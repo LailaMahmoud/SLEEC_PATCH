@@ -1,0 +1,1 @@
+web: gunicorn SLEECpatch.app.app:app

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{ cfg.title }} – Step 5: Requirement Refinement</title>
+		<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+
+<style>
+.wrapper {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+textarea, pre {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 10px;
+    font-family: Consolas, monospace;
+    font-size: 14px;
+    white-space: pre-wrap;
+    overflow: auto;
+}
+
+textarea {
+    background: transparent;
+    color: transparent;
+    caret-color: black;
+    z-index: 2;
+    border: 1px solid #ccc;
+}
+
+pre {
+    z-index: 1;
+}
+
+/* COLORS */
+.keyword { color: #8e44ad; font-weight: bold; }
+.number { color: orange; }
+.comment { color: green; }
+.type { color: #c0392b; }
+
+
+.buttons {
+			height: 15%;
+			display: flex;
+			flex-direction: column;
+			}
+
+			button {
+			flex: 1;
+			font-size: 16px;
+			border: 1px solid #aaa;
+			background: #f5f5f5;
+			cursor: pointer;
+			}
+
+			button:hover {
+			background: #e0e0e0;
+			}
+</style>
+
+
+<!-- INPUT -->
+			<body>
+				<div class="page">
+					<div class="main-box">
+						{% include 'nav.html' %}
+						<h2>STEP Extended: Requirement Verification</h2>
+					</div>
+<div class="wrapper">
+    <pre id="inputHighlight"></pre>
+    <textarea id="inputText">
+def_start
+    event OpenCurtainRequest
+    measure underDressed: boolean
+    event SignalOpenCurtain
+    event OpenCurtain
+    event LeavePatient
+    event UserFallen
+    event SupportCalled
+    event PatientFallen
+    event ProvideCompanionship
+    event CallSupport
+    measure patientNotDeaf:boolean
+def_end
+
+rule_start
+//r5 when OpenCurtainRequest and (not {underDressed})
+//then OpenCurtain within 30 minutes
+//r11 when SupportCalled then not OpenCurtain within 40 minutes
+r2 when PatientFallen then CallSupport
+r3 when PatientFallen then ProvideCompanionship within 10 minutes unless {patientNotDeaf}
+r4 when CallSupport then not ProvideCompanionship within 10 minutes
+rule_end
+    </textarea>
+</div>
+
+<!-- OUTPUT -->
+<div class="wrapper">
+    <pre id="outputHighlight"></pre>
+    <textarea id="outputText" readonly>
+    
+</textarea>
+</div>
+
+<br><br>
+
+<div class="buttons">
+    <button onclick="analyze1('situational')">check situational conflict</button>
+    <button onclick="analyze1('purpose')">check purpose</button>
+    <button onclick="analyze1('concern')">check concern</button>
+    <button onclick="analyze1('conflict')">check conflicts</button>
+    <button onclick="analyze1('redundancy')">check redundancy</button>
+</div>
+
+
+<script>
+const input = document.getElementById("inputText");
+const inputHL = document.getElementById("inputHighlight");
+
+const output = document.getElementById("outputText");
+const outputHL = document.getElementById("outputHighlight");
+
+function escapeHTML(text) {
+    return text.replace(/&/g, "&amp;")
+               .replace(/</g, "&lt;")
+               .replace(/>/g, "&gt;");
+}
+
+function highlight(text) {
+    text = escapeHTML(text);
+
+    return text
+        .replace(/\/\/.*$/gm, '<span class="comment">$&</span>')
+        .replace(/\b(def_start|def_end|rule_start|rule_end|when|then|within|unless|not|and)\b/g,
+            '<span class="keyword">$1</span>')
+        .replace(/\b(event|measure)\b/g,
+            '<span class="keyword">$1</span>')
+        .replace(/\b(boolean)\b/g,
+            '<span class="type">$1</span>')
+        .replace(/\b(\d+)\b/g,
+            '<span class="number">$1</span>');
+}
+
+// update input highlight
+function updateInput() {
+    inputHL.innerHTML = highlight(input.value);
+}
+
+// update output highlight
+function updateOutput() {
+    outputHL.innerHTML = highlight(output.value);
+}
+
+// sync scroll
+function syncScroll(textarea, pre) {
+    textarea.addEventListener("scroll", () => {
+        pre.scrollTop = textarea.scrollTop;
+        pre.scrollLeft = textarea.scrollLeft;
+    });
+}
+
+input.addEventListener("input", updateInput);
+output.addEventListener("input", updateOutput);
+
+syncScroll(input, inputHL);
+syncScroll(output, outputHL);
+
+// initial render
+updateInput();
+updateOutput();
+
+
+// YOUR EXISTING BACKEND CALL
+async function analyze1(mode) {
+    const res = await fetch("/analyze1", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            text: input.value,
+            mode: mode
+        })
+    });
+
+    const data = await res.json();
+
+    output.value = data.response;
+    updateOutput();
+}
+
+
+</script>
+
+
+</body>

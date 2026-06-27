@@ -1,0 +1,9 @@
+flask
+pandas
+openai
+python-dotenv
+openpyxl
+pyngrok
+gunicorn
+psycopg2-binary
+flask-sqlalchemy

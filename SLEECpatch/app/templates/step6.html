@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Concerns & Resolution Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --bg: #eef3fb;
+    --card: #ffffff;
+    --primary: #4f46e5;
+    --blue: #2563eb;
+    --green: #16a34a;
+    --red: #dc2626;
+    --text: #172033;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #eef3fb, #f8fafc);
+    color: var(--text);
+}
+
+.wrapper {
+    max-width: 1200px;
+    margin: auto;
+    padding: 36px;
+}
+
+.hero {
+    background: linear-gradient(135deg, #111827, #3730a3);
+    color: white;
+    padding: 34px;
+    border-radius: 22px;
+    margin-bottom: 28px;
+    box-shadow: 0 20px 45px rgba(31, 41, 55, 0.22);
+}
+
+.hero h1 {
+    margin: 0;
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.hero p {
+    margin-top: 10px;
+    color: #dbeafe;
+    font-size: 15px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.stat {
+    background: var(--card);
+    padding: 20px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.07);
+}
+
+.stat strong {
+    font-size: 28px;
+    display: block;
+    color: var(--primary);
+}
+
+.stat span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 26px;
+}
+
+.card {
+    background: var(--card);
+    border-radius: 22px;
+    padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.card-header {
+    margin-bottom: 18px;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.card-header p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.action {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--border);
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.action:hover {
+    transform: translateY(-2px);
+    background: #ffffff;
+    box-shadow: 0 12px 25px rgba(15, 23, 42, 0.1);
+    border-color: #c7d2fe;
+}
+
+.icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.purple { background: #eef2ff; color: var(--primary); }
+.green { background: #ecfdf5; color: var(--green); }
+.blue { background: #eff6ff; color: var(--blue); }
+.red { background: #fef2f2; color: var(--red); }
+
+.action-title {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.action-desc {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.timeline {
+    margin-top: 28px;
+    background: white;
+    border-radius: 22px;
+    padding: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+}
+
+.timeline h2 {
+    margin-top: 0;
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.step {
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.step strong {
+    color: var(--primary);
+    display: block;
+    margin-bottom: 6px;
+}
+
+.output {
+    margin-top: 28px;
+    background: #111827;
+    color: #e5e7eb;
+    padding: 20px;
+    border-radius: 18px;
+    font-size: 14px;
+}
+
+@media (max-width: 900px) {
+    .grid, .stats, .steps {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<script>
+function goTo(path) {
+    window.location.href = path;
+}
+</script>
+
+<div class="wrapper">
+
+    <section class="hero">
+        <h1>Concerns & Resolution Dashboard</h1>
+        <p>Professional control center for SLEEC detection, redundancy analysis,  and LLM-based rule refinement.</p>
+    </section>
+<!-- Architecture -->
+<section class="card" style="margin-bottom:30px;">
+
+    <div class="card-header">
+        <h2>SLEEC-PATCH Architecture</h2>
+        <p>
+            SLEEC-PATCH combines formal reasoning and LLM-assisted semantic
+            refinement to generate, verify, and rank resolution patches for
+            well-formedness issues in robot normative specifications.
+        </p>
+    </div>
+
+    <img
+        src="{{ url_for('static', filename='images/sleec_patch_architecture.png') }}"
+        alt="SLEEC-PATCH Architecture"
+        style="
+            width:100%;
+            border-radius:18px;
+            border:1px solid #dbe4f3;
+            box-shadow:0 12px 30px rgba(0,0,0,.08);
+        ">
+
+</section>
+    <section class="stats">
+        
+                <div>
+                    
+<h3>Select Use Case</h3>
+
+<div class="usecase-grid">
+    <label><input type="checkbox" name="usecase" value="ALMI"> ALMI</label>
+    <label><input type="checkbox" name="usecase" value="ASPEN"> ASPEN</label>
+    <label><input type="checkbox" name="usecase" value="AutoCAR"> AutoCAR</label>
+    <label><input type="checkbox" name="usecase" value="BSN"> BSN</label>
+    <label><input type="checkbox" name="usecase" value="CSICobot"> CSICobot</label>
+    <label><input type="checkbox" name="usecase" value="DAISY"> DAISY</label>
+    <label><input type="checkbox" name="usecase" value="DPA"> DPA</label>
+    <label><input type="checkbox" name="usecase" value="DressAssist"> DressAssist</label>
+    <label><input type="checkbox" name="usecase" value="SafeSCAD"> SafeSCAD</label>
+</div>
+
+<button onclick="openSLEECPatch()">Open SLEEC-PATCH</button>
+
+<script>
+function openSLEECPatch() {
+    const selected = Array.from(
+        document.querySelectorAll("input[name='usecase']:checked")
+    ).map(x => x.value);
+
+    if (selected.length === 0) {
+        alert("Please select at least one use case.");
+        return;
+    }
+
+    window.location.href =
+        "/sleec-patch-workbench?use_cases=" + encodeURIComponent(selected.join(","));
+}
+</script>
+        </div>
+
+    </section>
+
+    <section class="timeline">
+        <h2>Resolution Pipeline</h2>
+
+        <div class="steps">
+     
+</div>
+<div style="
+margin-top:20px;
+padding:18px;
+background:#f8fafc;
+border-left:5px solid #4f46e5;
+border-radius:12px;
+line-height:1.7;
+">
+
+<b>Workflow</b>
+
+<ol>
+<li>Load a SLEEC specification and well-formedness properties.</li>
+<li>LEGOS-SLEEC diagnoses conflicts, redundancies, concerns, and other well-formedness issues.</li>
+<li>Select an appropriate repair operator.</li>
+<li>Generate deterministic repairs using formal rule transformations or semantic refinements using an LLM.</li>
+<li>Formally verify every candidate patch with LEGOS-SLEEC.</li>
+<li>Rank verified patches using specification quality criteria.</li>
+<li>Present the ranked patches to stakeholders.</li>
+</ol>
+
+</div>
+
+</body>
+</html>

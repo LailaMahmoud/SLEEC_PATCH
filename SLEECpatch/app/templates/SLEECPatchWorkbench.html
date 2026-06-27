@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SLEEC-PATCH Workbench</title>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_patch_workbench.css') }}">
+</head>
+
+<body>
+
+<div class="page">
+
+    <header class="hero">
+        <h1>SLEEC-PATCH Workbench</h1>
+        <p>
+            Automated generation and formal validation of resolution patches for well-formedness issues
+            in normative requirements.
+        </p>
+    </header>
+
+    <section class="panel">
+        <h2>1. SLEEC Specification Input</h2>
+
+        <label>Use Case</label>
+
+<select id="useCase">
+    {% for uc in use_cases %}
+        <option value="{{ uc }}"
+            {% if uc in selected_use_cases %}selected{% endif %}>
+            {{ uc }}
+        </option>
+    {% endfor %}
+</select>
+<button class="secondary" onclick="loadSelectedUseCase()">
+    Load Selected Use Case
+</button>
+
+<textarea id="sleecInput" rows="16">
+{{ sleec_text or "" }}
+</textarea>
+
+        <button class="primary" onclick="diagnoseWFIs()">
+            Diagnose WFIs
+        </button>
+    </section>
+
+    <section class="grid-2">
+
+        <div class="panel">
+            <h2>2. Detected Well-Formedness Issues</h2>
+            <div id="issuesOutput">
+                No diagnosis yet.
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>3. Selected Issue</h2>
+            <div id="selectedIssueOutput">
+                Select one issue.
+            </div>
+
+            <button class="success" onclick="generateVerifiedPatches()">
+                Suggest Verified Resolution Patches
+            </button>
+        </div>
+
+    </section>
+
+    <section class="grid-2">
+
+        <div class="panel">
+            <h2>4A. Deterministic Candidate Repairs (Rule-based)</h2>
+            <div id="deterministicOutput">
+                No deterministic repairs yet.
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>4B. GPT Semantic Candidate Repairs (LLM-assisted)</h2>
+            <div id="llmOutput">
+                No GPT semantic repairs yet.
+            </div>
+        </div>
+
+    </section>
+
+    <section class="grid-2">
+
+        <div class="panel">
+            <h2>4C. Formally Verified & Ranked Resolution Patches</h2>
+            <div id="patchOutput">
+                No verified patches yet.
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>5. Internal Verification Log</h2>
+            <div id="logOutput">
+                No log yet.
+            </div>
+        </div>
+
+    </section>
+
+    <section class="panel">
+        <h2>6. Evaluation Summary</h2>
+
+        <button class="secondary" onclick="loadEvaluationSummary()">
+            Load Evaluation Summary
+        </button>
+
+        <button class="secondary" onclick="loadDetailedEvaluationResults()">
+            Load Detailed Results
+        </button>
+        <div id="patchDetailOutput">
+        Click an operation in the table to view rule and resolution details.
+        </div>
+        <div id="summaryOutput">
+            No summary loaded.
+        </div>
+    </section>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/sleec_patch_workbench.js') }}"></script>
+
+</body>
+</html>
