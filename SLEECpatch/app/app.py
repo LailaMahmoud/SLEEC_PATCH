@@ -41,7 +41,8 @@ evaluation_b = EvaluationBFinalSpec(
 from services.philosopher_review_store import PhilosopherReviewStore
 
 philosopher_review_store = PhilosopherReviewStore()
-
+from services.evaluation_excel_exporter import EvaluationExcelExporter
+evaluation_excel_exporter = EvaluationExcelExporter()
 
 SLEEC_EXCEL_FILES = {
     "ALMI": os.path.join(BASE_DIR, "sleec_usecases", "ALMI.xlsx"),
@@ -370,6 +371,73 @@ def api_philosopher_review_summary():
         "status": "OK",
         "summary": philosopher_review_store.summary(),
         "reviews": philosopher_review_store.all_reviews()
+    })
+
+
+@app.route("/api/sleec-patch/export-evaluation", methods=["POST"])
+def api_export_evaluation():
+    data = request.get_json() or {}
+    use_case = data.get("use_case", "ALMI")
+
+    corrected_path = SLEEC_FILES.get(f"{use_case}-corrected")
+    original_path = SLEEC_FILES.get(use_case)
+
+    all_results = sleec_patch_engine.store.all_results()
+
+    use_case_patches = [
+        p for p in all_results
+        if p.get("use_case") == use_case
+    ]
+
+    evaluation_a_result = evaluation_a.evaluate_use_case(
+        use_case=use_case,
+        corrected_path=corrected_path,
+        generated_patches=use_case_patches
+    )
+
+    original_sleec = load_sleec_text(use_case)
+
+    built = evaluation_b.build_sleecpatch_file(
+        use_case=use_case,
+        original_sleec=original_sleec,
+        all_patch_results=use_case_patches,
+        apply_patch_to_text=sleec_patch_engine.apply_patch_to_text
+    )
+
+    evaluation_b_result = evaluation_b.evaluate(
+        use_case=use_case,
+        original_path=original_path,
+        corrected_path=corrected_path,
+        sleecpatch_path=built["output_path"]
+    )
+
+    semantic_ops = {
+        "event_specialization",
+        "measure_specialization",
+        "capability_refinement",
+        "new_rule_generation"
+    }
+
+    semantic_patches = [
+        p for p in use_case_patches
+        if p.get("source") == "llm" or p.get("operation") in semantic_ops
+    ]
+
+    philosopher_summary = philosopher_review_store.summary()
+
+    excel_path = evaluation_excel_exporter.export_use_case(
+        use_case=use_case,
+        evaluation_a=evaluation_a_result,
+        evaluation_b=evaluation_b_result,
+        semantic_patches=semantic_patches,
+        philosopher_summary=philosopher_summary,
+        selected_patches=built.get("selected_patches", [])
+    )
+
+    return jsonify({
+        "status": "OK",
+        "use_case": use_case,
+        "excel_path": excel_path
     })
 
 if __name__ == "__main__":

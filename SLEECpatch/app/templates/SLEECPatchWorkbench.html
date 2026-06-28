@@ -3,132 +3,195 @@
 <head>
 <meta charset="UTF-8">
 <title>SLEEC-PATCH Workbench</title>
-
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_patch_workbench.css') }}">
 </head>
 
 <body>
-
 <div class="page">
 
-    <header class="hero">
-        <h1>SLEEC-PATCH Workbench</h1>
-        <p>
-            Automated generation and formal validation of resolution patches for well-formedness issues
-            in normative requirements.
-        </p>
-    </header>
+<header class="hero">
+    <h1>SLEEC-PATCH Workbench</h1>
+    <p>Automated generation and formal validation of resolution patches for well-formedness issues in normative requirements.</p>
+</header>
 
-    <section class="panel">
-        <h2>1. SLEEC Specification Input</h2>
+<section class="panel">
+    <h2>1. SLEEC Specification Input</h2>
 
-        <label>Use Case</label>
-
-<select id="useCase">
-    {% for uc in use_cases %}
-        <option value="{{ uc }}"
-            {% if uc in selected_use_cases %}selected{% endif %}>
-            {{ uc }}
-        </option>
-    {% endfor %}
-</select>
-<button class="secondary" onclick="loadSelectedUseCase()">
-    Load Selected Use Case
-</button>
-
-<textarea id="sleecInput" rows="16">
-{{ sleec_text or "" }}
-</textarea>
-
-        <button class="primary" onclick="diagnoseWFIs()">
-            Diagnose WFIs
-        </button>
-    </section>
-
-    <section class="grid-2">
-
-        <div class="panel">
-            <h2>2. Detected Well-Formedness Issues</h2>
-            <div id="issuesOutput">
-                No diagnosis yet.
-            </div>
+    <div class="toolbar">
+        <div>
+            <label>Use Case</label>
+            <select id="useCase">
+                {% for uc in use_cases %}
+                <option value="{{ uc }}" {% if uc in selected_use_cases %}selected{% endif %}>
+                    {{ uc }}
+                </option>
+                {% endfor %}
+            </select>
         </div>
 
-        <div class="panel">
-            <h2>3. Selected Issue</h2>
-            <div id="selectedIssueOutput">
-                Select one issue.
-            </div>
+        <button class="secondary" onclick="loadSelectedUseCase()">Load Use Case</button>
+        <button class="primary" onclick="diagnoseWFIs()">Diagnose WFIs</button>
+    </div>
 
-            <button class="success" onclick="generateVerifiedPatches()">
-                Suggest Verified Resolution Patches
+    <textarea id="sleecInput" rows="16">{{ sleec_text or "" }}</textarea>
+</section>
+
+<section class="grid-2">
+    <div class="panel">
+        <h2>2. Detected WFIs</h2>
+        <div id="issuesOutput" class="empty">No diagnosis yet.</div>
+    </div>
+
+    <div class="panel">
+        <h2>3. Selected Issue</h2>
+        <div id="selectedIssueOutput" class="empty">Select one issue.</div>
+        <button class="success" onclick="generateVerifiedPatches()">Suggest Verified Patches</button>
+    </div>
+</section>
+
+<section class="grid-2">
+    <div class="panel">
+        <h2>4A. Deterministic Repairs</h2>
+        <div id="deterministicOutput" class="empty">No deterministic repairs yet.</div>
+    </div>
+
+    <div class="panel">
+        <h2>4B. GPT Semantic Repairs</h2>
+        <div id="llmOutput" class="empty">No GPT semantic repairs yet.</div>
+    </div>
+</section>
+
+<section class="grid-2">
+    <div class="panel">
+        <h2>4C. Verified & Ranked Patches</h2>
+        <div id="patchOutput" class="empty">No verified patches yet.</div>
+    </div>
+
+    <div class="panel">
+        <h2>5. Verification Log</h2>
+        <div id="logOutput" class="empty">No log yet.</div>
+    </div>
+</section>
+
+<section class="panel evaluation-section">
+
+    <div class="section-header">
+
+        <div>
+            <h2>6. Evaluation</h2>
+            <p>
+                Review evaluation summaries, detailed repair information,
+                and export evaluation reports.
+            </p>
+        </div>
+
+        <div class="toolbar">
+
+            <button class="secondary"
+                    onclick="loadEvaluationSummary()">
+                📊 Load Summary
             </button>
+
+            <button class="secondary"
+                    onclick="loadDetailedEvaluationResults()">
+                📑 Load Details
+            </button>
+
+            <button class="secondary"
+                    onclick="exportEvaluationExcel()">
+                📥 Export Excel
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Summary cards -->
+
+    <div id="summaryOutput" class="summary-container">
+        No evaluation summary loaded.
+    </div>
+
+    <!-- Selected patch details -->
+
+    <div class="panel-light">
+
+        <h3>Patch Details</h3>
+
+        <div id="patchDetailOutput" class="empty">
+            Click an operation in the evaluation tables to view the
+            original rule, proposed rule, explanation, and verification details.
+        </div>
+
+    </div>
+
+    <!-- Evaluation A -->
+
+    <section class="evaluation-card">
+
+        <div class="card-header">
+
+            <h3>6A. Patch Match</h3>
+
+            <button class="primary"
+                    onclick="runEvaluationA()">
+                Run
+            </button>
+
+        </div>
+
+        <div id="evaluationAOutput" class="empty">
+            No Evaluation A results yet.
         </div>
 
     </section>
 
-    <section class="grid-2">
+    <!-- Evaluation B -->
 
-        <div class="panel">
-            <h2>4A. Deterministic Candidate Repairs (Rule-based)</h2>
-            <div id="deterministicOutput">
-                No deterministic repairs yet.
-            </div>
+    <section class="evaluation-card">
+
+        <div class="card-header">
+
+            <h3>6B. Final Specification</h3>
+
+            <button class="primary"
+                    onclick="runEvaluationB()">
+                Run
+            </button>
+
         </div>
 
-        <div class="panel">
-            <h2>4B. GPT Semantic Candidate Repairs (LLM-assisted)</h2>
-            <div id="llmOutput">
-                No GPT semantic repairs yet.
-            </div>
-        </div>
-
-    </section>
-
-    <section class="grid-2">
-
-        <div class="panel">
-            <h2>4C. Formally Verified & Ranked Resolution Patches</h2>
-            <div id="patchOutput">
-                No verified patches yet.
-            </div>
-        </div>
-
-        <div class="panel">
-            <h2>5. Internal Verification Log</h2>
-            <div id="logOutput">
-                No log yet.
-            </div>
+        <div id="evaluationBOutput" class="empty">
+            No Evaluation B results yet.
         </div>
 
     </section>
 
-    <section class="panel">
-        <h2>6. Evaluation Summary</h2>
+    <!-- Evaluation C -->
 
-        <button class="secondary" onclick="loadEvaluationSummary()">
-            Load Evaluation Summary
-        </button>
+    <section class="evaluation-card">
 
-        <button class="secondary" onclick="loadDetailedEvaluationResults()">
-            Load Detailed Results
-        </button>
-        <div id="patchDetailOutput">
-        Click an operation in the table to view rule and resolution details.
+        <div class="card-header">
+
+            <h3>6C. Philosopher Review</h3>
+
+            <button class="primary"
+                    onclick="loadPhilosopherReview()">
+                Load Form
+            </button>
+
         </div>
-        <button onclick="runEvaluationA()">Evaluation A: Patch Match</button>
-        <button onclick="runEvaluationB()">Evaluation B: Final Spec</button>
-        <button onclick="loadPhilosopherReview()">Evaluation C: Philosopher Review</button>
 
-        <div id="evaluationOutput"></div>
-        <div id="summaryOutput">
-            No summary loaded.
+        <div id="evaluationCOutput" class="empty">
+            No philosopher review loaded.
         </div>
+
     </section>
+
+</section>
 
 </div>
 
 <script src="{{ url_for('static', filename='js/sleec_patch_workbench.js') }}"></script>
-
 </body>
 </html>

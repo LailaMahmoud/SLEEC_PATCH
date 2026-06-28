@@ -46,8 +46,9 @@ class SLEECParser:
         clean = re.sub(r"\s+", " ", text).strip()
 
         m = re.match(
-            r"^(Rule\d+(?:_\d+)?)\s+when\s+(.*?)\s+then\s+(.*)$",
-            clean
+            r"^((?:Rule|R)\d+(?:_\d+)?)\s+when\s+(.*?)\s+then\s+(.*)$",
+            clean,
+            flags=re.IGNORECASE
         )
 
         if not m:
@@ -60,12 +61,14 @@ class SLEECParser:
         action = re.split(
             r"\s+unless\s+",
             rest,
-            maxsplit=1
+            maxsplit=1,
+            flags=re.IGNORECASE
         )[0].strip()
 
         defeaters = re.findall(
             r"unless\s+(.*?)(?=\s+unless\s+|$)",
-            rest
+            rest,
+            flags=re.IGNORECASE
         )
 
         return {

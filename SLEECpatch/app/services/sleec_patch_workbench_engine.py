@@ -154,7 +154,7 @@ class SLEECPatchWorkbenchEngine:
     use_case,
     sleec_text,
     issue,
-    max_attempts=3
+    max_attempts=1
 ):
         start_total = time.time()
 
@@ -233,7 +233,7 @@ class SLEECPatchWorkbenchEngine:
         # Multiple attempts
         # -------------------------------
 
-        while attempts < max_attempts:
+        while attempts <= max_attempts:
 
             attempts += 1
 

@@ -524,8 +524,7 @@ async function runEvaluationA() {
         use_case: useCase
     });
 
-    document.getElementById("evaluationOutput").innerHTML =
-        `<pre>${JSON.stringify(data.result, null, 2)}</pre>`;
+    renderEvaluationA(data.result);
 }
 
 async function runEvaluationB() {
@@ -535,8 +534,7 @@ async function runEvaluationB() {
         use_case: useCase
     });
 
-    document.getElementById("evaluationOutput").innerHTML =
-        `<pre>${JSON.stringify(data.result, null, 2)}</pre>`;
+    renderEvaluationB(data.result);
 }
 
 async function loadPhilosopherReview() {
@@ -546,6 +544,159 @@ async function loadPhilosopherReview() {
         use_case: useCase
     });
 
-    document.getElementById("evaluationOutput").innerHTML =
-        `<pre>${JSON.stringify(data.patches, null, 2)}</pre>`;
+    renderEvaluationC(data);
+}
+
+
+
+
+function pct(x) {
+    return Math.round((x || 0) * 100) + "%";
+}
+
+function renderEvaluationA(data) {
+    const r = data.result || data;
+
+    const opRows = Object.entries(r.by_operation || {}).map(([op, v]) => `
+        <tr>
+            <td>${op}</td>
+            <td>${v.generated}</td>
+            <td>${v.matched}</td>
+            <td>${pct(v.match_rate)}</td>
+        </tr>
+    `).join("");
+
+    const patchRows = (r.patch_rows || []).map(p => `
+        <tr>
+            <td>${p.issue_id}</td>
+            <td>${p.patch_id}</td>
+            <td>${p.operation}</td>
+            <td>${p.target_rule_id}</td>
+            <td>${p.matched_corrected ? "✅ Match" : "❌ No"}</td>
+        </tr>
+    `).join("");
+
+    evaluationOutput.innerHTML = `
+        <h3>Evaluation A — Patch-Level Match</h3>
+
+        <div class="eval-cards">
+            <div class="eval-card"><b>Total WFIs</b><span>${r.total_wfis}</span></div>
+            <div class="eval-card"><b>WFIs With Match</b><span>${r.wfis_with_matching_patch}</span></div>
+            <div class="eval-card"><b>Total Patches</b><span>${r.total_patches}</span></div>
+            <div class="eval-card"><b>Patch Match Rate</b><span>${pct(r.patch_match_rate)}</span></div>
+        </div>
+
+        <h4>Match by Operation</h4>
+        <table class="eval-table">
+            <thead><tr><th>Operation</th><th>Generated</th><th>Matched</th><th>Rate</th></tr></thead>
+            <tbody>${opRows}</tbody>
+        </table>
+
+        <h4>Patch Details</h4>
+        <table class="eval-table">
+            <thead><tr><th>Issue</th><th>Patch</th><th>Operation</th><th>Target Rule</th><th>Match</th></tr></thead>
+            <tbody>${patchRows}</tbody>
+        </table>
+    `;
+}
+
+function renderEvaluationB(data) {
+    const r = data.result || data;
+    const corrected = r.corrected_vs_original || {};
+    const patch = r.sleecpatch_vs_original || {};
+    const sim = r.similarities || {};
+
+    const metrics = [
+        "rules_edited",
+        "rules_added",
+        "rules_deleted",
+        "constraints_added",
+        "constraints_removed",
+        "defeaters_added",
+        "defeaters_removed",
+        "actions_changed"
+    ];
+
+    const rows = metrics.map(m => `
+        <tr>
+            <td>${m}</td>
+            <td>${corrected[m] ?? 0}</td>
+            <td>${patch[m] ?? 0}</td>
+            <td>${pct(sim[m])}</td>
+        </tr>
+    `).join("");
+
+    evaluationOutput.innerHTML = `
+        <h3>Evaluation B — Final Specification Comparison</h3>
+
+        <div class="eval-cards">
+            <div class="eval-card"><b>Use Case</b><span>${r.use_case}</span></div>
+            <div class="eval-card"><b>Overall Similarity</b><span>${pct(r.overall_similarity)}</span></div>
+            <div class="eval-card"><b>Corrected Edits</b><span>${corrected.rules_edited ?? 0}</span></div>
+            <div class="eval-card"><b>SLEECPATCH Edits</b><span>${patch.rules_edited ?? 0}</span></div>
+        </div>
+
+        <table class="eval-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Original → Corrected</th>
+                    <th>Original → SLEECPATCH</th>
+                    <th>Similarity</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+    `;
+}
+
+function renderEvaluationC(data) {
+    const patches = data.patches || data || [];
+
+    const rows = patches.map(p => `
+        <tr>
+            <td>${p.issue_id}</td>
+            <td>${p.operation}</td>
+            <td class="small-cell">${p.original_rule || ""}</td>
+            <td class="small-cell">${p.proposed_rule || ""}</td>
+            <td class="small-cell">${p.explanation || ""}</td>
+            <td>
+                <button onclick='submitPhilosopherReview(${JSON.stringify(p)}, "accept")'>Accept</button>
+                <button onclick='submitPhilosopherReview(${JSON.stringify(p)}, "reject")'>Reject</button>
+            </td>
+        </tr>
+    `).join("");
+
+    evaluationOutput.innerHTML = `
+        <h3>Evaluation C — Philosopher Review</h3>
+
+        <div class="eval-cards">
+            <div class="eval-card"><b>Semantic Patches</b><span>${patches.length}</span></div>
+        </div>
+
+        <table class="eval-table">
+            <thead>
+                <tr>
+                    <th>Issue</th>
+                    <th>Operation</th>
+                    <th>Original Rule</th>
+                    <th>Proposed Rule</th>
+                    <th>Explanation</th>
+                    <th>Decision</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+    `;
+}
+
+
+async function exportEvaluationExcel() {
+    const useCase = document.getElementById("useCase").value;
+
+    const data = await postJSON("/api/sleec-patch/export-evaluation", {
+        use_case: useCase
+    });
+
+    alert("Excel exported: " + data.excel_path);
 }
