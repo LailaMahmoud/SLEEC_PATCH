@@ -9,10 +9,18 @@ from services.gpt_patch_engine import GPTPatchEngine
 class SLEECPipelineManager:
 
     def __init__(self, model="gpt-4o-mini"):
-        self.client = OpenAI()
+        # Lazily created so the manager builds without an API key
+        # (diagnosis-only use); the client is made on the first LLM call.
+        self._client = None
         self.model = model
         self.detector = SLEECDetectionEngine()
         self.gpt_patch_engine = GPTPatchEngine()
+
+    @property
+    def client(self):
+        if self._client is None:
+            self._client = OpenAI()
+        return self._client
 
     def clean_json(self, text):
         text = text.strip()

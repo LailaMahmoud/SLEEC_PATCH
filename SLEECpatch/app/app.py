@@ -1,5 +1,5 @@
 
-import  spacy, numpy as np, re, os
+import numpy as np, re, os
 import sys
 
 from flask import Flask, render_template, request,redirect, jsonify, abort, url_for, session, render_template_string

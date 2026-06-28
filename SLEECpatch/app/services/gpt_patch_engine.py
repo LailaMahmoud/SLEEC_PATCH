@@ -5,7 +5,16 @@ from openai import OpenAI
 
 from services.prompts import build_prompt, LLM_SEMANTIC_OPERATORS
 
-client = OpenAI()
+# Lazily created so the module imports without an API key (diagnosis works
+# key-free; the client is built on the first LLM call).
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = OpenAI()
+    return _client
 
 
 class GPTPatchEngine:
@@ -47,7 +56,7 @@ class GPTPatchEngine:
             existing_responses=existing_responses
         )
 
-        response = client.chat.completions.create(
+        response = _get_client().chat.completions.create(
             model=self.model,
             temperature=0,
             messages=[
