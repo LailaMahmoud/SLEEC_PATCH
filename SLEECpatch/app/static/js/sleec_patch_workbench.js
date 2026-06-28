@@ -6,6 +6,7 @@ let sleecPatchState = {
     log: null
 };
 
+
 function escapeHtml(value) {
     return String(value || "")
         .replaceAll("&", "&amp;")
@@ -380,15 +381,6 @@ async function loadEvaluationSummary() {
 
 
 
-function escapeHtml(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
 async function loadDetailedEvaluationResults() {
     const data = await postJSON("/api/sleec-patch/evaluation-results", {});
 
@@ -516,6 +508,9 @@ async function loadSelectedUseCase() {
     document.getElementById("sleecInput").value = data.sleec_text || "";
 }
 
+function pct(x) {
+    return Math.round((Number(x) || 0) * 100) + "%";
+}
 
 async function runEvaluationA() {
     const useCase = document.getElementById("useCase").value;
@@ -547,19 +542,12 @@ async function loadPhilosopherReview() {
     renderEvaluationC(data);
 }
 
-
-
-
-function pct(x) {
-    return Math.round((x || 0) * 100) + "%";
-}
-
 function renderEvaluationA(data) {
     const r = data.result || data;
 
     const opRows = Object.entries(r.by_operation || {}).map(([op, v]) => `
         <tr>
-            <td>${op}</td>
+            <td>${escapeHtml(op)}</td>
             <td>${v.generated}</td>
             <td>${v.matched}</td>
             <td>${pct(v.match_rate)}</td>
@@ -568,34 +556,51 @@ function renderEvaluationA(data) {
 
     const patchRows = (r.patch_rows || []).map(p => `
         <tr>
-            <td>${p.issue_id}</td>
-            <td>${p.patch_id}</td>
-            <td>${p.operation}</td>
-            <td>${p.target_rule_id}</td>
+            <td>${escapeHtml(p.issue_id)}</td>
+            <td>${escapeHtml(p.patch_id)}</td>
+            <td>${escapeHtml(p.operation)}</td>
+            <td>${escapeHtml(p.target_rule_id)}</td>
             <td>${p.matched_corrected ? "✅ Match" : "❌ No"}</td>
         </tr>
     `).join("");
 
-    evaluationOutput.innerHTML = `
-        <h3>Evaluation A — Patch-Level Match</h3>
-
+    document.getElementById("evaluationAOutput").innerHTML = `
         <div class="eval-cards">
-            <div class="eval-card"><b>Total WFIs</b><span>${r.total_wfis}</span></div>
-            <div class="eval-card"><b>WFIs With Match</b><span>${r.wfis_with_matching_patch}</span></div>
-            <div class="eval-card"><b>Total Patches</b><span>${r.total_patches}</span></div>
+            <div class="eval-card"><b>Total WFIs</b><span>${r.total_wfis || 0}</span></div>
+            <div class="eval-card"><b>WFIs With Match</b><span>${r.wfis_with_matching_patch || 0}</span></div>
+            <div class="eval-card"><b>Total Patches</b><span>${r.total_patches || 0}</span></div>
             <div class="eval-card"><b>Patch Match Rate</b><span>${pct(r.patch_match_rate)}</span></div>
         </div>
 
         <h4>Match by Operation</h4>
         <table class="eval-table">
-            <thead><tr><th>Operation</th><th>Generated</th><th>Matched</th><th>Rate</th></tr></thead>
-            <tbody>${opRows}</tbody>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Generated</th>
+                    <th>Matched</th>
+                    <th>Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${opRows || `<tr><td colspan="4">No operation results.</td></tr>`}
+            </tbody>
         </table>
 
         <h4>Patch Details</h4>
         <table class="eval-table">
-            <thead><tr><th>Issue</th><th>Patch</th><th>Operation</th><th>Target Rule</th><th>Match</th></tr></thead>
-            <tbody>${patchRows}</tbody>
+            <thead>
+                <tr>
+                    <th>Issue</th>
+                    <th>Patch</th>
+                    <th>Operation</th>
+                    <th>Target Rule</th>
+                    <th>Match</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${patchRows || `<tr><td colspan="5">No patch results.</td></tr>`}
+            </tbody>
         </table>
     `;
 }
@@ -626,11 +631,9 @@ function renderEvaluationB(data) {
         </tr>
     `).join("");
 
-    evaluationOutput.innerHTML = `
-        <h3>Evaluation B — Final Specification Comparison</h3>
-
+    document.getElementById("evaluationBOutput").innerHTML = `
         <div class="eval-cards">
-            <div class="eval-card"><b>Use Case</b><span>${r.use_case}</span></div>
+            <div class="eval-card"><b>Use Case</b><span>${escapeHtml(r.use_case)}</span></div>
             <div class="eval-card"><b>Overall Similarity</b><span>${pct(r.overall_similarity)}</span></div>
             <div class="eval-card"><b>Corrected Edits</b><span>${corrected.rules_edited ?? 0}</span></div>
             <div class="eval-card"><b>SLEECPATCH Edits</b><span>${patch.rules_edited ?? 0}</span></div>
@@ -651,25 +654,24 @@ function renderEvaluationB(data) {
 }
 
 function renderEvaluationC(data) {
-    const patches = data.patches || data || [];
+    const patches = data.patches || [];
 
-    const rows = patches.map(p => `
+    const rows = patches.map((p, index) => `
         <tr>
-            <td>${p.issue_id}</td>
-            <td>${p.operation}</td>
-            <td class="small-cell">${p.original_rule || ""}</td>
-            <td class="small-cell">${p.proposed_rule || ""}</td>
-            <td class="small-cell">${p.explanation || ""}</td>
+            <td>${escapeHtml(p.issue_id)}</td>
+            <td>${escapeHtml(p.patch_id)}</td>
+            <td>${escapeHtml(p.operation)}</td>
+            <td class="small-cell">${escapeHtml(p.proposed_rule || "")}</td>
             <td>
-                <button onclick='submitPhilosopherReview(${JSON.stringify(p)}, "accept")'>Accept</button>
-                <button onclick='submitPhilosopherReview(${JSON.stringify(p)}, "reject")'>Reject</button>
+                <button class="success" onclick="submitPhilosopherReviewByIndex(${index}, 'accept')">Accept</button>
+                <button class="danger" onclick="submitPhilosopherReviewByIndex(${index}, 'reject')">Reject</button>
             </td>
         </tr>
     `).join("");
 
-    evaluationOutput.innerHTML = `
-        <h3>Evaluation C — Philosopher Review</h3>
+    window.semanticPatchesForReview = patches;
 
+    document.getElementById("evaluationCOutput").innerHTML = `
         <div class="eval-cards">
             <div class="eval-card"><b>Semantic Patches</b><span>${patches.length}</span></div>
         </div>
@@ -678,18 +680,32 @@ function renderEvaluationC(data) {
             <thead>
                 <tr>
                     <th>Issue</th>
+                    <th>Patch</th>
                     <th>Operation</th>
-                    <th>Original Rule</th>
                     <th>Proposed Rule</th>
-                    <th>Explanation</th>
                     <th>Decision</th>
                 </tr>
             </thead>
-            <tbody>${rows}</tbody>
+            <tbody>
+                ${rows || `<tr><td colspan="5">No semantic patches found.</td></tr>`}
+            </tbody>
         </table>
     `;
 }
 
+async function submitPhilosopherReviewByIndex(index, decision) {
+    const patch = window.semanticPatchesForReview[index];
+    const comment = prompt("Optional comment:");
+
+    await postJSON("/api/sleec-patch/philosopher-review", {
+        ...patch,
+        reviewer: "Philosopher",
+        decision: decision,
+        comment: comment || ""
+    });
+
+    alert("Review saved.");
+}
 
 async function exportEvaluationExcel() {
     const useCase = document.getElementById("useCase").value;
@@ -699,4 +715,17 @@ async function exportEvaluationExcel() {
     });
 
     alert("Excel exported: " + data.excel_path);
+}
+
+async function submitPhilosopherReview(patch, decision) {
+    const comment = prompt("Optional comment:");
+
+    await postJSON("/api/sleec-patch/philosopher-review", {
+        ...patch,
+        reviewer: "Philosopher",
+        decision: decision,
+        comment: comment || ""
+    });
+
+    alert("Review saved.");
 }

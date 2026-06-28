@@ -143,7 +143,8 @@ rule_start
 	Rule21 when ExaminingPatient then CanEndSession
 	Rule21_1 when ExaminingPatient then CanCallHuman
 
-c2 when MeetingUser and {patientComfortable} and {patientAgeConsidered} then ProceedWithExamination
+c2 when ExamineState and ({severityOfState} > StateThreshold) and PatientInCriticalCondition then not ApproachPatient
+Concern is raised
 rule_end
 
 concern_start
