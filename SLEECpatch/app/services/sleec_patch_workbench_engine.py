@@ -328,7 +328,7 @@ class SLEECPatchWorkbenchEngine:
         total_time = time.time() - start_total
 
         verified_patches = self.patch_ranker.rank(verified_patches)
-        output_file = self.build_final_sleecpatch(
+        output_file = self.build_final_sleecpatch_file(
         use_case,
         sleec_text,
         verified_patches

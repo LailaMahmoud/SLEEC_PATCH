@@ -27,6 +27,21 @@ from services.sleec_pipeline_manager import SLEECPipelineManager
 sleec_pipeline_manager = SLEECPipelineManager()
 from services.sleec_patch_workbench_engine import SLEECPatchWorkbenchEngine
 sleec_patch_engine = SLEECPatchWorkbenchEngine()
+from services.sleec_parser import SLEECParser
+from services.evaluation_a_patch_match import EvaluationAPatchMatch
+
+evaluation_a = EvaluationAPatchMatch(SLEECParser())
+from services.evaluation_b_final_spec import EvaluationBFinalSpec
+from services.repair_action_analyzer import RepairActionAnalyzer
+
+evaluation_b = EvaluationBFinalSpec(
+    parser=SLEECParser(),
+    analyzer=RepairActionAnalyzer()
+)
+from services.philosopher_review_store import PhilosopherReviewStore
+
+philosopher_review_store = PhilosopherReviewStore()
+
 
 SLEEC_EXCEL_FILES = {
     "ALMI": os.path.join(BASE_DIR, "sleec_usecases", "ALMI.xlsx"),
@@ -228,6 +243,134 @@ def api_sleec_patch_evaluation_results():
         sleec_patch_engine.store.all_results()
     )
 
+
+@app.route("/api/sleec-patch/evaluation-a", methods=["POST"])
+def api_evaluation_a():
+    data = request.get_json() or {}
+    use_case = data.get("use_case", "ALMI")
+
+    corrected_path = SLEEC_FILES.get(f"{use_case}-corrected")
+
+    generated_patches = sleec_patch_engine.store.all_results()
+
+    generated_patches = [
+        p for p in generated_patches
+        if p.get("use_case") == use_case
+    ]
+
+    result = evaluation_a.evaluate_use_case(
+        use_case=use_case,
+        corrected_path=corrected_path,
+        generated_patches=generated_patches
+    )
+
+    return jsonify({
+        "status": "OK",
+        "evaluation": "A",
+        "result": result
+    })
+
+
+
+@app.route("/api/sleec-patch/evaluation-b", methods=["POST"])
+def api_evaluation_b():
+    data = request.get_json() or {}
+    use_case = data.get("use_case", "ALMI")
+
+    original_path = SLEEC_FILES.get(use_case)
+    corrected_path = SLEEC_FILES.get(f"{use_case}-corrected")
+
+    original_sleec = load_sleec_text(use_case)
+
+    all_results = sleec_patch_engine.store.all_results()
+
+    use_case_patches = [
+        p for p in all_results
+        if p.get("use_case") == use_case
+    ]
+
+    built = evaluation_b.build_sleecpatch_file(
+        use_case=use_case,
+        original_sleec=original_sleec,
+        all_patch_results=use_case_patches,
+        apply_patch_to_text=sleec_patch_engine.apply_patch_to_text
+    )
+
+    result = evaluation_b.evaluate(
+        use_case=use_case,
+        original_path=original_path,
+        corrected_path=corrected_path,
+        sleecpatch_path=built["output_path"]
+    )
+
+    return jsonify({
+        "status": "OK",
+        "evaluation": "B",
+        "generated_file": built["output_path"],
+        "selected_patches": built["selected_patches"],
+        "result": result
+    })
+
+
+
+@app.route("/api/sleec-patch/non-deterministic-patches", methods=["POST"])
+def api_non_deterministic_patches():
+    data = request.get_json() or {}
+    use_case = data.get("use_case", "")
+
+    semantic_ops = {
+        "event_specialization",
+        "measure_specialization",
+        "capability_refinement",
+        "new_rule_generation"
+    }
+
+    rows = sleec_patch_engine.store.all_results()
+
+    patches = []
+
+    for r in rows:
+        if use_case and r.get("use_case") != use_case:
+            continue
+
+        if r.get("source") == "llm" or r.get("operation") in semantic_ops:
+            patches.append({
+                "use_case": r.get("use_case", ""),
+                "issue_id": r.get("issue_id", ""),
+                "issue_type": r.get("issue_type", ""),
+                "patch_id": r.get("patch_id", ""),
+                "operation": r.get("operation", ""),
+                "original_rule": r.get("original_rule", ""),
+                "proposed_rule": r.get("proposed_rule", ""),
+                "explanation": r.get("natural_language_explanation", "")
+            })
+
+    return jsonify({
+        "status": "OK",
+        "patches": patches,
+        "count": len(patches)
+    })
+
+
+@app.route("/api/sleec-patch/philosopher-review", methods=["POST"])
+def api_philosopher_review():
+    data = request.get_json() or {}
+
+    philosopher_review_store.save_review(data)
+
+    return jsonify({
+        "status": "OK",
+        "message": "Review saved"
+    })
+
+
+@app.route("/api/sleec-patch/philosopher-review-summary", methods=["POST"])
+def api_philosopher_review_summary():
+    return jsonify({
+        "status": "OK",
+        "summary": philosopher_review_store.summary(),
+        "reviews": philosopher_review_store.all_reviews()
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)

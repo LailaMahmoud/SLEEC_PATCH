@@ -502,6 +502,8 @@ function showPatchDetails(row) {
 
 
 
+
+
 async function loadSelectedUseCase() {
     const useCase = document.getElementById("useCase").value;
 
@@ -514,3 +516,36 @@ async function loadSelectedUseCase() {
     document.getElementById("sleecInput").value = data.sleec_text || "";
 }
 
+
+async function runEvaluationA() {
+    const useCase = document.getElementById("useCase").value;
+
+    const data = await postJSON("/api/sleec-patch/evaluation-a", {
+        use_case: useCase
+    });
+
+    document.getElementById("evaluationOutput").innerHTML =
+        `<pre>${JSON.stringify(data.result, null, 2)}</pre>`;
+}
+
+async function runEvaluationB() {
+    const useCase = document.getElementById("useCase").value;
+
+    const data = await postJSON("/api/sleec-patch/evaluation-b", {
+        use_case: useCase
+    });
+
+    document.getElementById("evaluationOutput").innerHTML =
+        `<pre>${JSON.stringify(data.result, null, 2)}</pre>`;
+}
+
+async function loadPhilosopherReview() {
+    const useCase = document.getElementById("useCase").value;
+
+    const data = await postJSON("/api/sleec-patch/non-deterministic-patches", {
+        use_case: useCase
+    });
+
+    document.getElementById("evaluationOutput").innerHTML =
+        `<pre>${JSON.stringify(data.patches, null, 2)}</pre>`;
+}
