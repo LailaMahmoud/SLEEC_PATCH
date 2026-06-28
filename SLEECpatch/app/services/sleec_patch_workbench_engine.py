@@ -1,6 +1,6 @@
 import re
 import time
-
+import os
 from services.sleec_detection_engine import SLEECDetectionEngine
 from services.gpt_patch_engine import GPTPatchEngine
 from services.sleec_patch_evaluation_store import SLEECPatchEvaluationStore
@@ -328,6 +328,11 @@ class SLEECPatchWorkbenchEngine:
         total_time = time.time() - start_total
 
         verified_patches = self.patch_ranker.rank(verified_patches)
+        output_file = self.build_final_sleecpatch(
+        use_case,
+        sleec_text,
+        verified_patches
+        )
 
         log = {
             "use_case": use_case,
@@ -398,6 +403,8 @@ class SLEECPatchWorkbenchEngine:
             "deterministic_candidates": deterministic_candidates,
             "llm_candidates": llm_candidates,
             "verified_patches": verified_patches,
+            "generated_file": output_file,
+
             "log": log
         }
 
@@ -1203,4 +1210,25 @@ class SLEECPatchWorkbenchEngine:
             "conditions_refined": conditions_refined,
             "actions_refined": actions_refined,
             "capabilities_refined": capabilities_refined
+        }
+    
+
+    def build_final_sleecpatch_file(self, use_case, original_sleec, verified_patches):
+        final_sleec = original_sleec
+
+        for patch in verified_patches:
+            final_sleec = self.apply_patch_to_text(final_sleec, patch)
+
+        folder = os.path.join("results", use_case)
+        os.makedirs(folder, exist_ok=True)
+
+        path = os.path.join(folder, f"{use_case}_SLEECPATCH.sleec")
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(final_sleec)
+
+        return {
+            "use_case": use_case,
+            "path": path,
+            "sleec_text": final_sleec
         }
