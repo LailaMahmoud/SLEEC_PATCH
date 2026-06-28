@@ -1,0 +1,27 @@
+# Keep the build context (and image) small.
+.venv
+venv
+.git
+.gitignore
+node_modules
+**/__pycache__
+**/*.pyc
+**/*.pyo
+
+# Not needed in the SLEEC-PATCH image
+case_studies
+expert_resolutions
+crayon/app/uploads
+crayon/app/instance
+crayon/app/data
+crayon/expert_resolutions
+crayon/uploads
+crayon/results
+crayon/instance
+*.pdf
+proof.txt
+simplified.txt
+
+# Cloudflare/build artifacts
+.wrangler
+dist

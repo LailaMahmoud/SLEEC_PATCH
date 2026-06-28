@@ -1,7 +1,15 @@
 import json
 from openai import OpenAI
 
-client = OpenAI()
+# Lazily created so the module imports without an API key (diagnosis-only use).
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = OpenAI()
+    return _client
 
 
 class GPTResolutionEngine:
@@ -63,7 +71,7 @@ Each patch MUST have exactly this structure:
 INPUT:
 """ + json.dumps(payload, indent=2)
 
-        response = client.chat.completions.create(
+        response = _get_client().chat.completions.create(
             model=self.model,
             messages=[
                 {

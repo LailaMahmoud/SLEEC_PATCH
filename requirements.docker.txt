@@ -1,0 +1,23 @@
+# Slim dependency set for the SLEEC-PATCH container image.
+# Drops the unused ML stack (torch / transformers / sentence-transformers /
+# scikit-learn / scipy / spacy / nltk) — nothing in app.py, services/, or sleec/
+# imports them, so they only bloated the image (multi-GB -> <1GB).
+Flask==3.1.3
+gunicorn==23.0.0
+python-dotenv==1.2.2
+
+openai==2.44.0
+
+# LEGOS_SLEEC analyzer stack
+PySMT==0.9.6
+z3-solver==4.16.0.0
+textX==4.3.0
+networkx==3.4.2
+antlr4-python3-runtime==4.13.2
+termcolor==3.3.0
+ordered-set==4.1.0
+
+# Spec / use-case parsing
+pandas==3.0.3
+openpyxl==3.1.5
+numpy==2.4.6

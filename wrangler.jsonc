@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sleec-patch",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-25",
+
+  // Disable the public *.workers.dev URL (the one with the account name).
+  // NOTE: attach the sleec-patch.com custom domain FIRST, otherwise this
+  // leaves the Worker with no public URL.
+  "workers_dev": false,
+
+  // Public URL. The zone for sleec-patch.com must already exist in this
+  // Cloudflare account; the DNS record + edge cert are provisioned automatically.
+  "routes": [
+    { "pattern": "sleec-patch.com", "custom_domain": true }
+  ],
+
+  // The container image is built from the Dockerfile in this directory.
+  // Build context is this directory, so the Dockerfile can COPY ./sleec,
+  // ./crayon/app, etc.
+  "containers": [
+    {
+      "class_name": "SleecPatchContainer",
+      "image": "./Dockerfile",
+      // standard-2 = 1 vCPU / 6 GiB / 12 GB disk. z3 is CPU-bound; bump to
+      // standard-3/4 if diagnosis feels slow. Drop to standard-1 to save cost.
+      "instance_type": "standard-2",
+      "max_instances": 3
+    }
+  ],
+
+  // Containers are driven by a Durable Object; the binding name is what the
+  // Worker uses (env.SLEEC_PATCH_CONTAINER).
+  "durable_objects": {
+    "bindings": [
+      { "name": "SLEEC_PATCH_CONTAINER", "class_name": "SleecPatchContainer" }
+    ]
+  },
+
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["SleecPatchContainer"] }
+  ]
+}
