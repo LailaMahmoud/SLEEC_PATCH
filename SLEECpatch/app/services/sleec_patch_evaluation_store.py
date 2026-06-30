@@ -210,41 +210,72 @@ class SLEECPatchEvaluationStore:
         conn.close()
         return [dict(r) for r in rows]
 
-    def all_results(self):
+    def result_columns(self, include_patched_sleec=True):
+        columns = [
+            "use_case",
+            "issue_id",
+            "issue_type",
+            "attempts",
+            "total_time_seconds",
+            "patch_id",
+            "operation",
+            "source",
+            "target_rule_id",
+            "original_rule",
+            "proposed_rule",
+            "natural_language_explanation",
+            "rules_modified",
+            "rules_added",
+            "rules_deleted",
+            "defeaters_added",
+            "conditions_refined",
+            "actions_refined",
+            "capabilities_refined",
+            "verified",
+            "expert_similarity",
+            "expert_match",
+            "requires_social_scientist_review",
+            "timestamp"
+        ]
+
+        if include_patched_sleec:
+            columns.insert(12, "patched_sleec")
+
+        return columns
+
+    def fetch_results(self, where_clause="", params=(), include_patched_sleec=True):
         conn = self.connect()
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
-        rows = cur.execute("""
+        columns = ",\n            ".join(
+            self.result_columns(include_patched_sleec)
+        )
+
+        query = f"""
         SELECT
-            use_case,
-            issue_id,
-            issue_type,
-            attempts,
-            total_time_seconds,
-            patch_id,
-            operation,
-            source,
-            target_rule_id,
-            original_rule,
-            proposed_rule,
-            natural_language_explanation,
-            patched_sleec,
-            rules_modified,
-            rules_added,
-            rules_deleted,
-            defeaters_added,
-            conditions_refined,
-            actions_refined,
-            capabilities_refined,
-            verified,
-            expert_similarity,
-            expert_match,
-            requires_social_scientist_review,
-            timestamp
+            {columns}
         FROM sleec_patch_results
-        ORDER BY timestamp DESC
-        """).fetchall()
+        """
+
+        if where_clause:
+            query += f"\n        WHERE {where_clause}"
+
+        query += "\n        ORDER BY timestamp DESC"
+
+        rows = cur.execute(query, params).fetchall()
 
         conn.close()
         return [dict(r) for r in rows]
+
+    def all_results(self, include_patched_sleec=True):
+        return self.fetch_results(
+            include_patched_sleec=include_patched_sleec
+        )
+
+    def results_for_use_case(self, use_case, include_patched_sleec=True):
+        return self.fetch_results(
+            where_clause="use_case = ?",
+            params=(use_case,),
+            include_patched_sleec=include_patched_sleec
+        )

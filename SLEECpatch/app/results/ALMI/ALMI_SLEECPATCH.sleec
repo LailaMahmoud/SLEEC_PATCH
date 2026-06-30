@@ -111,7 +111,7 @@ rule_start
 	R21_1 when FireSafetyMeasures then OpenWindows
 	R21_2 when FireSafetyMeasures then AskUserIfOK
 	R21_3 when FireSafetyMeasures then InformCaregiver
-R22 when HumanOnFloor and {userOccupied} and ({riskLevel} = high) then CallEmergencyServices
+R22 when SmokeDetectorAlarm and UserIsPresentInLocation then CallEmergencyServices within 5 minutes
 rule_end
 
 concern_start

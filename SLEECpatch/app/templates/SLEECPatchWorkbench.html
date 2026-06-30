@@ -43,7 +43,6 @@
         </div>
 
         <button class="secondary" onclick="loadSelectedUseCase()">Load Use Case</button>
-        <button class="primary" onclick="diagnoseWFIs()">Diagnose WFIs</button>
     </div>
 
     <div class="sleec-code-editor">
@@ -53,6 +52,10 @@
                   spellcheck="false"
                   oninput="updateSleecEditorHighlight()"
                   onscroll="syncSleecEditorScroll()">{{ sleec_text or "" }}</textarea>
+    </div>
+
+    <div class="step-actionbar">
+        <button class="primary" onclick="diagnoseWFIs()">Diagnose WFIs</button>
     </div>
 </section>
 
@@ -78,9 +81,22 @@
         <div id="llmOutput" class="empty">No GPT semantic repairs yet.</div>
     </div>
 
-    <div class="panel">
+    <div class="panel verified-panel">
         <h2>4C. Verified & Ranked Patches</h2>
         <div id="patchOutput" class="empty">No verified patches yet.</div>
+    </div>
+
+    <div class="panel stakeholder-panel">
+        <div class="section-header">
+            <div>
+                <h2>4D. Stakeholder Decision</h2>
+                <p>Inspect, compare, edit, and approve the preferred verified patch.</p>
+            </div>
+        </div>
+
+        <div id="stakeholderDecisionOutput" class="empty">
+            Select a verified patch to review.
+        </div>
     </div>
 </section>
 
@@ -105,17 +121,17 @@
 
             <button class="secondary"
                     onclick="loadEvaluationSummary()">
-                📊 Load Summary
+                Load Summary
             </button>
 
             <button class="secondary"
                     onclick="loadDetailedEvaluationResults()">
-                📑 Load Details
+                Load Details
             </button>
 
             <button class="secondary"
                     onclick="exportEvaluationExcel()">
-                📥 Export Excel
+                Export Excel
             </button>
 
         </div>

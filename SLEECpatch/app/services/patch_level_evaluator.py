@@ -100,6 +100,8 @@ class PatchLevelEvaluator:
 
         if operation in {
             "defeater_introduction",
+            "defeater_propagation",
+            "purpose_defeater",
             "trigger_strengthening",
             "trigger_refinement",
             "rule_merging",

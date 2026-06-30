@@ -55,6 +55,17 @@ class PatchRanker:
             + 0.20 * interpretability
         )
 
+        rationale = self.ranking_rationale(
+            patch=patch,
+            structural=structural,
+            logical=logical,
+            semantic=semantic,
+            interpretability=interpretability,
+            interpretability_issues=interp["issues"]
+        )
+
+        patch["ranking_rationale"] = rationale
+
         return {
             "structural_simplicity": round(structural, 2),
             "logical_simplicity": round(logical, 2),
@@ -62,8 +73,57 @@ class PatchRanker:
             "interpretability": round(interpretability, 2),
             "interpretability_passed": interp["passed"],
             "interpretability_issues": interp["issues"],
+            "rationale": rationale,
             "total_score": round(total, 2)
         }
+
+    def ranking_rationale(
+        self,
+        patch,
+        structural,
+        logical,
+        semantic,
+        interpretability,
+        interpretability_issues
+    ):
+        operation = str(patch.get("operation", ""))
+        reasons = []
+
+        if structural >= 85:
+            reasons.append("Keeps the repaired rule structurally compact.")
+        elif structural < 70:
+            reasons.append("Adds structural complexity that should be reviewed.")
+
+        if logical >= 85:
+            reasons.append("Uses a relatively simple logical condition.")
+        elif logical < 70:
+            reasons.append("Uses a more complex condition with several logical parts.")
+
+        if semantic >= 90:
+            reasons.append("Avoids vague placeholder concepts.")
+        elif semantic < 80:
+            reasons.append("May contain a concept that needs clearer domain wording.")
+
+        if interpretability >= 85:
+            reasons.append("The rule change is easy to interpret from the explanation.")
+        elif interpretability_issues:
+            reasons.append(interpretability_issues[0])
+
+        operation_reasons = {
+            "defeater_introduction": "Adds an exception while preserving the main rule.",
+            "defeater_propagation": "Preserves an existing exception in the repaired rule.",
+            "purpose_defeater": "Targets the exception to the affected purpose.",
+            "trigger_refinement": "Narrows the rule trigger to avoid the issue.",
+            "trigger_strengthening": "Adds context to the trigger instead of changing the response.",
+            "rule_decomposition": "Splits the repair into explicit cases for inspection.",
+            "rule_merging": "Combines related behavior into a single repaired rule.",
+            "rule_removal": "Removes behavior only when the rule appears redundant."
+        }
+
+        if operation in operation_reasons:
+            reasons.append(operation_reasons[operation])
+
+        return reasons[:4]
 
     def structural_simplicity(self, rule):
         score = 100

@@ -58,13 +58,20 @@ class EvaluationAPatchMatch:
 
         # 3. Defeater introduction:
         # match if proposed defeater appears in corrected rule
-        if operation in ["defeater_introduction", "add_defeater"]:
+        if operation in ["defeater_introduction", "add_defeater", "purpose_defeater"]:
             if proposed_defeaters and proposed_defeaters in corrected_raw:
                 return True
 
         # 4. Trigger/condition strengthening:
         # match if proposed added condition appears in corrected condition
-        if operation in ["trigger_strengthening", "constraint_added", "condition_refinement"]:
+        if operation in [
+            "trigger_strengthening",
+            "trigger_refinement",
+            "defeater_propagation",
+            "rule_decomposition",
+            "constraint_added",
+            "condition_refinement"
+        ]:
             proposed_parts = set(proposed_condition.split())
             corrected_parts = set(corrected_condition.split())
 

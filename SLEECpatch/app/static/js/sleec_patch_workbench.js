@@ -5,6 +5,10 @@ let sleecPatchState = {
     verifiedPatches: [],
     deterministicCandidates: [],
     llmCandidates: [],
+    selectedPatchIndex: null,
+    comparisonPatchIndexes: [],
+    approvedPatchIndex: null,
+    patchDecisions: {},
     log: null,
     rawDiagnosis: null
 };
@@ -26,6 +30,229 @@ function escapeCodeHtml(value) {
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;");
+}
+
+function patchDisplayLabel(patch) {
+    return patch.operation_label || patch.operation || "Patch";
+}
+
+function renderInlineBadges(items, className = "neutral") {
+    const values = Array.isArray(items) ? items.filter(Boolean) : [];
+
+    if (!values.length) return "";
+
+    return `
+        <div class="review-flags">
+            ${values.map(item => `<span class="badge ${className}">${escapeHtml(item)}</span>`).join("")}
+        </div>
+    `;
+}
+
+function renderRationaleList(items) {
+    const values = Array.isArray(items) ? items.filter(Boolean) : [];
+
+    if (!values.length) return "";
+
+    return `
+        <div class="rationale-list">
+            <strong>Why this rank?</strong>
+            <ul>
+                ${values.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+            </ul>
+        </div>
+    `;
+}
+
+function renderRegressionReport(report) {
+    if (!report) return "";
+
+    const passed = Boolean(report.regression_passed);
+    const fixed = Boolean(report.selected_issue_fixed);
+
+    return `
+        <div class="regression-report ${passed ? "passed" : "failed"}">
+            <div class="regression-report-top">
+                <strong>Regression Verification</strong>
+                <span class="badge ${passed ? "good" : "bad"}">
+                    ${passed ? "Passed" : "Needs review"}
+                </span>
+            </div>
+            <dl class="score-list regression-score-list">
+                <div><dt>Selected WFI</dt><dd>${fixed ? "Fixed" : "Still present"}</dd></div>
+                <div><dt>New WFIs</dt><dd>${escapeHtml(report.new_issue_count || 0)}</dd></div>
+                <div><dt>Resolved</dt><dd>${escapeHtml(report.resolved_issue_count || 0)}</dd></div>
+                <div><dt>Remaining</dt><dd>${escapeHtml(report.remaining_issue_count || 0)}</dd></div>
+                <div><dt>Total After</dt><dd>${escapeHtml(report.after_issue_count || 0)}</dd></div>
+            </dl>
+            ${
+                report.new_issues && report.new_issues.length
+                    ? `<div class="regression-new-issues">
+                        <strong>New issues introduced</strong>
+                        <ul>
+                            ${report.new_issues.slice(0, 3).map(issue => `
+                                <li>
+                                    <span>${escapeHtml(issue.issue_type || "issue")}</span>
+                                    ${escapeHtml(issue.summary || "")}
+                                </li>
+                            `).join("")}
+                        </ul>
+                    </div>`
+                    : ""
+            }
+        </div>
+    `;
+}
+
+function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractHighlightTerms(text) {
+    const terms = [];
+    const lines = String(text || "").split("\n");
+
+    lines.forEach(line => {
+        const match = line.match(/^\s*(.+?)\s*:\s*\[\d+\s*,\s*\d+\]\s*$/);
+
+        if (match) {
+            const term = match[1].trim();
+            if (term && !terms.includes(term)) terms.push(term);
+        }
+    });
+
+    return terms;
+}
+
+function highlightTraceTerms(text, terms) {
+    let html = escapeHtml(text);
+    const sortedTerms = [...terms]
+        .filter(Boolean)
+        .sort((a, b) => b.length - a.length);
+
+    sortedTerms.forEach(term => {
+        const escapedTerm = escapeHtml(term);
+        const pattern = new RegExp(escapeRegExp(escapedTerm), "g");
+        html = html.replace(
+            pattern,
+            `<span class="trace-highlight-token">${escapedTerm}</span>`
+        );
+    });
+
+    return html;
+}
+
+function traceBlockTitle(line, currentTitle) {
+    const trimmed = line.trim();
+
+    if (/^Situational conflict under situation/i.test(trimmed)) return "Conflict Situation";
+    if (/^For rule:/i.test(trimmed)) return "Rule Being Checked";
+    if (/^Because of the following SLEEC rule:/i.test(trimmed)) return "Conflicting SLEEC Rule";
+    if (/^TO BE HIGHLIGHTED/i.test(trimmed)) return "Highlighted Terms";
+    if (/^UNSAT CORE/i.test(trimmed)) return "Unsat Core";
+    if (/^detect conflict|^Conflict detected|^find trace|^vol:/i.test(trimmed)) return "Conflict Reasoning";
+    if (/^checking when|^solving under config|^domain size|^unsat$/i.test(trimmed)) return "Solver Log";
+    if (/^when\s+/i.test(trimmed)) return "Expanded Formal Rules";
+
+    return currentTitle;
+}
+
+function formatDiagnosisTrace(value, options = {}) {
+    const text = String(value || "").replace(/-{10,}/g, "").replace(/\*{10,}/g, "");
+    const maxBlocks = options.maxBlocks || null;
+    const maxChars = options.maxChars || null;
+    const highlightTerms = extractHighlightTerms(text);
+    const blocks = [];
+    let currentTitle = "Diagnosis Trace";
+    let currentLines = [];
+
+    function pushBlock() {
+        const content = currentLines.join("\n").trim();
+        if (!content) return;
+
+        blocks.push({
+            title: currentTitle,
+            content
+        });
+        currentLines = [];
+    }
+
+    text.split("\n").forEach(line => {
+        const trimmed = line.trim();
+
+        if (/^\s*(.+?)\s*:\s*\[\d+\s*,\s*\d+\]\s*$/.test(line)) return;
+        if (!trimmed && !currentLines.length) return;
+
+        const nextTitle = traceBlockTitle(line, currentTitle);
+        const isHeaderOnly = [
+            "Situational conflict under situation",
+            "For rule:",
+            "Because of the following SLEEC rule:",
+            "TO BE HIGHLIGHTED",
+            "UNSAT CORE"
+        ].some(prefix => trimmed.toLowerCase().startsWith(prefix.toLowerCase()));
+
+        if (nextTitle !== currentTitle) {
+            pushBlock();
+            currentTitle = nextTitle;
+        }
+
+        if (!isHeaderOnly) currentLines.push(line);
+    });
+
+    pushBlock();
+
+    let visibleBlocks = maxBlocks ? blocks.slice(0, maxBlocks) : blocks;
+    let truncated = maxBlocks && blocks.length > maxBlocks;
+
+    if (maxChars) {
+        let remaining = maxChars;
+        visibleBlocks = visibleBlocks.map(block => {
+            if (remaining <= 0) {
+                truncated = true;
+                return null;
+            }
+
+            if (block.content.length > remaining) {
+                truncated = true;
+                const content = block.content.slice(0, remaining).trimEnd() + "\n...";
+                remaining = 0;
+                return {...block, content};
+            }
+
+            remaining -= block.content.length;
+            return block;
+        }).filter(Boolean);
+    }
+
+    const highlightHtml = highlightTerms.length
+        ? `
+            <section class="trace-block trace-highlight-list">
+                <h4>Highlighted Terms</h4>
+                <div>
+                    ${highlightTerms.map(term => `<span class="trace-highlight-pill">${escapeHtml(term)}</span>`).join("")}
+                </div>
+            </section>
+        `
+        : "";
+
+    const blockHtml = visibleBlocks.map(block => `
+        <section class="trace-block">
+            <h4>${escapeHtml(block.title)}</h4>
+            <pre>${highlightTraceTerms(block.content, highlightTerms)}</pre>
+        </section>
+    `).join("");
+
+    const truncatedHtml = truncated
+        ? `<p class="trace-truncated">Output shortened here. Select the issue to view the full structured trace.</p>`
+        : "";
+
+    return `
+        <div class="trace-blocks">
+            ${highlightHtml}
+            ${blockHtml}
+            ${truncatedHtml}
+        </div>
+    `;
 }
 
 function highlightSleecCode(value) {
@@ -120,6 +347,10 @@ function resetPatchWorkbench() {
         verifiedPatches: [],
         deterministicCandidates: [],
         llmCandidates: [],
+        selectedPatchIndex: null,
+        comparisonPatchIndexes: [],
+        approvedPatchIndex: null,
+        patchDecisions: {},
         log: null,
         rawDiagnosis: null
     };
@@ -129,6 +360,7 @@ function resetPatchWorkbench() {
     document.getElementById("deterministicOutput").innerHTML = "No rule-based repairs yet.";
     document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
     document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
+    document.getElementById("stakeholderDecisionOutput").innerHTML = "Select a verified patch to review.";
     document.getElementById("logOutput").innerHTML = "No log yet.";
     document.getElementById("summaryOutput").innerHTML = "No evaluation summary loaded.";
     document.getElementById("patchDetailOutput").innerHTML = `
@@ -164,6 +396,10 @@ async function diagnoseWFIs() {
     sleecPatchState.verifiedPatches = [];
     sleecPatchState.deterministicCandidates = [];
     sleecPatchState.llmCandidates = [];
+    sleecPatchState.selectedPatchIndex = null;
+    sleecPatchState.comparisonPatchIndexes = [];
+    sleecPatchState.approvedPatchIndex = null;
+    sleecPatchState.patchDecisions = {};
     sleecPatchState.log = null;
 
     renderIssues();
@@ -171,6 +407,7 @@ async function diagnoseWFIs() {
     document.getElementById("deterministicOutput").innerHTML = "No rule-based repairs yet.";
     document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
     document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
+    document.getElementById("stakeholderDecisionOutput").innerHTML = "Select a verified patch to review.";
     document.getElementById("logOutput").innerHTML = "No log yet.";
     refreshPatchWizard();
     goToPatchStep(2);
@@ -218,12 +455,15 @@ function renderIssues() {
 
                 <div class="issue-section">
                     <strong>Original Rule(s)</strong>
-                    <pre>${(issue.original_rules || []).join("\n") || "No original rule extracted."}</pre>
+                    <pre>${escapeHtml((issue.original_rules || []).join("\n") || "No original rule extracted.")}</pre>
                 </div>
 
                 <div class="issue-section">
                     <strong>Diagnosis Trace</strong>
-                    <pre>${shortIssueText(issue.value)}</pre>
+                    ${formatDiagnosisTrace(shortIssueText(issue.value), {
+                        maxBlocks: 3,
+                        maxChars: 650
+                    })}
                 </div>
 
                 <button class="secondary small-btn" onclick="event.stopPropagation(); selectIssue(${index});">
@@ -247,7 +487,7 @@ function selectIssue(index) {
             </div>
 
             <p><strong>Selected WFI diagnosis trace</strong></p>
-            <pre>${sleecPatchState.selectedIssue.value}</pre>
+            ${formatDiagnosisTrace(sleecPatchState.selectedIssue.value)}
         </div>
     `;
 
@@ -308,6 +548,12 @@ async function generateVerifiedPatches() {
         data.verified_patches || [];
     sleecPatchState.failedPatches =
     data.failed_patches || [];
+    sleecPatchState.selectedPatchIndex =
+        sleecPatchState.verifiedPatches.length ? 0 : null;
+    sleecPatchState.comparisonPatchIndexes =
+        sleecPatchState.verifiedPatches.slice(0, 2).map((_, index) => index);
+    sleecPatchState.approvedPatchIndex = null;
+    sleecPatchState.patchDecisions = {};
 
     sleecPatchState.log =
         data.log || {};
@@ -327,6 +573,7 @@ async function generateVerifiedPatches() {
     );
 
     renderVerifiedPatches();
+    renderStakeholderDecision();
 
     renderLog();
     refreshPatchWizard();
@@ -352,19 +599,21 @@ function renderCandidatePatches(containerId, patches, title) {
 
             <h3>${title} ${i + 1}</h3>
 
-            <p><b>Patch ID:</b> ${p.patch_id}</p>
+            <p><b>Patch ID:</b> ${escapeHtml(p.patch_id)}</p>
 
-            <p><b>Operation:</b> ${p.operation}</p>
+            <p><b>Repair:</b> ${escapeHtml(patchDisplayLabel(p))}</p>
 
-            <p><b>Source:</b> ${p.source}</p>
+            <p><b>Operation:</b> ${escapeHtml(p.operation)}</p>
+
+            <p><b>Source:</b> ${escapeHtml(p.source)}</p>
 
             <p><b>Original Rule</b></p>
 
-            <pre>${p.original_rule || ""}</pre>
+            <pre>${escapeHtml(p.original_rule || "")}</pre>
 
             <p><b>Proposed Patch</b></p>
 
-            <pre>${p.proposed_rule || ""}</pre>
+            <pre>${escapeHtml(p.proposed_rule || "")}</pre>
 
         </div>
         `;
@@ -384,34 +633,64 @@ function renderVerifiedPatches() {
                 <p>The system could not generate a formally verified patch within the attempt limit.</p>
             </div>
         `;
+        renderStakeholderDecision();
         return;
     }
 
     let html = "";
 
-sleecPatchState.verifiedPatches.forEach((p) => {
+sleecPatchState.verifiedPatches.forEach((p, index) => {
 
     const ranking = p.ranking || {};
+    const decision = sleecPatchState.patchDecisions[index] || "pending";
+    const isSelected = sleecPatchState.selectedPatchIndex === index;
+    const isCompared = sleecPatchState.comparisonPatchIndexes.includes(index);
+    const decisionClass = decision === "approved" ? "good" : decision === "rejected" ? "bad" : "neutral";
+    const rationale = p.ranking_rationale || ranking.rationale || [];
 
     html += `
-        <div class="patch-card">
+        <div class="patch-card ${isSelected ? "selected-patch" : ""}">
 
-            <h3>Rank #${p.rank || "-"} — ${p.patch_id} — ${p.operation}</h3>
+            <div class="patch-card-header">
+                <div>
+                    <h3>Rank #${escapeHtml(p.rank || "-")} - ${escapeHtml(patchDisplayLabel(p))}</h3>
+                    <p><strong>${escapeHtml(p.patch_id)}</strong> - ${escapeHtml(p.operation)}</p>
+                    <p><strong>Source:</strong> ${escapeHtml(p.source || "llm")}</p>
+                </div>
 
-            <p><strong>Source:</strong> ${p.source || "llm"}</p>
+                <span class="badge ${decisionClass}">${escapeHtml(decision)}</span>
+            </div>
 
-            <p><strong>Ranking Score:</strong> ${p.ranking_score || 0}</p>
+            <p class="patch-summary">${escapeHtml(p.stakeholder_summary || "")}</p>
+            ${renderInlineBadges(p.review_flags)}
+            ${renderRegressionReport(p.regression_report)}
+
+            <p><strong>Ranking Score:</strong> ${escapeHtml(p.ranking_score || 0)}</p>
 
             <div class="metric-card">
 
-                <p><strong>Structural Simplicity:</strong> ${ranking.structural_simplicity || 0}</p>
+                <p><strong>Structural Simplicity:</strong> ${escapeHtml(ranking.structural_simplicity || 0)}</p>
 
-                <p><strong>Logical Simplicity:</strong> ${ranking.logical_simplicity || 0}</p>
+                <p><strong>Logical Simplicity:</strong> ${escapeHtml(ranking.logical_simplicity || 0)}</p>
 
-                <p><strong>Semantic Clarity:</strong> ${ranking.semantic_clarity || 0}</p>
+                <p><strong>Semantic Clarity:</strong> ${escapeHtml(ranking.semantic_clarity || 0)}</p>
 
-                <p><strong>Interpretability:</strong> ${ranking.interpretability || 0}</p>
+                <p><strong>Interpretability:</strong> ${escapeHtml(ranking.interpretability || 0)}</p>
 
+            </div>
+
+            ${renderRationaleList(rationale)}
+
+            <div class="patch-actions">
+                <button class="primary small-btn" onclick="selectPatchForReview(${index})">Review</button>
+                <button class="success small-btn" onclick="approvePatch(${index})">Approve</button>
+                <button class="danger small-btn" onclick="rejectPatch(${index})">Reject</button>
+                <label class="compare-toggle">
+                    <input type="checkbox"
+                           ${isCompared ? "checked" : ""}
+                           onchange="toggleComparePatch(${index}, this.checked)">
+                    Compare
+                </label>
             </div>
 
             <p><strong>Verified by SLEEC</strong></p>
@@ -433,6 +712,251 @@ sleecPatchState.verifiedPatches.forEach((p) => {
 });
 
     out.innerHTML = html;
+}
+
+function selectPatchForReview(index) {
+    sleecPatchState.selectedPatchIndex = index;
+
+    if (!sleecPatchState.comparisonPatchIndexes.includes(index)) {
+        sleecPatchState.comparisonPatchIndexes = [
+            index,
+            ...sleecPatchState.comparisonPatchIndexes
+        ].slice(0, 3);
+    }
+
+    renderVerifiedPatches();
+    renderStakeholderDecision();
+}
+
+function toggleComparePatch(index, checked) {
+    const current = sleecPatchState.comparisonPatchIndexes.filter(i => i !== index);
+
+    if (checked) {
+        current.push(index);
+    }
+
+    sleecPatchState.comparisonPatchIndexes = current.slice(0, 3);
+    renderVerifiedPatches();
+    renderStakeholderDecision();
+}
+
+function approvePatch(index) {
+    Object.keys(sleecPatchState.patchDecisions).forEach(key => {
+        if (sleecPatchState.patchDecisions[key] === "approved") {
+            sleecPatchState.patchDecisions[key] = "pending";
+        }
+    });
+
+    sleecPatchState.patchDecisions[index] = "approved";
+    sleecPatchState.approvedPatchIndex = index;
+    sleecPatchState.selectedPatchIndex = index;
+
+    renderVerifiedPatches();
+    renderStakeholderDecision();
+}
+
+function rejectPatch(index) {
+    sleecPatchState.patchDecisions[index] = "rejected";
+
+    if (sleecPatchState.approvedPatchIndex === index) {
+        sleecPatchState.approvedPatchIndex = null;
+    }
+
+    if (sleecPatchState.selectedPatchIndex === null) {
+        sleecPatchState.selectedPatchIndex = index;
+    }
+
+    renderVerifiedPatches();
+    renderStakeholderDecision();
+}
+
+function saveStakeholderEdit() {
+    const index = sleecPatchState.selectedPatchIndex;
+    const patch = sleecPatchState.verifiedPatches[index];
+
+    if (!patch) return;
+
+    const previousProposed = patch.proposed_rule || "";
+    const proposed = document.getElementById("stakeholderProposedRule").value.trim();
+    const explanation = document.getElementById("stakeholderExplanation").value.trim();
+
+    if (!proposed) {
+        alert("The proposed rule cannot be empty.");
+        return;
+    }
+
+    patch.proposed_rule = proposed;
+    patch.natural_language_explanation = explanation;
+    patch.stakeholder_edited = true;
+
+    if (patch.patched_sleec && previousProposed && patch.patched_sleec.includes(previousProposed)) {
+        patch.patched_sleec = patch.patched_sleec.replace(previousProposed, proposed);
+    }
+
+    if (!sleecPatchState.patchDecisions[index]) {
+        sleecPatchState.patchDecisions[index] = "edited";
+    }
+
+    renderVerifiedPatches();
+    renderStakeholderDecision();
+}
+
+function resetStakeholderEdit() {
+    const index = sleecPatchState.selectedPatchIndex;
+    const patch = sleecPatchState.verifiedPatches[index];
+
+    if (!patch) return;
+
+    document.getElementById("stakeholderProposedRule").value = patch.proposed_rule || "";
+    document.getElementById("stakeholderExplanation").value = patch.natural_language_explanation || "";
+}
+
+function applyApprovedPatchToEditor() {
+    const patch = sleecPatchState.verifiedPatches[sleecPatchState.approvedPatchIndex];
+
+    if (!patch || !patch.patched_sleec) {
+        alert("Approve a patch with a generated SLEEC preview first.");
+        return;
+    }
+
+    const input = document.getElementById("sleecInput");
+    input.value = patch.patched_sleec;
+    sleecPatchState.sleecText = patch.patched_sleec;
+    updateSleecEditorHighlight();
+    alert("Approved patch loaded into the SLEEC editor.");
+}
+
+function renderStakeholderDecision() {
+    const out = document.getElementById("stakeholderDecisionOutput");
+
+    if (!out) return;
+
+    if (!sleecPatchState.verifiedPatches.length) {
+        out.innerHTML = "No verified patches are available for stakeholder review.";
+        return;
+    }
+
+    if (sleecPatchState.selectedPatchIndex === null) {
+        sleecPatchState.selectedPatchIndex = 0;
+    }
+
+    const selectedPatch = sleecPatchState.verifiedPatches[sleecPatchState.selectedPatchIndex];
+    const approvedPatch = sleecPatchState.verifiedPatches[sleecPatchState.approvedPatchIndex];
+    const approvedCount = sleecPatchState.approvedPatchIndex === null ? 0 : 1;
+    const rejectedCount = Object.values(sleecPatchState.patchDecisions).filter(v => v === "rejected").length;
+    const editedCount = sleecPatchState.verifiedPatches.filter(p => p.stakeholder_edited).length;
+    const comparisonIndexes = sleecPatchState.comparisonPatchIndexes.length
+        ? sleecPatchState.comparisonPatchIndexes
+        : [sleecPatchState.selectedPatchIndex];
+
+    const comparisonCards = comparisonIndexes.map(index => {
+        const patch = sleecPatchState.verifiedPatches[index];
+        if (!patch) return "";
+
+        const ranking = patch.ranking || {};
+        const rationale = patch.ranking_rationale || ranking.rationale || [];
+        const decision = sleecPatchState.patchDecisions[index] || "pending";
+
+        return `
+            <article class="comparison-card">
+                <div class="comparison-card-top">
+                    <strong>Rank #${escapeHtml(patch.rank || "-")}</strong>
+                    <span class="badge ${decision === "approved" ? "good" : decision === "rejected" ? "bad" : "neutral"}">${escapeHtml(decision)}</span>
+                </div>
+                <p><strong>${escapeHtml(patchDisplayLabel(patch))}</strong></p>
+                <p>${escapeHtml(patch.patch_id)} - ${escapeHtml(patch.operation)}</p>
+                <p class="patch-summary compact">${escapeHtml(patch.stakeholder_summary || "")}</p>
+                ${renderRegressionReport(patch.regression_report)}
+                <dl class="score-list">
+                    <div><dt>Total</dt><dd>${escapeHtml(patch.ranking_score || 0)}</dd></div>
+                    <div><dt>Structural</dt><dd>${escapeHtml(ranking.structural_simplicity || 0)}</dd></div>
+                    <div><dt>Logical</dt><dd>${escapeHtml(ranking.logical_simplicity || 0)}</dd></div>
+                    <div><dt>Semantic</dt><dd>${escapeHtml(ranking.semantic_clarity || 0)}</dd></div>
+                    <div><dt>Interpretability</dt><dd>${escapeHtml(ranking.interpretability || 0)}</dd></div>
+                </dl>
+                ${renderRationaleList(rationale)}
+                <h4>Proposed Rule</h4>
+                <pre>${escapeHtml(patch.proposed_rule || "")}</pre>
+                <button class="secondary small-btn" onclick="selectPatchForReview(${index})">Inspect</button>
+            </article>
+        `;
+    }).join("");
+
+    out.innerHTML = `
+        <div class="decision-summary">
+            <div class="metric-card">
+                <h3>Review State</h3>
+                <p><strong>Verified patches:</strong> ${sleecPatchState.verifiedPatches.length}</p>
+                <p><strong>Approved:</strong> ${approvedCount}</p>
+                <p><strong>Rejected:</strong> ${rejectedCount}</p>
+                <p><strong>Edited:</strong> ${editedCount}</p>
+            </div>
+
+            <div class="metric-card">
+                <h3>Approved Patch</h3>
+                ${
+                    approvedPatch
+                        ? `<p><strong>${escapeHtml(approvedPatch.patch_id)}</strong> - ${escapeHtml(patchDisplayLabel(approvedPatch))}</p>
+                           <p>Rank #${escapeHtml(approvedPatch.rank || "-")} with score ${escapeHtml(approvedPatch.ranking_score || 0)}</p>
+                           <button class="primary small-btn" onclick="applyApprovedPatchToEditor()">Load into editor</button>`
+                        : `<p>No approved patch yet.</p>`
+                }
+            </div>
+        </div>
+
+        <div class="decision-editor">
+            <div>
+                <h3>Selected Patch</h3>
+                <p>
+                    <strong>${escapeHtml(selectedPatch.patch_id)}</strong>
+                    - ${escapeHtml(patchDisplayLabel(selectedPatch))}
+                    - Rank #${escapeHtml(selectedPatch.rank || "-")}
+                </p>
+                <p class="patch-summary">${escapeHtml(selectedPatch.stakeholder_summary || "")}</p>
+                ${renderInlineBadges(selectedPatch.review_flags)}
+                ${renderRegressionReport(selectedPatch.regression_report)}
+                ${renderRationaleList(
+                    selectedPatch.ranking_rationale ||
+                    (selectedPatch.ranking || {}).rationale ||
+                    []
+                )}
+
+                <label for="stakeholderProposedRule">Proposed Rule</label>
+                <textarea id="stakeholderProposedRule" rows="6">${escapeHtml(selectedPatch.proposed_rule || "")}</textarea>
+
+                <label for="stakeholderExplanation">Rationale</label>
+                <textarea id="stakeholderExplanation" rows="4">${escapeHtml(selectedPatch.natural_language_explanation || "")}</textarea>
+
+                <div class="patch-actions">
+                    <button class="primary" onclick="saveStakeholderEdit()">Save edit</button>
+                    <button class="secondary" onclick="resetStakeholderEdit()">Reset fields</button>
+                    <button class="success" onclick="approvePatch(${sleecPatchState.selectedPatchIndex})">Approve</button>
+                    <button class="danger" onclick="rejectPatch(${sleecPatchState.selectedPatchIndex})">Reject</button>
+                </div>
+            </div>
+
+            <div>
+                <h3>Verification Preview</h3>
+                <p>
+                    <strong>Status:</strong>
+                    ${
+                        selectedPatch.stakeholder_edited
+                            ? "Edited after verification; re-run diagnosis before final use."
+                            : "Verified by SLEEC."
+                    }
+                </p>
+                <h4>Original Rule</h4>
+                <pre>${escapeHtml(selectedPatch.original_rule || "")}</pre>
+                <h4>Patched SLEEC</h4>
+                <pre>${escapeHtml(selectedPatch.patched_sleec || "")}</pre>
+            </div>
+        </div>
+
+        <h3>Comparison</h3>
+        <div class="comparison-grid">
+            ${comparisonCards}
+        </div>
+    `;
 }
 
 function renderLog() {
@@ -697,7 +1221,7 @@ function renderEvaluationA(data) {
             <td>${escapeHtml(p.patch_id)}</td>
             <td>${escapeHtml(p.operation)}</td>
             <td>${escapeHtml(p.target_rule_id)}</td>
-            <td>${p.matched_corrected ? "✅ Match" : "❌ No"}</td>
+            <td>${p.matched_corrected ? "Match" : "No match"}</td>
         </tr>
     `).join("");
 

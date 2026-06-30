@@ -76,10 +76,13 @@
 
             if (config.onStepChange) config.onStepChange(currentStep);
 
-            window.requestAnimationFrame(() => {
-                const top = root.querySelector(".wizard-shell") || root.body || document.documentElement;
-                top.scrollIntoView({ behavior: "smooth", block: "start" });
-            });
+            const activeStep = steps.find((item) => (
+                Number(item.getAttribute("data-step")) === currentStep
+            ));
+
+            if (activeStep) {
+                activeStep.scrollTop = 0;
+            }
         }
 
         if (backButton) {

@@ -83,8 +83,8 @@ SLEEC_FILES = {
     "DressAssist": os.path.join(BASE_DIR, "sleec_usecases", "DRESSASSIST.sleec"),
     "DressAssist-corrected": os.path.join(BASE_DIR, "sleec_usecases", "DRESSASSIST-corrected.sleec"),
 
-    "SafeSCAD": os.path.join(BASE_DIR, "sleec_usecases", "Safescade.sleec"),
-    "SafeSCAD-corrected": os.path.join(BASE_DIR, "sleec_usecases", "Safescade-corrected.sleec"),
+    "SafeSCAD": os.path.join(BASE_DIR, "sleec_usecases", "safescade.sleec"),
+    "SafeSCAD-corrected": os.path.join(BASE_DIR, "sleec_usecases", "safescade-corrected.sleec"),
 
     "Tabiat":os.path.join(BASE_DIR, "sleec_usecases", "Tabiat.sleec"),
     "Tabiat-corrected":os.path.join(BASE_DIR, "sleec_usecases", "Tabiat-corrected.sleec"),
@@ -249,7 +249,7 @@ def api_sleec_patch_evaluation_summary():
 def api_sleec_patch_evaluation_results():
 
     return jsonify(
-        sleec_patch_engine.store.all_results()
+        sleec_patch_engine.store.all_results(include_patched_sleec=False)
     )
 
 
@@ -266,12 +266,10 @@ def api_evaluation_a():
             "error": f"No corrected SLEEC file found for {use_case}"
         }), 404
 
-    generated_patches = sleec_patch_engine.store.all_results()
-
-    generated_patches = [
-        p for p in generated_patches
-        if p.get("use_case") == use_case
-    ]
+    generated_patches = sleec_patch_engine.store.results_for_use_case(
+        use_case,
+        include_patched_sleec=False
+    )
 
     result = evaluation_a.evaluate_use_case(
         use_case=use_case,
@@ -297,12 +295,10 @@ def api_evaluation_b():
 
     original_sleec = load_sleec_text(use_case)
 
-    all_results = sleec_patch_engine.store.all_results()
-
-    use_case_patches = [
-        p for p in all_results
-        if p.get("use_case") == use_case
-    ]
+    use_case_patches = sleec_patch_engine.store.results_for_use_case(
+        use_case,
+        include_patched_sleec=False
+    )
 
     built = evaluation_b.build_sleecpatch_file(
         use_case=use_case,
@@ -340,7 +336,15 @@ def api_non_deterministic_patches():
         "new_rule_generation"
     }
 
-    rows = sleec_patch_engine.store.all_results()
+    if use_case:
+        rows = sleec_patch_engine.store.results_for_use_case(
+            use_case,
+            include_patched_sleec=False
+        )
+    else:
+        rows = sleec_patch_engine.store.all_results(
+            include_patched_sleec=False
+        )
 
     patches = []
 
@@ -396,12 +400,10 @@ def api_export_evaluation():
     corrected_path = SLEEC_FILES.get(f"{use_case}-corrected")
     original_path = SLEEC_FILES.get(use_case)
 
-    all_results = sleec_patch_engine.store.all_results()
-
-    use_case_patches = [
-        p for p in all_results
-        if p.get("use_case") == use_case
-    ]
+    use_case_patches = sleec_patch_engine.store.results_for_use_case(
+        use_case,
+        include_patched_sleec=False
+    )
 
     evaluation_a_result = evaluation_a.evaluate_use_case(
         use_case=use_case,

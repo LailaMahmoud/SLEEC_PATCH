@@ -17,13 +17,16 @@ class RepairOperatorSelector:
         ],
         "redundancies": [
             "rule_removal",
+            "defeater_propagation",
             "rule_merging"
         ],
         "concerns": [
             "defeater_introduction",
-            "trigger_strengthening"
+            "trigger_strengthening",
+            "rule_decomposition"
         ],
         "purpose_blocking": [
+            "purpose_defeater",
             "trigger_refinement",
             "trigger_strengthening",
             "rule_decomposition"
@@ -41,7 +44,11 @@ class RepairOperatorSelector:
             "measure_specialization",
             "capability_refinement"
         ],
-        "redundancies": [],
+        "redundancies": [
+            "event_specialization",
+            "measure_specialization",
+            "capability_refinement"
+        ],
         "concerns": [
             "new_rule_generation",
             "capability_refinement"
