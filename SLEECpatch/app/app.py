@@ -43,6 +43,8 @@ from services.philosopher_review_store import PhilosopherReviewStore
 philosopher_review_store = PhilosopherReviewStore()
 from services.evaluation_excel_exporter import EvaluationExcelExporter
 evaluation_excel_exporter = EvaluationExcelExporter()
+from services.patch_level_evaluator import PatchLevelEvaluator
+patch_level_evaluator = PatchLevelEvaluator()
 
 SLEEC_EXCEL_FILES = {
     "ALMI": os.path.join(BASE_DIR, "sleec_usecases", "ALMI.xlsx"),
@@ -83,8 +85,15 @@ SLEEC_FILES = {
     "DressAssist-corrected": os.path.join(BASE_DIR, "sleec_usecases", "DRESSASSIST-corrected.sleec"),
 
     "SafeSCAD": os.path.join(BASE_DIR, "sleec_usecases", "Safescade.sleec"),
-    "SafeSCAD-corrected": os.path.join(BASE_DIR, "sleec_usecases", "Safescade-corrected.sleec")
-}
+    "SafeSCAD-corrected": os.path.join(BASE_DIR, "sleec_usecases", "Safescade-corrected.sleec"),
+
+    "Tabiat":os.path.join(BASE_DIR, "sleec_usecases", "Tabiat.sleec"),
+    "Tabiat":os.path.join(BASE_DIR, "sleec_usecases", "Tabiat-corrected.sleec"),
+
+    "Casper":os.path.join(BASE_DIR, "sleec_usecases", "Casper.sleec"),
+    "Casper":os.path.join(BASE_DIR, "sleec_usecases", "Casper-corrected.sleec")
+
+    }
 
 
 

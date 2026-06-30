@@ -5,13 +5,15 @@ class RepairOperatorSelector:
             "trigger_refinement",
             "defeater_introduction",
             "rule_merging",
-            "trigger_strengthening"
+            "trigger_strengthening",
+            "rule_decomposition"
         ],
         "situational_conflicts": [
             "trigger_refinement",
             "defeater_introduction",
             "rule_merging",
-            "trigger_strengthening"
+            "trigger_strengthening",
+            "rule_decomposition"
         ],
         "redundancies": [
             "rule_removal",
@@ -23,7 +25,8 @@ class RepairOperatorSelector:
         ],
         "purpose_blocking": [
             "trigger_refinement",
-            "trigger_strengthening"
+            "trigger_strengthening",
+            "rule_decomposition"
         ]
     }
 
@@ -38,8 +41,7 @@ class RepairOperatorSelector:
             "measure_specialization",
             "capability_refinement"
         ],
-        "redundancies": []
-        ,
+        "redundancies": [],
         "concerns": [
             "new_rule_generation",
             "capability_refinement"

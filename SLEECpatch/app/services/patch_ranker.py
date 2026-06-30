@@ -25,13 +25,28 @@ class PatchRanker:
         return ranked
 
     def score_patch(self, patch):
+        original = str(patch.get("original_rule", ""))
         proposed = str(patch.get("proposed_rule", ""))
-        explanation = str(patch.get("natural_language_explanation", ""))
+        explanation = str(
+            patch.get("natural_language_explanation", "")
+            or patch.get("explanation", "")
+        )
 
         structural = self.structural_simplicity(proposed)
         logical = self.logical_simplicity(proposed)
         semantic = self.semantic_clarity(proposed)
-        interpretability = self.interpretability(proposed, explanation)
+
+        interp = self.interpretability(
+            original_rule=original,
+            patched_rule=proposed,
+            explanation=explanation
+        )
+
+        patch["interpretability_score"] = interp["score"]
+        patch["interpretability_passed"] = interp["passed"]
+        patch["interpretability_issues"] = interp["issues"]
+
+        interpretability = interp["score"]
 
         total = (
             0.30 * structural
@@ -45,6 +60,8 @@ class PatchRanker:
             "logical_simplicity": round(logical, 2),
             "semantic_clarity": round(semantic, 2),
             "interpretability": round(interpretability, 2),
+            "interpretability_passed": interp["passed"],
+            "interpretability_issues": interp["issues"],
             "total_score": round(total, 2)
         }
 
@@ -105,9 +122,21 @@ class PatchRanker:
                 score -= 25
 
         return max(0, min(100, score))
+    
 
-    def interpretability(self, rule, explanation):
+    #1. Did the patch introduce a new undefined concept?
+    #2. Did it add a condition that is redundant with the original trigger?
+    #3. Did it make the rule harder to understand?
+    #4. Did it change stakeholder intent?
+    #5. Did it replace an action with a new action whose meaning is unclear?
+
+    def interpretability(self, original_rule, patched_rule, explanation=""):
         score = 100
+        issues = []
+
+        original_text = str(original_rule)
+        patched_text = str(patched_rule)
+        explanation_text = str(explanation)
 
         sensitive_terms = [
             "Religion",
@@ -117,12 +146,143 @@ class PatchRanker:
             "Disability"
         ]
 
+        vague_terms = [
+            "isEmergency",
+            "emergency",
+            "critical",
+            "serious",
+            "urgent",
+            "appropriate",
+            "reasonable",
+            "highRisk",
+            "riskLevel",
+            "specialCase"
+        ]
+
+        # 1. Sensitive terms must be justified
         for term in sensitive_terms:
-            if term.lower() in rule.lower():
-                if term.lower() not in explanation.lower():
-                    score -= 25
+            if term.lower() in patched_text.lower():
+                if term.lower() not in explanation_text.lower():
+                    score -= 20
+                    issues.append(
+                        f"Sensitive term '{term}' is introduced without explicit rationale."
+                    )
 
-        if not explanation or len(explanation.split()) < 6:
-            score -= 20
+        # 2. New vague/contextual concepts must be explained
+        for term in vague_terms:
+            if term.lower() in patched_text.lower() and term.lower() not in original_text.lower():
+                if term.lower() not in explanation_text.lower():
+                    score -= 20
+                    issues.append(
+                        f"New contextual concept '{term}' is introduced without explanation."
+                    )
 
-        return max(0, min(100, score))
+        # 3. New condition may weaken original obligation
+        original_condition = self.extract_condition(original_text)
+        patched_condition = self.extract_condition(patched_text)
+
+        if original_condition and patched_condition:
+            if original_condition.lower() in patched_condition.lower():
+                original_parts = self.count_conditions(original_condition)
+                patched_parts = self.count_conditions(patched_condition)
+
+                if patched_parts > original_parts:
+                    score -= 20
+                    issues.append(
+                        "Patch adds a new trigger condition, which may weaken the original obligation."
+                    )
+
+        # 4. Action change must be explained
+        original_action = self.extract_action(original_text)
+        patched_action = self.extract_action(patched_text)
+
+        if original_action and patched_action and original_action != patched_action:
+            if (
+                original_action.lower() not in explanation_text.lower()
+                or patched_action.lower() not in explanation_text.lower()
+            ):
+                score -= 20
+                issues.append(
+                    f"Action changed from '{original_action}' to '{patched_action}' without clear explanation."
+                )
+
+        # 5. New predicates must be explained
+        original_terms = set(self.extract_predicates(original_text))
+        patched_terms = set(self.extract_predicates(patched_text))
+
+        new_terms = patched_terms - original_terms
+
+        for term in new_terms:
+            if term.lower() not in explanation_text.lower():
+                score -= 10
+                issues.append(
+                    f"New predicate '{term}' is introduced without explaining its meaning."
+                )
+
+        score = max(score, 0)
+
+        return {
+            "score": score,
+            "passed": score >= 70,
+            "issues": issues
+        }
+
+        
+
+
+    def extract_condition(self, rule_text):
+        text = str(rule_text)
+
+        m = re.search(
+            r"\bwhen\b(.*?)\bthen\b",
+            text,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        return m.group(1).strip() if m else ""
+
+
+    def extract_action(self, rule_text):
+        text = str(rule_text)
+
+        m = re.search(
+            r"\bthen\b(.*)",
+            text,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        if not m:
+            return ""
+
+        action = m.group(1)
+
+        action = re.split(
+            r"\bwithin\b|\bunless\b",
+            action,
+            flags=re.IGNORECASE
+        )[0]
+
+        return action.strip()
+
+
+    def count_conditions(self, condition):
+        if not condition:
+            return 0
+
+        parts = re.split(
+            r"\band\b|\bor\b",
+            condition,
+            flags=re.IGNORECASE
+        )
+
+        return len([p for p in parts if p.strip()])
+
+
+    def extract_predicates(self, text):
+        text = str(text)
+
+        # Captures DetectFire, NotifyUser, isEmergency, AlertUser, etc.
+        return re.findall(
+            r"\b[A-Za-z_][A-Za-z0-9_]*\b",
+            text
+        )

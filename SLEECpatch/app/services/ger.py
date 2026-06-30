@@ -149,10 +149,273 @@ class SLEECPatchWorkbenchEngine:
         
         return text
     
-    
+    def generate_verified_patches(
+            self,
+            use_case,
+            sleec_text,
+            issue,
+            max_attempts=1
+        ):
+        start_total = time.time()
+
+        original_analysis = self.detector.run_text(sleec_text)
+        original_structured = original_analysis.get("structured", {})
+
+        issue_type = issue.get("issue_type", "")
+        issue_key = issue_type
+
+        if issue_type == "redundancy":
+            issue_key = "redundancies"
+        elif issue_type == "conflict":
+            issue_key = "conflicts"
+        elif issue_type == "concern":
+            issue_key = "concerns"
+        elif issue_type == "purpose":
+            issue_key = "purpose_blocking"
+        elif issue_type == "situational_conflict":
+            issue_key = "situational_conflicts"
+
+        selected_issue_value = issue.get("value", "")
+
+        verified_patches = []
+        failed_patch_count = 0
+        failed_patches = []
+
+
+        deterministic_candidates = []
+        llm_candidates = []
+
+        generation_time = 0
+        validation_time = 0
+        attempts = 0
+
+        rules_json = self.sleec_text_to_rules_json(sleec_text)
+        operator_plan = self.operator_selector.select(issue_key)
+
+        print("\n========== REPAIR OPERATOR SELECTION ==========")
+        print("Issue Type:", issue_key)
+        print("Deterministic operators:", operator_plan.get("deterministic", []))
+        print("LLM operators:", operator_plan.get("llm", []))
+        print("==============================================\n")
+
+        selected_findings = {
+            issue_key: [selected_issue_value]
+        }
+
+        # -------------------------------
+        # GPT is called ONCE per issue
+        # -------------------------------
+
+        semantic_ops = operator_plan.get("llm", [])
+        llm_patches = []
+
+        if semantic_ops:
+            start_generation = time.time()
+
+            print(">>> Calling GPT with operators:", semantic_ops)
+
+            llm_patches = self.gpt_patch_engine.generate_all_patches(
+                rules=rules_json,
+                structured_findings=selected_findings,
+                repair_operators=semantic_ops
+            )
+
+            for i, p in enumerate(llm_patches, start=1):
+                p["patch_id"] = f"g{i}"
+                p["id"] = f"g{i}"
+
+            llm_candidates.extend(llm_patches)
+
+            generation_time += time.time() - start_generation
+
+        seen_candidate_signatures = set()
+        seen_verified_signatures = set()
+
+        # -------------------------------
+        # Multiple attempts
+        # -------------------------------
+
+        while attempts <= max_attempts:
+
+            attempts += 1
+
+            start_generation = time.time()
+
+            deterministic_patches = self.deterministic_engine.generate(
+                issue_type=issue_key,
+                selected_issue=selected_issue_value,
+                rules=rules_json,
+                operators=operator_plan.get("deterministic", [])
+            )
+
+            generation_time += time.time() - start_generation
+
+            for p in deterministic_patches:
+                sig = (
+                    p.get("operation"),
+                    p.get("target_rule_id"),
+                    p.get("proposed_rule"),
+                    p.get("missing_element")
+                )
+
+                if sig not in seen_candidate_signatures:
+                    deterministic_candidates.append(p)
+                    seen_candidate_signatures.add(sig)
+
+            patches = deterministic_patches + llm_patches
+            failed_patches = []
+
+
+
+            for patch in patches:
+                
+                normalized_patch = self.normalize_patch(patch, sleec_text)
+
+                if normalized_patch.get("patch_id") == "not_applicable":
+                    failed_patch_count += 1
+                    continue
+
+                patch_signature = (
+                    normalized_patch.get("operation"),
+                    normalized_patch.get("target_rule_id"),
+                    normalized_patch.get("proposed_rule"),
+                    normalized_patch.get("missing_element")
+                )
+
+                if patch_signature in seen_verified_signatures:
+                    continue
+
+                patched_sleec = self.apply_patch_to_text(
+                    sleec_text,
+                    normalized_patch
+                )
+
+                start_validation = time.time()
+
+                new_analysis = self.detector.run_text(patched_sleec)
+                new_structured = new_analysis.get("structured", {})
+
+                validation_time += time.time() - start_validation
+
+                target_fixed = self.target_issue_fixed(
+                    issue_key,
+                    selected_issue_value,
+                    original_structured,
+                    new_structured
+                )
+
+                no_new_violations = (
+                    self.count_issues(new_structured)
+                    <=
+                    self.count_issues(original_structured)
+                )
+
+                print("--------------------------------")
+                print("ATTEMPT:", attempts)
+                print("SOURCE:", normalized_patch.get("source"))
+                print("OPERATION:", normalized_patch.get("operation"))
+                print("TARGET FIXED:", target_fixed)
+                print("NO NEW VIOLATIONS:", no_new_violations)
+                print("--------------------------------")
+
+                if target_fixed and no_new_violations:
+                    normalized_patch["verified"] = True
+                    normalized_patch["patched_sleec"] = patched_sleec
+                    normalized_patch["validation_result"] = new_structured
+                    normalized_patch["attempt"] = attempts
+
+                    verified_patches.append(normalized_patch)
+                    seen_verified_signatures.add(patch_signature)
+
+                else:
+                    failed_patch_count += 1
+
+        total_time = time.time() - start_total
+
+        verified_patches = self.patch_ranker.rank(verified_patches)
+        output_file = self.build_final_sleecpatch_file(
+        use_case,
+        sleec_text,
+        verified_patches
+        )
+
+        log = {
+            "use_case": use_case,
+            "issue_id": issue.get("id", ""),
+            "issue_type": issue_key,
+            "attempts": attempts,
+            "max_attempts": max_attempts,
+            "failed_patch_count": failed_patch_count,
+            "verified_patch_count": len(verified_patches),
+            "generation_time_seconds": round(generation_time, 3),
+            "validation_time_seconds": round(validation_time, 3),
+            "total_time_seconds": round(total_time, 3),
+            "successful": len(verified_patches) > 0
+        }
+
+        for patch in verified_patches:
+
+            metrics = self.patch_metrics(patch)
+
+            self.store.save_result({
+                "use_case": use_case,
+                "issue_id": issue.get("id", ""),
+                "issue_type": issue_key,
+                "selected_issue": selected_issue_value,
+
+                "attempts": attempts,
+                "failed_patch_count": failed_patch_count,
+                "verified_patch_count": len(verified_patches),
+
+                "generation_time_seconds": round(generation_time, 3),
+                "validation_time_seconds": round(validation_time, 3),
+                "total_time_seconds": round(total_time, 3),
+
+                "patch_id": patch.get("patch_id", patch.get("id", "")),
+                "operation": patch.get("operation", ""),
+                "source": patch.get("source", "unknown"),
+                "rank": patch.get("rank", 0),
+                "ranking_score": patch.get("ranking_score", 0),
+
+                "target_rule_id": patch.get("target_rule_id", ""),
+                "original_rule": patch.get("original_rule", ""),
+                "proposed_rule": patch.get("proposed_rule", ""),
+                "natural_language_explanation": patch.get(
+                    "natural_language_explanation",
+                    ""
+                ),
+                "patched_sleec": patch.get("patched_sleec", ""),
+
+                "rules_modified": metrics["rules_modified"],
+                "rules_added": metrics["rules_added"],
+                "rules_deleted": metrics["rules_deleted"],
+                "defeaters_added": metrics["defeaters_added"],
+                "conditions_refined": metrics["conditions_refined"],
+                "actions_refined": metrics["actions_refined"],
+                "capabilities_refined": metrics["capabilities_refined"],
+
+                "verified": True,
+
+                "expert_similarity": 0,
+                "expert_match": False,
+                "requires_social_scientist_review": False
+            })
+
+        return {
+            "status": "OK",
+            "selected_issue": issue,
+            "repair_operators": operator_plan,
+            "deterministic_candidates": deterministic_candidates,
+            "llm_candidates": llm_candidates,
+            "verified_patches": verified_patches,
+            "generated_file": output_file,
+
+            "log": log
+        }
+
 
     def generate_verified_patchese(
-        self,
+    self,
     use_case,
     sleec_text,
     issue,
@@ -1090,415 +1353,111 @@ class SLEECPatchWorkbenchEngine:
         return patch
 
 
-    def verify_deterministic_patch_iteratively(
-        self,
-        original_sleec,
+def verify_deterministic_patch_iteratively(
+    self,
+    original_sleec,
+    issue_key,
+    selected_issue_value,
+    original_structured,
+    patch,
+    depth=0,
+    max_depth=3
+):
+    patched_sleec = self.apply_patch_to_text(original_sleec, patch)
+
+    new_analysis = self.detector.run_text(patched_sleec)
+    new_structured = new_analysis.get("structured", {})
+
+    target_fixed = self.target_issue_fixed(
         issue_key,
         selected_issue_value,
         original_structured,
-        patch,
-        depth=0,
-        max_depth=3
-    ):
-        patched_sleec = self.apply_patch_to_text(original_sleec, patch)
+        new_structured
+    )
 
-        new_analysis = self.detector.run_text(patched_sleec)
-        new_structured = new_analysis.get("structured", {})
+    related_issue = self.find_related_new_issue(
+        patch=patch,
+        new_structured=new_structured
+    )
 
-        target_fixed = self.target_issue_fixed(
-            issue_key,
-            selected_issue_value,
-            original_structured,
-            new_structured
-        )
+    patch["target_fixed"] = target_fixed
+    patch["related_issue"] = related_issue
+    patch["patched_sleec"] = patched_sleec
+    patch["validation_result"] = new_structured
+    patch["verification_depth"] = depth
 
-        related_issue = self.find_related_new_issue(
-            patch=patch,
-            new_structured=new_structured
-        )
+    if target_fixed and related_issue is None:
+        patch["verified"] = True
+        return patch
 
-        patch["target_fixed"] = target_fixed
-        patch["related_issue"] = related_issue
-        patch["patched_sleec"] = patched_sleec
-        patch["validation_result"] = new_structured
-        patch["verification_depth"] = depth
-
-        if target_fixed and related_issue is None:
-            patch["verified"] = True
-            return patch
-
-        if depth >= max_depth:
-            patch["verified"] = False
-            patch["failure_reason"] = "Maximum deterministic augmentation depth reached"
-            return None
-
-        if target_fixed and related_issue:
-            followup_patches = self.deterministic_engine.generate(
-                issue_type=related_issue["issue_type"],
-                selected_issue=related_issue["issue"],
-                rules=self.sleec_text_to_rules_json(patched_sleec),
-                operators=self.operator_selector.select(
-                    related_issue["issue_type"]
-                ).get("deterministic", [])
-            )
-
-            for followup in followup_patches:
-                followup = self.normalize_patch(followup, patched_sleec)
-
-                augmented = self.verify_deterministic_patch_iteratively(
-                    original_sleec=patched_sleec,
-                    issue_key=related_issue["issue_type"],
-                    selected_issue_value=related_issue["issue"],
-                    original_structured=new_structured,
-                    patch=followup,
-                    depth=depth + 1,
-                    max_depth=max_depth
-                )
-
-                if augmented:
-                    patch["verified"] = True
-                    patch["patched_sleec"] = augmented["patched_sleec"]
-                    patch["augmented_with"] = augmented
-                    patch["augmentation_reason"] = "Fixed related issue involving edited rule"
-                    patch["verification_depth"] = depth + 1
-                    return patch
-
+    if depth >= max_depth:
         patch["verified"] = False
-        patch["failure_reason"] = "Target not fixed or related issue unresolved"
+        patch["failure_reason"] = "Maximum deterministic augmentation depth reached"
         return None
 
-
-    def find_related_new_issue(self, patch, new_structured):
-        edited_rules = set(patch.get("edited_rules", []))
-
-        target_rule_id = patch.get("target_rule_id")
-        if target_rule_id:
-            edited_rules.add(target_rule_id)
-
-        if not edited_rules:
-            return None
-
-        for issue_type, issues in new_structured.items():
-            if not isinstance(issues, list):
-                continue
-
-            for issue in issues:
-                issue_text = str(issue)
-
-                for rule_id in edited_rules:
-                    if rule_id and rule_id in issue_text:
-                        return {
-                            "issue_type": issue_type,
-                            "issue": issue,
-                            "related_rule": rule_id
-                        }
-
-        return None
-
-
-
-    def generate_verified_patches(
-    self,
-    use_case,
-    sleec_text,
-    issue,
-    max_attempts=1
-):
-        start_total = time.time()
-
-        original_analysis = self.detector.run_text(sleec_text)
-        original_structured = original_analysis.get("structured", {})
-
-        issue_type = issue.get("issue_type", "")
-        issue_key = issue_type
-
-        if issue_type == "redundancy":
-            issue_key = "redundancies"
-        elif issue_type == "conflict":
-            issue_key = "conflicts"
-        elif issue_type == "concern":
-            issue_key = "concerns"
-        elif issue_type == "purpose":
-            issue_key = "purpose_blocking"
-        elif issue_type == "situational_conflict":
-            issue_key = "situational_conflicts"
-
-        selected_issue_value = issue.get("value", "")
-
-        verified_patches = []
-        failed_patches = []
-        failed_patch_count = 0
-
-        deterministic_candidates = []
-        llm_candidates = []
-
-        generation_time = 0
-        validation_time = 0
-        attempts = 0
-
-        rules_json = self.sleec_text_to_rules_json(sleec_text)
-        operator_plan = self.operator_selector.select(issue_key)
-
-        print("\n========== REPAIR OPERATOR SELECTION ==========")
-        print("Issue Type:", issue_key)
-        print("Deterministic operators:", operator_plan.get("deterministic", []))
-        print("LLM operators:", operator_plan.get("llm", []))
-        print("==============================================\n")
-
-        selected_findings = {
-            issue_key: [selected_issue_value]
-        }
-
-        # -------------------------------
-        # GPT is called ONCE per issue
-        # -------------------------------
-
-        semantic_ops = operator_plan.get("llm", [])
-        llm_patches = []
-
-        if semantic_ops:
-            start_generation = time.time()
-
-            print(">>> Calling GPT with operators:", semantic_ops)
-
-            llm_patches = self.gpt_patch_engine.generate_all_patches(
-                rules=rules_json,
-                structured_findings=selected_findings,
-                repair_operators=semantic_ops
-            )
-
-            for i, p in enumerate(llm_patches, start=1):
-                p["patch_id"] = f"g{i}"
-                p["id"] = f"g{i}"
-                p["source"] = p.get("source", "llm")
-
-            llm_candidates.extend(llm_patches)
-
-            generation_time += time.time() - start_generation
-
-        seen_candidate_signatures = set()
-        seen_verified_signatures = set()
-        seen_failed_signatures = set()
-
-        # -------------------------------
-        # Multiple attempts
-        # -------------------------------
-
-        while attempts < max_attempts:
-            attempts += 1
-
-            start_generation = time.time()
-
-            deterministic_patches = self.deterministic_engine.generate(
-                issue_type=issue_key,
-                selected_issue=selected_issue_value,
-                rules=rules_json,
-                operators=operator_plan.get("deterministic", [])
-            )
-
-            generation_time += time.time() - start_generation
-
-            for i, p in enumerate(deterministic_patches, start=1):
-                p["patch_id"] = p.get("patch_id", f"d{i}")
-                p["id"] = p.get("id", p["patch_id"])
-                p["source"] = p.get("source", "deterministic")
-
-                sig = (
-                    p.get("operation"),
-                    p.get("target_rule_id"),
-                    p.get("proposed_rule"),
-                    p.get("missing_element")
-                )
-
-                if sig not in seen_candidate_signatures:
-                    deterministic_candidates.append(p)
-                    seen_candidate_signatures.add(sig)
-
-            patches = deterministic_patches + llm_patches
-
-            for patch in patches:
-                normalized_patch = self.normalize_patch(patch, sleec_text)
-
-                if normalized_patch.get("patch_id") == "not_applicable":
-                    failed_patch_count += 1
-                    normalized_patch["verified"] = False
-                    normalized_patch["failure_reason"] = "Patch not applicable"
-                    failed_patches.append(normalized_patch)
-                    continue
-
-                patch_signature = (
-                    normalized_patch.get("operation"),
-                    normalized_patch.get("target_rule_id"),
-                    normalized_patch.get("proposed_rule"),
-                    normalized_patch.get("missing_element")
-                )
-
-                if patch_signature in seen_verified_signatures:
-                    continue
-
-                source = normalized_patch.get("source", "")
-
-                print("--------------------------------")
-                print("ATTEMPT:", attempts)
-                print("SOURCE:", source)
-                print("OPERATION:", normalized_patch.get("operation"))
-                print("--------------------------------")
-
-                start_validation = time.time()
-
-                if source == "deterministic":
-                    verified = self.verify_deterministic_patch_iteratively(
-                        original_sleec=sleec_text,
-                        issue_key=issue_key,
-                        selected_issue_value=selected_issue_value,
-                        original_structured=original_structured,
-                        patch=normalized_patch,
-                        depth=0,
-                        max_depth=3
-                    )
-                else:
-                    verified = self.verify_llm_patch_once(
-                        original_sleec=sleec_text,
-                        issue_key=issue_key,
-                        selected_issue_value=selected_issue_value,
-                        original_structured=original_structured,
-                        patch=normalized_patch
-                    )
-
-                validation_time += time.time() - start_validation
-
-                if verified:
-                    verified["attempt"] = attempts
-                    verified_patches.append(verified)
-                    seen_verified_signatures.add(patch_signature)
-                else:
-                    if patch_signature not in seen_failed_signatures:
-                        failed_patch_count += 1
-                        normalized_patch["verified"] = False
-                        failed_patches.append(normalized_patch)
-                        seen_failed_signatures.add(patch_signature)
-
-        total_time = time.time() - start_total
-
-        verified_patches = self.patch_ranker.rank(verified_patches)
-
-        output_file = self.build_final_sleecpatch_file(
-            use_case,
-            sleec_text,
-            verified_patches
+    if target_fixed and related_issue:
+        followup_patches = self.deterministic_engine.generate(
+            issue_type=related_issue["issue_type"],
+            selected_issue=related_issue["issue"],
+            rules=self.sleec_text_to_rules_json(patched_sleec),
+            operators=self.operator_selector.select(
+                related_issue["issue_type"]
+            ).get("deterministic", [])
         )
 
-        log = {
-            "use_case": use_case,
-            "issue_id": issue.get("id", ""),
-            "issue_type": issue_key,
-            "attempts": attempts,
-            "max_attempts": max_attempts,
-            "failed_patch_count": failed_patch_count,
-            "verified_patch_count": len(verified_patches),
-            "generation_time_seconds": round(generation_time, 3),
-            "validation_time_seconds": round(validation_time, 3),
-            "total_time_seconds": round(total_time, 3),
-            "successful": len(verified_patches) > 0
-        }
+        for followup in followup_patches:
+            followup = self.normalize_patch(followup, patched_sleec)
 
-        for patch in verified_patches:
-            metrics = self.patch_metrics(patch)
+            augmented = self.verify_deterministic_patch_iteratively(
+                original_sleec=patched_sleec,
+                issue_key=related_issue["issue_type"],
+                selected_issue_value=related_issue["issue"],
+                original_structured=new_structured,
+                patch=followup,
+                depth=depth + 1,
+                max_depth=max_depth
+            )
 
-            self.store.save_result({
-                "use_case": use_case,
-                "issue_id": issue.get("id", ""),
-                "issue_type": issue_key,
-                "selected_issue": selected_issue_value,
+            if augmented:
+                patch["verified"] = True
+                patch["patched_sleec"] = augmented["patched_sleec"]
+                patch["augmented_with"] = augmented
+                patch["augmentation_reason"] = "Fixed related issue involving edited rule"
+                patch["verification_depth"] = depth + 1
+                return patch
 
-                "attempts": attempts,
-                "failed_patch_count": failed_patch_count,
-                "verified_patch_count": len(verified_patches),
+    patch["verified"] = False
+    patch["failure_reason"] = "Target not fixed or related issue unresolved"
+    return None
 
-                "generation_time_seconds": round(generation_time, 3),
-                "validation_time_seconds": round(validation_time, 3),
-                "total_time_seconds": round(total_time, 3),
 
-                "patch_id": patch.get("patch_id", patch.get("id", "")),
-                "operation": patch.get("operation", ""),
-                "source": patch.get("source", "unknown"),
-                "rank": patch.get("rank", 0),
-                "ranking_score": patch.get("ranking_score", 0),
+def find_related_new_issue(self, patch, new_structured):
+    edited_rules = set(patch.get("edited_rules", []))
 
-                "target_rule_id": patch.get("target_rule_id", ""),
-                "original_rule": patch.get("original_rule", ""),
-                "proposed_rule": patch.get("proposed_rule", ""),
-                "natural_language_explanation": patch.get(
-                    "natural_language_explanation",
-                    ""
-                ),
-                "patched_sleec": patch.get("patched_sleec", ""),
+    target_rule_id = patch.get("target_rule_id")
+    if target_rule_id:
+        edited_rules.add(target_rule_id)
 
-                "rules_modified": metrics["rules_modified"],
-                "rules_added": metrics["rules_added"],
-                "rules_deleted": metrics["rules_deleted"],
-                "defeaters_added": metrics["defeaters_added"],
-                "conditions_refined": metrics["conditions_refined"],
-                "actions_refined": metrics["actions_refined"],
-                "capabilities_refined": metrics["capabilities_refined"],
+    if not edited_rules:
+        return None
 
-                "verified": True,
+    for issue_type, issues in new_structured.items():
+        if not isinstance(issues, list):
+            continue
 
-                "expert_similarity": 0,
-                "expert_match": False,
-                "requires_social_scientist_review": False
-            })
+        for issue in issues:
+            issue_text = str(issue)
 
-        return {
-            "status": "OK",
-            "selected_issue": issue,
-            "repair_operators": operator_plan,
-            "deterministic_candidates": deterministic_candidates,
-            "llm_candidates": llm_candidates,
-            "verified_patches": verified_patches,
-            "failed_patches": failed_patches,
-            "generated_file": output_file,
-            "log": log
-        }
+            for rule_id in edited_rules:
+                if rule_id and rule_id in issue_text:
+                    return {
+                        "issue_type": issue_type,
+                        "issue": issue,
+                        "related_rule": rule_id
+                    }
+
+    return None
+
+
+
     
-
-    def build_rank1_sleecpatch(self, use_case, original_sleec, all_wfi_results):
-        final_sleec = original_sleec
-        selected_patches = []
-
-        for result in all_wfi_results:
-            verified = result.get("verified_patches", [])
-
-            if not verified:
-                continue
-
-            ranked = sorted(
-                verified,
-                key=lambda p: p.get("rank", 999)
-            )
-
-            best_patch = ranked[0]
-            selected_patches.append(best_patch)
-
-            final_sleec = self.apply_patch_to_text(
-                final_sleec,
-                best_patch
-            )
-
-        folder = os.path.join("results", use_case)
-        os.makedirs(folder, exist_ok=True)
-
-        output_path = os.path.join(
-            folder,
-            f"{use_case}_SLEECPATCH.sleec"
-        )
-
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(final_sleec)
-
-        return {
-            "use_case": use_case,
-            "output_path": output_path,
-            "selected_patches": selected_patches,
-            "final_sleec": final_sleec
-        }

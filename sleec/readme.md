@@ -46,5 +46,10 @@ Please find here, both the initial and corrected normative requirements collecte
 7. [DPA](Case-studies/DPA.pdf) [(initial,](gdpr/DPA.sleec)[ corrected)](gdpr/DPA-corrected.sleec)
 8. [DressAssist](Case-studies/DressAssist.pdf) [(initial,](dressingAssist/DRESSASSIST.sleec)[ corrected)](dressingAssist/DRESSASSIST-corrected.sleec)
 9. [SafeSCAD](Case-studies/SafeSCAD.pdf) [(initial,](safescade/safescade.sleec)[ corrected)](safescade/safescade-corrected.sleec)
+10. [Tabiat](Case-studies/Tabiat.pdf) [(initial,](Tabiat/Tabiat.sleec)[ corrected)](Tabiat/Tabiat-Corrected.sleec)
+11. [Casper](Case-studies/Casper.pdf) [(initial,](Casper/Casper.sleec)[ corrected)](Casper/Casper-Corrected.sleec)
+
+
+
 
 
