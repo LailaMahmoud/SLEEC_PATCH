@@ -1,6 +1,8 @@
 import re
 from collections import defaultdict
+from services.evaluation_metrics import EvaluationMetrics
 
+metrics = EvaluationMetrics()
 
 class PatchLevelEvaluator:
     """
@@ -11,6 +13,7 @@ class PatchLevelEvaluator:
 
     def __init__(self, parser=None):
         self.parser = parser
+        self.metrics = EvaluationMetrics()
 
     def evaluate(self, use_case, patches, corrected_sleec_text):
         corrected_norm = self.normalize(corrected_sleec_text)

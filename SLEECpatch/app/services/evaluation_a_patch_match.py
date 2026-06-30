@@ -1,11 +1,14 @@
 import re
 from collections import defaultdict
+from services.evaluation_metrics import EvaluationMetrics
+
 
 
 class EvaluationAPatchMatch:
 
     def __init__(self, parser):
         self.parser = parser
+        self.metrics = EvaluationMetrics()
 
     def normalize(self, text):
         text = str(text or "").lower()

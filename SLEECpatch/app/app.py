@@ -25,11 +25,9 @@ sleec_manager = SLEECResolutionManager()
 #from USCLLM import UseCaseRepository
 from services.sleec_pipeline_manager import SLEECPipelineManager
 sleec_pipeline_manager = SLEECPipelineManager()
-from services.sleec_patch_workbench_engine import SLEECPatchWorkbenchEngine
-sleec_patch_engine = SLEECPatchWorkbenchEngine()
+
 from services.sleec_parser import SLEECParser
 from services.evaluation_a_patch_match import EvaluationAPatchMatch
-
 evaluation_a = EvaluationAPatchMatch(SLEECParser())
 from services.evaluation_b_final_spec import EvaluationBFinalSpec
 from services.repair_action_analyzer import RepairActionAnalyzer
@@ -44,7 +42,8 @@ philosopher_review_store = PhilosopherReviewStore()
 from services.evaluation_excel_exporter import EvaluationExcelExporter
 evaluation_excel_exporter = EvaluationExcelExporter()
 from services.patch_level_evaluator import PatchLevelEvaluator
-patch_level_evaluator = PatchLevelEvaluator()
+patch_level_evaluator  = PatchLevelEvaluator()
+
 
 SLEEC_EXCEL_FILES = {
     "ALMI": os.path.join(BASE_DIR, "sleec_usecases", "ALMI.xlsx"),
@@ -88,10 +87,10 @@ SLEEC_FILES = {
     "SafeSCAD-corrected": os.path.join(BASE_DIR, "sleec_usecases", "Safescade-corrected.sleec"),
 
     "Tabiat":os.path.join(BASE_DIR, "sleec_usecases", "Tabiat.sleec"),
-    "Tabiat":os.path.join(BASE_DIR, "sleec_usecases", "Tabiat-corrected.sleec"),
+    "Tabiat-corrected":os.path.join(BASE_DIR, "sleec_usecases", "Tabiat-corrected.sleec"),
 
     "Casper":os.path.join(BASE_DIR, "sleec_usecases", "Casper.sleec"),
-    "Casper":os.path.join(BASE_DIR, "sleec_usecases", "Casper-corrected.sleec")
+    "Casper-corrected":os.path.join(BASE_DIR, "sleec_usecases", "Casper-corrected.sleec")
 
     }
 
@@ -260,6 +259,12 @@ def api_evaluation_a():
     use_case = data.get("use_case", "ALMI")
 
     corrected_path = SLEEC_FILES.get(f"{use_case}-corrected")
+
+    if not corrected_path:
+        return jsonify({
+            "status": "ERROR",
+            "error": f"No corrected SLEEC file found for {use_case}"
+        }), 404
 
     generated_patches = sleec_patch_engine.store.all_results()
 

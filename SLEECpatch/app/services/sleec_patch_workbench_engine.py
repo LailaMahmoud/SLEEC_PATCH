@@ -1224,6 +1224,10 @@ class SLEECPatchWorkbenchEngine:
             issue_key = "situational_conflicts"
 
         selected_issue_value = issue.get("value", "")
+        selected_issue_value = str(selected_issue_value)
+
+        if issue_key == "redundancies":
+            selected_issue_value = self.extract_rule_from_issue_text(selected_issue_value)
 
         verified_patches = []
         failed_patches = []
@@ -1461,7 +1465,19 @@ class SLEECPatchWorkbenchEngine:
             "log": log
         }
     
+    def extract_rule_from_issue_text(self, text):
+        text = str(text).strip()
 
+        match = re.search(
+            r"(Rule\d+(?:_\d+)?\s+when\s+.*?then\s+.*)",
+            text,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        if match:
+            return match.group(1).strip()
+
+        return text
     def build_rank1_sleecpatch(self, use_case, original_sleec, all_wfi_results):
         final_sleec = original_sleec
         selected_patches = []

@@ -27,9 +27,45 @@ class DeterministicRepairEngine:
 
         return patches
 
+    def generate_redundancy_patches(self, selected_issue, rules, operators):
+        patches = []
+        issue_text = str(selected_issue)
+
+        rule_id = self.extract_rule_id(issue_text)
+        original_rule = self.find_rule_text(rule_id, rules) or issue_text
+
+        if "rule_removal" in operators and rule_id:
+            patches.append({
+                "patch_id": f"d_remove_{rule_id}",
+                "id": f"d_remove_{rule_id}",
+                "source": "deterministic",
+                "operation": "rule_removal",
+                "target_rule_id": rule_id,
+                "original_rule": original_rule,
+                "proposed_rule": "",
+                "natural_language_explanation": (
+                    f"Remove {rule_id} because it is redundant."
+                )
+            })
+
+        if "rule_merging" in operators and rule_id:
+            patches.append({
+                "patch_id": f"d_merge_{rule_id}",
+                "id": f"d_merge_{rule_id}",
+                "source": "deterministic",
+                "operation": "rule_merging",
+                "target_rule_id": rule_id,
+                "original_rule": original_rule,
+                "proposed_rule": original_rule,
+                "natural_language_explanation": (
+                    f"Merge {rule_id} with the equivalent rule to avoid redundancy."
+                )
+            })
+
+        return patches
+
     def generate_conflict_patches(self, issue_type, selected_issue, rules, operators):
         patches = []
-
         conflict_rules = self.find_conflicting_rules(selected_issue, rules)
 
         if len(conflict_rules) < 2:
@@ -49,7 +85,7 @@ class DeterministicRepairEngine:
                 "original_rule": self.rule_to_text(r1),
                 "proposed_rule": self.add_defeater(r1, r2["action"]),
                 "natural_language_explanation":
-                    "The conflicting action is converted into an explicit defeater so this rule is blocked when the opposite action applies."
+                    "The conflicting action is converted into an explicit defeater."
             })
 
             patches.append({
@@ -62,7 +98,7 @@ class DeterministicRepairEngine:
                 "original_rule": self.rule_to_text(r2),
                 "proposed_rule": self.add_defeater(r2, r1["action"]),
                 "natural_language_explanation":
-                    "The opposite rule is given an explicit defeater so the two rules no longer fire incompatibly."
+                    "The opposite rule is given an explicit defeater."
             })
 
         if "trigger_strengthening" in operators:
@@ -76,7 +112,7 @@ class DeterministicRepairEngine:
                 "original_rule": self.rule_to_text(r1),
                 "proposed_rule": self.strengthen_trigger(r1, r2["action"]),
                 "natural_language_explanation":
-                    "The trigger is strengthened using an existing conflicting action as a contextual guard."
+                    "The trigger is strengthened using contextual information."
             })
 
         if "rule_merging" in operators:
@@ -90,36 +126,32 @@ class DeterministicRepairEngine:
                 "original_rule": self.rule_to_text(r1) + "\n" + self.rule_to_text(r2),
                 "proposed_rule": self.merge_conflicting_rules(r1, r2),
                 "natural_language_explanation":
-                    "The two conflicting rules are merged into one rule with an explicit exception."
+                    "The two conflicting rules are merged into one rule."
             })
 
         return patches
 
-    def generate_redundancy_patches(self, selected_issue, rules, operators):
-        patches = []
+    def extract_rule_id(self, text):
+        m = re.search(r"\bRule\d+(?:_\d+)?\b", str(text))
+        return m.group(0) if m else ""
 
-        redundant_rules = self.find_redundant_rules(selected_issue, rules)
+    def find_rule_text(self, rule_id, rules):
+        if not rule_id:
+            return ""
 
-        if len(redundant_rules) < 1:
-            return patches
+        for r in rules:
+            if isinstance(r, dict):
+                if r.get("id", "") == rule_id:
+                    return (
+                        r.get("raw")
+                        or r.get("text")
+                        or f'{r.get("id")} when {r.get("condition", "")} then {r.get("action", "")}'
+                    )
 
-        target = redundant_rules[0]
+            elif isinstance(r, str) and rule_id in r:
+                return r
 
-        if "rule_removal" in operators:
-            patches.append({
-                "id": "d1",
-                "patch_id": "d1",
-                "source": "deterministic",
-                "issue_type": "redundancies",
-                "operation": "rule_removal",
-                "target_rule_id": target["id"],
-                "original_rule": self.rule_to_text(target),
-                "proposed_rule": "",
-                "natural_language_explanation":
-                    "The redundant rule is removed because it is logically implied by another rule."
-            })
-
-        return patches
+        return ""
 
     def find_conflicting_rules(self, selected_issue, rules):
         text = str(selected_issue)
@@ -139,24 +171,6 @@ class DeterministicRepairEngine:
 
                 if self.is_opposite_action(r1["action"], r2["action"]):
                     return [r1, r2]
-
-        return []
-
-    def find_redundant_rules(self, selected_issue, rules):
-        text = str(selected_issue)
-
-        for rule in rules:
-            if rule["id"] in text:
-                return [rule]
-
-        for i, r1 in enumerate(rules):
-            for r2 in rules[i + 1:]:
-                if (
-                    r1["condition"] == r2["condition"]
-                    and r1["action"] == r2["action"]
-                    and r1.get("defeater", "") == r2.get("defeater", "")
-                ):
-                    return [r2]
 
         return []
 

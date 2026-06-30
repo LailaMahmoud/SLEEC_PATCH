@@ -181,6 +181,8 @@ async function generateVerifiedPatches() {
 
     sleecPatchState.verifiedPatches =
         data.verified_patches || [];
+    sleecPatchState.failedPatches =
+    data.failed_patches || [];
 
     sleecPatchState.log =
         data.log || {};
