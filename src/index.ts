@@ -12,11 +12,12 @@ export class SleecPatchContainer extends Container {
   defaultPort = 8080;
   sleepAfter = "15m";
 
-  // Forward the OpenAI key (set via `wrangler secret put OPENAI_API_KEY`)
-  // into the container process. Secrets are auto-added to `env`, so they do
-  // not need to be declared in wrangler.jsonc.
+  // Forward secrets (set via `wrangler secret put ...`) into the container
+  // process as host environment variables. Secrets are auto-added to `env`, so
+  // they do not need to be declared in wrangler.jsonc.
   envVars = {
     OPENAI_API_KEY: env.OPENAI_API_KEY,
+    SECRET_KEY: env.SECRET_KEY,
   };
 
   override onStart() {
