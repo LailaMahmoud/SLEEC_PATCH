@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>SLEEC-PATCH Workbench</title>
+<title>SLEEC-PATCH</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/loader.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_patch_workbench.css') }}">
 </head>
 
@@ -10,11 +11,23 @@
 <div class="page">
 
 <header class="hero">
-    <h1>SLEEC-PATCH Workbench</h1>
+    <h1>SLEEC-PATCH</h1>
     <p>Automated generation and formal validation of resolution patches for well-formedness issues in normative requirements.</p>
 </header>
 
-<section class="panel">
+<div class="wizard-shell">
+    <div class="wizard-topbar">
+        <div>
+            <span class="wizard-kicker">SLEEC-PATCH workflow</span>
+            <strong data-wizard-counter data-counter-mode="label">Specification Input</strong>
+        </div>
+        <button type="button" class="secondary" data-wizard-restart>Start over</button>
+    </div>
+
+    <div class="wizard-stepper" data-wizard-stepper aria-label="Workflow sections"></div>
+</div>
+
+<section class="panel wizard-step is-active" data-step="1">
     <h2>1. SLEEC Specification Input</h2>
 
     <div class="toolbar">
@@ -33,47 +46,50 @@
         <button class="primary" onclick="diagnoseWFIs()">Diagnose WFIs</button>
     </div>
 
-    <textarea id="sleecInput" rows="16">{{ sleec_text or "" }}</textarea>
-</section>
-
-<section class="grid-2">
-    <div class="panel">
-        <h2>2. Detected WFIs</h2>
-        <div id="issuesOutput" class="empty">No diagnosis yet.</div>
-    </div>
-
-    <div class="panel">
-        <h2>3. Selected Issue</h2>
-        <div id="selectedIssueOutput" class="empty">Select one issue.</div>
-        <button class="success" onclick="generateVerifiedPatches()">Suggest Verified Patches</button>
+    <div class="sleec-code-editor">
+        <pre id="sleecInputHighlight" class="sleec-code-highlight" aria-hidden="true"></pre>
+        <textarea id="sleecInput"
+                  rows="16"
+                  spellcheck="false"
+                  oninput="updateSleecEditorHighlight()"
+                  onscroll="syncSleecEditorScroll()">{{ sleec_text or "" }}</textarea>
     </div>
 </section>
 
-<section class="grid-2">
+<section class="panel wizard-step" data-step="2">
+    <h2>2. Detected Well-Formedness Issues</h2>
+    <div id="issuesOutput" class="empty">No diagnosis yet.</div>
+</section>
+
+<section class="panel wizard-step" data-step="3">
+    <h2>3. Selected Issue</h2>
+    <div id="selectedIssueOutput" class="empty">Select one issue.</div>
+    <button class="success" onclick="generateVerifiedPatches()">Suggest Verified Patches</button>
+</section>
+
+<section class="grid-2 wizard-step" data-step="4">
     <div class="panel">
-        <h2>4A. Deterministic Repairs</h2>
-        <div id="deterministicOutput" class="empty">No deterministic repairs yet.</div>
+        <h2>4A. Rule-Based Repairs</h2>
+        <div id="deterministicOutput" class="empty">No rule-based repairs yet.</div>
     </div>
 
     <div class="panel">
         <h2>4B. GPT Semantic Repairs</h2>
         <div id="llmOutput" class="empty">No GPT semantic repairs yet.</div>
     </div>
-</section>
 
-<section class="grid-2">
     <div class="panel">
         <h2>4C. Verified & Ranked Patches</h2>
         <div id="patchOutput" class="empty">No verified patches yet.</div>
     </div>
-
-    <div class="panel">
-        <h2>5. Verification Log</h2>
-        <div id="logOutput" class="empty">No log yet.</div>
-    </div>
 </section>
 
-<section class="panel evaluation-section">
+<section class="panel wizard-step" data-step="5">
+    <h2>5. Internal Verification Log</h2>
+    <div id="logOutput" class="empty">No log yet.</div>
+</section>
+
+<section class="panel evaluation-section wizard-step" data-step="6">
 
     <div class="section-header">
 
@@ -190,8 +206,15 @@
 
 </section>
 
+<footer class="wizard-footer" aria-label="Wizard navigation">
+    <button type="button" class="secondary" data-wizard-back>Back</button>
+    <button type="button" class="primary" data-wizard-next>Continue</button>
+</footer>
+
 </div>
 
+<script src="{{ url_for('static', filename='js/loader.js') }}"></script>
+<script src="{{ url_for('static', filename='js/wizard.js') }}"></script>
 <script src="{{ url_for('static', filename='js/sleec_patch_workbench.js') }}"></script>
 </body>
 </html>

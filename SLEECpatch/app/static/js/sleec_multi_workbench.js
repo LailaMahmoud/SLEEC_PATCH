@@ -1,5 +1,12 @@
 let currentResult = null;
 
+function runWithLoader(work, text) {
+    if (window.withLoader) {
+        return window.withLoader(work, text);
+    }
+    return work();
+}
+
 function collectMultiStakeholderRules() {
 
     const stakeholders = ["S1", "S2", "S3", "S4", "S5"];
@@ -82,14 +89,16 @@ async function analyzeMulti() {
 
     console.log("SENDING:", stakeholdersRules);
 
-    const response = await fetch("/api/sleec/analyze-multiple", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            use_case: useCase,
-            stakeholders_rules: stakeholdersRules
-        })
-    });
+    const response = await runWithLoader(() => fetch("/api/sleec/analyze-multiple", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                use_case: useCase,
+                stakeholders_rules: stakeholdersRules
+            })
+        }),
+        "Analysing multi-stakeholder rules..."
+    );
 
     currentResult = await response.json();
 
@@ -229,15 +238,17 @@ async function savePatches() {
 
     const selected = currentResult.patches.filter(p => p.selected);
 
-    const response = await fetch("/api/sleec/save-patches", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            stakeholder: "MULTI",
-            use_case: useCase,
-            patches: selected
-        })
-    });
+    const response = await runWithLoader(() => fetch("/api/sleec/save-patches", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                stakeholder: "MULTI",
+                use_case: useCase,
+                patches: selected
+            })
+        }),
+        "Saving selected patches..."
+    );
 
     const data = await response.json();
 
@@ -257,14 +268,16 @@ async function applySelectedPatches() {
         return;
     }
 
-    const response = await fetch("/api/sleec/apply-patches", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            rules: currentResult.rules,
-            patches: selectedPatches
-        })
-    });
+    const response = await runWithLoader(() => fetch("/api/sleec/apply-patches", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                rules: currentResult.rules,
+                patches: selectedPatches
+            })
+        }),
+        "Applying selected patches..."
+    );
 
     const data = await response.json();
 
@@ -312,14 +325,16 @@ async function approveResolution() {
     const stakeholder = document.getElementById("approvalStakeholder").value;
     const useCase = document.getElementById("useCase").value;
 
-    const response = await fetch("/api/sleec/approve", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            stakeholder: stakeholder,
-            use_case: useCase
-        })
-    });
+    const response = await runWithLoader(() => fetch("/api/sleec/approve", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                stakeholder: stakeholder,
+                use_case: useCase
+            })
+        }),
+        "Saving approval..."
+    );
 
     const data = await response.json();
 
@@ -355,14 +370,16 @@ async function compareWithExpert(mode = "final") {
 
     uscRules = normalizeForCompare(uscRules);
 
-    const response = await fetch("/api/sleec/compare", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-            expert_file: expertFile,
-            usc_rules: uscRules
-        })
-    });
+    const response = await runWithLoader(() => fetch("/api/sleec/compare", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                expert_file: expertFile,
+                usc_rules: uscRules
+            })
+        }),
+        "Comparing with expert reference..."
+    );
 
     const comparison = await response.json();
 

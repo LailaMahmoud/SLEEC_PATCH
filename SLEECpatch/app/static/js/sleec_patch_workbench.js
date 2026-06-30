@@ -3,8 +3,13 @@ let sleecPatchState = {
     issues: [],
     selectedIssue: null,
     verifiedPatches: [],
-    log: null
+    deterministicCandidates: [],
+    llmCandidates: [],
+    log: null,
+    rawDiagnosis: null
 };
+
+let patchWizard = null;
 
 
 function escapeHtml(value) {
@@ -15,21 +20,127 @@ function escapeHtml(value) {
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
 }
+
+function escapeCodeHtml(value) {
+    return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+}
+
+function highlightSleecCode(value) {
+    return escapeCodeHtml(value)
+        .replace(/(^|\s)(def|rule|when|then|unless|if|and|or|not|must|may|shall)\b/g, '$1<span class="sleec-kw">$2</span>')
+        .replace(/(^|\s)(conflict|concern|purpose|capability|event|measure|defeater)\b/g, '$1<span class="sleec-kw-strong">$2</span>')
+        .replace(/\b(r\d+|rule[_-]?\d+)\b/gi, '<span class="sleec-rule-id">$1</span>')
+        .replace(/(#.*)$/gm, '<span class="sleec-comment">$1</span>');
+}
+
+function updateSleecEditorHighlight() {
+    const input = document.getElementById("sleecInput");
+    const highlight = document.getElementById("sleecInputHighlight");
+
+    if (!input || !highlight) return;
+
+    highlight.innerHTML = highlightSleecCode(input.value) + "\n";
+    syncSleecEditorScroll();
+}
+
+function syncSleecEditorScroll() {
+    const input = document.getElementById("sleecInput");
+    const highlight = document.getElementById("sleecInputHighlight");
+
+    if (!input || !highlight) return;
+
+    highlight.scrollTop = input.scrollTop;
+    highlight.scrollLeft = input.scrollLeft;
+}
+
 async function postJSON(url, data) {
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-    });
+    const loaderText = loaderTextForUrl(url);
 
-    const result = await response.json();
+    return window.withLoader(async () => {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
+        });
 
-    if (!response.ok) {
-        alert(result.error || "Request failed");
-        throw new Error(result.error || "Request failed");
-    }
+        const result = await response.json();
 
-    return result;
+        if (!response.ok) {
+            alert(result.error || "Request failed");
+            throw new Error(result.error || "Request failed");
+        }
+
+        return result;
+    }, loaderText);
+}
+
+function loaderTextForUrl(url) {
+    if (url.includes("diagnose")) return "Diagnosing well-formedness issues...";
+    if (url.includes("generate-verified")) return "Generating and verifying candidate repairs...";
+    if (url.includes("evaluation")) return "Loading evaluation results...";
+    if (url.includes("load-usecase")) return "Loading SLEEC use case...";
+    if (url.includes("philosopher")) return "Saving review...";
+    return "Working...";
+}
+
+function refreshPatchWizard() {
+    if (patchWizard) patchWizard.refresh();
+}
+
+function goToPatchStep(step) {
+    if (patchWizard) patchWizard.goToStep(step);
+}
+
+function hasGeneratedPatches() {
+    return Boolean(
+        sleecPatchState.log ||
+        sleecPatchState.verifiedPatches.length ||
+        sleecPatchState.deterministicCandidates.length ||
+        sleecPatchState.llmCandidates.length
+    );
+}
+
+function canAdvancePatchWizard(step) {
+    if (step === 1) return sleecPatchState.issues.length > 0;
+    if (step === 2) return Boolean(sleecPatchState.selectedIssue);
+    if (step === 3) return hasGeneratedPatches();
+    if (step === 4) return hasGeneratedPatches();
+    if (step === 5) return Boolean(sleecPatchState.log);
+    return false;
+}
+
+function resetPatchWorkbench() {
+    sleecPatchState = {
+        sleecText: "",
+        issues: [],
+        selectedIssue: null,
+        verifiedPatches: [],
+        deterministicCandidates: [],
+        llmCandidates: [],
+        log: null,
+        rawDiagnosis: null
+    };
+
+    document.getElementById("issuesOutput").innerHTML = "No diagnosis yet.";
+    document.getElementById("selectedIssueOutput").innerHTML = "Select one issue.";
+    document.getElementById("deterministicOutput").innerHTML = "No rule-based repairs yet.";
+    document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
+    document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
+    document.getElementById("logOutput").innerHTML = "No log yet.";
+    document.getElementById("summaryOutput").innerHTML = "No evaluation summary loaded.";
+    document.getElementById("patchDetailOutput").innerHTML = `
+        Click an operation in the evaluation tables to view the
+        original rule, proposed rule, explanation, and verification details.
+    `;
+    document.getElementById("evaluationAOutput").innerHTML = "No Evaluation A results yet.";
+    document.getElementById("evaluationBOutput").innerHTML = "No Evaluation B results yet.";
+    document.getElementById("evaluationCOutput").innerHTML = "No philosopher review loaded.";
+
+    goToPatchStep(1);
+    refreshPatchWizard();
 }
 
 async function diagnoseWFIs() {
@@ -49,8 +160,20 @@ async function diagnoseWFIs() {
     sleecPatchState.sleecText = sleecText;
     sleecPatchState.issues = data.issues || [];
     sleecPatchState.rawDiagnosis = data;
+    sleecPatchState.selectedIssue = null;
+    sleecPatchState.verifiedPatches = [];
+    sleecPatchState.deterministicCandidates = [];
+    sleecPatchState.llmCandidates = [];
+    sleecPatchState.log = null;
 
     renderIssues();
+    document.getElementById("selectedIssueOutput").innerHTML = "Select one issue.";
+    document.getElementById("deterministicOutput").innerHTML = "No rule-based repairs yet.";
+    document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
+    document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
+    document.getElementById("logOutput").innerHTML = "No log yet.";
+    refreshPatchWizard();
+    goToPatchStep(2);
 }
 
 function shortIssueText(value) {
@@ -129,6 +252,8 @@ function selectIssue(index) {
     `;
 
     renderIssues();
+    refreshPatchWizard();
+    goToPatchStep(3);
 }
 
 async function generateVerifiedPatches() {
@@ -145,7 +270,7 @@ async function generateVerifiedPatches() {
         <div class="patch-card">
             <h3>Generating verified patches...</h3>
             <p>
-                SLEEC-PATCH is generating deterministic repairs first,
+                SLEEC-PATCH is generating rule-based repairs first,
                 then invoking GPT for semantic refinement,
                 followed by SLEEC verification and ranking.
             </p>
@@ -192,7 +317,7 @@ async function generateVerifiedPatches() {
     renderCandidatePatches(
         "deterministicOutput",
         sleecPatchState.deterministicCandidates,
-        "Deterministic"
+        "Rule-Based"
     );
 
     renderCandidatePatches(
@@ -204,6 +329,8 @@ async function generateVerifiedPatches() {
     renderVerifiedPatches();
 
     renderLog();
+    refreshPatchWizard();
+    goToPatchStep(4);
 }
 function renderCandidatePatches(containerId, patches, title) {
 
@@ -501,6 +628,13 @@ function showPatchDetails(row) {
 async function loadSelectedUseCase() {
     const useCase = document.getElementById("useCase").value;
 
+    if (useCase === "Custom") {
+        const customText = sessionStorage.getItem("sleecPatchCustomText") || "";
+        document.getElementById("sleecInput").value = customText;
+        updateSleecEditorHighlight();
+        return;
+    }
+
     const data = await postJSON("/api/sleec-patch/load-usecase", {
         use_case: useCase
     });
@@ -508,6 +642,7 @@ async function loadSelectedUseCase() {
     console.log("LOAD RESPONSE:", data);
 
     document.getElementById("sleecInput").value = data.sleec_text || "";
+    updateSleecEditorHighlight();
 }
 
 function pct(x) {
@@ -731,3 +866,42 @@ async function submitPhilosopherReview(patch, decision) {
 
     alert("Review saved.");
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const customText = sessionStorage.getItem("sleecPatchCustomText");
+    const customUseCase = sessionStorage.getItem("sleecPatchCustomUseCase");
+    const useCaseSelect = document.getElementById("useCase");
+    const sleecInput = document.getElementById("sleecInput");
+
+    if (customText && sleecInput) {
+        if (useCaseSelect && customUseCase && !Array.from(useCaseSelect.options).some(option => option.value === customUseCase)) {
+            const option = document.createElement("option");
+            option.value = customUseCase;
+            option.textContent = customUseCase;
+            useCaseSelect.prepend(option);
+            useCaseSelect.value = customUseCase;
+        }
+
+        sleecInput.value = customText;
+        sleecPatchState.sleecText = customText;
+    }
+
+    updateSleecEditorHighlight();
+
+    if (!window.SleecWizard) return;
+
+    patchWizard = window.SleecWizard.init({
+        root: document,
+        total: 6,
+        labels: [
+            "Specification",
+            "Detected WFIs",
+            "Selected issue",
+            "Repairs",
+            "Verification log",
+            "Evaluation"
+        ],
+        canAdvance: canAdvancePatchWizard,
+        onRestart: resetPatchWorkbench
+    });
+});

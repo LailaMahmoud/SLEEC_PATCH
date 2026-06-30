@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Concerns & Resolution Dashboard</title>
+<title>SLEEC-PATCH Start</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -11,11 +11,11 @@
     --bg: #fafbfa;
     --card: #ffffff;
     --surface-2: #f4f7f5;
-    --primary: #ffc8bd;          /* peach — actions & accent */
-    --primary-hover: #f9b1a3;
-    --primary-light: #fff2ef;
-    --primary-ink: #9a4434;
-    --on-primary: #5a2a20;
+    --primary: #3f5a4b;
+    --primary-hover: #334a3d;
+    --primary-light: #edf2ef;
+    --primary-ink: #2e4438;
+    --on-primary: #ffffff;
     --secondary: #b1c6ba;        /* sage */
     --secondary-light: #eef3f0;
     --secondary-ink: #3c5648;
@@ -42,7 +42,7 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { font-family: var(--font-head); letter-spacing: -0.01em; }
+h1, h2, h3 { font-family: var(--font-head); letter-spacing: 0; }
 
 .wrapper {
     max-width: 1200px;
@@ -74,9 +74,7 @@ h1, h2, h3 { font-family: var(--font-head); letter-spacing: -0.01em; }
 }
 
 .stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    display: block;
     margin-bottom: 28px;
 }
 
@@ -253,18 +251,129 @@ button {
     cursor: pointer;
     background: var(--primary);
     color: var(--on-primary);
-    box-shadow: 0 2px 8px rgba(249,177,163,0.45);
+    box-shadow: 0 2px 8px rgba(63,90,75,0.28);
     transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 button:hover {
     background: var(--primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 5px 16px rgba(249,177,163,0.55);
+    box-shadow: 0 5px 16px rgba(63,90,75,0.36);
+}
+
+.button-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.secondary-button {
+    background: var(--secondary-light);
+    color: var(--secondary-ink);
+    border: 1px solid var(--secondary);
+    box-shadow: none;
+}
+
+.secondary-button:hover {
+    background: var(--secondary);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(60, 86, 72, 0.16);
+}
+
+.selection-panel {
+    max-width: 100%;
+}
+
+.custom-editor-panel {
+    display: none;
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+}
+
+.custom-editor-panel.is-open {
+    display: block;
+}
+
+.editor-shell {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    overflow: hidden;
+    border: 1px solid #25352c;
+    border-radius: 14px;
+    background: #1f2a24;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.line-numbers {
+    min-height: 320px;
+    padding: 16px 10px;
+    background: #18211c;
+    color: #8ea095;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    text-align: right;
+    user-select: none;
+}
+
+.code-editor {
+    position: relative;
+    min-height: 320px;
+}
+
+.code-highlight,
+.code-editor textarea {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 16px;
+    border: 0;
+    border-radius: 0;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow: auto;
+}
+
+.code-highlight {
+    color: #d8e2dc;
+    pointer-events: none;
+}
+
+.code-editor textarea {
+    resize: vertical;
+    min-height: 320px;
+    background: transparent;
+    color: transparent;
+    caret-color: #ffffff;
+    outline: none;
+}
+
+.kw {
+    color: #b7d7bb;
+    font-weight: 700;
+}
+
+.kw-strong {
+    color: #f0d79b;
+    font-weight: 700;
+}
+
+.rule-id {
+    color: #9cc7ad;
+}
+
+.comment {
+    color: #91a69a;
+    font-style: italic;
 }
 
 @media (max-width: 900px) {
-    .grid, .stats, .steps {
+    .grid, .steps {
         grid-template-columns: 1fr;
     }
 }
@@ -282,8 +391,8 @@ function goTo(path) {
 <div class="wrapper">
 
     <section class="hero">
-        <h1>Concerns & Resolution Dashboard</h1>
-        <p>Professional control center for SLEEC detection, redundancy analysis,  and LLM-based rule refinement.</p>
+        <h1>SLEEC-PATCH Start</h1>
+        <p>Select an existing use case or add a custom SLEEC specification to begin the workflow.</p>
     </section>
 <!-- Architecture -->
 <section class="card" style="margin-bottom:30px;">
@@ -310,7 +419,7 @@ function goTo(path) {
 </section>
     <section class="stats">
         
-                <div>
+                <div class="card selection-panel">
                     
 <h3>Select Use Case</h3>
 
@@ -329,10 +438,38 @@ function goTo(path) {
 
 </div>
 
-<button onclick="openSLEECPatch()">Open SLEEC-PATCH</button>
+<div class="button-row">
+    <button onclick="openSLEECPatch()">START SELECTED</button>
+    <button class="secondary-button" onclick="toggleCustomEditor()">ADD CUSTOM</button>
+</div>
+
+<div id="customEditorPanel" class="custom-editor-panel">
+    <div class="card-header">
+        <h2>Custom SLEEC Specification</h2>
+        <p>Add a SLEEC specification in the editor, then start the workflow with that input.</p>
+    </div>
+
+    <div class="editor-shell">
+        <pre id="lineNumbers" class="line-numbers">1</pre>
+        <div class="code-editor">
+            <pre id="customHighlight" class="code-highlight" aria-hidden="true"></pre>
+            <textarea id="customSleecInput" spellcheck="false" oninput="updateCustomEditor()" onscroll="syncCustomEditorScroll()">def rule_1
+when condition
+then action
+unless exception</textarea>
+        </div>
+    </div>
+
+    <div class="button-row" style="margin-top:14px;">
+        <button onclick="startCustomSLEECPatch()">START CUSTOM</button>
+    </div>
+</div>
 
 <script>
 function openSLEECPatch() {
+    sessionStorage.removeItem("sleecPatchCustomText");
+    sessionStorage.removeItem("sleecPatchCustomUseCase");
+
     const selected = Array.from(
         document.querySelectorAll("input[name='usecase']:checked")
     ).map(x => x.value);
@@ -345,6 +482,63 @@ function openSLEECPatch() {
     window.location.href =
         "/sleec-patch-workbench?use_cases=" + encodeURIComponent(selected.join(","));
 }
+
+function toggleCustomEditor() {
+    const panel = document.getElementById("customEditorPanel");
+    panel.classList.toggle("is-open");
+    updateCustomEditor();
+}
+
+function escapeEditorHtml(value) {
+    return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+}
+
+function highlightSleec(value) {
+    return escapeEditorHtml(value)
+        .replace(/(^|\s)(def|rule|when|then|unless|if|and|or|not|must|may|shall)\b/g, '$1<span class="kw">$2</span>')
+        .replace(/(^|\s)(conflict|concern|purpose|capability|event|measure|defeater)\b/g, '$1<span class="kw-strong">$2</span>')
+        .replace(/\b(r\d+|rule[_-]?\d+)\b/gi, '<span class="rule-id">$1</span>')
+        .replace(/(#.*)$/gm, '<span class="comment">$1</span>');
+}
+
+function updateCustomEditor() {
+    const input = document.getElementById("customSleecInput");
+    const highlight = document.getElementById("customHighlight");
+    const lineNumbers = document.getElementById("lineNumbers");
+    const lines = Math.max(1, input.value.split("\n").length);
+
+    highlight.innerHTML = highlightSleec(input.value) + "\n";
+    lineNumbers.textContent = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
+    syncCustomEditorScroll();
+}
+
+function syncCustomEditorScroll() {
+    const input = document.getElementById("customSleecInput");
+    const highlight = document.getElementById("customHighlight");
+    const lineNumbers = document.getElementById("lineNumbers");
+
+    highlight.scrollTop = input.scrollTop;
+    highlight.scrollLeft = input.scrollLeft;
+    lineNumbers.scrollTop = input.scrollTop;
+}
+
+function startCustomSLEECPatch() {
+    const customText = document.getElementById("customSleecInput").value.trim();
+
+    if (!customText) {
+        alert("Please add a custom SLEEC specification.");
+        return;
+    }
+
+    sessionStorage.setItem("sleecPatchCustomText", customText);
+    sessionStorage.setItem("sleecPatchCustomUseCase", "Custom");
+    window.location.href = "/sleec-patch-workbench?use_cases=Custom";
+}
+
+document.addEventListener("DOMContentLoaded", updateCustomEditor);
 </script>
         </div>
 
@@ -369,11 +563,11 @@ line-height:1.7;
 
 <ol>
 <li>Load a SLEEC specification and well-formedness properties.</li>
-<li>LEGOS-SLEEC diagnoses conflicts, redundancies, concerns, and other well-formedness issues.</li>
+<li>State-of-the-art tooling diagnoses conflicts, redundancies, concerns, and other well-formedness issues.</li>
 <li>Select an appropriate repair operator.</li>
-<li>Generate deterministic repairs using formal rule transformations or semantic refinements using an LLM.</li>
-<li>Formally verify every candidate patch with LEGOS-SLEEC.</li>
-<li>Rank verified patches using specification quality criteria.</li>
+<li>Generate repairs using formal rule transformations or semantic refinements using an LLM.</li>
+<li>Formally verify every candidate patch with state-of-the-art verification tooling.</li>
+<li>Rank verified patches according to criteria established with multidisciplinary stakeholders.</li>
 <li>Present the ranked patches to stakeholders.</li>
 </ol>
 

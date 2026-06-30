@@ -18,20 +18,40 @@ function getNlRules() {
 }
 
 async function postJSON(url, data) {
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-    });
+    return runWithLoader(async () => {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
+        });
 
-    const result = await response.json();
+        const result = await response.json();
 
-    if (!response.ok) {
-        alert(result.error || "Request failed");
-        throw new Error(result.error || "Request failed");
+        if (!response.ok) {
+            alert(result.error || "Request failed");
+            throw new Error(result.error || "Request failed");
+        }
+
+        return result;
+    }, pipelineLoaderText(url));
+}
+
+function runWithLoader(work, text) {
+    if (window.withLoader) {
+        return window.withLoader(work, text);
     }
+    return work();
+}
 
-    return result;
+function pipelineLoaderText(url) {
+    if (url.includes("nl-to-sleec")) return "Translating natural language into SLEEC...";
+    if (url.includes("extract-relations")) return "Extracting semantic relations...";
+    if (url.includes("analyse")) return "Analysing well-formedness issues...";
+    if (url.includes("generate-patches")) return "Generating candidate repairs...";
+    if (url.includes("validate-patches")) return "Validating candidate repairs...";
+    if (url.includes("select-patch")) return "Preparing final refined specification...";
+    if (url.includes("load-use-case")) return "Loading use case rules...";
+    return "Working...";
 }
 
 

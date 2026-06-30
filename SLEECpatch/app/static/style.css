@@ -2,7 +2,7 @@
 
 /* ═══════════════════════════════════════════════════
    TOKENS  —  60 / 30 / 10 palette
-   60% white base · 30% sage #B1C6BA · 10% peach #FFC8BD
+   60% white base · 30% sage #B1C6BA · 10% charcoal green #3F5A4B
    ═══════════════════════════════════════════════════ */
 :root {
   /* base (60%) */
@@ -10,12 +10,12 @@
   --surface:     #ffffff;   /* cards / panels                 */
   --surface-2:   #f4f7f5;   /* faint sage-tinted fill         */
 
-  /* accent — peach (10%, actions & highlights) */
-  --accent:      #ffc8bd;   /* peach — action fills, accents  */
-  --accent-hover:#f9b1a3;   /* deeper peach for hover         */
-  --accent-light:#fff2ef;   /* peach tint surface             */
-  --accent-ink:  #9a4434;   /* terracotta — readable accent text/links */
-  --on-accent:   #5a2a20;   /* ink for text on peach fills    */
+  /* accent — charcoal green (10%, actions & highlights) */
+  --accent:      #3f5a4b;
+  --accent-hover:#334a3d;
+  --accent-light:#edf2ef;
+  --accent-ink:  #2e4438;
+  --on-accent:   #ffffff;
 
   /* secondary — sage (30%, structure & support) */
   --secondary:      #b1c6ba;
@@ -99,6 +99,21 @@ a:hover { color: var(--text); }
   box-shadow: var(--shadow-lg);
   padding: 36px 52px 48px;
   animation: fadeUp 0.35s ease both;
+}
+
+.home-title {
+  margin: 10px 0 20px;
+  text-align: center;
+  font-size: clamp(2.2rem, 7vw, 4.8rem);
+  letter-spacing: 0;
+}
+
+.home-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
 }
 
 @keyframes fadeUp {
@@ -243,7 +258,7 @@ form button:not([type]):not(.btn-accept):not(.btn-edit-ai):not(.btn-save-ai):not
   background: var(--accent);
   color: var(--on-accent);
   border-color: var(--accent);
-  box-shadow: 0 2px 8px rgba(249,177,163,0.45);
+  box-shadow: 0 2px 8px rgba(63,90,75,0.28);
 }
 
 .btn-primary:hover,
@@ -254,7 +269,7 @@ form button:not([type]):not(.btn-accept):not(.btn-edit-ai):not(.btn-save-ai):not
   border-color: var(--accent-hover);
   color: var(--on-accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(249,177,163,0.55);
+  box-shadow: 0 4px 14px rgba(63,90,75,0.36);
 }
 
 /* Generate AI button */

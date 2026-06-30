@@ -1,16 +1,25 @@
+function runWithLoader(work, text) {
+    if (window.withLoader) {
+        return window.withLoader(work, text);
+    }
+    return work();
+}
+
 async function runDetectionByUseCase() {
 
     const useCase = document.getElementById("useCase").value;
 
-    const response = await fetch("/api/sleec-detection/by-usecase", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            use_case: useCase
-        })
-    });
+    const response = await runWithLoader(() => fetch("/api/sleec-detection/by-usecase", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                use_case: useCase
+            })
+        }),
+        "Running SLEEC detection..."
+    );
 
     const data = await response.json();
 

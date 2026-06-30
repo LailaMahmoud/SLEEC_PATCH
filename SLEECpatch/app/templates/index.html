@@ -1,51 +1,42 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SLEEC-PATCH Workbench
- </title>
+  <title>SLEEC-PATCH</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   
 </head>
 <body>
 <div class="page">
   <div class="main-box">
-  <div class="right-menu">
-    <a href="/">Home</a>
-    <a href="/about">About</a>
-    <a href="/contact">Contact</a>
-
-    </div>
-    <h2>SLEEC-PATCH Workbench
-</h2>
+    <h2 class="home-title">SLEEC-PATCH</h2>
     <p class="subtitle">
-SLEEC-PATCH is a research prototype that automatically generates, formally verifies, and ranks resolution patches for well-formedness issues in SLEEC robot normative specifications. The framework combines deterministic formal reasoning with LLM-assisted semantic refinement to produce correct-by-construction candidate repairs that preserve stakeholder intent.
-</p>
+SLEEC-PATCH is a tool-supported methodology that automatically generates, formally verifies, and ranks resolution patches for well-formedness issues in SLEEC robot normative specifications. The framework combines formal reasoning with LLM-assisted semantic refinement to produce correct-by-construction candidate repairs.
     </p>
 
     <div class="info-box">
 
-<h3>Key Features</h3>
+<h3>Workflow</h3>
 
 <ul>
-    <li>✔ Detects conflicts, redundancies, concerns, purpose blocking, and situational conflicts using LEGOS-SLEEC.</li>
+    <li>✔ Detects conflicts, redundancies, concerns, purpose blocking, and situational conflicts using state-of-the-art tooling.</li>
 
     <li>✔ Selects appropriate repair operators based on the diagnosed issue.</li>
 
-    <li>✔ Generates deterministic repairs using formal rule transformations.</li>
+    <li>✔ Generates repairs using formal rule transformations.</li>
 
     <li>✔ Uses an LLM only for semantic refinements requiring new concepts or rules.</li>
 
-    <li>✔ Formally verifies every candidate patch using LEGOS-SLEEC.</li>
+    <li>✔ Formally verifies every candidate patch using state-of-the-art verification tooling.</li>
 
-    <li>✔ Ranks verified patches according to specification quality criteria.</li>
+    <li>✔ Ranks verified patches according to criteria established with multidisciplinary stakeholders.</li>
 </ul>
 
 </div>
     
 
-<div style="display:flex;gap:12px;flex-wrap:wrap;">
-    <button class="btn" onclick="window.location.href='/step6'">
-        Launch SLEEC-PATCH Workbench
+<div class="home-actions">
+    <button class="btn btn-primary" onclick="window.location.href='/step6'">
+        START
     </button>
 </div>
     </div>
