@@ -14,7 +14,10 @@
             <p class="eyebrow">SLEEC-PATCH</p>
             <h1>Philosopher Review</h1>
         </div>
-        <a class="header-link" href="{{ url_for('sleec_patch_workbench') }}">Workbench</a>
+        <nav class="header-actions" aria-label="Review navigation">
+            <a class="header-link" href="{{ url_for('sleec_patch_workbench') }}">Workbench</a>
+            <a class="header-link" href="{{ url_for('sleec_patch_report') }}">Report Data</a>
+        </nav>
     </header>
 
     <section class="review-controls" aria-label="Review controls">

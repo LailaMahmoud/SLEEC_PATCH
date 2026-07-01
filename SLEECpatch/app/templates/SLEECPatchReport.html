@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SLEEC-PATCH Report Data</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_patch_report.css') }}">
+</head>
+
+<body>
+<main class="report-page">
+    <header class="report-header">
+        <div>
+            <p class="eyebrow">SLEEC-PATCH</p>
+            <h1>Report Data</h1>
+        </div>
+        <nav class="header-actions" aria-label="Report navigation">
+            <a class="header-link" href="{{ url_for('sleec_patch_workbench') }}">Workbench</a>
+            <a class="header-link" href="{{ url_for('philosopher_review') }}">Philosopher Review</a>
+            <a id="jsonLink" class="header-link primary-link" href="/api/sleec-patch/report-data" target="_blank" rel="noopener">Open JSON</a>
+        </nav>
+    </header>
+
+    <section class="report-controls" aria-label="Report controls">
+        <label>
+            <span>Use Case</span>
+            <select id="reportUseCase">
+                <option value="">All use cases</option>
+                {% for uc in use_cases %}
+                <option value="{{ uc }}">{{ uc }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="checkbox-label">
+            <input id="includePatchedSleec" type="checkbox">
+            <span>Include patched SLEEC text</span>
+        </label>
+
+        <button id="loadReportButton" type="button" class="primary">Load Report Data</button>
+    </section>
+
+    <section class="metrics-strip" aria-label="Top-level report metrics">
+        <div class="metric">
+            <span>Total Rows</span>
+            <strong id="metricTotalRows">0</strong>
+        </div>
+        <div class="metric">
+            <span>Verified</span>
+            <strong id="metricVerifiedRows">0</strong>
+        </div>
+        <div class="metric">
+            <span>LLM</span>
+            <strong id="metricLlmRows">0</strong>
+        </div>
+        <div class="metric">
+            <span>Deterministic</span>
+            <strong id="metricDetRows">0</strong>
+        </div>
+        <div class="metric">
+            <span>Avg Time</span>
+            <strong id="metricAvgTime">0s</strong>
+        </div>
+    </section>
+
+    <section class="grid-two">
+        <article class="panel">
+            <div class="panel-heading">
+                <h2>Evaluation Summary</h2>
+                <span id="summaryCount">0 rows</span>
+            </div>
+            <div id="summaryOutput" class="table-wrap empty-state">No summary loaded.</div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-heading">
+                <h2>Breakdowns</h2>
+            </div>
+            <div id="breakdownOutput" class="breakdown-grid empty-state">No breakdown loaded.</div>
+        </article>
+    </section>
+
+    <section class="grid-two detail-grid">
+        <article class="panel table-panel">
+            <div class="panel-heading">
+                <h2>Saved Patch Rows</h2>
+                <span id="detailCount">0 rows</span>
+            </div>
+            <div id="detailsOutput" class="table-wrap empty-state">No patch details loaded.</div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-heading">
+                <h2>Selected Patch</h2>
+            </div>
+            <div id="patchDetailOutput" class="empty-state">Click a patch row to inspect the original rule, proposed rule, explanation, source, and patched SLEEC text when loaded.</div>
+        </article>
+    </section>
+
+    <section class="grid-two">
+        <article class="panel">
+            <div class="panel-heading">
+                <h2>Philosopher Review</h2>
+            </div>
+            <div id="philosopherOutput" class="empty-state">No philosopher review data loaded.</div>
+        </article>
+
+        <article class="panel">
+            <div class="panel-heading">
+                <h2>Experiment Logs</h2>
+            </div>
+            <div id="logsOutput" class="empty-state">No experiment logs loaded.</div>
+        </article>
+    </section>
+
+    <div id="reportToast" class="report-toast" role="status" aria-live="polite"></div>
+</main>
+
+<script src="{{ url_for('static', filename='js/sleec_patch_report.js') }}"></script>
+</body>
+</html>

@@ -15,6 +15,10 @@
   --secondary-hover:#9cb4a6;
   --secondary-light:#eef3f0;
   --secondary-ink:  #3c5648;
+  --accent-bright:       #f2b84b;
+  --accent-bright-hover: #dfa43a;
+  --accent-bright-light: #fff5df;
+  --accent-bright-ink:   #5c3a05;
   --dark:        #2b322e;
   --success:     #4f9d77;
   --danger:      #d4685e;
@@ -49,6 +53,10 @@ body {
 
 /* ── Hero ── */
 .hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: 6px solid var(--accent);
@@ -72,6 +80,29 @@ body {
   line-height: 1.7;
   margin: 4px 0 0;
   max-width: 820px;
+}
+
+.hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.hero-links a {
+  min-height: 40px;
+  border: 1px solid var(--accent-bright);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--accent-bright-light);
+  color: var(--accent-bright-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hero-links a:hover {
+  border-color: var(--accent-bright-hover);
+  background: var(--accent-bright);
 }
 
 /* ── Panels ── */
@@ -171,15 +202,15 @@ body {
 }
 
 .wizard-dot.is-active {
-  background: var(--accent-light);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  background: var(--accent-bright-light);
+  border-color: var(--accent-bright);
+  color: var(--accent-bright-ink);
 }
 
 .wizard-dot.is-active span {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+  background: var(--accent-bright);
+  border-color: var(--accent-bright-hover);
+  color: var(--accent-bright-ink);
 }
 
 .wizard-dot.is-complete {
@@ -366,8 +397,8 @@ button:disabled {
 
 .issue-sidebar-item:hover,
 .issue-sidebar-item.is-active {
-  border-color: var(--accent);
-  background: var(--accent-light);
+  border-color: var(--accent-bright);
+  background: var(--accent-bright-light);
   box-shadow: none;
 }
 
@@ -550,8 +581,8 @@ button:hover { transform: translateY(-1px); }
 }
 
 .issue-card:hover {
-  border-color: var(--accent);
-  background: var(--accent-light);
+  border-color: var(--accent-bright);
+  background: var(--accent-bright-light);
   transform: translateY(-1px);
   cursor: pointer;
 }

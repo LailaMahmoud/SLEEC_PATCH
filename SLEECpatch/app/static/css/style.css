@@ -23,6 +23,11 @@
   --secondary-light:#eef3f0;
   --secondary-ink:  #3c5648;
 
+  --accent-bright:       #f2b84b;
+  --accent-bright-hover: #dfa43a;
+  --accent-bright-light: #fff5df;
+  --accent-bright-ink:   #5c3a05;
+
   /* dark neutral (charcoal-green) */
   --dark:        #2b322e;
   --dark2:       #3b443f;
@@ -273,6 +278,22 @@ button[onclick]:hover {
   color: var(--on-accent);
   transform: translateY(-1px);
   box-shadow: 0 4px 14px rgba(249,177,163,0.55);
+}
+
+button.btn-secondary,
+button.btn-secondary[onclick] {
+  background: var(--accent-bright-light);
+  color: var(--accent-bright-ink);
+  border-color: var(--accent-bright);
+  box-shadow: var(--shadow-sm);
+}
+
+button.btn-secondary:hover,
+button.btn-secondary[onclick]:hover {
+  background: var(--accent-bright);
+  border-color: var(--accent-bright-hover);
+  color: var(--accent-bright-ink);
+  box-shadow: var(--shadow);
 }
 
 /* Big CTA */

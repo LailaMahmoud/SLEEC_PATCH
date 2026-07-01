@@ -7,6 +7,10 @@
   --border: #dfe7e2;
   --accent: #315b48;
   --accent-2: #315a78;
+  --accent-bright: #f2b84b;
+  --accent-bright-hover: #dfa43a;
+  --accent-bright-light: #fff5df;
+  --accent-bright-ink: #5c3a05;
   --accept: #2f7d56;
   --reject: #b94743;
   --amber: #8a6a22;
@@ -74,6 +78,13 @@ button:disabled {
   padding-bottom: 18px;
 }
 
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .eyebrow {
   margin: 0 0 4px;
   color: var(--accent);
@@ -114,6 +125,17 @@ h3 {
   background: var(--surface);
   border-color: var(--border);
   color: var(--ink);
+}
+
+.header-actions .header-link:last-child {
+  border-color: var(--accent-bright);
+  background: var(--accent-bright-light);
+  color: var(--accent-bright-ink);
+}
+
+.header-actions .header-link:last-child:hover {
+  border-color: var(--accent-bright-hover);
+  background: var(--accent-bright);
 }
 
 .primary {
@@ -280,8 +302,8 @@ textarea {
 }
 
 .queue-item.is-active {
-  border-color: var(--accent-2);
-  background: #edf4f8;
+  border-color: var(--accent-bright);
+  background: var(--accent-bright-light);
 }
 
 .queue-item strong,

@@ -6,9 +6,12 @@ import time
 from datetime import datetime
 
 
+REPO_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
 DB_PATH = os.environ.get(
     "SLEEC_SQLITE_PATH",
-    os.path.join("instance", "sleec_patch_results.db")
+    os.path.join(REPO_ROOT, "instance", "sleec_patch_results.db")
 )
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
 REQUIRE_DATABASE_URL = os.environ.get("SLEEC_REQUIRE_DATABASE_URL", "") == "1"

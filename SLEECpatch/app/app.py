@@ -1,6 +1,7 @@
 
 import numpy as np, re, os
 import sys
+from dotenv import load_dotenv
 
 from flask import Flask, render_template, request,redirect, jsonify, abort, url_for, session, render_template_string
 from openai import OpenAI
@@ -12,6 +13,7 @@ import json
 import sys
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(APP_DIR, ".env"))
 ROOT_DIR = os.path.abspath(os.path.join(APP_DIR, "..", ".."))
 
 if ROOT_DIR not in sys.path:
@@ -104,14 +106,8 @@ from sleec.sleec_api import *
 from sleec.sleec_api import *
 
 
-import os
-
-from dotenv import load_dotenv
-
 from services.sleec_patch_workbench_engine import SLEECPatchWorkbenchEngine
 
-
-load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24).hex())
@@ -197,6 +193,14 @@ def sleec_patch_workbench():
 def philosopher_review():
     return render_template(
         "philosopher_review.html",
+        use_cases=list(SLEEC_FILES.keys())
+    )
+
+
+@app.route("/sleec-patch-report")
+def sleec_patch_report():
+    return render_template(
+        "SLEECPatchReport.html",
         use_cases=list(SLEEC_FILES.keys())
     )
 
@@ -394,6 +398,136 @@ def api_sleec_patch_experiment_verifications():
             run_id=data.get("run_id", ""),
             include_patched_sleec=bool(data.get("include_patched_sleec", False))
         )
+    })
+
+
+def request_payload():
+    data = request.get_json(silent=True) or {}
+    return {
+        **request.args.to_dict(),
+        **data
+    }
+
+
+def truthy(value, default=False):
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def count_by(rows, field):
+    counts = {}
+
+    for row in rows:
+        key = row.get(field) or "Unknown"
+        counts[key] = counts.get(key, 0) + 1
+
+    return counts
+
+
+def report_metrics(rows):
+    total = len(rows)
+    verified = sum(1 for row in rows if row.get("verified"))
+    social_review = sum(
+        1 for row in rows
+        if row.get("requires_social_scientist_review")
+    )
+    philosopher_reviewed = sum(
+        1 for row in rows
+        if row.get("philosopher_decision")
+    )
+
+    return {
+        "total_patch_rows": total,
+        "verified_patch_rows": verified,
+        "llm_patch_rows": sum(
+            1 for row in rows
+            if str(row.get("source", "")).lower() == "llm"
+        ),
+        "deterministic_patch_rows": sum(
+            1 for row in rows
+            if str(row.get("source", "")).lower() == "deterministic"
+        ),
+        "social_review_required_rows": social_review,
+        "philosopher_reviewed_rows": philosopher_reviewed,
+        "avg_attempts": round(
+            sum(float(row.get("attempts") or 0) for row in rows) / total,
+            3
+        ) if total else 0,
+        "avg_total_time_seconds": round(
+            sum(float(row.get("total_time_seconds") or 0) for row in rows) / total,
+            3
+        ) if total else 0,
+        "by_use_case": count_by(rows, "use_case"),
+        "by_issue_type": count_by(rows, "issue_type"),
+        "by_operation": count_by(rows, "operation"),
+        "by_source": count_by(rows, "source")
+    }
+
+
+@app.route("/api/sleec-patch/report-data", methods=["GET", "POST"])
+def api_sleec_patch_report_data():
+    data = request_payload()
+    use_case = data.get("use_case", "").strip()
+    include_patched_sleec = truthy(
+        data.get("include_patched_sleec"),
+        default=True
+    )
+    evaluation_summary = sleec_patch_engine.store.summary()
+
+    if use_case:
+        patch_rows = sleec_patch_engine.store.results_for_use_case(
+            use_case,
+            include_patched_sleec=include_patched_sleec
+        )
+        evaluation_summary = [
+            row for row in evaluation_summary
+            if row.get("use_case") == use_case
+        ]
+    else:
+        patch_rows = sleec_patch_engine.store.all_results(
+            include_patched_sleec=include_patched_sleec
+        )
+
+    experiment_runs = sleec_patch_engine.store.pipeline_runs(use_case)
+    experiment_candidates = sleec_patch_engine.store.patch_candidates()
+    experiment_verifications = sleec_patch_engine.store.patch_verifications(
+        include_patched_sleec=include_patched_sleec
+    )
+    philosopher_reviews = philosopher_review_store.all_reviews()
+
+    if use_case:
+        experiment_candidates = [
+            row for row in experiment_candidates
+            if row.get("use_case") == use_case
+        ]
+        experiment_verifications = [
+            row for row in experiment_verifications
+            if row.get("use_case") == use_case
+        ]
+        philosopher_reviews = [
+            row for row in philosopher_reviews
+            if row.get("use_case") == use_case
+        ]
+
+    return jsonify({
+        "status": "OK",
+        "use_case": use_case or "ALL",
+        "include_patched_sleec": include_patched_sleec,
+        "persistence": sleec_patch_engine.store.persistence_status(),
+        "report_metrics": report_metrics(patch_rows),
+        "evaluation_summary": evaluation_summary,
+        "evaluation_details": patch_rows,
+        "philosopher_review_metrics": (
+            sleec_patch_engine.store.philosopher_review_metrics()
+        ),
+        "philosopher_review_summary": philosopher_review_store.summary(),
+        "philosopher_reviews": philosopher_reviews,
+        "experiment_runs": experiment_runs,
+        "experiment_candidates": experiment_candidates,
+        "experiment_verifications": experiment_verifications
     })
 
 
