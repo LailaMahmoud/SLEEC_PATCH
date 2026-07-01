@@ -186,64 +186,57 @@ class SLEECPatchWorkbenchEngine:
 
     def sleec_text_to_rules_json(self, sleec_text):
         rules = []
+        inside_rules = False
+        current = ""
 
-        m = re.search(
-            r"rule_start(.*?)rule_end",
-            sleec_text,
-            flags=re.IGNORECASE | re.DOTALL
-        )
+        for line in sleec_text.splitlines():
+            line = line.strip()
 
-        if not m:
-            return rules
-
-        block = m.group(1)
-        block = re.sub(r"//.*", "", block)
-
-        chunks = re.split(
-            r"(?=\b[A-Za-z]+\d+(?:_\d+)?\s+when\s+)",
-            block
-        )
-
-        for chunk in chunks:
-            chunk = re.sub(r"\s+", " ", chunk).strip()
-
-            if not chunk:
+            if not line or line.startswith("//"):
                 continue
 
-            match = re.search(
-                r"^([A-Za-z]+\d+(?:_\d+)?)\s+when\s+(.+?)\s+then\s+(.+?)(?=\s+[A-Za-z]+\d+(?:_\d+)?\s+when\s+|$)",
-                chunk,
-                flags=re.IGNORECASE | re.DOTALL
-            )
-
-            if not match:
+            if line.lower() == "rule_start":
+                inside_rules = True
                 continue
 
-            rule_id = match.group(1).strip()
-            condition = match.group(2).strip()
-            rest = match.group(3).strip()
+            if line.lower() == "rule_end":
+                inside_rules = False
+                if current:
+                    rules.append(current.strip())
+                break
 
-            defeaters = re.findall(
-                r"\bunless\s+(.+?)(?=\s+unless\s+|\s+otherwise\s+|\s+then\s+|$)",
-                rest,
-                flags=re.IGNORECASE
-            )
+            if not inside_rules:
+                continue
 
-            action = re.split(
-                r"\s+unless\s+|\s+otherwise\s+",
-                rest,
-                maxsplit=1,
-                flags=re.IGNORECASE
-            )[0].strip()
+            if re.match(r"^(r\d+|rule\d+|c\d+)(?:_\d+)?\s+when\s+", line, re.IGNORECASE):
+                if current:
+                    rules.append(current.strip())
+                current = line
+            else:
+                current += " " + line
 
-            rules.append({
-                "id": rule_id,
-                "condition": condition,
-                "action": action,
-                "defeater": " AND ".join(d.strip() for d in defeaters)
-            })
+        parsed_rules = []
 
-        return rules
+        pattern = re.compile(
+            r"^((?:r\d+|rule\d+|c\d+)(?:_\d+)?)\s+when\s+(.+?)\s+then\s+(.+?)(?:\s+unless\s+(.+))?$",
+            re.IGNORECASE
+        )
+
+        for text in rules:
+            match = pattern.search(text)
+
+            if match:
+                parsed_rules.append({
+                    "id": match.group(1).strip(),
+                    "condition": match.group(2).strip(),
+                    "action": match.group(3).strip(),
+                    "defeater": match.group(4).strip() if match.group(4) else "",
+                    "raw": text
+                })
+
+        print("RULES PARSED:", len(parsed_rules))
+
+        return parsed_rules
 
     def parse_rule_block(self, rule_text):
         clean = re.sub(r"\s+", " ", str(rule_text or "")).strip()
@@ -305,24 +298,35 @@ class SLEECPatchWorkbenchEngine:
             return ""
 
         lines = sleec_text.splitlines()
-        collecting = False
         collected = []
+        inside = False
+
+        start_pattern = re.compile(
+            rf"^\s*{re.escape(rule_id)}\s+when\s+",
+            re.IGNORECASE
+        )
+
+        next_rule_pattern = re.compile(
+            r"^\s*(r\d+|rule\d+|c\d+)(?:_\d+)?\s+when\s+",
+            re.IGNORECASE
+        )
 
         for line in lines:
             stripped = line.strip()
 
-            if collecting:
-                if self.is_rule_boundary(stripped):
-                    break
-
+            if start_pattern.match(stripped):
+                inside = True
                 collected.append(stripped)
                 continue
 
-            if self.line_has_rule_id(stripped, rule_id):
-                collecting = True
-                collected.append(stripped)
+            if inside:
+                if next_rule_pattern.match(stripped) or stripped.lower() == "rule_end":
+                    break
 
-        return "\n".join(collected).strip()
+                if stripped and not stripped.startswith("//"):
+                    collected.append(stripped)
+
+        return " ".join(collected).strip()
 
 
     def clean_original_rule(self, original_rule, sleec_text, target_rule_id):
@@ -599,10 +603,10 @@ class SLEECPatchWorkbenchEngine:
     def ensure_rule_id(self, original_rule, proposed_rule):
         proposed_rule = proposed_rule.strip()
 
-        if re.match(r"^[A-Za-z]+\d+(?:_\d+)?\s+when\s+", proposed_rule, re.IGNORECASE):
+        if re.match(r"^(r\d+|rule\d+|c\d+)(?:_\d+)?\s+when\s+", proposed_rule, re.IGNORECASE):
             return proposed_rule
 
-        match = re.match(r"^([A-Za-z]+\d+(?:_\d+)?)\s+", original_rule.strip())
+        match = re.match(r"^((?:r\d+|rule\d+|c\d+)(?:_\d+)?)\s+", original_rule.strip(), re.IGNORECASE)
 
         if match:
             return f"{match.group(1)} {proposed_rule}"
