@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SLEEC-PATCH Philosopher Review</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/philosopher_review.css') }}">
+</head>
+
+<body>
+<main class="review-page">
+    <header class="review-header">
+        <div>
+            <p class="eyebrow">SLEEC-PATCH</p>
+            <h1>Philosopher Review</h1>
+        </div>
+        <a class="header-link" href="{{ url_for('sleec_patch_workbench') }}">Workbench</a>
+    </header>
+
+    <section class="review-controls" aria-label="Review controls">
+        <label>
+            <span>Use Case</span>
+            <select id="reviewUseCase">
+                <option value="">All use cases</option>
+                {% for uc in use_cases %}
+                <option value="{{ uc }}">{{ uc }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="checkbox-label">
+            <input id="includeReviewed" type="checkbox">
+            <span>Include reviewed</span>
+        </label>
+
+        <button id="loadQueueButton" type="button" class="primary">Load Queue</button>
+        <button id="refreshMetricsButton" type="button" class="secondary">Refresh Metrics</button>
+    </section>
+
+    <section class="metrics-strip" id="metricsStrip" aria-label="Review metrics">
+        <div class="metric">
+            <span>Total</span>
+            <strong id="metricTotal">0</strong>
+        </div>
+        <div class="metric">
+            <span>Pending</span>
+            <strong id="metricPending">0</strong>
+        </div>
+        <div class="metric">
+            <span>Accepted</span>
+            <strong id="metricAccepted">0</strong>
+        </div>
+        <div class="metric">
+            <span>Rejected</span>
+            <strong id="metricRejected">0</strong>
+        </div>
+        <div class="metric">
+            <span>Rate</span>
+            <strong id="metricRate">0%</strong>
+        </div>
+    </section>
+
+    <section class="review-workspace">
+        <aside class="queue-panel" aria-label="Patch queue">
+            <div class="queue-heading">
+                <h2>Queue</h2>
+                <span id="queueCount">0 patches</span>
+            </div>
+            <div id="queueList" class="queue-list empty-state">No patches loaded.</div>
+        </aside>
+
+        <section class="detail-panel" aria-label="Patch detail">
+            <div id="detailEmpty" class="detail-empty">
+                Select a saved semantic patch.
+            </div>
+
+            <article id="patchDetail" class="patch-detail" hidden>
+                <div class="detail-topline">
+                    <div>
+                        <p id="detailMeta" class="detail-meta"></p>
+                        <h2 id="detailTitle"></h2>
+                    </div>
+                    <span id="decisionBadge" class="decision-badge">Pending</span>
+                </div>
+
+                <div class="rule-grid">
+                    <section>
+                        <h3>Original Rule</h3>
+                        <pre id="originalRule"></pre>
+                    </section>
+                    <section>
+                        <h3>Proposed Rule</h3>
+                        <pre id="proposedRule"></pre>
+                    </section>
+                </div>
+
+                <section class="explanation-block">
+                    <h3>Explanation</h3>
+                    <p id="patchExplanation"></p>
+                </section>
+
+                <section class="comments-block">
+                    <label for="reviewComments">Comments</label>
+                    <textarea id="reviewComments" rows="5"></textarea>
+                </section>
+
+                <div class="decision-actions">
+                    <button id="acceptButton" type="button" class="accept">Accept</button>
+                    <button id="rejectButton" type="button" class="reject">Reject</button>
+                </div>
+            </article>
+        </section>
+    </section>
+
+    <section class="breakdown-panel" aria-label="Metric breakdown">
+        <div>
+            <h2>Use Cases</h2>
+            <div id="useCaseBreakdown" class="breakdown-list"></div>
+        </div>
+        <div>
+            <h2>Operations</h2>
+            <div id="operationBreakdown" class="breakdown-list"></div>
+        </div>
+    </section>
+
+    <div id="reviewToast" class="review-toast" role="status" aria-live="polite"></div>
+</main>
+
+<script src="{{ url_for('static', filename='js/philosopher_review.js') }}"></script>
+</body>
+</html>

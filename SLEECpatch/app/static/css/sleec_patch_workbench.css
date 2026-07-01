@@ -249,8 +249,142 @@ button:disabled {
   gap: 24px;
 }
 
+.wizard-step.issue-workspace.is-active,
+.wizard-step.repair-workspace.is-active {
+  display: grid;
+}
+
+.issue-workspace {
+  display: grid;
+  grid-template-columns: minmax(250px, 330px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.compact-issue-workspace {
+  grid-template-columns: minmax(230px, 300px) minmax(0, 1fr);
+}
+
+.repair-workspace {
+  grid-template-columns: minmax(250px, 330px) repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.repair-sidebar-panel {
+  grid-row: 1 / span 5;
+}
+
+.repair-workspace .issue-run-panel,
+.repair-workspace .verified-panel,
+.repair-workspace .stakeholder-panel {
+  grid-column: 2 / -1;
+}
+
 .verified-panel {
   grid-column: 1 / -1;
+}
+
+.issue-run-panel {
+  grid-column: 1 / -1;
+}
+
+.issue-run-summary {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.issue-run-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.issue-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.issue-sidebar-panel {
+  align-self: start;
+  position: sticky;
+  top: 12px;
+}
+
+.issue-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.issue-sidebar-header h2 {
+  margin: 0;
+}
+
+.issue-sidebar-header span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 30px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent-ink);
+  font-weight: 800;
+}
+
+.issue-sidebar-list {
+  display: grid;
+  gap: 8px;
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.issue-sidebar-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  margin: 0;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  box-shadow: none;
+}
+
+.issue-sidebar-item:hover,
+.issue-sidebar-item.is-active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  box-shadow: none;
+}
+
+.issue-sidebar-item strong,
+.issue-sidebar-item small {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.issue-sidebar-item strong {
+  font-size: 13px;
+}
+
+.issue-sidebar-item small {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .step-actionbar {
@@ -425,6 +559,10 @@ button:hover { transform: translateY(-1px); }
 .selected-issue {
   border: 1.5px solid var(--accent) !important;
   background: var(--accent-light) !important;
+}
+
+.issue-card.is-resolved {
+  border-color: var(--success);
 }
 
 .trace-blocks {
@@ -801,7 +939,25 @@ td {
 tbody tr:hover td { background: var(--secondary-light); }
 
 @media (max-width: 900px) {
-  .grid-2 { grid-template-columns: 1fr; }
+  .grid-2,
+  .issue-workspace,
+  .compact-issue-workspace,
+  .repair-workspace {
+    grid-template-columns: 1fr;
+  }
+  .repair-sidebar-panel,
+  .repair-workspace .issue-run-panel,
+  .repair-workspace .verified-panel,
+  .repair-workspace .stakeholder-panel {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  .issue-sidebar-panel {
+    position: static;
+  }
+  .issue-sidebar-list {
+    max-height: 280px;
+  }
   .page { padding: 14px 18px 48px; }
   .hero h1 { font-size: 24px; }
   .hero p { display: none; }

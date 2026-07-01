@@ -25,7 +25,7 @@
       // standard-2 = 1 vCPU / 6 GiB / 12 GB disk. z3 is CPU-bound; bump to
       // standard-3/4 if diagnosis feels slow. Drop to standard-1 to save cost.
       "instance_type": "standard-2",
-      "max_instances": 3
+      "max_instances": 1
     }
   ],
 

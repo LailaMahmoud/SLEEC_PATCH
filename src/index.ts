@@ -18,6 +18,8 @@ export class SleecPatchContainer extends Container {
   envVars = {
     OPENAI_API_KEY: env.OPENAI_API_KEY,
     SECRET_KEY: env.SECRET_KEY,
+    DATABASE_URL: env.DATABASE_URL,
+    SLEEC_REQUIRE_DATABASE_URL: "1",
   };
 
   override onStart() {
@@ -27,11 +29,11 @@ export class SleecPatchContainer extends Container {
 
 export default {
   /**
-   * Stateless app: every request is independent, so we load-balance across a
-   * small pool of warm instances rather than pinning to one.
+   * Keep one container for the experiment so refreshes cannot bounce between
+   * instances while a use case is being reviewed.
    */
   async fetch(request: Request): Promise<Response> {
-    const container = await getRandom(env.SLEEC_PATCH_CONTAINER, 3);
+    const container = await getRandom(env.SLEEC_PATCH_CONTAINER, 1);
     return container.fetch(request);
   },
 };

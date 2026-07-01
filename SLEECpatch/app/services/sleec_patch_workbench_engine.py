@@ -1,7 +1,11 @@
+import copy
 import hashlib
+from collections import OrderedDict
 import re
 import time
 import os
+import threading
+import uuid
 from services.sleec_detection_engine import SLEECDetectionEngine
 from services.gpt_patch_engine import GPTPatchEngine
 from services.sleec_patch_evaluation_store import SLEECPatchEvaluationStore
@@ -20,9 +24,38 @@ class SLEECPatchWorkbenchEngine:
         self.operator_selector = RepairOperatorSelector()
         self.deterministic_engine = DeterministicRepairEngine()
         self.patch_ranker = PatchRanker()
+        self.detector_cache = OrderedDict()
+        self.detector_cache_lock = threading.RLock()
+        self.detector_cache_max_entries = int(
+            os.environ.get("SLEEC_DETECTOR_CACHE_SIZE", "64")
+        )
+
+    def run_detector_cached(self, sleec_text):
+        if self.detector_cache_max_entries <= 0:
+            return self.detector.run_text(sleec_text)
+
+        cache_key = hashlib.sha256(
+            str(sleec_text or "").encode("utf-8")
+        ).hexdigest()
+
+        with self.detector_cache_lock:
+            cached = self.detector_cache.get(cache_key)
+            if cached is not None:
+                self.detector_cache.move_to_end(cache_key)
+                return copy.deepcopy(cached)
+
+        result = self.detector.run_text(sleec_text)
+
+        with self.detector_cache_lock:
+            self.detector_cache[cache_key] = copy.deepcopy(result)
+
+            while len(self.detector_cache) > self.detector_cache_max_entries:
+                self.detector_cache.popitem(last=False)
+
+        return result
 
     def diagnose(self, sleec_text):
-        result = self.detector.run_text(sleec_text)
+        result = self.run_detector_cached(sleec_text)
 
         print("\n========== DETECTOR OUTPUT ==========")
         print(result)
@@ -401,6 +434,7 @@ class SLEECPatchWorkbenchEngine:
         return {
             "id": patch_id,
             "patch_id": patch_id,
+            "result_id": patch.get("result_id", patch.get("_result_id", "")),
             "source": patch.get("source", "llm"),
             "issue_type": patch.get("issue_type", ""),
             "rule_ids": patch.get("rule_ids", []),
@@ -888,7 +922,7 @@ class SLEECPatchWorkbenchEngine:
     def verify_candidate_patch(self, original_sleec, issue, patch):
         patched_sleec = self.apply_patch_to_text(original_sleec, patch)
 
-        original_analysis = self.detector.run_text(original_sleec)
+        original_analysis = self.run_detector_cached(original_sleec)
         original_structured = original_analysis.get("structured", {})
         new_analysis = self.diagnose(patched_sleec)
         new_structured = new_analysis.get("structured", {})
@@ -934,7 +968,7 @@ class SLEECPatchWorkbenchEngine:
 ):
         patched_sleec = self.apply_patch_to_text(original_sleec, patch)
 
-        new_analysis = self.detector.run_text(patched_sleec)
+        new_analysis = self.run_detector_cached(patched_sleec)
         new_structured = new_analysis.get("structured", {})
 
         regression_report = self.build_regression_report(
@@ -987,7 +1021,7 @@ class SLEECPatchWorkbenchEngine:
     ):
         patched_sleec = self.apply_patch_to_text(original_sleec, patch)
 
-        new_analysis = self.detector.run_text(patched_sleec)
+        new_analysis = self.run_detector_cached(patched_sleec)
         new_structured = new_analysis.get("structured", {})
 
         regression_report = self.build_regression_report(
@@ -1046,7 +1080,7 @@ class SLEECPatchWorkbenchEngine:
                 )
 
                 if augmented:
-                    final_analysis = self.detector.run_text(augmented["patched_sleec"])
+                    final_analysis = self.run_detector_cached(augmented["patched_sleec"])
                     final_structured = final_analysis.get("structured", {})
                     final_regression_report = self.build_regression_report(
                         issue_key,
@@ -1120,8 +1154,9 @@ class SLEECPatchWorkbenchEngine:
     max_attempts=1
 ):
         start_total = time.time()
+        run_id = uuid.uuid4().hex
 
-        original_analysis = self.detector.run_text(sleec_text)
+        original_analysis = self.run_detector_cached(sleec_text)
         original_structured = original_analysis.get("structured", {})
 
         issue_type = issue.get("issue_type", "")
@@ -1190,6 +1225,60 @@ class SLEECPatchWorkbenchEngine:
                 p["patch_id"] = f"g{i}"
                 p["id"] = f"g{i}"
                 p["source"] = p.get("source", "llm")
+                normalized_preview = self.normalize_patch(p, sleec_text)
+                metrics = self.patch_metrics(normalized_preview)
+                result_id = self.store.save_result({
+                    "use_case": use_case,
+                    "issue_id": issue.get("id", ""),
+                    "issue_type": issue_key,
+                    "selected_issue": selected_issue_value,
+
+                    "attempts": 0,
+                    "failed_patch_count": 0,
+                    "verified_patch_count": 0,
+
+                    "generation_time_seconds": 0,
+                    "validation_time_seconds": 0,
+                    "total_time_seconds": 0,
+
+                    "patch_id": normalized_preview.get("patch_id", ""),
+                    "operation": normalized_preview.get("operation", ""),
+                    "source": "llm",
+
+                    "target_rule_id": normalized_preview.get("target_rule_id", ""),
+                    "original_rule": normalized_preview.get("original_rule", ""),
+                    "proposed_rule": normalized_preview.get("proposed_rule", ""),
+                    "natural_language_explanation": normalized_preview.get(
+                        "natural_language_explanation",
+                        ""
+                    ),
+                    "patched_sleec": "",
+
+                    "rules_modified": metrics["rules_modified"],
+                    "rules_added": metrics["rules_added"],
+                    "rules_deleted": metrics["rules_deleted"],
+                    "defeaters_added": metrics["defeaters_added"],
+                    "conditions_refined": metrics["conditions_refined"],
+                    "actions_refined": metrics["actions_refined"],
+                    "capabilities_refined": metrics["capabilities_refined"],
+
+                    "verified": False,
+                    "expert_similarity": 0,
+                    "expert_match": False,
+                    "requires_social_scientist_review": True
+                })
+                p["_result_id"] = result_id
+                p["result_id"] = result_id
+
+                self.store.save_patch_candidate({
+                    "run_id": run_id,
+                    "use_case": use_case,
+                    "issue_id": issue.get("id", ""),
+                    "issue_type": issue_key,
+                    "attempt": 0,
+                    "candidate_signature": self.patch_signature_text(p),
+                    "patch": p
+                })
 
             llm_candidates.extend(llm_patches)
 
@@ -1232,6 +1321,15 @@ class SLEECPatchWorkbenchEngine:
                 if sig not in seen_candidate_signatures:
                     deterministic_candidates.append(p)
                     seen_candidate_signatures.add(sig)
+                    self.store.save_patch_candidate({
+                        "run_id": run_id,
+                        "use_case": use_case,
+                        "issue_id": issue.get("id", ""),
+                        "issue_type": issue_key,
+                        "attempt": attempts,
+                        "candidate_signature": self.patch_signature_text(p),
+                        "patch": p
+                    })
 
             patches = deterministic_patches + llm_patches
 
@@ -1242,6 +1340,7 @@ class SLEECPatchWorkbenchEngine:
                     failed_patch_count += 1
                     normalized_patch["verified"] = False
                     normalized_patch["failure_reason"] = "Patch not applicable"
+                    normalized_patch["attempt"] = attempts
                     failed_patches.append(normalized_patch)
                     continue
 
@@ -1294,6 +1393,7 @@ class SLEECPatchWorkbenchEngine:
                     if patch_signature not in seen_failed_signatures:
                         failed_patch_count += 1
                         normalized_patch["verified"] = False
+                        normalized_patch["attempt"] = attempts
                         failed_patches.append(normalized_patch)
                         seen_failed_signatures.add(patch_signature)
 
@@ -1308,6 +1408,7 @@ class SLEECPatchWorkbenchEngine:
         )
 
         log = {
+            "run_id": run_id,
             "use_case": use_case,
             "issue_id": issue.get("id", ""),
             "issue_type": issue_key,
@@ -1320,6 +1421,25 @@ class SLEECPatchWorkbenchEngine:
             "total_time_seconds": round(total_time, 3),
             "successful": len(verified_patches) > 0
         }
+
+        self.store.save_pipeline_run({
+            **log,
+            "selected_issue": selected_issue_value,
+            "repair_operators": operator_plan,
+            "original_issue_count": self.count_issues(original_structured),
+            "original_structured": original_structured,
+            "generated_file_path": output_file.get("path", "")
+        })
+
+        for patch in failed_patches + verified_patches:
+            self.store.save_patch_verification({
+                "run_id": run_id,
+                "use_case": use_case,
+                "issue_id": issue.get("id", ""),
+                "issue_type": issue_key,
+                "attempt": patch.get("attempt", attempts),
+                "patch": patch
+            })
 
         for patch in verified_patches:
             metrics = self.patch_metrics(patch)
@@ -1339,6 +1459,7 @@ class SLEECPatchWorkbenchEngine:
                 "total_time_seconds": round(total_time, 3),
 
                 "patch_id": patch.get("patch_id", patch.get("id", "")),
+                "id": patch.get("result_id", ""),
                 "operation": patch.get("operation", ""),
                 "source": patch.get("source", "unknown"),
                 "rank": patch.get("rank", 0),
@@ -1379,6 +1500,18 @@ class SLEECPatchWorkbenchEngine:
             "generated_file": output_file,
             "log": log
         }
+
+    def patch_signature_text(self, patch):
+        parts = [
+            patch.get("operation", ""),
+            patch.get("target_rule_id", ""),
+            patch.get("proposed_rule", ""),
+            patch.get("missing_element", "")
+        ]
+
+        return hashlib.sha1(
+            "|".join(str(part) for part in parts).encode("utf-8")
+        ).hexdigest()
 
     def extract_rule_from_issue_text(self, text):
         text = str(text).strip()

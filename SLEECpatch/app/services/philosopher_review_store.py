@@ -1,27 +1,22 @@
-import os
-import sqlite3
 from datetime import datetime
 
+from services.sleec_patch_evaluation_store import SLEECPatchEvaluationStore
 
-DB_PATH = os.path.join("instance", "sleec_patch_results.db")
 
-
-class PhilosopherReviewStore:
+class PhilosopherReviewStore(SLEECPatchEvaluationStore):
 
     def __init__(self):
-        os.makedirs("instance", exist_ok=True)
+        super().__init__()
         self.create_table()
-
-    def connect(self):
-        return sqlite3.connect(DB_PATH)
 
     def create_table(self):
         conn = self.connect()
         cur = conn.cursor()
+        id_column = self.id_column()
 
-        cur.execute("""
+        cur.execute(f"""
         CREATE TABLE IF NOT EXISTS philosopher_patch_reviews (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id {id_column},
             use_case TEXT,
             issue_id TEXT,
             issue_type TEXT,
@@ -44,7 +39,7 @@ class PhilosopherReviewStore:
         conn = self.connect()
         cur = conn.cursor()
 
-        cur.execute("""
+        self.execute(cur, """
         INSERT INTO philosopher_patch_reviews (
             use_case,
             issue_id,
@@ -80,24 +75,29 @@ class PhilosopherReviewStore:
 
     def all_reviews(self):
         conn = self.connect()
-        conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
-        rows = cur.execute("""
+        rows = self.execute(cur, """
             SELECT *
             FROM philosopher_patch_reviews
             ORDER BY timestamp DESC
         """).fetchall()
 
         conn.close()
-        return [dict(r) for r in rows]
+        return self.rows_to_dicts(rows)
 
     def summary(self):
         rows = self.all_reviews()
 
         total = len(rows)
-        accepted = len([r for r in rows if r.get("decision") == "accept"])
-        rejected = len([r for r in rows if r.get("decision") == "reject"])
+        accepted = len([
+            r for r in rows
+            if str(r.get("decision", "")).lower() in {"accept", "accepted"}
+        ])
+        rejected = len([
+            r for r in rows
+            if str(r.get("decision", "")).lower() in {"reject", "rejected"}
+        ])
 
         by_operation = {}
 
@@ -112,15 +112,18 @@ class PhilosopherReviewStore:
 
             by_operation[op]["total"] += 1
 
-            if r.get("decision") == "accept":
+            decision = str(r.get("decision", "")).lower()
+
+            if decision in {"accept", "accepted"}:
                 by_operation[op]["accepted"] += 1
 
-            if r.get("decision") == "reject":
+            if decision in {"reject", "rejected"}:
                 by_operation[op]["rejected"] += 1
 
         for op, v in by_operation.items():
             v["acceptance_rate"] = round(
-                v["accepted"] / v["total"], 3
+                v["accepted"] / v["total"],
+                3
             ) if v["total"] else 0
 
         return {

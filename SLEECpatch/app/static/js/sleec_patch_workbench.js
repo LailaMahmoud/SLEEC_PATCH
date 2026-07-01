@@ -5,6 +5,8 @@ let sleecPatchState = {
     verifiedPatches: [],
     deterministicCandidates: [],
     llmCandidates: [],
+    failedPatches: [],
+    issueResults: {},
     selectedPatchIndex: null,
     comparisonPatchIndexes: [],
     approvedPatchIndex: null,
@@ -330,6 +332,230 @@ function hasGeneratedPatches() {
     );
 }
 
+function issueKey(issue) {
+    if (!issue) return "";
+    return issue.id || `${issue.issue_type}:${String(issue.value || "").slice(0, 120)}`;
+}
+
+function currentIssueKey() {
+    return issueKey(sleecPatchState.selectedIssue);
+}
+
+function currentIssueResult() {
+    return sleecPatchState.issueResults[currentIssueKey()] || null;
+}
+
+function resetCurrentRunState() {
+    sleecPatchState.verifiedPatches = [];
+    sleecPatchState.deterministicCandidates = [];
+    sleecPatchState.llmCandidates = [];
+    sleecPatchState.failedPatches = [];
+    sleecPatchState.selectedPatchIndex = null;
+    sleecPatchState.comparisonPatchIndexes = [];
+    sleecPatchState.approvedPatchIndex = null;
+    sleecPatchState.patchDecisions = {};
+    sleecPatchState.log = null;
+}
+
+function captureCurrentRunState(data = null) {
+    return {
+        deterministicCandidates: sleecPatchState.deterministicCandidates,
+        llmCandidates: sleecPatchState.llmCandidates,
+        verifiedPatches: sleecPatchState.verifiedPatches,
+        failedPatches: sleecPatchState.failedPatches,
+        selectedPatchIndex: sleecPatchState.selectedPatchIndex,
+        comparisonPatchIndexes: sleecPatchState.comparisonPatchIndexes,
+        patchDecisions: sleecPatchState.patchDecisions,
+        approvedPatchIndex: sleecPatchState.approvedPatchIndex,
+        log: sleecPatchState.log,
+        raw: data
+    };
+}
+
+function persistCurrentIssueUiState() {
+    const key = currentIssueKey();
+    if (!key || !sleecPatchState.issueResults[key]) return;
+    sleecPatchState.issueResults[key] = captureCurrentRunState(
+        sleecPatchState.issueResults[key].raw || null
+    );
+}
+
+function restoreIssueResult(result) {
+    if (!result) {
+        resetCurrentRunState();
+        renderIssueRunOutput();
+        document.getElementById("deterministicOutput").innerHTML = "No deterministic repairs yet.";
+        document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
+        document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
+        document.getElementById("stakeholderDecisionOutput").innerHTML = "Run the pipeline for this issue.";
+        document.getElementById("logOutput").innerHTML = "No log yet.";
+        return;
+    }
+
+    sleecPatchState.deterministicCandidates = result.deterministicCandidates || [];
+    sleecPatchState.llmCandidates = result.llmCandidates || [];
+    sleecPatchState.verifiedPatches = result.verifiedPatches || [];
+    sleecPatchState.failedPatches = result.failedPatches || [];
+    sleecPatchState.selectedPatchIndex = result.selectedPatchIndex ?? (
+        sleecPatchState.verifiedPatches.length ? 0 : null
+    );
+    sleecPatchState.comparisonPatchIndexes = result.comparisonPatchIndexes || [];
+    sleecPatchState.patchDecisions = result.patchDecisions || {};
+    sleecPatchState.approvedPatchIndex = result.approvedPatchIndex ?? null;
+    sleecPatchState.log = result.log || null;
+
+    renderCandidatePatches(
+        "deterministicOutput",
+        sleecPatchState.deterministicCandidates,
+        "Deterministic"
+    );
+    renderCandidatePatches(
+        "llmOutput",
+        sleecPatchState.llmCandidates,
+        "GPT Semantic"
+    );
+    renderVerifiedPatches();
+    renderStakeholderDecision();
+    renderLog();
+    renderIssueRunOutput();
+}
+
+function issueRunStatus(issue) {
+    const result = sleecPatchState.issueResults[issueKey(issue)];
+    if (!result) return "not run";
+    if (result.log && result.log.successful) return "resolved";
+    return "attempted";
+}
+
+function issueStatusBadgeClass(status) {
+    if (status === "resolved") return "good";
+    if (status === "attempted") return "neutral";
+    return "bad";
+}
+
+function renderIssueSidebars() {
+    const sidebarIds = [
+        "issueSidebarStep3",
+        "issueSidebarStep4",
+        "issueSidebarStep5"
+    ];
+    const countIds = [
+        "issueSidebarCountStep3",
+        "issueSidebarCountStep4",
+        "issueSidebarCountStep5"
+    ];
+
+    const selectedKey = currentIssueKey();
+    const total = sleecPatchState.issues.length;
+    const resolved = sleecPatchState.issues.filter(
+        issue => issueRunStatus(issue) === "resolved"
+    ).length;
+    const countText = total ? `${resolved}/${total}` : "0";
+
+    countIds.forEach(id => {
+        const count = document.getElementById(id);
+        if (count) count.textContent = countText;
+    });
+
+    const html = total
+        ? sleecPatchState.issues.map((issue, index) => {
+            const status = issueRunStatus(issue);
+            const isActive = issueKey(issue) === selectedKey;
+            const title = issue.id || `Issue ${index + 1}`;
+
+            return `
+                <button type="button"
+                        class="issue-sidebar-item ${isActive ? "is-active" : ""}"
+                        onclick="selectIssue(${index})">
+                    <span>
+                        <strong>${escapeHtml(title)}</strong>
+                        <small>${escapeHtml(issue.issue_type || "issue")}</small>
+                    </span>
+                    <span class="badge ${issueStatusBadgeClass(status)}">
+                        ${escapeHtml(status)}
+                    </span>
+                </button>
+            `;
+        }).join("")
+        : "No issues selected.";
+
+    sidebarIds.forEach(id => {
+        const sidebar = document.getElementById(id);
+        if (!sidebar) return;
+
+        sidebar.className = total
+            ? "issue-sidebar-list"
+            : "issue-sidebar-list empty";
+        sidebar.innerHTML = html;
+    });
+}
+
+function unresolvedIssueIndexAfter(currentIndex) {
+    if (!sleecPatchState.issues.length) return -1;
+
+    for (let offset = 1; offset <= sleecPatchState.issues.length; offset += 1) {
+        const index = (currentIndex + offset) % sleecPatchState.issues.length;
+        if (issueRunStatus(sleecPatchState.issues[index]) !== "resolved") {
+            return index;
+        }
+    }
+
+    return -1;
+}
+
+function selectNextUnresolvedIssue() {
+    const currentIndex = sleecPatchState.issues.findIndex(
+        issue => issueKey(issue) === currentIssueKey()
+    );
+    const nextIndex = unresolvedIssueIndexAfter(Math.max(currentIndex, 0));
+
+    if (nextIndex < 0) {
+        alert("All detected issues have a successful run.");
+        return;
+    }
+
+    selectIssue(nextIndex);
+}
+
+function renderIssueRunOutput() {
+    const out = document.getElementById("issueRunOutput");
+    if (!out) return;
+
+    const selected = sleecPatchState.selectedIssue;
+    const total = sleecPatchState.issues.length;
+    const resolved = sleecPatchState.issues.filter(issue => issueRunStatus(issue) === "resolved").length;
+    const attempted = sleecPatchState.issues.filter(issue => issueRunStatus(issue) === "attempted").length;
+    const selectedStatus = selected ? issueRunStatus(selected) : "none";
+    const llmCount = sleecPatchState.llmCandidates.length;
+    const deterministicCount = sleecPatchState.deterministicCandidates.length;
+    const verifiedCount = sleecPatchState.verifiedPatches.length;
+
+    out.innerHTML = `
+        <div class="issue-run-summary">
+            <div>
+                <h3>Issue Run</h3>
+                <p>
+                    <strong>${escapeHtml(selected?.id || "No issue selected")}</strong>
+                    ${selected ? `- ${escapeHtml(selected.issue_type || "")}` : ""}
+                </p>
+                <div class="issue-status-row">
+                    <span class="badge neutral">Status: ${escapeHtml(selectedStatus)}</span>
+                    <span class="badge good">Resolved: ${escapeHtml(resolved)} / ${escapeHtml(total)}</span>
+                    <span class="badge neutral">Attempted: ${escapeHtml(attempted)}</span>
+                    <span class="badge neutral">Deterministic: ${escapeHtml(deterministicCount)}</span>
+                    <span class="badge neutral">LLM persisted: ${escapeHtml(llmCount)}</span>
+                    <span class="badge neutral">Verified: ${escapeHtml(verifiedCount)}</span>
+                </div>
+            </div>
+            <div class="issue-run-actions">
+                <button class="secondary small-btn" onclick="goToPatchStep(2)">Issue List</button>
+                <button class="primary small-btn" onclick="selectNextUnresolvedIssue()">Next Unresolved</button>
+                <button class="success small-btn" onclick="generateVerifiedPatches()">Run Again</button>
+            </div>
+        </div>
+    `;
+}
+
 function canAdvancePatchWizard(step) {
     if (step === 1) return sleecPatchState.issues.length > 0;
     if (step === 2) return Boolean(sleecPatchState.selectedIssue);
@@ -347,6 +573,8 @@ function resetPatchWorkbench() {
         verifiedPatches: [],
         deterministicCandidates: [],
         llmCandidates: [],
+        failedPatches: [],
+        issueResults: {},
         selectedPatchIndex: null,
         comparisonPatchIndexes: [],
         approvedPatchIndex: null,
@@ -357,11 +585,13 @@ function resetPatchWorkbench() {
 
     document.getElementById("issuesOutput").innerHTML = "No diagnosis yet.";
     document.getElementById("selectedIssueOutput").innerHTML = "Select one issue.";
-    document.getElementById("deterministicOutput").innerHTML = "No rule-based repairs yet.";
+    document.getElementById("deterministicOutput").innerHTML = "No deterministic repairs yet.";
     document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
     document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
     document.getElementById("stakeholderDecisionOutput").innerHTML = "Select a verified patch to review.";
     document.getElementById("logOutput").innerHTML = "No log yet.";
+    const issueRunOutput = document.getElementById("issueRunOutput");
+    if (issueRunOutput) issueRunOutput.innerHTML = "No issue run loaded.";
     document.getElementById("summaryOutput").innerHTML = "No evaluation summary loaded.";
     document.getElementById("patchDetailOutput").innerHTML = `
         Click an operation in the evaluation tables to view the
@@ -370,6 +600,7 @@ function resetPatchWorkbench() {
     document.getElementById("evaluationAOutput").innerHTML = "No Evaluation A results yet.";
     document.getElementById("evaluationBOutput").innerHTML = "No Evaluation B results yet.";
     document.getElementById("evaluationCOutput").innerHTML = "No philosopher review loaded.";
+    renderIssueSidebars();
 
     goToPatchStep(1);
     refreshPatchWizard();
@@ -396,6 +627,8 @@ async function diagnoseWFIs() {
     sleecPatchState.verifiedPatches = [];
     sleecPatchState.deterministicCandidates = [];
     sleecPatchState.llmCandidates = [];
+    sleecPatchState.failedPatches = [];
+    sleecPatchState.issueResults = {};
     sleecPatchState.selectedPatchIndex = null;
     sleecPatchState.comparisonPatchIndexes = [];
     sleecPatchState.approvedPatchIndex = null;
@@ -403,12 +636,15 @@ async function diagnoseWFIs() {
     sleecPatchState.log = null;
 
     renderIssues();
+    renderIssueSidebars();
     document.getElementById("selectedIssueOutput").innerHTML = "Select one issue.";
-    document.getElementById("deterministicOutput").innerHTML = "No rule-based repairs yet.";
+    document.getElementById("deterministicOutput").innerHTML = "No deterministic repairs yet.";
     document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
     document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
     document.getElementById("stakeholderDecisionOutput").innerHTML = "Select a verified patch to review.";
     document.getElementById("logOutput").innerHTML = "No log yet.";
+    const issueRunOutput = document.getElementById("issueRunOutput");
+    if (issueRunOutput) issueRunOutput.innerHTML = "No issue run loaded.";
     refreshPatchWizard();
     goToPatchStep(2);
 }
@@ -440,17 +676,24 @@ function renderIssues() {
     let html = "";
 
     sleecPatchState.issues.forEach((issue, index) => {
+        const status = issueRunStatus(issue);
         const selectedClass =
             sleecPatchState.selectedIssue &&
             sleecPatchState.selectedIssue.id === issue.id
                 ? " selected-issue"
                 : "";
+        const resolvedClass = status === "resolved" ? " is-resolved" : "";
 
         html += `
-            <div class="issue-card${selectedClass}" onclick="selectIssue(${index})">
+            <div class="issue-card${selectedClass}${resolvedClass}" onclick="selectIssue(${index})">
                 <div class="issue-header">
                     <span class="issue-type">${issue.issue_type}</span>
                     <span class="issue-id">${issue.id}</span>
+                </div>
+                <div class="issue-status-row">
+                    <span class="badge ${status === "resolved" ? "good" : status === "attempted" ? "neutral" : "bad"}">
+                        ${escapeHtml(status)}
+                    </span>
                 </div>
 
                 <div class="issue-section">
@@ -478,6 +721,7 @@ function renderIssues() {
 
 function selectIssue(index) {
     sleecPatchState.selectedIssue = sleecPatchState.issues[index];
+    const savedResult = currentIssueResult();
 
     document.getElementById("selectedIssueOutput").innerHTML = `
         <div class="issue-card selected-issue">
@@ -485,15 +729,22 @@ function selectIssue(index) {
                 <span class="issue-type">${sleecPatchState.selectedIssue.issue_type}</span>
                 <span class="issue-id">${sleecPatchState.selectedIssue.id}</span>
             </div>
+            <div class="issue-status-row">
+                <span class="badge ${savedResult ? "good" : "neutral"}">
+                    ${savedResult ? "Run result already loaded" : "Ready to run"}
+                </span>
+            </div>
 
             <p><strong>Selected WFI diagnosis trace</strong></p>
             ${formatDiagnosisTrace(sleecPatchState.selectedIssue.value)}
         </div>
     `;
 
+    restoreIssueResult(savedResult);
     renderIssues();
+    renderIssueSidebars();
     refreshPatchWizard();
-    goToPatchStep(3);
+    goToPatchStep(savedResult ? 4 : 3);
 }
 
 async function generateVerifiedPatches() {
@@ -510,7 +761,7 @@ async function generateVerifiedPatches() {
         <div class="patch-card">
             <h3>Generating verified patches...</h3>
             <p>
-                SLEEC-PATCH is generating rule-based repairs first,
+                SLEEC-PATCH is generating deterministic repairs first,
                 then invoking GPT for semantic refinement,
                 followed by SLEEC verification and ranking.
             </p>
@@ -558,12 +809,14 @@ async function generateVerifiedPatches() {
     sleecPatchState.log =
         data.log || {};
 
+    sleecPatchState.issueResults[currentIssueKey()] = captureCurrentRunState(data);
+
     // NEW
 
     renderCandidatePatches(
         "deterministicOutput",
         sleecPatchState.deterministicCandidates,
-        "Rule-Based"
+        "Deterministic"
     );
 
     renderCandidatePatches(
@@ -576,6 +829,9 @@ async function generateVerifiedPatches() {
     renderStakeholderDecision();
 
     renderLog();
+    renderIssueRunOutput();
+    renderIssues();
+    renderIssueSidebars();
     refreshPatchWizard();
     goToPatchStep(4);
 }
@@ -642,11 +898,10 @@ function renderVerifiedPatches() {
 sleecPatchState.verifiedPatches.forEach((p, index) => {
 
     const ranking = p.ranking || {};
-    const decision = sleecPatchState.patchDecisions[index] || "pending";
     const isSelected = sleecPatchState.selectedPatchIndex === index;
     const isCompared = sleecPatchState.comparisonPatchIndexes.includes(index);
-    const decisionClass = decision === "approved" ? "good" : decision === "rejected" ? "bad" : "neutral";
     const rationale = p.ranking_rationale || ranking.rationale || [];
+    const isLLM = (p.source || "").toLowerCase() === "llm";
 
     html += `
         <div class="patch-card ${isSelected ? "selected-patch" : ""}">
@@ -658,7 +913,9 @@ sleecPatchState.verifiedPatches.forEach((p, index) => {
                     <p><strong>Source:</strong> ${escapeHtml(p.source || "llm")}</p>
                 </div>
 
-                <span class="badge ${decisionClass}">${escapeHtml(decision)}</span>
+                <span class="badge ${isLLM ? "neutral" : "good"}">
+                    ${isLLM ? "Persisted for philosopher" : "Deterministic"}
+                </span>
             </div>
 
             <p class="patch-summary">${escapeHtml(p.stakeholder_summary || "")}</p>
@@ -682,9 +939,7 @@ sleecPatchState.verifiedPatches.forEach((p, index) => {
             ${renderRationaleList(rationale)}
 
             <div class="patch-actions">
-                <button class="primary small-btn" onclick="selectPatchForReview(${index})">Review</button>
-                <button class="success small-btn" onclick="approvePatch(${index})">Approve</button>
-                <button class="danger small-btn" onclick="rejectPatch(${index})">Reject</button>
+                <button class="primary small-btn" onclick="selectPatchForReview(${index})">Inspect</button>
                 <label class="compare-toggle">
                     <input type="checkbox"
                            ${isCompared ? "checked" : ""}
@@ -724,6 +979,7 @@ function selectPatchForReview(index) {
         ].slice(0, 3);
     }
 
+    persistCurrentIssueUiState();
     renderVerifiedPatches();
     renderStakeholderDecision();
 }
@@ -736,6 +992,7 @@ function toggleComparePatch(index, checked) {
     }
 
     sleecPatchState.comparisonPatchIndexes = current.slice(0, 3);
+    persistCurrentIssueUiState();
     renderVerifiedPatches();
     renderStakeholderDecision();
 }
@@ -832,7 +1089,17 @@ function renderStakeholderDecision() {
     if (!out) return;
 
     if (!sleecPatchState.verifiedPatches.length) {
-        out.innerHTML = "No verified patches are available for stakeholder review.";
+        const llmCount = sleecPatchState.llmCandidates.length;
+        out.innerHTML = `
+            <div class="metric-card">
+                <h3>Persistence State</h3>
+                <p><strong>LLM patches persisted immediately:</strong> ${escapeHtml(llmCount)}</p>
+                <p><strong>Verified patches:</strong> 0</p>
+                <p>Deterministic repairs continue through verification before becoming final persisted results.</p>
+                <button class="secondary small-btn" onclick="selectNextUnresolvedIssue()">Next Unresolved Issue</button>
+                <a class="secondary small-btn" href="/philosopher-review" target="_blank" rel="noopener">Open Philosopher Review</a>
+            </div>
+        `;
         return;
     }
 
@@ -841,10 +1108,12 @@ function renderStakeholderDecision() {
     }
 
     const selectedPatch = sleecPatchState.verifiedPatches[sleecPatchState.selectedPatchIndex];
-    const approvedPatch = sleecPatchState.verifiedPatches[sleecPatchState.approvedPatchIndex];
-    const approvedCount = sleecPatchState.approvedPatchIndex === null ? 0 : 1;
-    const rejectedCount = Object.values(sleecPatchState.patchDecisions).filter(v => v === "rejected").length;
-    const editedCount = sleecPatchState.verifiedPatches.filter(p => p.stakeholder_edited).length;
+    const deterministicVerified = sleecPatchState.verifiedPatches.filter(
+        patch => (patch.source || "").toLowerCase() === "deterministic"
+    ).length;
+    const llmVerified = sleecPatchState.verifiedPatches.filter(
+        patch => (patch.source || "").toLowerCase() === "llm"
+    ).length;
     const comparisonIndexes = sleecPatchState.comparisonPatchIndexes.length
         ? sleecPatchState.comparisonPatchIndexes
         : [sleecPatchState.selectedPatchIndex];
@@ -855,13 +1124,13 @@ function renderStakeholderDecision() {
 
         const ranking = patch.ranking || {};
         const rationale = patch.ranking_rationale || ranking.rationale || [];
-        const decision = sleecPatchState.patchDecisions[index] || "pending";
+        const isLLM = (patch.source || "").toLowerCase() === "llm";
 
         return `
             <article class="comparison-card">
                 <div class="comparison-card-top">
                     <strong>Rank #${escapeHtml(patch.rank || "-")}</strong>
-                    <span class="badge ${decision === "approved" ? "good" : decision === "rejected" ? "bad" : "neutral"}">${escapeHtml(decision)}</span>
+                    <span class="badge ${isLLM ? "neutral" : "good"}">${isLLM ? "LLM" : "Deterministic"}</span>
                 </div>
                 <p><strong>${escapeHtml(patchDisplayLabel(patch))}</strong></p>
                 <p>${escapeHtml(patch.patch_id)} - ${escapeHtml(patch.operation)}</p>
@@ -885,28 +1154,24 @@ function renderStakeholderDecision() {
     out.innerHTML = `
         <div class="decision-summary">
             <div class="metric-card">
-                <h3>Review State</h3>
+                <h3>Persistence State</h3>
                 <p><strong>Verified patches:</strong> ${sleecPatchState.verifiedPatches.length}</p>
-                <p><strong>Approved:</strong> ${approvedCount}</p>
-                <p><strong>Rejected:</strong> ${rejectedCount}</p>
-                <p><strong>Edited:</strong> ${editedCount}</p>
+                <p><strong>Deterministic verified:</strong> ${deterministicVerified}</p>
+                <p><strong>LLM generated and persisted:</strong> ${sleecPatchState.llmCandidates.length}</p>
+                <p><strong>LLM verified:</strong> ${llmVerified}</p>
             </div>
 
             <div class="metric-card">
-                <h3>Approved Patch</h3>
-                ${
-                    approvedPatch
-                        ? `<p><strong>${escapeHtml(approvedPatch.patch_id)}</strong> - ${escapeHtml(patchDisplayLabel(approvedPatch))}</p>
-                           <p>Rank #${escapeHtml(approvedPatch.rank || "-")} with score ${escapeHtml(approvedPatch.ranking_score || 0)}</p>
-                           <button class="primary small-btn" onclick="applyApprovedPatchToEditor()">Load into editor</button>`
-                        : `<p>No approved patch yet.</p>`
-                }
+                <h3>Next Step</h3>
+                <p>LLM accept/reject decisions are handled on the philosopher page.</p>
+                <button class="secondary small-btn" onclick="selectNextUnresolvedIssue()">Next Unresolved Issue</button>
+                <a class="primary small-btn" href="/philosopher-review" target="_blank" rel="noopener">Open Philosopher Review</a>
             </div>
         </div>
 
         <div class="decision-editor">
             <div>
-                <h3>Selected Patch</h3>
+                <h3>Selected Verified Patch</h3>
                 <p>
                     <strong>${escapeHtml(selectedPatch.patch_id)}</strong>
                     - ${escapeHtml(patchDisplayLabel(selectedPatch))}
@@ -921,29 +1186,18 @@ function renderStakeholderDecision() {
                     []
                 )}
 
-                <label for="stakeholderProposedRule">Proposed Rule</label>
-                <textarea id="stakeholderProposedRule" rows="6">${escapeHtml(selectedPatch.proposed_rule || "")}</textarea>
+                <h4>Proposed Rule</h4>
+                <pre>${escapeHtml(selectedPatch.proposed_rule || "")}</pre>
 
-                <label for="stakeholderExplanation">Rationale</label>
-                <textarea id="stakeholderExplanation" rows="4">${escapeHtml(selectedPatch.natural_language_explanation || "")}</textarea>
-
-                <div class="patch-actions">
-                    <button class="primary" onclick="saveStakeholderEdit()">Save edit</button>
-                    <button class="secondary" onclick="resetStakeholderEdit()">Reset fields</button>
-                    <button class="success" onclick="approvePatch(${sleecPatchState.selectedPatchIndex})">Approve</button>
-                    <button class="danger" onclick="rejectPatch(${sleecPatchState.selectedPatchIndex})">Reject</button>
-                </div>
+                <h4>Explanation</h4>
+                <p>${escapeHtml(selectedPatch.natural_language_explanation || "")}</p>
             </div>
 
             <div>
                 <h3>Verification Preview</h3>
                 <p>
                     <strong>Status:</strong>
-                    ${
-                        selectedPatch.stakeholder_edited
-                            ? "Edited after verification; re-run diagnosis before final use."
-                            : "Verified by SLEEC."
-                    }
+                    Verified by SLEEC.
                 </p>
                 <h4>Original Rule</h4>
                 <pre>${escapeHtml(selectedPatch.original_rule || "")}</pre>
@@ -1222,6 +1476,9 @@ function renderEvaluationA(data) {
             <td>${escapeHtml(p.operation)}</td>
             <td>${escapeHtml(p.target_rule_id)}</td>
             <td>${p.matched_corrected ? "Match" : "No match"}</td>
+            <td>${escapeHtml(p.match_type || "-")}</td>
+            <td>${Math.round((Number(p.match_confidence) || 0) * 100)}%</td>
+            <td>${escapeHtml(p.match_reason || "")}</td>
         </tr>
     `).join("");
 
@@ -1257,10 +1514,13 @@ function renderEvaluationA(data) {
                     <th>Operation</th>
                     <th>Target Rule</th>
                     <th>Match</th>
+                    <th>Type</th>
+                    <th>Confidence</th>
+                    <th>Reason</th>
                 </tr>
             </thead>
             <tbody>
-                ${patchRows || `<tr><td colspan="5">No patch results.</td></tr>`}
+                ${patchRows || `<tr><td colspan="8">No patch results.</td></tr>`}
             </tbody>
         </table>
     `;

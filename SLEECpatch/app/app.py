@@ -193,6 +193,14 @@ def sleec_patch_workbench():
     )
 
 
+@app.route("/philosopher-review")
+def philosopher_review():
+    return render_template(
+        "philosopher_review.html",
+        use_cases=list(SLEEC_FILES.keys())
+    )
+
+
 @app.route("/api/sleec-patch/load-usecase", methods=["POST"])
 def api_sleec_patch_load_usecase():
 
@@ -251,6 +259,142 @@ def api_sleec_patch_evaluation_results():
     return jsonify(
         sleec_patch_engine.store.all_results(include_patched_sleec=False)
     )
+
+
+@app.route("/api/sleec-patch/philosopher-review-queue", methods=["POST"])
+def api_sleec_patch_philosopher_review_queue():
+    data = request.get_json() or {}
+
+    try:
+        return jsonify({
+            "status": "OK",
+            "patches": sleec_patch_engine.store.philosopher_review_queue(
+                use_case=data.get("use_case", ""),
+                include_reviewed=bool(data.get("include_reviewed", False))
+            ),
+            "metrics": sleec_patch_engine.store.philosopher_review_metrics()
+        })
+    except Exception as exc:
+        app.logger.exception("Failed to load philosopher review queue")
+        return jsonify({
+            "status": "ERROR",
+            "error": "Failed to load persisted philosopher review queue.",
+            "details": str(exc)
+        }), 500
+
+
+@app.route("/api/sleec-patch/philosopher-review-decision", methods=["POST"])
+def api_sleec_patch_philosopher_review_decision():
+    data = request.get_json() or {}
+    result_id = data.get("id")
+    decision = data.get("decision", "")
+
+    if not result_id:
+        return jsonify({
+            "status": "ERROR",
+            "error": "Missing patch result id."
+        }), 400
+
+    if decision not in {"Accepted", "Rejected"}:
+        return jsonify({
+            "status": "ERROR",
+            "error": "Decision must be Accepted or Rejected."
+        }), 400
+
+    saved = sleec_patch_engine.store.save_philosopher_decision(
+        result_id=result_id,
+        decision=decision,
+        comments=data.get("comments", "")
+    )
+
+    philosopher_review_store.save_review({
+        "use_case": data.get("use_case", ""),
+        "issue_id": data.get("issue_id", ""),
+        "issue_type": data.get("issue_type", ""),
+        "patch_id": data.get("patch_id", ""),
+        "operation": data.get("operation", ""),
+        "original_rule": data.get("original_rule", ""),
+        "proposed_rule": data.get("proposed_rule", ""),
+        "explanation": data.get("natural_language_explanation", ""),
+        "reviewer": data.get("reviewer", "Philosopher"),
+        "decision": decision,
+        "comment": data.get("comments", "")
+    })
+
+    return jsonify({
+        "status": "OK",
+        "saved": saved,
+        "metrics": sleec_patch_engine.store.philosopher_review_metrics()
+    })
+
+
+@app.route("/api/sleec-patch/philosopher-review-metrics", methods=["POST"])
+def api_sleec_patch_philosopher_review_metrics():
+    try:
+        return jsonify({
+            "status": "OK",
+            "metrics": sleec_patch_engine.store.philosopher_review_metrics()
+        })
+    except Exception as exc:
+        app.logger.exception("Failed to load philosopher review metrics")
+        return jsonify({
+            "status": "ERROR",
+            "error": "Failed to load philosopher review metrics.",
+            "details": str(exc)
+        }), 500
+
+
+@app.route("/api/sleec-patch/persistence-status", methods=["POST"])
+def api_sleec_patch_persistence_status():
+    try:
+        return jsonify({
+            "status": "OK",
+            "persistence": sleec_patch_engine.store.persistence_status()
+        })
+    except Exception as exc:
+        app.logger.exception("Failed to load persistence status")
+        return jsonify({
+            "status": "ERROR",
+            "error": "Failed to load persistence status.",
+            "details": str(exc)
+        }), 500
+
+
+@app.route("/api/sleec-patch/experiment-runs", methods=["POST"])
+def api_sleec_patch_experiment_runs():
+    data = request.get_json() or {}
+
+    return jsonify({
+        "status": "OK",
+        "runs": sleec_patch_engine.store.pipeline_runs(
+            data.get("use_case", "")
+        )
+    })
+
+
+@app.route("/api/sleec-patch/experiment-candidates", methods=["POST"])
+def api_sleec_patch_experiment_candidates():
+    data = request.get_json() or {}
+
+    return jsonify({
+        "status": "OK",
+        "candidates": sleec_patch_engine.store.patch_candidates(
+            data.get("run_id", "")
+        )
+    })
+
+
+@app.route("/api/sleec-patch/experiment-verifications", methods=["POST"])
+def api_sleec_patch_experiment_verifications():
+    data = request.get_json() or {}
+
+    return jsonify({
+        "status": "OK",
+        "verifications": sleec_patch_engine.store.patch_verifications(
+            run_id=data.get("run_id", ""),
+            include_patched_sleec=bool(data.get("include_patched_sleec", False))
+        )
+    })
 
 
 @app.route("/api/sleec-patch/evaluation-a", methods=["POST"])

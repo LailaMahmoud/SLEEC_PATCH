@@ -64,16 +64,38 @@
     <div id="issuesOutput" class="empty">No diagnosis yet.</div>
 </section>
 
-<section class="panel wizard-step" data-step="3">
-    <h2>3. Selected Issue</h2>
-    <div id="selectedIssueOutput" class="empty">Select one issue.</div>
-    <button class="success" onclick="generateVerifiedPatches()">Suggest Verified Patches</button>
+<section class="issue-workspace wizard-step" data-step="3">
+    <aside class="panel issue-sidebar-panel">
+        <div class="issue-sidebar-header">
+            <h2>Issues</h2>
+            <span id="issueSidebarCountStep3">0</span>
+        </div>
+        <div id="issueSidebarStep3" class="issue-sidebar-list empty">No issues selected.</div>
+    </aside>
+
+    <div class="panel">
+        <h2>3. Selected Issue</h2>
+        <div id="selectedIssueOutput" class="empty">Select one issue.</div>
+        <button class="success" onclick="generateVerifiedPatches()">Run Pipeline for Selected Issue</button>
+    </div>
 </section>
 
-<section class="grid-2 wizard-step" data-step="4">
+<section class="grid-2 repair-workspace wizard-step" data-step="4">
+    <aside class="panel issue-sidebar-panel repair-sidebar-panel">
+        <div class="issue-sidebar-header">
+            <h2>Issues</h2>
+            <span id="issueSidebarCountStep4">0</span>
+        </div>
+        <div id="issueSidebarStep4" class="issue-sidebar-list empty">No issues selected.</div>
+    </aside>
+
+    <div class="panel issue-run-panel">
+        <div id="issueRunOutput" class="empty">No issue run loaded.</div>
+    </div>
+
     <div class="panel">
-        <h2>4A. Rule-Based Repairs</h2>
-        <div id="deterministicOutput" class="empty">No rule-based repairs yet.</div>
+        <h2>4A. Deterministic Repairs</h2>
+        <div id="deterministicOutput" class="empty">No deterministic repairs yet.</div>
     </div>
 
     <div class="panel">
@@ -90,19 +112,31 @@
         <div class="section-header">
             <div>
                 <h2>4D. Stakeholder Decision</h2>
-                <p>Inspect, compare, edit, and approve the preferred verified patch.</p>
+                <p>Inspect persisted patches and continue through the detected issue list.</p>
             </div>
         </div>
 
         <div id="stakeholderDecisionOutput" class="empty">
-            Select a verified patch to review.
+            Select a verified patch to inspect.
         </div>
     </div>
 </section>
 
 <section class="panel wizard-step" data-step="5">
-    <h2>5. Internal Verification Log</h2>
-    <div id="logOutput" class="empty">No log yet.</div>
+    <div class="issue-workspace compact-issue-workspace">
+        <aside class="issue-sidebar-panel">
+            <div class="issue-sidebar-header">
+                <h2>Issues</h2>
+                <span id="issueSidebarCountStep5">0</span>
+            </div>
+            <div id="issueSidebarStep5" class="issue-sidebar-list empty">No issues selected.</div>
+        </aside>
+
+        <div>
+            <h2>5. Internal Verification Log</h2>
+            <div id="logOutput" class="empty">No log yet.</div>
+        </div>
+    </div>
 </section>
 
 <section class="panel evaluation-section wizard-step" data-step="6">
