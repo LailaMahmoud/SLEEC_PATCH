@@ -5,8 +5,10 @@ from services.sleec_patch_evaluation_store import SLEECPatchEvaluationStore
 
 class PhilosopherReviewStore(SLEECPatchEvaluationStore):
 
-    def __init__(self):
-        super().__init__()
+    def _create_schema(self):
+        # Runs lazily on first DB use (see base store) so container startup does
+        # not block on the database.
+        super()._create_schema()
         self.create_table()
 
     def create_table(self):

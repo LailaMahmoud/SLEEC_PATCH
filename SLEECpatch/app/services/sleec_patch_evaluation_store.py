@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+import threading
 import time
 from datetime import datetime
 
@@ -23,13 +24,46 @@ class SLEECPatchEvaluationStore:
 
         if not self.using_postgres():
             os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
-        self.create_tables()
-        self.ensure_columns()
+
+        # Schema creation is deferred to the first DB use (see connect()) rather
+        # than run here in the constructor. Connecting to Postgres during
+        # import/boot made container startup block on the database; a cold or
+        # distant DB then exceeded Cloudflare's container start deadline and took
+        # the whole site down. Lazy init lets gunicorn bind its port immediately
+        # and pay the DB round-trips on the first request instead.
+        self._schema_ready = False
+        self._schema_lock = threading.Lock()
+        self._schema_local = threading.local()
 
     def using_postgres(self):
         return DATABASE_URL.startswith(("postgres://", "postgresql://"))
 
     def connect(self):
+        # Ensure the schema exists before handing back a connection, unless we
+        # are already inside schema creation on this thread (create_tables/
+        # ensure_columns call connect() themselves).
+        if not self._schema_ready and not getattr(
+            self._schema_local, "in_schema", False
+        ):
+            self._ensure_schema()
+        return self._open_connection()
+
+    def _ensure_schema(self):
+        with self._schema_lock:
+            if self._schema_ready:
+                return
+            self._schema_local.in_schema = True
+            try:
+                self._create_schema()
+                self._schema_ready = True
+            finally:
+                self._schema_local.in_schema = False
+
+    def _create_schema(self):
+        self.create_tables()
+        self.ensure_columns()
+
+    def _open_connection(self):
         if self.using_postgres():
             try:
                 import psycopg
