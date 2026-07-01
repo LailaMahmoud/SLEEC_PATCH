@@ -362,9 +362,6 @@ class DeterministicRepairEngine:
         for match in re.finditer(r"\b(?:Rule|R|r)\d+(?:_\d+)?\b", str(text)):
             rule_id = match.group(0)
 
-            if rule_id.lower().startswith("rule"):
-                rule_id = "R" + rule_id[4:]
-
             if rule_id not in ids:
                 ids.append(rule_id)
 
@@ -450,17 +447,16 @@ class DeterministicRepairEngine:
         return self.find_rule_by_action(action, rules)
 
     def find_rule_by_action(self, action, rules):
-        action = str(action or "").strip()
+        action = self.normalize_action(action)
 
         if not action:
             return None
 
-        positive_action = self.strip_not(action)
-
         for rule in rules:
-            rule_action = str(rule.get("action", "")).strip()
+            rule_actions = [rule.get("action", "")]
+            rule_actions.extend(self.defeater_actions(rule.get("defeater", "")))
 
-            if rule_action == action or self.strip_not(rule_action) == positive_action:
+            if any(self.normalize_action(rule_action) == action for rule_action in rule_actions):
                 return rule
 
         return None
@@ -612,7 +608,7 @@ class DeterministicRepairEngine:
             }
 
         action = re.split(
-            r"\bwithin\b|\bunless\b",
+            r"\bwithin\b|\bunless\b|\beventually\b",
             match.group(2),
             flags=re.IGNORECASE
         )[0].strip()
@@ -655,6 +651,31 @@ class DeterministicRepairEngine:
 
     def strip_not(self, action):
         return re.sub(r"^not\s*", "", str(action or "").strip(), flags=re.IGNORECASE)
+
+    def normalize_action(self, action):
+        action = str(action or "").strip()
+        action = re.split(
+            r"\bwithin\b|\bunless\b|\beventually\b|\botherwise\b",
+            action,
+            maxsplit=1,
+            flags=re.IGNORECASE
+        )[0].strip()
+        action = self.strip_not(action)
+        action = action.strip("{}() ")
+        action = re.sub(r"\s+", " ", action)
+        return action
+
+    def defeater_actions(self, defeater):
+        actions = []
+
+        for match in re.finditer(
+            r"\bthen\s+(.+?)(?=\s+unless\s+|\s+otherwise\s+|$)",
+            str(defeater or ""),
+            flags=re.IGNORECASE
+        ):
+            actions.append(match.group(1).strip())
+
+        return actions
 
     def defeater_suffix(self, rule):
         defeater = self.clean_condition(rule.get("defeater", ""))

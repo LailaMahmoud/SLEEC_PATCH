@@ -167,11 +167,11 @@ class SLEECDetectionEngine:
 
             import re
 
-            pattern = r"(c\d+\s+when.*?Concern is raised)"
+            pattern = r"((?:c\d+)(?:_\d+)?\s+when.*?Concern is raised)"
             matches = re.findall(
                 pattern,
                 msg,
-                re.DOTALL
+                re.IGNORECASE | re.DOTALL
             )
 
             for m in matches:
