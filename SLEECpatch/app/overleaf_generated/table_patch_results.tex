@@ -1,0 +1,31 @@
+\begin{table*}[t]
+\caption{Verified patch-generation results across the evaluated case studies. RM, RA, RD, DA, TR, RR, and CR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, response refinements, and capability refinements, respectively.}
+\label{tab:patch-results}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llllrrrllcccccccllcc}
+\toprule
+Case & IID & WFI & Rules & Gen. & Val. & Total & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & Source & Sim. & Review \\
+\midrule
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d4 & rule\_merging & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 6 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 9 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d\_trigger\_refine\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 5 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d\_trigger\_refine\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 7 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21, R2\_1 & 20.94 & 40.92 & 61.99 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & llm & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & g3 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & 8 & llm & 0.00 & No \\
+\midrule
+ASPEN & redundancies\_1 & Redundancy & R14 & 17.43 & 133.12 & 151.34 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & llm & 0.00 & No \\
+\midrule
+DressAssist & concerns\_1 & Concern & Rule7 & 18.04 & 29.18 & 47.28 & d\_concern\_defeater\_Rule7 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
+DressAssist & concerns\_1 & Concern & Rule7 & 18.04 & 29.18 & 47.28 & d\_decompose\_Rule7 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
+DressAssist & concerns\_1 & Concern & Rule7 & 18.04 & 29.18 & 47.28 & d\_strengthen\_Rule7 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
+DressAssist & concerns\_1 & Concern & Rule10 & 18.04 & 29.18 & 47.28 & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & llm & 0.00 & No \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

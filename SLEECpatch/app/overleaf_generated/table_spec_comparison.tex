@@ -1,0 +1,28 @@
+\begin{table*}[t]
+\caption{Comparison of original, manually corrected, and SLEEC-PATCH specifications. Each specification is reported as \#Rules (\#Capabilities, \#Defeaters, \#Constraints). ID-MR, ID-MD, and ID-RA denote modified, deleted, and added rule IDs.}
+\label{tab:spec-comparison}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llllllllll}
+\toprule
+\multirow{2}{*}{Case} & \multirow{2}{*}{Original} & \multicolumn{4}{c}{Manually corrected} & \multicolumn{4}{c}{SLEEC-PATCH} \\
+\cmidrule(lr){3-6}\cmidrule(lr){7-10}
+& & Spec. & ID-MR & ID-MD & ID-RA & Spec. & ID-MR & ID-MD & ID-RA \\
+\midrule
+ALMI & 33 (25, 8, 51) & 32 (25, 7, 49) & R21, R2\_2 & R3 & -- & 34 (25, 8, 54) & -- & R3 & R3\_1, R3\_2 \\
+ASPEN & 21 (14, 4, 43) & 19 (16, 3, 37) & R10, R14\_1, R3, R9 & R13, R14, R4 & R15 & -- & -- & -- & -- \\
+AutoCAR & 24 (19, 13, 60) & 25 (22, 12, 62) & R1, R17, R19 & R23 & R24, R25 & -- & -- & -- & -- \\
+BSN & 29 (20, 6, 71) & 30 (21, 6, 73) & Rule1, Rule15 & -- & Rule19 & 29 (20, 6, 71) & -- & -- & -- \\
+CSICobot & 19 (14, 5, 32) & 24 (17, 5, 42) & R1, R13\_1, R4 & R14 & R16, R17, R18, R19, R20, R21 & 18 (13, 5, 31) & R3 & R4 & -- \\
+DAISY & 26 (25, 11, 56) & 30 (26, 12, 63) & Rule15, Rule17 & Rule16, Rule18, Rule19 & Rule14\_1, Rule14\_2, Rule22, Rule23, Rule24, Rule25, Rule5\_1 & 27 (25, 12, 63) & -- & Rule5 & Rule5\_1, Rule5\_2 \\
+DPA & 22 (18, 4, 69) & 25 (19, 2, 80) & R1 & R21, R3 & R21\_0, R21\_1, R3\_0, R3\_1, R8\_0 & 22 (18, 4, 69) & -- & -- & -- \\
+DressAssist & 30 (28, 14, 61) & 30 (29, 14, 61) & Rule7\_1 & -- & -- & 7 (5, 2, 13) & Rule1, Rule2, Rule3, Rule4, Rule5, Rule6, Rule7 & Rule10, Rule11\_1, Rule11\_2, Rule12, Rule13, Rule14, Rule15, Rule16, Rule16\_1, Rule17, Rule18, Rule19, Rule20\_1, Rule20\_2, Rule21, Rule22, Rule23, Rule24, Rule25, Rule26, Rule7\_1, Rule8, Rule9 & -- \\
+SafeSCAD & 28 (16, 3, 51) & 25 (19, 3, 58) & R10, R11\_1, R12\_1, R13, R4 & R1, R12, R1\_1, R1\_2, R3\_1, R9, R9\_1 & R19, R20, R2\_2, R7\_1 & -- & -- & -- & -- \\
+Tabiat & 0 (0, 0, 0) & -- & -- & -- & -- & -- & -- & -- & -- \\
+Casper & 0 (0, 0, 0) & -- & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
