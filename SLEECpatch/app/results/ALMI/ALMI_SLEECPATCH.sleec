@@ -64,6 +64,8 @@ def_start
 
 	// constants
 	constant maxTimeBetweenMeals = 28800 // is predetermined
+measure timeBetweenMealsWhileUserOccupied:boolean
+event CallEmergencyServicesWhenUserIsInDanger
 def_end
 
 rule_start
@@ -71,10 +73,10 @@ rule_start
 		unless {userOccupied} then RemindLater
 	// If the max time limit is exceeded, call the caregiver and inform them of the situation and in the meantime, suggest they have a snack.
 	R2 when AgentDeployed then TrackTime
-	R2_1 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then InformCaregiver
+R2_1 when TrackTime and ({timeBetweenMealsWhileUserOccupied} > maxTimeBetweenMeals) then InformCaregiver
 	R2_2 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then GiveSuggestion
-	R3 when HumanOnFloor then CallEmergencyServices
-	   unless (not {humanAssents}) then not CallEmergencyServices
+R3_1 when HumanOnFloor and (SmokeDetectorAlarm) then CallEmergencyServices unless ((not {humanAssents}) then not CallEmergencyServices)
+R3_2 when HumanOnFloor and not (SmokeDetectorAlarm) then CallEmergencyServices unless ((not {humanAssents}) then not CallEmergencyServices)
 
 	R4 when InterfereSafely and (not {safePathFound}) then InformUser
 	   unless {userOccupied}
@@ -106,12 +108,10 @@ rule_start
 	    unless ({riskLevel} = high)
 	R20 when UserChangeItemLocation then UpdateMap
 	    unless ({riskLevel} = high) then InterfereSafely
-	R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes
-	    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures 
+R21 when SmokeDetectorAlarm and not (HumanOnFloor) then CallEmergencyServices within 5 minutes unless (({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures)
 	R21_1 when FireSafetyMeasures then OpenWindows
 	R21_2 when FireSafetyMeasures then AskUserIfOK
 	R21_3 when FireSafetyMeasures then InformCaregiver
-R22 when SmokeDetectorAlarm and UserIsPresentInLocation then CallEmergencyServices within 5 minutes
 rule_end
 
 concern_start

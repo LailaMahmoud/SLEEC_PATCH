@@ -12,7 +12,6 @@ from services.sleec_patch_evaluation_store import SLEECPatchEvaluationStore
 from services.repair_operator_selector import RepairOperatorSelector
 from services.deterministic_repair_engine import DeterministicRepairEngine
 from services.patch_ranker import PatchRanker
-from services.use_case_descriptions import get_use_case_description
 
 
 class SLEECPatchWorkbenchEngine:
@@ -1162,29 +1161,6 @@ class SLEECPatchWorkbenchEngine:
 
 
 
-    def extract_defined_events(self, sleec_text):
-        return sorted(set(re.findall(
-            r"^\s*event\s+([A-Za-z_][A-Za-z0-9_]*)",
-            str(sleec_text),
-            flags=re.IGNORECASE | re.MULTILINE
-        )))
-
-    def extract_defined_measures(self, sleec_text):
-        return sorted(set(re.findall(
-            r"^\s*measure\s+([A-Za-z_][A-Za-z0-9_]*)",
-            str(sleec_text),
-            flags=re.IGNORECASE | re.MULTILINE
-        )))
-
-    def extract_rule_actions(self, rules):
-        return sorted(set(
-            str(rule.get("action", "")).strip()
-            for rule in rules
-            if str(rule.get("action", "")).strip()
-        ))
-
-
-
     def generate_verified_patches(
     self,
     use_case,
@@ -1252,23 +1228,12 @@ class SLEECPatchWorkbenchEngine:
         if semantic_ops:
             start_generation = time.time()
 
-            description = get_use_case_description(use_case)
-
-            print("\n========== USE CASE CONTEXT ==========")
-            print("Use case:", use_case)
-            print("Description:", description)
-            print("======================================\n")
-
             print(">>> Calling GPT with operators:", semantic_ops)
 
             llm_patches = self.gpt_patch_engine.generate_all_patches(
                 rules=rules_json,
                 structured_findings=selected_findings,
-                repair_operators=semantic_ops,
-                system_description=description,
-                existing_events=self.extract_defined_events(sleec_text),
-                existing_measures=self.extract_defined_measures(sleec_text),
-                existing_responses=self.extract_rule_actions(rules_json)
+                repair_operators=semantic_ops
             )
 
             for i, p in enumerate(llm_patches, start=1):

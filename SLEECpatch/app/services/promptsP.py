@@ -69,53 +69,6 @@ LLM_SEMANTIC_OPERATORS = [
     "new_rule_generation"
 ]
 
-
-OPERATOR_EXAMPLES = {'event_specialization': 'EXAMPLE: EVENT SPECIALIZATION FOR ALMI\n'
-                         'Original rules:\n'
-                         'r1 when FireSafetyMeasures then InformCaregiver\n'
-                         'r2 when FireSafetyMeasures and not humanAssents then not InformCaregiver\n'
-                         '\n'
-                         'Correct patch:\n'
-                         '[{"patch_id":"p1","issue_type":"situational_conflict","operation":"event_specialization","applicability":{"is_applicable":true,"reason":"The '
-                         'event FireSafetyMeasures is too broad."},"target_rule_id":"r1","original_rule":"r1 when '
-                         'FireSafetyMeasures then '
-                         'InformCaregiver","missing_element":"ConfirmedFireHazard","proposed_rule":"r1 when '
-                         'ConfirmedFireHazard then InformCaregiver","natural_language_explanation":"The broad event is '
-                         'specialized into '
-                         'ConfirmedFireHazard.","modification_cost":1,"new_events_added":1,"new_measures_added":0,"new_capabilities_added":0,"new_rules_added":0,"defeaters_added":0}]',
- 'measure_specialization': 'EXAMPLE: MEASURE SPECIALIZATION FOR ALMI\n'
-                           'Original rules:\n'
-                           'r1 when UserWantsToCook and riskLevel=high then InterfereSafely\n'
-                           'r2 when UserChangeMind and riskLevel=high then RecalculateApproach\n'
-                           '\n'
-                           'Correct patch:\n'
-                           '[{"patch_id":"p1","issue_type":"situational_conflict","operation":"measure_specialization","applicability":{"is_applicable":true,"reason":"riskLevel '
-                           'is too broad for different ALMI contexts."},"target_rule_id":"r1","original_rule":"r1 when '
-                           'UserWantsToCook and riskLevel=high then '
-                           'InterfereSafely","missing_element":"cookingRiskLevel","proposed_rule":"r1 when '
-                           'UserWantsToCook and cookingRiskLevel=high then '
-                           'InterfereSafely","natural_language_explanation":"The general risk measure is refined into '
-                           'a cooking-specific risk '
-                           'measure.","modification_cost":1,"new_events_added":0,"new_measures_added":1,"new_capabilities_added":0,"new_rules_added":0,"defeaters_added":0}]',
- 'capability_refinement': 'EXAMPLE: CAPABILITY REFINEMENT FOR ALMI\n'
-                          'Original rules:\n'
-                          'r1 when HumanOnFloor then CallEmergencyServices within 5 minutes\n'
-                          'r2 when HumanOnFloor and not humanAssents then not CallEmergencyServices within 500 '
-                          'seconds\n'
-                          '\n'
-                          'Correct patch:\n'
-                          '[{"patch_id":"p1","issue_type":"situational_conflict","operation":"capability_refinement","applicability":{"is_applicable":true,"reason":"A '
-                          'more specific assistance capability avoids immediately calling emergency '
-                          'services."},"target_rule_id":"r1","original_rule":"r1 when HumanOnFloor then '
-                          'CallEmergencyServices within 5 '
-                          'minutes","missing_element":"RequestCaregiverAssessment","proposed_rule":"r1 when '
-                          'HumanOnFloor then RequestCaregiverAssessment within 5 '
-                          'minutes","natural_language_explanation":"The direct emergency-call response is refined into '
-                          'a caregiver assessment '
-                          'response.","modification_cost":1,"new_events_added":0,"new_measures_added":0,"new_capabilities_added":1,"new_rules_added":0,"defeaters_added":0}]',
- 'new_rule_generation': 'Use new_rule_generation only when no existing rule can be minimally edited. Add one '
-                        'domain-specific rule and preserve all unrelated rules.'}
-
 def semantic_refinement_prompt(
     issue_type,
     rules,
@@ -129,8 +82,6 @@ def semantic_refinement_prompt(
     existing_events = existing_events or []
     existing_measures = existing_measures or []
     existing_responses = existing_responses or []
-
-    operator_example = OPERATOR_EXAMPLES.get(repair_operator, "")
 
     payload = {
         "issue_type": issue_type,
@@ -219,11 +170,6 @@ Use new_rule_generation only when:
 - the issue cannot be fixed by editing an existing rule;
 - the diagnosis reveals a missing normative condition;
 - a new rule is necessary to prevent the witness issue.
-
-OPERATOR-SPECIFIC WORKED EXAMPLE:
-{operator_example}
-
-Use this example only as a repair pattern. Do not copy concepts that are absent from the current use case.
 
 INPUT:
 {json.dumps(payload, indent=2)}

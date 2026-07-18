@@ -255,7 +255,7 @@ class DeterministicRepairEngine:
                 "operation": "defeater_introduction",
                 "target_rule_id": r1["id"],
                 "original_rule": self.rule_to_text(r1),
-                "proposed_rule": self.add_defeater(r1, self.specific_context(r2["condition"], r1["condition"])),
+                "proposed_rule": self.add_defeater(r1, r2["condition"]),
                 "natural_language_explanation":
                     "The conflicting context is converted into an explicit defeater."
             })
@@ -268,7 +268,7 @@ class DeterministicRepairEngine:
                 "operation": "defeater_introduction",
                 "target_rule_id": r2["id"],
                 "original_rule": self.rule_to_text(r2),
-                "proposed_rule": self.add_defeater(r2, self.specific_context(r1["condition"], r2["condition"])),
+                "proposed_rule": self.add_defeater(r2, r1["condition"]),
                 "natural_language_explanation":
                     "The opposite rule context is given an explicit defeater."
             })
@@ -317,15 +317,13 @@ class DeterministicRepairEngine:
                 "original_rule": self.rule_to_text(r1),
                 "proposed_rule": self.strengthen_trigger_with_condition(
                     r1,
-                    self.complementary_context(
-                        self.specific_context(r2["condition"], r1["condition"])
-                    )
+                    r2["condition"]
                 ),
                 "natural_language_explanation":
                     "The trigger is strengthened using contextual information."
             })
 
-        if "rule_merging" in operators and self.compatible_for_merging(r1, r2):
+        if "rule_merging" in operators:
             patches.append({
                 "id": "d4",
                 "patch_id": "d4",
@@ -340,21 +338,13 @@ class DeterministicRepairEngine:
             })
 
         if "rule_decomposition" in operators:
-            patches.append({
-                "id": f'd_decompose_{r1["id"]}',
-                "patch_id": f'd_decompose_{r1["id"]}',
-                "source": "deterministic",
-                "issue_type": issue_type,
-                "operation": "rule_decomposition",
-                "target_rule_id": r1["id"],
-                "rule_ids": [r1["id"], r2["id"]],
-                "original_rule": self.rule_to_text(r1),
-                "proposed_rule": self.decompose_conflicting_rule(r1, r2),
-                "natural_language_explanation": (
-                    "The broad rule is split into two contextual branches "
-                    "with distinct responses."
+            patches.append(
+                self.make_rule_decomposition_patch(
+                    r1,
+                    r2["condition"],
+                    "Split the first conflicting rule around the second rule's context."
                 )
-            })
+            )
 
         return patches
 
@@ -531,10 +521,7 @@ class DeterministicRepairEngine:
         )
 
     def refine_trigger_against_condition(self, rule, context):
-        context = self.specific_context(
-            self.clean_condition(context),
-            rule.get("condition", "")
-        )
+        context = self.clean_condition(context)
 
         if not context:
             return self.rule_to_text(rule)
@@ -543,26 +530,6 @@ class DeterministicRepairEngine:
             f'{rule["id"]} when {rule["condition"]} and not ({context}) '
             f'then {rule["action"]}{self.defeater_suffix(rule)}'
         )
-
-    def complementary_context(self, context):
-        context = self.clean_condition(context)
-        match = re.fullmatch(
-            r"not\s+\{?([A-Za-z_][A-Za-z0-9_]*)\}?",
-            context,
-            flags=re.IGNORECASE
-        )
-        return match.group(1) if match else context
-
-    def compatible_for_merging(self, r1, r2):
-        c1 = {
-            part.lower()
-            for part in self.condition_parts(r1.get("condition", ""))
-        }
-        c2 = {
-            part.lower()
-            for part in self.condition_parts(r2.get("condition", ""))
-        }
-        return bool(c1.intersection(c2))
 
     def propagate_defeater(self, rule):
         defeater = self.clean_condition(rule.get("defeater", ""))
@@ -597,23 +564,6 @@ class DeterministicRepairEngine:
         return (
             f'{r1["id"]} when {r1["condition"]} then {r1["action"]} '
             f'unless ({context})'
-        )
-
-    def decompose_conflicting_rule(self, r1, r2):
-        context = self.specific_context(
-            r2.get("condition", ""),
-            r1.get("condition", "")
-        )
-        context = self.clean_condition(context)
-
-        if not context:
-            return self.rule_to_text(r1)
-
-        return (
-            f'{r1["id"]}_1 when {r1["condition"]} and not ({context}) '
-            f'then {r1["action"]}{self.defeater_suffix(r1)}\n'
-            f'{r1["id"]}_2 when {r1["condition"]} and ({context}) '
-            f'then {r2["action"]}{self.defeater_suffix(r2)}'
         )
 
     def make_rule_decomposition_patch(self, rule, context, explanation):
