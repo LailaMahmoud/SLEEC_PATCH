@@ -11,11 +11,6 @@ Each patch must use this format:
     "issue_type": "conflict",
     "operation": "event_specialization",
 
-    "applicability": {
-      "is_applicable": true,
-      "reason": "The conflict is caused by a broad trigger event that covers partially different behaviours."
-    },
-
     "target_rule_id": "r2",
     "original_rule": "r2 when UserRequestsDressing then StopDressing",
     "missing_element": "UserRequestsDressingWhileInPain",
@@ -25,29 +20,6 @@ Each patch must use this format:
 
     "modification_cost": 1,
     "new_events_added": 1,
-    "new_measures_added": 0,
-    "new_capabilities_added": 0,
-    "new_rules_added": 0,
-    "defeaters_added": 0
-  }
-]
-
-If the selected semantic operator is NOT applicable, return:
-[
-  {
-    "patch_id": "not_applicable",
-    "operation": "none",
-    "applicability": {
-      "is_applicable": false,
-      "reason": "Explain why this semantic operator is not suitable."
-    },
-    "target_rule_id": "",
-    "original_rule": "",
-    "missing_element": "",
-    "proposed_rule": "",
-    "natural_language_explanation": "",
-    "modification_cost": 0,
-    "new_events_added": 0,
     "new_measures_added": 0,
     "new_capabilities_added": 0,
     "new_rules_added": 0,
@@ -97,23 +69,18 @@ OPERATOR_EXAMPLES = {'event_specialization': 'EXAMPLE: EVENT SPECIALIZATION FOR 
                            'InterfereSafely","natural_language_explanation":"The general risk measure is refined into '
                            'a cooking-specific risk '
                            'measure.","modification_cost":1,"new_events_added":0,"new_measures_added":1,"new_capabilities_added":0,"new_rules_added":0,"defeaters_added":0}]',
- 'capability_refinement': 'EXAMPLE: CAPABILITY REFINEMENT FOR ALMI\n'
-                          'Original rules:\n'
-                          'r1 when HumanOnFloor then CallEmergencyServices within 5 minutes\n'
-                          'r2 when HumanOnFloor and not humanAssents then not CallEmergencyServices within 500 '
-                          'seconds\n'
+  'capability_refinement': 'EXAMPLE: CAPABILITY REFINEMENT FOR RESTRICTIVENESS\n'
+                          'Blocking rule:\n'
+                          'r1 when HumanOnFloor and not humanAssents then not CallEmergencyServices within 500 seconds\n'
+                          'Intended purpose:\n'
+                          'when HumanOnFloor and UserUnconscious and not humanAssents then CallEmergencyServices within 4 minutes\n'
+                          '\n'
+                          'Selected operator:\n'
+                          'capability_refinement\n'
                           '\n'
                           'Correct patch:\n'
-                          '[{"patch_id":"p1","issue_type":"situational_conflict","operation":"capability_refinement","applicability":{"is_applicable":true,"reason":"A '
-                          'more specific assistance capability avoids immediately calling emergency '
-                          'services."},"target_rule_id":"r1","original_rule":"r1 when HumanOnFloor then '
-                          'CallEmergencyServices within 5 '
-                          'minutes","missing_element":"RequestCaregiverAssessment","proposed_rule":"r1 when '
-                          'HumanOnFloor then RequestCaregiverAssessment within 5 '
-                          'minutes","natural_language_explanation":"The direct emergency-call response is refined into '
-                          'a caregiver assessment '
-                          'response.","modification_cost":1,"new_events_added":0,"new_measures_added":0,"new_capabilities_added":1,"new_rules_added":0,"defeaters_added":0}]',
- 'new_rule_generation': 'Use new_rule_generation only when no existing rule can be minimally edited. Add one '
+                          '[{"patch_id":"p1","issue_type":"purpose","operation":"capability_refinement","target_rule_id":"r1","original_rule":"r1 when HumanOnFloor and not humanAssents then not CallEmergencyServices within 500 seconds","missing_element":"RequestUrgentCareAssessment","proposed_rule":"r1 when HumanOnFloor and not humanAssents then not RequestUrgentCareAssessment within 500 seconds","natural_language_explanation":"The broad emergency-response capability is refined into a more specific urgent-care assessment capability.","modification_cost":1,"new_events_added":0,"new_measures_added":0,"new_capabilities_added":1,"new_rules_added":0,"defeaters_added":0}]',
+'new_rule_generation': 'Use new_rule_generation only when no existing rule can be minimally edited. Add one '
                         'domain-specific rule and preserve all unrelated rules.'}
 
 def semantic_refinement_prompt(
@@ -177,48 +144,61 @@ STRICT RULES:
 8. Every proposed patch must be valid SLEEC syntax.
 9. The patch will be formally verified by LEGOS-SLEEC after generation.
 
-APPLICABILITY CHECK:
-Before generating a patch, first decide whether the selected semantic repair operator is applicable.
+SELECTED REPAIR OPERATOR:
+{repair_operator}
 
-The operator is applicable only if:
-1. The diagnosis cannot be fully repaired by deterministic transformations.
-2. The issue requires introducing a new semantic concept.
-3. The new concept is justified by the witness trace, diagnosis, or domain context.
-4. The patch preserves stakeholder intent.
-5. The patch modifies only the relevant rule or adds only the needed rule.
+The repair operator has already been selected by SLEEC-PATCH from the
+diagnosed well-formedness issue and its diagnosis context.
 
-If the selected semantic operator is not applicable, return the not_applicable JSON object from the required output format.
+Your task is ONLY to instantiate this selected semantic repair operator.
+
+Generate only the missing semantic element required by this operator:
+- event_specialization: introduce one finer-grained domain event;
+- measure_specialization: introduce one more discriminative environmental measure;
+- capability_refinement: introduce one more specific system capability or response;
+- new_rule_generation: introduce one additional normative SLEEC rule.
+
+Do NOT select another repair operator.
+Do NOT generate deterministic repairs.
+Do NOT rewrite the complete specification.
+Do NOT modify unrelated rules.
+Preserve the original stakeholder intent.
 
 REPAIR OPERATOR MEANING:
-- event_specialization: introduce a finer-grained event that distinguishes the conflicting situation.
+- event_specialization: introduce a finer-grained event that distinguishes the relevant situation.
 - measure_specialization: introduce a more discriminative environmental measure or predicate.
 - capability_refinement: refine a broad system response into a more specific capability.
-- new_rule_generation: add a new normative rule when existing rules cannot prevent the issue.
+- new_rule_generation: add a new normative rule when the diagnosed issue reveals missing normative behaviour.
 
-EVENT SPECIALIZATION APPLICABILITY:
-Use event_specialization only when:
-- the same broad event triggers partially conflicting behaviours;
-- the conflict cannot be resolved clearly by only adding a defeater;
-- the diagnosis suggests that the event covers multiple contexts;
-- a more specific event would make the behaviours distinguishable.
+OPERATOR-SPECIFIC INSTANTIATION GUIDANCE:
 
-MEASURE SPECIALIZATION APPLICABILITY:
-Use measure_specialization only when:
-- the conflict depends on an environmental state;
-- the current measure is too broad or vague;
-- a more precise measure can distinguish the conflicting contexts.
+EVENT SPECIALIZATION:
+Instantiate event_specialization by introducing a finer-grained event when:
+- the diagnosis shows that a broad event covers multiple relevant contexts;
+- the selected repair requires distinguishing those contexts semantically;
+- the new event can make the affected behaviours distinguishable.
+Do not introduce a defeater or other deterministic repair instead.
 
-CAPABILITY REFINEMENT APPLICABILITY:
-Use capability_refinement only when:
-- the response/action is too broad;
-- the system capability needs to be decomposed into a more specific action;
-- the existing action cannot explain the intended behaviour clearly.
+MEASURE SPECIALIZATION:
+Instantiate measure_specialization by introducing a more discriminative measure when:
+- the diagnosed issue depends on an environmental state;
+- the current measure is too broad or vague for the selected repair;
+- a more precise measure can distinguish the relevant contexts.
+Do not replace this operator with a syntactic trigger refinement.
 
-NEW-RULE GENERATION APPLICABILITY:
-Use new_rule_generation only when:
-- the issue cannot be fixed by editing an existing rule;
-- the diagnosis reveals a missing normative condition;
-- a new rule is necessary to prevent the witness issue.
+CAPABILITY REFINEMENT:
+Instantiate capability_refinement by introducing a more specific system capability when:
+- the response/action is too broad for the selected repair;
+- the selected repair requires decomposing that response into a more specific action;
+- the new capability better expresses the intended behaviour.
+Do not change unrelated responses.
+
+NEW-RULE GENERATION:
+Instantiate new_rule_generation by adding one normative rule when:
+- the diagnosis identifies missing normative behaviour;
+- the selected repair requires an additional rule to prevent the witness issue;
+- the new rule can be justified from the diagnosis and system context.
+Do not rewrite existing unrelated rules.
 
 OPERATOR-SPECIFIC WORKED EXAMPLE:
 {operator_example}

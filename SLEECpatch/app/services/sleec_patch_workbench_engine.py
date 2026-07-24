@@ -1078,7 +1078,14 @@ class SLEECPatchWorkbenchEngine:
                 selected_issue=related_issue["issue"],
                 rules=self.sleec_text_to_rules_json(patched_sleec),
                 operators=self.operator_selector.select(
-                    related_issue["issue_type"]
+                    issue_type=related_issue["issue_type"],
+                    rules=self.sleec_text_to_rules_json(patched_sleec),
+                    selected_issue=related_issue["issue"],
+                    existing_events=self.extract_defined_events(patched_sleec),
+                    existing_measures=self.extract_defined_measures(patched_sleec),
+                    existing_responses=self.extract_rule_actions(
+                        self.sleec_text_to_rules_json(patched_sleec)
+                    )
                 ).get("deterministic", [])
             )
 
@@ -1230,12 +1237,20 @@ class SLEECPatchWorkbenchEngine:
         attempts = 0
 
         rules_json = self.sleec_text_to_rules_json(sleec_text)
-        operator_plan = self.operator_selector.select(issue_key)
+        operator_plan = self.operator_selector.select(
+            issue_type=issue_key,
+            rules=rules_json,
+            selected_issue=selected_issue_value,
+            existing_events=self.extract_defined_events(sleec_text),
+            existing_measures=self.extract_defined_measures(sleec_text),
+            existing_responses=self.extract_rule_actions(rules_json)
+        )
 
         print("\n========== REPAIR OPERATOR SELECTION ==========")
         print("Issue Type:", issue_key)
         print("Deterministic operators:", operator_plan.get("deterministic", []))
         print("LLM operators:", operator_plan.get("llm", []))
+        print("Applicability:", operator_plan.get("applicability", {}))
         print("==============================================\n")
 
         selected_findings = {
