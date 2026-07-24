@@ -9,15 +9,23 @@
 \toprule
 Case & IID & WFI & Rules & Gen. & Val. & Total & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & Source & Sim. & Review \\
 \midrule
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
+ALMI & concerns\_1 & Concern & R3 & 7.67 & 0.39 & 8.14 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
+ALMI & concerns\_1 & Concern & R3 & 7.67 & 0.39 & 8.14 & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
+ALMI & concerns\_1 & Concern & R3 & 7.67 & 0.39 & 8.14 & d\_strengthen\_R3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
+ALMI & concerns\_1 & Concern & R3 & 7.67 & 0.39 & 8.14 & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & llm & 0.00 & No \\
+ALMI & concerns\_2 & Concern & R3 & 2.72 & 0.44 & 3.29 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
+ALMI & concerns\_2 & Concern & R3 & 2.72 & 0.44 & 3.29 & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
+ALMI & concerns\_2 & Concern & R3 & 2.72 & 0.44 & 3.29 & d\_strengthen\_R3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
+ALMI & concerns\_2 & Concern & R21 & 2.72 & 0.44 & 3.29 & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & llm & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 3.29 & 34.85 & 38.30 & d1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 3.29 & 34.85 & 38.30 & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 17.26 & 0.38 & 17.81 & d3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
 ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d4 & rule\_merging & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 6 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 9 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d\_trigger\_refine\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 5 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d\_trigger\_refine\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 7 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21, R2\_1 & 20.94 & 40.92 & 61.99 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & llm & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & g3 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & 8 & llm & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 17.26 & 0.38 & 17.81 & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 7 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 3.29 & 34.85 & 38.30 & d\_trigger\_refine\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 3.29 & 34.85 & 38.30 & d\_trigger\_refine\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 17.26 & 0.38 & 17.81 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & llm & 0.00 & No \\
+ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & g3 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & -- & llm & 0.00 & No \\
 \midrule
 ASPEN & redundancies\_1 & Redundancy & R14 & 17.43 & 133.12 & 151.34 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & llm & 0.00 & No \\
 \midrule
