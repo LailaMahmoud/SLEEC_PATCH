@@ -24,11 +24,41 @@ class SLEECPatchWorkbenchEngine:
 
         self.operator_selector = RepairOperatorSelector()
         self.deterministic_engine = DeterministicRepairEngine()
-        self.patch_ranker = PatchRanker()
+        # Section C ranking:
+        # structural/logical = deterministic;
+        # semantic clarity/interpretability = GPT, after formal verification.
+        self.patch_ranker = PatchRanker(
+            semantic_assessor=self._assess_patch_quality_for_ranking
+        )
         self.detector_cache = OrderedDict()
         self.detector_cache_lock = threading.RLock()
         self.detector_cache_max_entries = int(
             os.environ.get("SLEEC_DETECTOR_CACHE_SIZE", "64")
+        )
+
+        # Context supplied to the Section-C quality assessor for the current WFI.
+        self._ranking_context = {}
+
+    def _assess_patch_quality_for_ranking(self, patch):
+        """
+        Called by PatchRanker only for formally verified patches.
+        GPT assesses semantic clarity and interpretability; it does not
+        re-decide formal correctness.
+        """
+        context = getattr(self, "_ranking_context", {}) or {}
+
+        quality_patch = dict(patch)
+        quality_patch["selected_issue"] = context.get("selected_issue", "")
+        quality_patch["issue_type"] = context.get("issue_type", "")
+        quality_patch["affected_rules"] = context.get("affected_rules", [])
+        quality_patch["diagnosis_context"] = context.get("diagnosis_context", "")
+
+        return self.gpt_patch_engine.assess_patch_quality(
+            patch=quality_patch,
+            system_description=context.get("system_description", ""),
+            existing_events=context.get("existing_events", []),
+            existing_measures=context.get("existing_measures", []),
+            existing_responses=context.get("existing_responses", [])
         )
 
     def run_detector_cached(self, sleec_text):
@@ -1463,6 +1493,28 @@ class SLEECPatchWorkbenchEngine:
                         seen_failed_signatures.add(patch_signature)
 
         total_time = time.time() - start_total
+
+        # Section C: rank only patches that already passed formal verification.
+        # Structural/logical metrics are deterministic.
+        # Semantic clarity/interpretability receive the WFI and declared vocabulary.
+        affected_rule_ids = self.extract_issue_rule_ids(selected_issue_value)
+        affected_rules = [
+            rule for rule in rules_json
+            if str(rule.get("id", "")).lower()
+            in {rid.lower() for rid in affected_rule_ids}
+        ]
+
+        self._ranking_context = {
+            "use_case": use_case,
+            "issue_type": issue_key,
+            "selected_issue": selected_issue_value,
+            "diagnosis_context": selected_issue_value,
+            "affected_rules": affected_rules,
+            "system_description": get_use_case_description(use_case),
+            "existing_events": self.extract_defined_events(sleec_text),
+            "existing_measures": self.extract_defined_measures(sleec_text),
+            "existing_responses": self.extract_rule_actions(rules_json)
+        }
 
         verified_patches = self.patch_ranker.rank(verified_patches)
 

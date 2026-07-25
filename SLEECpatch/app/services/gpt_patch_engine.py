@@ -3,7 +3,7 @@ import re
 
 from openai import OpenAI
 
-from services.prompts import build_prompt, LLM_SEMANTIC_OPERATORS
+from services.prompts import build_prompt, LLM_SEMANTIC_OPERATORS, patch_quality_ranking_prompt
 
 # Lazily created so the module imports without an API key (diagnosis works
 # key-free; the client is built on the first LLM call).
@@ -109,6 +109,75 @@ Never return markdown.
                 "new_rules_added": 0,
                 "defeaters_added": 0
             }]
+
+
+    def assess_patch_quality(
+        self,
+        patch,
+        system_description="",
+        existing_events=None,
+        existing_measures=None,
+        existing_responses=None
+    ):
+        """
+        Section C ranking assessment.
+
+        This method is called only after formal verification. GPT does not
+        decide correctness here; it scores semantic clarity and interpretability.
+        """
+        prompt = patch_quality_ranking_prompt(
+            patch=patch,
+            system_description=system_description,
+            existing_events=existing_events,
+            existing_measures=existing_measures,
+            existing_responses=existing_responses
+        )
+
+        response = _get_client().chat.completions.create(
+            model=self.model,
+            temperature=0,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a requirements-quality assessor. "
+                        "The candidate repair has already passed formal verification. "
+                        "Assess only semantic clarity and interpretability. "
+                        "Return valid raw JSON only."
+                    )
+                },
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        content = response.choices[0].message.content
+
+        try:
+            result = json.loads(self.clean_json(content))
+            semantic = float(result.get("semantic_clarity", 0))
+            interpretability = float(result.get("interpretability", 0))
+
+            return {
+                "semantic_clarity": max(0, min(100, semantic)),
+                "semantic_clarity_reason": str(
+                    result.get("semantic_clarity_reason", "")
+                ).strip(),
+                "interpretability": max(0, min(100, interpretability)),
+                "interpretability_reason": str(
+                    result.get("interpretability_reason", "")
+                ).strip(),
+                "source": "llm"
+            }
+        except Exception as exc:
+            return {
+                "semantic_clarity": None,
+                "semantic_clarity_reason": (
+                    "LLM quality assessment could not be parsed."
+                ),
+                "interpretability": None,
+                "interpretability_reason": str(exc),
+                "source": "llm_error"
+            }
 
     def generate_all_patches(
         self,

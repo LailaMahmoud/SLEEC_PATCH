@@ -101,13 +101,9 @@ class DeterministicRepairEngine:
     def generate_concern_patches(self, selected_issue, rules, operators):
         patches = []
         concern = self.parse_when_then(selected_issue)
-        target_rule = self.find_related_rule(selected_issue, rules)
-
-        if not target_rule:
-            target_rule = self.find_rule_by_action(
-                concern.get("action", ""),
-                rules
-            )
+        # Generic target selection across the currently loaded specification.
+        # Do not choose the first rule that merely shares the same response.
+        target_rule = self.find_best_related_rule(selected_issue, rules)
 
         if not target_rule:
             return patches
@@ -444,17 +440,109 @@ class DeterministicRepairEngine:
         return []
 
     def find_related_rule(self, selected_issue, rules):
-        issue_text = str(selected_issue)
-        rule_id = self.extract_rule_id(issue_text)
-        rule = self.find_rule(rule_id, rules)
+        """
+        Backward-compatible wrapper around context-aware target selection.
+        """
+        return self.find_best_related_rule(selected_issue, rules)
 
-        if rule:
-            return rule
+    def find_best_related_rule(self, selected_issue, rules):
+        """
+        Select the rule most strongly related to the diagnosed WFI.
 
+        This is use-case independent: it uses only the current diagnosis and
+        the rules in the currently loaded SLEEC specification.
+        """
+        issue_text = str(selected_issue or "")
         parsed = self.parse_when_then(issue_text)
-        action = parsed.get("action", "")
+        issue_condition = parsed.get("condition", "")
+        issue_action = self.normalize_action(parsed.get("action", ""))
 
-        return self.find_rule_by_action(action, rules)
+        # Highest-confidence signal: an explicitly diagnosed rule ID.
+        for rule_id in self.extract_rule_ids(issue_text):
+            rule = self.find_rule(rule_id, rules)
+            if rule:
+                return rule
+
+        issue_terms = self.condition_terms(issue_condition)
+        best_rule = None
+        best_score = -1
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+
+            score = 0
+            rule_action = self.normalize_action(rule.get("action", ""))
+            rule_condition = self.clean_condition(rule.get("condition", ""))
+            rule_terms = self.condition_terms(rule_condition)
+
+            # Same normative response is important, but is not sufficient alone.
+            if issue_action and rule_action == issue_action:
+                score += 10
+
+            # Reward shared diagnosis/trigger vocabulary.
+            shared_terms = issue_terms.intersection(rule_terms)
+            score += 4 * len(shared_terms)
+
+            # Strongly reward containment of the rule trigger in the WFI trigger.
+            if (
+                rule_condition
+                and issue_condition
+                and self.normalized_condition(rule_condition)
+                in self.normalized_condition(issue_condition)
+            ):
+                score += 8
+
+            # A response encoded in a defeater may also identify the related rule.
+            defeater_matches = 0
+            for defeater_action in self.defeater_actions(
+                rule.get("defeater", "")
+            ):
+                if (
+                    issue_action
+                    and self.normalize_action(defeater_action) == issue_action
+                ):
+                    defeater_matches += 1
+
+            score += 5 * defeater_matches
+
+            # Do not select an unrelated rule just because every score is zero.
+            if score > best_score:
+                best_score = score
+                best_rule = rule
+
+        return best_rule if best_score > 0 else None
+
+    def condition_terms(self, condition):
+        """
+        Extract comparable semantic identifiers from a SLEEC condition.
+        Logical/syntactic words and numeric literals are ignored.
+        """
+        ignored = {
+            "and", "or", "not", "when", "then", "unless", "within",
+            "eventually", "otherwise", "true", "false",
+            "seconds", "second", "minutes", "minute",
+            "hours", "hour"
+        }
+
+        return {
+            token.lower()
+            for token in re.findall(
+                r"[A-Za-z_][A-Za-z0-9_]*",
+                str(condition or "")
+            )
+            if token.lower() not in ignored
+        }
+
+    def normalized_condition(self, condition):
+        """
+        Normalize whitespace/braces for condition containment comparison while
+        preserving the domain vocabulary itself.
+        """
+        value = self.clean_condition(condition).lower()
+        value = value.replace("{", "").replace("}", "")
+        value = re.sub(r"\s+", " ", value)
+        return value.strip()
 
     def find_rule_by_action(self, action, rules):
         action = self.normalize_action(action)

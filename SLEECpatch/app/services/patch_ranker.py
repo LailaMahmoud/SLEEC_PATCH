@@ -3,6 +3,11 @@ import re
 
 class PatchRanker:
 
+    def __init__(self, semantic_assessor=None):
+        # Optional callback for Section-C qualitative assessment.
+        # It must be invoked only on patches that already passed formal verification.
+        self.semantic_assessor = semantic_assessor
+
     def rank(self, verified_patches):
         ranked = []
 
@@ -32,27 +37,53 @@ class PatchRanker:
             or patch.get("explanation", "")
         )
 
+        # Section C: deterministic dimensions.
         structural = self.structural_simplicity(proposed)
         logical = self.logical_simplicity(proposed)
-        semantic = self.semantic_clarity(proposed)
 
+        # Conservative fallback values. If the engine supplies the LLM assessor,
+        # these two qualitative dimensions are replaced by the LLM scores.
+        semantic = self.semantic_clarity(proposed)
         interp = self.interpretability(
             original_rule=original,
             patched_rule=proposed,
             explanation=explanation
         )
-
-        patch["interpretability_score"] = interp["score"]
-        patch["interpretability_passed"] = interp["passed"]
-        patch["interpretability_issues"] = interp["issues"]
-
         interpretability = interp["score"]
+        semantic_source = "fallback"
+        semantic_reason = ""
+        interpretability_reason = ""
+        issues = list(interp["issues"])
+
+        if self.semantic_assessor is not None:
+            try:
+                quality = self.semantic_assessor(patch)
+                if isinstance(quality, dict) and quality.get("source") == "llm":
+                    if quality.get("semantic_clarity") is not None:
+                        semantic = self._clamp(float(quality["semantic_clarity"]))
+                    if quality.get("interpretability") is not None:
+                        interpretability = self._clamp(float(quality["interpretability"]))
+
+                    semantic_reason = str(
+                        quality.get("semantic_clarity_reason", "")
+                    ).strip()
+                    interpretability_reason = str(
+                        quality.get("interpretability_reason", "")
+                    ).strip()
+                    semantic_source = "llm"
+                    issues = (
+                        [interpretability_reason]
+                        if interpretability_reason
+                        else []
+                    )
+            except Exception as exc:
+                print("[WARN] LLM patch-quality assessment failed:", exc)
 
         total = (
-            0.30 * structural
-            + 0.30 * logical
-            + 0.20 * semantic
-            + 0.20 * interpretability
+            0.25 * structural
+            + 0.25 * logical
+            + 0.25 * semantic
+            + 0.25 * interpretability
         )
 
         rationale = self.ranking_rationale(
@@ -61,9 +92,12 @@ class PatchRanker:
             logical=logical,
             semantic=semantic,
             interpretability=interpretability,
-            interpretability_issues=interp["issues"]
+            interpretability_issues=issues
         )
 
+        patch["interpretability_score"] = interpretability
+        patch["interpretability_passed"] = interpretability >= 70
+        patch["interpretability_issues"] = issues
         patch["ranking_rationale"] = rationale
 
         return {
@@ -71,8 +105,11 @@ class PatchRanker:
             "logical_simplicity": round(logical, 2),
             "semantic_clarity": round(semantic, 2),
             "interpretability": round(interpretability, 2),
-            "interpretability_passed": interp["passed"],
-            "interpretability_issues": interp["issues"],
+            "semantic_assessment_source": semantic_source,
+            "semantic_clarity_reason": semantic_reason,
+            "interpretability_reason": interpretability_reason,
+            "interpretability_passed": interpretability >= 70,
+            "interpretability_issues": issues,
             "rationale": rationale,
             "total_score": round(total, 2)
         }
@@ -125,64 +162,104 @@ class PatchRanker:
 
         return reasons[:4]
 
+    def split_proposed_rules(self, text):
+        text = re.sub(r"\s+", " ", str(text or "")).strip()
+        if not text:
+            return []
+        starts = list(re.finditer(
+            r"(?i)(?<!\w)(?:(?:rule|r|c)\d+(?:_\d+)?)\s+when\b", text
+        ))
+        if len(starts) <= 1:
+            return [text] if re.search(r"\bwhen\b.+\bthen\b", text, re.I) else []
+        return [
+            text[m.start():(starts[i+1].start() if i+1 < len(starts) else len(text))].strip()
+            for i, m in enumerate(starts)
+        ]
+
+    def max_parenthesis_depth(self, text):
+        depth = maximum = 0
+        for char in str(text or ""):
+            if char == "(":
+                depth += 1
+                maximum = max(maximum, depth)
+            elif char == ")":
+                depth = max(0, depth - 1)
+        return maximum
+
     def structural_simplicity(self, rule):
-        score = 100
-
-        tokens = rule.split()
-        score -= max(0, len(tokens) - 12) * 2
-
-        defeaters = rule.count("unless")
-        score -= defeaters * 10
-
-        nested = rule.count("(") + rule.count(")")
-        score -= nested * 3
-
+        rules = self.split_proposed_rules(rule)
+        if not rules:
+            return 0
+        scores = []
+        for item in rules:
+            score = 100
+            score -= max(0, len(item.split()) - 20) * 1.5
+            score -= len(re.findall(r"\bunless\b", item, re.I)) * 6
+            score -= max(0, self.max_parenthesis_depth(item) - 1) * 5
+            scores.append(max(0, min(100, score)))
+        score = sum(scores) / len(scores)
+        score -= max(0, len(rules) - 2) * 8
         return max(0, min(100, score))
 
     def logical_simplicity(self, rule):
-        score = 100
+        """
+        Deterministic logical-complexity score over the complete repair:
+        triggering condition + defeater/UNLESS expression.
+        """
+        rules = self.split_proposed_rules(rule)
+        if not rules:
+            return 0
 
-        boolean_ops = len(
-            re.findall(r"\b(and|or|not)\b", rule, re.IGNORECASE)
-        )
+        scores = []
+        for item in rules:
+            score = 100.0
 
-        score -= boolean_ops * 8
+            condition = self.extract_condition(item)
+            defeater = self.extract_defeater(item)
+            logical_text = " ".join(
+                part for part in (condition, defeater) if part
+            )
 
-        if "not not" in rule.lower():
-            score -= 20
+            boolean_ops = len(
+                re.findall(r"\b(?:and|or|not)\b", logical_text, re.I)
+            )
+            negations = len(re.findall(r"\bnot\b", logical_text, re.I))
+            double_negations = len(
+                re.findall(r"\bnot\s*(?:\(\s*)?not\b", logical_text, re.I)
+            )
+            depth = self.max_parenthesis_depth(logical_text)
+            logical_tokens = len(logical_text.split())
 
-        match = re.search(
-            r"when\s+(.*?)\s+then",
-            rule,
-            re.IGNORECASE
-        )
+            score -= boolean_ops * 4
+            score -= negations * 2
+            score -= double_negations * 15
+            score -= max(0, depth - 1) * 6
+            score -= max(0, logical_tokens - 14) * 1.5
 
-        if match:
-            condition = match.group(1)
+            scores.append(self._clamp(score))
 
-            if len(condition.split()) > 8:
-                score -= 15
-
-        return max(0, min(100, score))
+        return sum(scores) / len(scores)
 
     def semantic_clarity(self, rule):
-        score = 100
-
+        """
+        Conservative fallback only. Paper-aligned runs should use the LLM
+        semantic assessor supplied by the workbench engine.
+        """
+        score = 90.0
         vague_terms = [
             "RiskHigh",
             "SituationBad",
             "ConditionMet",
             "SomethingWrong",
             "UserIsOk",
-            "NormalState"
+            "NormalState",
+            "SpecialCase"
         ]
-
         for term in vague_terms:
-            if term.lower() in rule.lower():
-                score -= 25
+            if term.lower() in str(rule).lower():
+                score -= 20
+        return self._clamp(score)
 
-        return max(0, min(100, score))
-    
 
     #1. Did the patch introduce a new undefined concept?
     #2. Did it add a condition that is redundant with the original trigger?
@@ -215,7 +292,6 @@ class PatchRanker:
             "appropriate",
             "reasonable",
             "highRisk",
-            "riskLevel",
             "specialCase"
         ]
 
@@ -266,17 +342,19 @@ class PatchRanker:
                     f"Action changed from '{original_action}' to '{patched_action}' without clear explanation."
                 )
 
-        # 5. New predicates must be explained
+        # 5. New identifiers relative to this rule are only a fallback warning.
+        # Do NOT call them "undefined": they may already be declared in the SLEEC
+        # vocabulary. The LLM assessor receives the full declared vocabulary.
         original_terms = set(self.extract_predicates(original_text))
         patched_terms = set(self.extract_predicates(patched_text))
-
         new_terms = patched_terms - original_terms
 
-        for term in new_terms:
+        for term in sorted(new_terms, key=str.lower):
             if term.lower() not in explanation_text.lower():
-                score -= 10
+                score -= 5
                 issues.append(
-                    f"New predicate '{term}' is introduced without explaining its meaning."
+                    f"Identifier '{term}' is new relative to the original rule; "
+                    "check it against the declared SLEEC vocabulary and repair rationale."
                 )
 
         score = max(score, 0)
@@ -288,6 +366,20 @@ class PatchRanker:
         }
 
         
+
+
+    def extract_defeater(self, rule_text):
+        text = str(rule_text)
+        m = re.search(
+            r"\bunless\b(.*)$",
+            text,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+        return m.group(1).strip() if m else ""
+
+    @staticmethod
+    def _clamp(value):
+        return max(0.0, min(100.0, float(value)))
 
 
     def extract_condition(self, rule_text):
@@ -341,8 +433,14 @@ class PatchRanker:
     def extract_predicates(self, text):
         text = str(text)
 
-        # Captures DetectFire, NotifyUser, isEmergency, AlertUser, etc.
-        return re.findall(
-            r"\b[A-Za-z_][A-Za-z0-9_]*\b",
-            text
-        )
+        tokens = re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", text)
+        keywords = {
+            "when", "then", "unless", "within", "and", "or", "not",
+            "event", "measure", "rule", "true", "false",
+            "second", "seconds", "minute", "minutes", "hour", "hours"
+        }
+        return [
+            token for token in tokens
+            if token.lower() not in keywords
+            and not re.fullmatch(r"(?:r|rule|c)\d+(?:_\d+)?", token, re.I)
+        ]

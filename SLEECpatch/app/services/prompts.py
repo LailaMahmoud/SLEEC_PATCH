@@ -321,3 +321,77 @@ def build_prompt(
         existing_measures=existing_measures,
         existing_responses=existing_responses
     )
+
+
+# PATCH RANKING — Section C
+def patch_quality_ranking_prompt(
+    patch,
+    system_description="",
+    existing_events=None,
+    existing_measures=None,
+    existing_responses=None
+):
+    payload = {
+        "system_description": system_description,
+        "original_rule": patch.get("original_rule", ""),
+        "proposed_rule": patch.get("proposed_rule", ""),
+        "operation": patch.get("operation", ""),
+        "natural_language_explanation": patch.get(
+            "natural_language_explanation", patch.get("explanation", "")
+        ),
+        "missing_element": patch.get("missing_element", ""),
+        "issue_type": patch.get("issue_type", ""),
+        "selected_issue": patch.get("selected_issue", ""),
+        "affected_rules": patch.get("affected_rules", []),
+        "diagnosis_context": patch.get("diagnosis_context", ""),
+        "existing_events": existing_events or [],
+        "existing_measures": existing_measures or [],
+        "existing_responses": existing_responses or []
+    }
+
+    return f"""
+The SLEEC repair below has ALREADY passed formal verification.
+Do NOT assess formal correctness and do NOT propose a different repair.
+
+Assess only:
+
+SEMANTIC CLARITY (0-100)
+Prefer specific, unambiguous, domain-grounded events, measures, and responses.
+
+VOCABULARY INTERPRETATION RULES:
+- existing_events, existing_measures, and existing_responses contain concepts
+  already declared or already used in the current SLEEC specification.
+- Do NOT classify or penalize a concept as newly introduced merely because it
+  is absent from the individual original_rule.
+- A concept is genuinely new only if it appears in proposed_rule but is absent
+  from existing_events, existing_measures, existing_responses, and original_rule.
+- Reuse of a declared concept should normally support semantic clarity when the
+  concept is used consistently with its domain meaning.
+- For a genuinely new concept, assess whether it is specific, unambiguous,
+  domain-grounded, explained by the repair rationale/system description, and
+  meaningfully distinct from existing vocabulary.
+- Penalize genuinely new generic placeholders such as RiskHigh, ConditionMet,
+  SituationBad, UserIsOk, NormalState, and SpecialCase.
+- Do NOT penalize declared concepts such as riskLevel, userOccupied,
+  humanAssents, SmokeDetectorAlarm, or userDisablesAlarm when they appear in
+  the supplied existing vocabulary.
+
+INTERPRETABILITY (0-100)
+Prefer preservation of apparent stakeholder intent, an understandable rationale,
+minimal dependence on unstated context, and descriptive predicates.
+Penalize unexplained action changes or contextual distinctions.
+
+AND, OR, NOT, WHEN, THEN, UNLESS, and WITHIN are SLEEC syntax, not predicates.
+If proposed_rule contains multiple rules, assess the complete repair.
+
+INPUT:
+{json.dumps(payload, indent=2)}
+
+Return ONLY this raw JSON object:
+{{
+  "semantic_clarity": 0,
+  "semantic_clarity_reason": "one concise reason",
+  "interpretability": 0,
+  "interpretability_reason": "one concise reason"
+}}
+"""
