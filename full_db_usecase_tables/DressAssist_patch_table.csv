@@ -1,0 +1,3 @@
+case study,issue_id,issue_type,verified_patch_count,generation_time_seconds,validation_time_seconds,patch_id,operation,rules_modified,rules_added,rules_deleted,defeaters_added,conditions_refined,capabilities_refined,rank,source,expert_similarity,requires_social_scientist_review
+DressAssist,concerns_1,concerns,1.0,11.584,1.792,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+DressAssist,concerns_1,concerns,1.0,11.584,1.792,g2,capability_refinement,1,0,0,0,0,1,2.0,llm,0.0,1

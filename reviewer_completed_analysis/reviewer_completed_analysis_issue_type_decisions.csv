@@ -1,0 +1,10 @@
+issue_type,decision,count
+concerns,accepted,13
+concerns,pending,53
+concerns,rejected,30
+redundancies,accepted,4
+redundancies,pending,6
+redundancies,rejected,11
+situational_conflicts,accepted,3
+situational_conflicts,pending,21
+situational_conflicts,rejected,8

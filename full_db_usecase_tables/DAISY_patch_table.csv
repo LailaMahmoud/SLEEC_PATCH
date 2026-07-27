@@ -1,0 +1,19 @@
+case study,issue_id,issue_type,verified_patch_count,generation_time_seconds,validation_time_seconds,patch_id,operation,rules_modified,rules_added,rules_deleted,defeaters_added,conditions_refined,capabilities_refined,rank,source,expert_similarity,requires_social_scientist_review
+DAISY,concerns_1,concerns,,,,d_concern_defeater_Rule5,defeater_introduction,1,0,0,1,0,0,,deterministic,0.0,0
+DAISY,concerns_1,concerns,,,,d_concern_defeater_Rule5,defeater_introduction,1,0,0,1,0,0,,deterministic,0.0,0
+DAISY,concerns_1,concerns,,,,d_decompose_Rule5,rule_decomposition,1,1,0,0,1,0,,deterministic,0.0,0
+DAISY,concerns_1,concerns,,,,d_decompose_Rule5,rule_decomposition,1,1,0,0,1,0,,deterministic,0.0,0
+DAISY,concerns_1,concerns,,,,d_strengthen_Rule5,trigger_strengthening,1,0,0,0,1,0,,deterministic,0.0,0
+DAISY,concerns_1,concerns,,,,d_strengthen_Rule5,trigger_strengthening,1,0,0,0,1,0,,deterministic,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,d1,defeater_introduction,1,0,0,1,0,0,,deterministic,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,d2,defeater_introduction,1,0,0,1,0,0,,deterministic,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,d3,trigger_strengthening,1,0,0,0,1,0,,deterministic,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,d4,rule_merging,1,0,0,0,0,0,,deterministic,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,d_decompose_Rule1,rule_decomposition,1,1,0,0,1,0,,deterministic,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,d_trigger_refine_1,trigger_refinement,1,0,0,0,1,0,,deterministic,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,d_trigger_refine_2,trigger_refinement,1,0,0,0,1,0,,deterministic,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,g1,event_specialization,1,0,0,0,1,0,,llm,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,g2,measure_specialization,1,0,0,0,1,0,,llm,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,g2,measure_specialization,1,0,0,0,1,0,,llm,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,g3,capability_refinement,1,0,0,0,0,1,,llm,0.0,0
+DAISY,situational_conflicts_1,situational_conflicts,,,,g3,capability_refinement,1,0,0,0,0,1,,llm,0.0,0

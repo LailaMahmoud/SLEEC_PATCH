@@ -1,0 +1,2431 @@
+actions_refined,attempts,capabilities_refined,conditions_refined,defeaters_added,expert_match,expert_similarity,id,issue_id,issue_type,natural_language_explanation,operation,original_rule,patch_id,patched_sleec,philosopher_comments,philosopher_decision,proposed_rule,requires_social_scientist_review,review_timestamp,rules_added,rules_deleted,rules_modified,source,target_rule_id,timestamp,total_time_seconds,use_case,verified
+0,5,0,1,0,0,0.0,98,concerns_7,concerns,Split the related rule into context-specific branches for the concern.,rule_decomposition,R10_1 when PreparingRobot then InformHuman,d_decompose_R10_1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+R10_1 R10_1_1 when PreparingRobot and (TrackHumanLocation and {humanTooClose}) then InformHuman
+R10_1_2 when PreparingRobot and not (TrackHumanLocation and {humanTooClose}) then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,"R10_1_1 when PreparingRobot and (TrackHumanLocation and {humanTooClose}) then InformHuman
+R10_1_2 when PreparingRobot and not (TrackHumanLocation and {humanTooClose}) then InformHuman",0,,1,0,1,deterministic,R10_1,2026-07-01T02:21:04.762809,11.354,CSICobot,1
+0,5,0,0,0,0,0.0,94,concerns_7,concerns,"A new rule is introduced to prevent informing the human when they are too close while the robot is tracking their location, addressing the concern raised.",new_rule_generation,R4 when RobotWorking then InformHuman,g1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+R16 when TrackHumanLocation and {humanTooClose} then not InformHuman
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R16 when TrackHumanLocation and {humanTooClose} then not InformHuman,0,,1,0,0,llm,R4,2026-07-01T02:21:04.407362,11.354,CSICobot,1
+0,5,0,1,0,0,0.0,97,concerns_7,concerns,Strengthen the rule trigger using the concern context identified by the diagnosis.,trigger_strengthening,R10_1 when PreparingRobot then InformHuman,d_strengthen_R10_1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+R10_1 when PreparingRobot and (TrackHumanLocation and {humanTooClose}) then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R10_1 when PreparingRobot and (TrackHumanLocation and {humanTooClose}) then InformHuman,0,,0,0,1,deterministic,R10_1,2026-07-01T02:21:03.998543,11.354,CSICobot,1
+0,5,0,0,1,0,0.0,96,concerns_7,concerns,Add the concern context as an explicit exception to the related rule.,defeater_introduction,R10_1 when PreparingRobot then InformHuman,d_concern_defeater_R10_1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+R10_1 when PreparingRobot then InformHuman unless (TrackHumanLocation and {humanTooClose})
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R10_1 when PreparingRobot then InformHuman unless (TrackHumanLocation and {humanTooClose}),0,,0,0,1,deterministic,R10_1,2026-07-01T02:21:03.607029,11.354,CSICobot,1
+1,0,1,0,0,0,0.0,95,concerns_7,concerns,,capability_refinement,,g2,,,,,1,,0,0,1,llm,,2026-07-01T02:20:57.425814,0.0,CSICobot,0
+0,5,0,0,0,0,0.0,89,concerns_6,concerns,"A new rule is introduced to prevent the robot from moving away from a human when the action is random and the route is not available, addressing the concern raised in the findings.",new_rule_generation,,g1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+R16 when ActionHumanRandom and not {routeAvailable} then not MoveAwayFromHuman
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R16 when ActionHumanRandom and not {routeAvailable} then not MoveAwayFromHuman,0,,1,0,0,llm,R16,2026-07-01T02:20:16.666865,8.116,CSICobot,1
+1,0,1,0,0,0,0.0,90,concerns_6,concerns,,capability_refinement,,g2,,,,,1,,0,0,1,llm,,2026-07-01T02:20:14.875109,0.0,CSICobot,0
+0,5,0,1,0,0,0.0,88,concerns_5,concerns,Split the related rule into context-specific branches for the concern.,rule_decomposition,"R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+unless (not {routeAvailable}) then AskPermission",d_decompose_R6,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+R6_1 when InformHuman and (ActionHumanRandom) then RobotMoving unless {humanInRoute}
+R6_2 when InformHuman and not (ActionHumanRandom) then RobotMoving unless {humanInRoute}
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,"R6_1 when InformHuman and (ActionHumanRandom) then RobotMoving unless {humanInRoute}
+R6_2 when InformHuman and not (ActionHumanRandom) then RobotMoving unless {humanInRoute}",0,,1,0,1,deterministic,R6,2026-07-01T02:18:40.175341,28.144,CSICobot,1
+0,5,0,1,0,0,0.0,87,concerns_5,concerns,Strengthen the rule trigger using the concern context identified by the diagnosis.,trigger_strengthening,"R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+unless (not {routeAvailable}) then AskPermission",d_strengthen_R6,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+R6 when InformHuman and (ActionHumanRandom) then RobotMoving unless {humanInRoute}
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R6 when InformHuman and (ActionHumanRandom) then RobotMoving unless {humanInRoute},0,,0,0,1,deterministic,R6,2026-07-01T02:18:39.830426,28.144,CSICobot,1
+0,5,0,0,1,0,0.0,86,concerns_5,concerns,Add the concern context as an explicit exception to the related rule.,defeater_introduction,"R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+unless (not {routeAvailable}) then AskPermission",d_concern_defeater_R6,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+R6 when InformHuman then RobotMoving unless (humanInRoute OR ActionHumanRandom)
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R6 when InformHuman then RobotMoving unless (humanInRoute OR ActionHumanRandom),0,,0,0,1,deterministic,R6,2026-07-01T02:18:39.476574,28.144,CSICobot,1
+0,5,0,0,0,0,0.0,84,concerns_5,concerns,"A new rule is introduced to specifically address the concern raised when ActionHumanRandom occurs, ensuring that the system can respond appropriately to this situation.",new_rule_generation,R2 when RobotMoving then AccountHumanRandomness,g1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+R16 when ActionHumanRandom then RaiseConcern
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R16 when ActionHumanRandom then RaiseConcern,0,,1,0,0,llm,R2,2026-07-01T02:18:39.137881,28.144,CSICobot,1
+1,0,1,0,0,0,0.0,85,concerns_5,concerns,"The broad action AccountHumanRandomness is refined into a more specific capability that focuses on accounting for human movement patterns, which is necessary to address the concern raised when the robot is moving.",capability_refinement,R2 when RobotMoving then AccountHumanRandomness,g2,,,,R2 when RobotMoving then AccountHumanMovementPatterns,1,,0,0,1,llm,R2,2026-07-01T02:18:17.059183,0.0,CSICobot,0
+0,5,0,1,0,0,0.0,83,concerns_4,concerns,Split the related rule into context-specific branches for the concern.,rule_decomposition,R5 when HumanSaysStop then RobotStopAction,d_decompose_R5,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+R5_1 when HumanSaysStop and (ActionHumanRandom and {humanInRange} or {humanTooClose}) then RobotStopAction
+R5_2 when HumanSaysStop and not (ActionHumanRandom and {humanInRange} or {humanTooClose}) then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,"R5_1 when HumanSaysStop and (ActionHumanRandom and {humanInRange} or {humanTooClose}) then RobotStopAction
+R5_2 when HumanSaysStop and not (ActionHumanRandom and {humanInRange} or {humanTooClose}) then RobotStopAction",0,,1,0,1,deterministic,R5,2026-07-01T02:16:47.804007,9.701,CSICobot,1
+0,5,0,1,0,0,0.0,82,concerns_4,concerns,Strengthen the rule trigger using the concern context identified by the diagnosis.,trigger_strengthening,R5 when HumanSaysStop then RobotStopAction,d_strengthen_R5,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+R5 when HumanSaysStop and (ActionHumanRandom and {humanInRange} or {humanTooClose}) then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R5 when HumanSaysStop and (ActionHumanRandom and {humanInRange} or {humanTooClose}) then RobotStopAction,0,,0,0,1,deterministic,R5,2026-07-01T02:16:47.417010,9.701,CSICobot,1
+0,5,0,0,1,0,0.0,81,concerns_4,concerns,Add the concern context as an explicit exception to the related rule.,defeater_introduction,R5 when HumanSaysStop then RobotStopAction,d_concern_defeater_R5,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+R5 when HumanSaysStop then RobotStopAction unless (ActionHumanRandom and {humanInRange} or {humanTooClose})
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R5 when HumanSaysStop then RobotStopAction unless (ActionHumanRandom and {humanInRange} or {humanTooClose}),0,,0,0,1,deterministic,R5,2026-07-01T02:16:47.013153,9.701,CSICobot,1
+0,5,0,0,0,0,0.0,79,concerns_4,concerns,"A new rule is introduced to ensure that the robot stops its action when a human is in danger, addressing the concern raised by the diagnosis.",new_rule_generation,R5 when HumanSaysStop then RobotStopAction,g1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+R5a when HumanInDanger then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R5a when HumanInDanger then RobotStopAction,0,,1,0,0,llm,R5,2026-07-01T02:16:46.644366,9.701,CSICobot,1
+1,0,1,0,0,0,0.0,80,concerns_4,concerns,,capability_refinement,,g2,,,,,1,,0,0,1,llm,,2026-07-01T02:16:42.072061,0.0,CSICobot,0
+0,5,0,0,0,0,0.0,77,concerns_3,concerns,"A new rule is introduced to ensure human safety when the robot is moving and detects a human in range, addressing the concern raised in the diagnosis.",new_rule_generation,"R1 when RobotMoving then AvoidBumping
+unless {humanInRoute} then AdjustRoute
+unless {humanTooClose} then AdjustRoute
+unless {bumpHuman} then InquireSafety",g1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+R16 when RobotMoving and ({humanInRange} or {bumpHuman} or {humanTooClose}) then EnsureHumanSafety
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R16 when RobotMoving and ({humanInRange} or {bumpHuman} or {humanTooClose}) then EnsureHumanSafety,0,,1,0,0,llm,R1,2026-07-01T02:15:58.626878,9.271,CSICobot,1
+1,0,1,0,0,0,0.0,78,concerns_3,concerns,,capability_refinement,,g2,,,,,1,,0,0,1,llm,,2026-07-01T02:15:56.648057,0.0,CSICobot,0
+0,5,0,1,0,0,0.0,73,concerns_2,concerns,Split the related rule into context-specific branches for the concern.,rule_decomposition,"R1 when RobotMoving then AvoidBumping
+unless {humanInRoute} then AdjustRoute
+unless {humanTooClose} then AdjustRoute
+unless {bumpHuman} then InquireSafety",d_decompose_R1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+R1_1 when RobotMoving and ({humanInRange} or {humanTooClose} or not {routeAvailable}) then AvoidBumping unless {humanInRoute}
+R1_2 when RobotMoving and not ({humanInRange} or {humanTooClose} or not {routeAvailable}) then AvoidBumping unless {humanInRoute}
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,"R1_1 when RobotMoving and ({humanInRange} or {humanTooClose} or not {routeAvailable}) then AvoidBumping unless {humanInRoute}
+R1_2 when RobotMoving and not ({humanInRange} or {humanTooClose} or not {routeAvailable}) then AvoidBumping unless {humanInRoute}",0,,1,0,1,deterministic,R1,2026-07-01T02:13:57.467457,11.629,CSICobot,1
+0,5,0,1,0,0,0.0,72,concerns_2,concerns,Strengthen the rule trigger using the concern context identified by the diagnosis.,trigger_strengthening,"R1 when RobotMoving then AvoidBumping
+unless {humanInRoute} then AdjustRoute
+unless {humanTooClose} then AdjustRoute
+unless {bumpHuman} then InquireSafety",d_strengthen_R1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+R1 when RobotMoving and ({humanInRange} or {humanTooClose} or not {routeAvailable}) then AvoidBumping unless {humanInRoute}
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R1 when RobotMoving and ({humanInRange} or {humanTooClose} or not {routeAvailable}) then AvoidBumping unless {humanInRoute},0,,0,0,1,deterministic,R1,2026-07-01T02:13:57.098175,11.629,CSICobot,1
+0,5,0,0,1,0,0.0,71,concerns_2,concerns,Add the concern context as an explicit exception to the related rule.,defeater_introduction,"R1 when RobotMoving then AvoidBumping
+unless {humanInRoute} then AdjustRoute
+unless {humanTooClose} then AdjustRoute
+unless {bumpHuman} then InquireSafety",d_concern_defeater_R1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+R1 when RobotMoving then AvoidBumping unless (humanInRoute OR {humanInRange} or {humanTooClose} or not {routeAvailable})
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R1 when RobotMoving then AvoidBumping unless (humanInRoute OR {humanInRange} or {humanTooClose} or not {routeAvailable}),0,,0,0,1,deterministic,R1,2026-07-01T02:13:56.705655,11.629,CSICobot,1
+0,5,0,0,0,0,0.0,69,concerns_2,concerns,"A new rule is introduced to ensure human safety when the robot is moving and humans are detected in close proximity, addressing the concern raised in the diagnosis.",new_rule_generation,"R1 when RobotMoving then AvoidBumping
+unless {humanInRoute} then AdjustRoute
+unless {humanTooClose} then AdjustRoute
+unless {bumpHuman} then InquireSafety",g1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+R1a when RobotMoving and ({humanInRange} or {humanTooClose}) then EnsureHumanSafety
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R1a when RobotMoving and ({humanInRange} or {humanTooClose}) then EnsureHumanSafety,0,,1,0,0,llm,R1,2026-07-01T02:13:56.340121,11.629,CSICobot,1
+1,0,1,0,0,0,0.0,70,concerns_2,concerns,,capability_refinement,,g2,,,,,1,,0,0,1,llm,,2026-07-01T02:13:51.859839,0.0,CSICobot,0
+0,5,0,0,0,0,0.0,67,concerns_1,concerns,"A new rule is introduced to ensure that the robot informs humans specifically when they are in danger while the robot is working, addressing the concern raised.",new_rule_generation,R4 when RobotWorking then InformHuman,g1,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+    R7 when RobotMoving and {humanInRange} then RobotStopAction
+   	   unless {humanReEnables} then RobotContinueTask
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+R4a when RobotWorking and {HumanInDanger} then InformHuman
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,R4a when RobotWorking and {HumanInDanger} then InformHuman,0,,1,0,0,llm,R4,2026-07-01T02:11:44.146449,11.158,CSICobot,1
+1,5,1,0,0,0,0.0,68,concerns_1,concerns,The broad action RobotContinueTask is refined to RobotContinueTaskWithCaution to ensure the robot continues its task while being aware of the human's presence.,capability_refinement,"R7 when RobotMoving and {humanInRange} then RobotStopAction
+unless {humanReEnables} then RobotContinueTask",g2,"def_start
+	// Events
+    event RobotMoving //Includes arm and base movement
+    event RobotWorking
+    event RobotContinueTask
+    event RobotStopAction
+    event AvoidBumping
+    event AdjustRoute
+    event InquireSafety
+    event AccountHumanRandomness
+    event TrackHumanLocation
+    event InformHuman
+    event HumanSaysStop
+    event AskPermission
+    event MoveAtSafeSpeed
+    event IncreaseSpeed
+    event PreparingRobot
+    event AssignToRobot
+    event AssignLiability
+    event ConsiderAppearance
+    event ReportIncident
+    event MinimizeCobotCollaboration
+    event PrioritizeHumans
+    event ActionHumanRandom
+    event MoveAwayFromHuman
+    
+    // measures
+    measure humanInRoute: boolean
+    measure humanInRange: boolean
+    measure bumpHuman: boolean
+    measure humanTooClose: boolean
+    measure routeAvailable: boolean
+    measure humanReEnables: boolean
+    measure risk: scale(low, medium, high)
+    measure efficiency: scale(elow, emedium, ehigh)
+    measure isHumanTask: boolean
+    measure humanConsents: boolean
+    measure accident: boolean
+    measure humansPresent: boolean
+    measure obstaclePresent: boolean
+event RobotContinueTaskWithCaution
+def_end
+
+rule_start
+	R1 when RobotMoving then AvoidBumping
+	   unless {humanInRoute} then AdjustRoute
+	   unless {humanTooClose} then AdjustRoute
+	   unless {bumpHuman} then InquireSafety
+
+    R2 when RobotMoving then AccountHumanRandomness
+
+    R3 when RobotMoving then TrackHumanLocation
+
+    R4 when RobotWorking then InformHuman
+    
+    R4b when RobotWorking then InformHuman
+
+    R5 when HumanSaysStop then RobotStopAction
+    
+    R6 when InformHuman then RobotMoving unless {humanInRoute} then AdjustRoute
+ 	   unless (not {routeAvailable}) then AskPermission
+
+R7 when RobotMoving and {humanInRange} then RobotStopAction
+unless {humanReEnables} then RobotContinueTaskWithCaution
+
+    R8 when RobotMoving then MoveAtSafeSpeed
+   	   unless (({efficiency} = elow) and ({risk} = low)) then IncreaseSpeed
+
+    R9 when PreparingRobot and {isHumanTask} then not AssignToRobot
+   	   unless {humanConsents}
+
+    R10 when PreparingRobot then AssignLiability
+    
+    R10_1 when PreparingRobot then InformHuman
+
+    R11 when PreparingRobot then ConsiderAppearance
+
+    R12 when PreparingRobot then MinimizeCobotCollaboration
+
+	R12_1 when PreparingRobot then PrioritizeHumans
+
+    R13 when RobotWorking and {accident} then RobotStopAction
+
+    R13_1 when RobotWorking and {accident} then ReportIncident
+
+    R14 when PreparingRobot and {humansPresent} then InformHuman
+
+    R15 when RobotWorking and {obstaclePresent} then ReportIncident
+    
+    R15_1 when RobotWorking and {obstaclePresent} then RobotStopAction
+rule_end
+
+concern_start
+    // Safety
+    c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask
+    c2 when RobotMoving and ({humanInRange} or ({humanTooClose} or (not {routeAvailable}))) then not AvoidBumping
+    c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute
+    c4 when ActionHumanRandom and ({humanInRange} or {humanTooClose}) then not RobotStopAction
+    c5 when ActionHumanRandom then  RobotMoving
+    c6 when ActionHumanRandom and {routeAvailable} then not MoveAwayFromHuman
+    c7 when TrackHumanLocation and {humanTooClose} then not InformHuman
+    c8 when HumanSaysStop then not RobotStopAction
+concern_end
+
+purpose_start
+    p1 exists RobotMoving  and ({humanInRoute} and ((not {bumpHuman}) and (not {humanTooClose})))
+    p2 exists RobotWorking and {humanInRange}
+    p3 exists RobotContinueTask and {humanInRange}
+    p4 exists RobotStopAction and {humanTooClose}
+    p5 exists AvoidBumping and {humanTooClose}
+    p6 exists AdjustRoute and {humanTooClose}
+    p7 exists InquireSafety and ({risk} > medium)
+    p8 when AccountHumanRandomness then RobotStopAction
+    p9 when AccountHumanRandomness then MoveAtSafeSpeed
+    p10 when TrackHumanLocation and {humanTooClose} then InformHuman
+    p11 when HumanSaysStop then RobotStopAction
+    p12 when AskPermission then AssignToRobot
+    p13 when TrackHumanLocation and (not {humanTooClose}) then IncreaseSpeed
+    p14 when PreparingRobot then AssignLiability
+    p15 exists ReportIncident and {accident}
+purpose_end",,,"R7 when RobotMoving and {humanInRange} then RobotStopAction
+unless {humanReEnables} then RobotContinueTaskWithCaution",0,,0,0,1,llm,R7,2026-07-01T02:11:43.799964,11.158,CSICobot,1

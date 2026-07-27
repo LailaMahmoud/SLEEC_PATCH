@@ -1,0 +1,3158 @@
+actions_refined,attempts,capabilities_refined,conditions_refined,defeaters_added,expert_match,expert_similarity,id,issue_id,issue_type,natural_language_explanation,operation,original_rule,patch_id,patched_sleec,philosopher_comments,philosopher_decision,proposed_rule,requires_social_scientist_review,review_timestamp,rules_added,rules_deleted,rules_modified,source,target_rule_id,timestamp,total_time_seconds,use_case,verified
+0,5,0,1,0,0,0.0,66,situational_conflicts_1,situational_conflicts,Split the first conflicting rule around the second rule's context.,rule_decomposition,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",d_decompose_R4,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4_1 when PreparingDrone and {onIndigenousLand} and (PreparingDrone and {privateTerritory}) then not DeployDrone unless {landTreatyInPlace}
+R4_2 when PreparingDrone and {onIndigenousLand} and not (PreparingDrone and {privateTerritory}) then not DeployDrone unless {landTreatyInPlace}
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,"R4_1 when PreparingDrone and {onIndigenousLand} and (PreparingDrone and {privateTerritory}) then not DeployDrone unless {landTreatyInPlace}
+R4_2 when PreparingDrone and {onIndigenousLand} and not (PreparingDrone and {privateTerritory}) then not DeployDrone unless {landTreatyInPlace}",0,,1,0,1,deterministic,R4,2026-07-01T01:40:09.952108,36.416,ASPEN,1
+0,5,0,0,0,0,0.0,65,situational_conflicts_1,situational_conflicts,The two conflicting rules are merged into one rule.,rule_merging,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",d4,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone unless ((landTreatyInPlace) OR (PreparingDrone and {privateTerritory})) then not DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone unless ((landTreatyInPlace) OR (PreparingDrone and {privateTerritory})) then not DeployDrone,0,,0,0,1,deterministic,R4,2026-07-01T01:40:09.564605,36.416,ASPEN,1
+0,5,0,1,0,0,0.0,64,situational_conflicts_1,situational_conflicts,The trigger is refined using the other conflicting rule's context.,trigger_refinement,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",d_trigger_refine_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4 when PreparingDrone and {onIndigenousLand} and not (PreparingDrone and {privateTerritory}) then not DeployDrone unless {landTreatyInPlace}
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R4 when PreparingDrone and {onIndigenousLand} and not (PreparingDrone and {privateTerritory}) then not DeployDrone unless {landTreatyInPlace},0,,0,0,1,deterministic,R4,2026-07-01T01:40:09.141329,36.416,ASPEN,1
+0,5,0,1,0,0,0.0,63,situational_conflicts_1,situational_conflicts,The trigger is strengthened using contextual information.,trigger_strengthening,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",d3,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4 when PreparingDrone and {onIndigenousLand} and (PreparingDrone and {privateTerritory}) then not DeployDrone unless {landTreatyInPlace}
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R4 when PreparingDrone and {onIndigenousLand} and (PreparingDrone and {privateTerritory}) then not DeployDrone unless {landTreatyInPlace},0,,0,0,1,deterministic,R4,2026-07-01T01:40:08.679811,36.416,ASPEN,1
+0,5,0,1,0,0,0.0,62,situational_conflicts_1,situational_conflicts,The opposite trigger is refined using the first rule's context.,trigger_refinement,R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone,d_trigger_refine_2,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+R7_1 when PreparingDrone and {privateTerritory} and not (PreparingDrone and {onIndigenousLand}) then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R7_1 when PreparingDrone and {privateTerritory} and not (PreparingDrone and {onIndigenousLand}) then not DeployDrone,0,,0,0,1,deterministic,R7_1,2026-07-01T01:40:08.329213,36.416,ASPEN,1
+0,5,0,0,1,0,0.0,61,situational_conflicts_1,situational_conflicts,The conflicting context is converted into an explicit defeater.,defeater_introduction,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",d1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone unless (landTreatyInPlace OR PreparingDrone and {privateTerritory})
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone unless (landTreatyInPlace OR PreparingDrone and {privateTerritory}),0,,0,0,1,deterministic,R4,2026-07-01T01:40:07.943790,36.416,ASPEN,1
+0,5,0,0,1,0,0.0,60,situational_conflicts_1,situational_conflicts,The opposite rule context is given an explicit defeater.,defeater_introduction,R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone,d2,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone unless (PreparingDrone and {onIndigenousLand})
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone unless (PreparingDrone and {onIndigenousLand}),0,,0,0,1,deterministic,R7_1,2026-07-01T01:40:07.613993,36.416,ASPEN,1
+0,5,0,1,0,0,0.0,58,situational_conflicts_1,situational_conflicts,"The measure onIndigenousLand is specialized by adding a landUseType measure to differentiate between protected and non-protected lands, clarifying when drone deployment is restricted.",measure_specialization,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",g2,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+measure landUseType:boolean
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4 when PreparingDrone and {onIndigenousLand} and {landUseType=protected} then not DeployDrone unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R4 when PreparingDrone and {onIndigenousLand} and {landUseType=protected} then not DeployDrone unless {landTreatyInPlace} then DeployDrone,0,,0,0,1,llm,R4,2026-07-01T01:40:07.265073,36.416,ASPEN,1
+1,5,1,0,0,0,0.0,59,situational_conflicts_1,situational_conflicts,"The capability to deploy the drone is refined to specify that deployment is only allowed when on Indigenous land and a land treaty is in place, clarifying the conditions for deployment.",capability_refinement,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",g3,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+event DeployDroneOnTreatyLand
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4 when PreparingDrone and {onIndigenousLand} and {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R4 when PreparingDrone and {onIndigenousLand} and {landTreatyInPlace} then DeployDrone,0,,0,0,1,llm,R4,2026-07-01T01:40:06.881710,36.416,ASPEN,1
+0,0,0,1,0,0,0.0,57,situational_conflicts_1,situational_conflicts,"The broad event PreparingDrone is specialized into a context-specific event that considers the presence of a land treaty, allowing for clearer decision-making regarding drone deployment.",event_specialization,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",g1,,,,R4 when PreparingDroneOnIndigenousLandWithTreaty and {onIndigenousLand} then not DeployDrone unless {landTreatyInPlace} then DeployDrone,1,,0,0,1,llm,R4,2026-07-01T01:39:40.026033,0.0,ASPEN,0
+1,5,1,0,0,0,0.0,56,redundancies_1,redundancies,"The action of informing the keeper is refined to specifically address battery damage, making the response more contextually relevant.",capability_refinement,R14 when DeployDrone and {damages} then InformKeeper,g3,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+event InformKeeperAboutBatteryDamage
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+R14 when DeployDrone and {damages} and {batteryDamage} then InformKeeperAboutBatteryDamage
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R14 when DeployDrone and {damages} and {batteryDamage} then InformKeeperAboutBatteryDamage,0,,0,0,1,llm,R14,2026-07-01T01:38:54.839449,83.714,ASPEN,1
+0,5,0,1,0,0,0.0,55,redundancies_1,redundancies,"The measure {damages} is specialized to focus specifically on structural damages, allowing for clearer communication of the situation to the keeper.",measure_specialization,R14 when DeployDrone and {damages} then InformKeeper,g2,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+measure {structuralDamages}:boolean
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+R14 when DeployDrone and {structuralDamages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R14 when DeployDrone and {structuralDamages} then InformKeeper,0,,0,0,1,llm,R14,2026-07-01T01:38:54.500387,83.714,ASPEN,1
+0,0,0,1,0,0,0.0,54,redundancies_1,redundancies,The broad event DeployDrone is specialized into a minor damages context to ensure that the InformKeeper action is only triggered when the drone has minor damages.,event_specialization,R14 when DeployDrone and {damages} then InformKeeper,g1,,,,R14 when DeployDroneWithMinorDamages then InformKeeper,1,,0,0,1,llm,R14,2026-07-01T01:37:41.859239,0.0,ASPEN,0
+0,5,0,1,0,0,0.0,53,concerns_4,concerns,Split the related rule into context-specific branches for the concern.,rule_decomposition,"R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+then InformKeeper",d_decompose_R8_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+R8_1 R8_1_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and (EnsureCompliance) then InformKeeper
+R8_1_2 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and not (EnsureCompliance) then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,"R8_1_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and (EnsureCompliance) then InformKeeper
+R8_1_2 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and not (EnsureCompliance) then InformKeeper",0,,1,0,1,deterministic,R8_1,2026-07-01T01:37:17.839372,29.197,ASPEN,1
+0,5,0,0,1,0,0.0,52,concerns_4,concerns,Add the concern context as an explicit exception to the related rule.,defeater_introduction,"R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+then InformKeeper",d_concern_defeater_R8_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+R8_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) then InformKeeper unless {EnsureCompliance}
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R8_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) then InformKeeper unless {EnsureCompliance},0,,0,0,1,deterministic,R8_1,2026-07-01T01:37:17.491272,29.197,ASPEN,1
+0,5,0,1,0,0,0.0,51,concerns_4,concerns,Strengthen the rule trigger using the concern context identified by the diagnosis.,trigger_strengthening,"R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+then InformKeeper",d_strengthen_R8_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+R8_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and (EnsureCompliance) then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R8_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and (EnsureCompliance) then InformKeeper,0,,0,0,1,deterministic,R8_1,2026-07-01T01:37:17.146985,29.197,ASPEN,1
+0,5,0,0,0,0,0.0,49,concerns_4,concerns,"A new rule is introduced to ensure that the keeper is informed within 5 minutes of implementing ASPEN, addressing the concern raised.",new_rule_generation,R10 when ImplementASPEN then EnsureCompliance,g1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+R10_1 when ImplementASPEN then EnsureInformKeeperWithin5Minutes
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R10_1 when ImplementASPEN then EnsureInformKeeperWithin5Minutes,0,,1,0,0,llm,R10,2026-07-01T01:37:16.800525,29.197,ASPEN,1
+1,0,1,0,0,0,0.0,50,concerns_4,concerns,"The broad action EnsureCompliance is refined into a specific capability to verify regulatory standards, ensuring compliance is effectively addressed.",capability_refinement,R10 when ImplementASPEN then EnsureCompliance,g2,,,,R10 when ImplementASPEN then VerifyRegulatoryStandards,1,,0,0,1,llm,R10,2026-07-01T01:36:52.890157,0.0,ASPEN,0
+0,5,0,1,0,0,0.0,48,concerns_3,concerns,Split the related rule into context-specific branches for the concern.,rule_decomposition,"R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+then InformKeeper",d_decompose_R8_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+R8_1 R8_1_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and (DeletePictures) then InformKeeper
+R8_1_2 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and not (DeletePictures) then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,"R8_1_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and (DeletePictures) then InformKeeper
+R8_1_2 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and not (DeletePictures) then InformKeeper",0,,1,0,1,deterministic,R8_1,2026-07-01T01:32:46.236951,9.01,ASPEN,1
+0,5,0,0,1,0,0.0,47,concerns_3,concerns,Add the concern context as an explicit exception to the related rule.,defeater_introduction,"R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+then InformKeeper",d_concern_defeater_R8_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+R8_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) then InformKeeper unless {DeletePictures}
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R8_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) then InformKeeper unless {DeletePictures},0,,0,0,1,deterministic,R8_1,2026-07-01T01:32:45.905025,9.01,ASPEN,1
+0,5,0,1,0,0,0.0,46,concerns_3,concerns,Strengthen the rule trigger using the concern context identified by the diagnosis.,trigger_strengthening,"R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+then InformKeeper",d_strengthen_R8_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+R8_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and (DeletePictures) then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R8_1 when DeployDrone and (({carbonFootprint} > low) and ({benefits} < medium)) and (DeletePictures) then InformKeeper,0,,0,0,1,deterministic,R8_1,2026-07-01T01:32:45.609755,9.01,ASPEN,1
+0,5,0,0,0,0,0.0,44,concerns_3,concerns,"A new rule is introduced to ensure that the keeper is informed whenever pictures are deleted, addressing the concern raised in the diagnosis.",new_rule_generation,"R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+then InformKeeper",g1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+R8_2 when DeletePicturesWithoutInformingKeeper then InformKeeper
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R8_2 when DeletePicturesWithoutInformingKeeper then InformKeeper,0,,1,0,0,llm,R8_1,2026-07-01T01:32:45.296752,9.01,ASPEN,1
+1,0,1,0,0,0,0.0,45,concerns_3,concerns,,capability_refinement,,g2,,,,,1,,0,0,1,llm,,2026-07-01T01:32:40.917484,0.0,ASPEN,0
+0,5,0,1,0,0,0.0,43,concerns_2,concerns,Split the related rule into context-specific branches for the concern.,rule_decomposition,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",d_decompose_R4,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4_1 when PreparingDrone and {onIndigenousLand} and ({flightCondition} = dangerous) then not DeployDrone unless {landTreatyInPlace}
+R4_2 when PreparingDrone and {onIndigenousLand} and not ({flightCondition} = dangerous) then not DeployDrone unless {landTreatyInPlace}
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,"R4_1 when PreparingDrone and {onIndigenousLand} and ({flightCondition} = dangerous) then not DeployDrone unless {landTreatyInPlace}
+R4_2 when PreparingDrone and {onIndigenousLand} and not ({flightCondition} = dangerous) then not DeployDrone unless {landTreatyInPlace}",0,,1,0,1,deterministic,R4,2026-07-01T01:32:01.902312,35.22,ASPEN,1
+0,5,0,1,0,0,0.0,42,concerns_2,concerns,Strengthen the rule trigger using the concern context identified by the diagnosis.,trigger_strengthening,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",d_strengthen_R4,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4 when PreparingDrone and {onIndigenousLand} and ({flightCondition} = dangerous) then not DeployDrone unless {landTreatyInPlace}
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R4 when PreparingDrone and {onIndigenousLand} and ({flightCondition} = dangerous) then not DeployDrone unless {landTreatyInPlace},0,,0,0,1,deterministic,R4,2026-07-01T01:32:01.544727,35.22,ASPEN,1
+0,5,0,0,1,0,0.0,41,concerns_2,concerns,Add the concern context as an explicit exception to the related rule.,defeater_introduction,"R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+unless {landTreatyInPlace} then DeployDrone",d_concern_defeater_R4,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone unless (landTreatyInPlace OR {flightCondition} = dangerous)
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone unless (landTreatyInPlace OR {flightCondition} = dangerous),0,,0,0,1,deterministic,R4,2026-07-01T01:32:01.197363,35.22,ASPEN,1
+1,0,1,0,0,0,0.0,40,concerns_2,concerns,,capability_refinement,,g2,,,,,1,,0,0,1,llm,,2026-07-01T01:31:32.178243,0.0,ASPEN,0
+0,0,0,0,0,0,0.0,39,concerns_2,concerns,"A new rule is introduced to prevent deploying the drone when the flight condition is dangerous, addressing the concern raised in the existing rule.",new_rule_generation,"R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+unless ({flightCondition} = dangerous) then GroundDrone",g1,,,,R11_1 when DeployDrone and ({flightCondition} = dangerous) then not DeployDrone,1,,1,0,0,llm,R11,2026-07-01T01:31:31.497895,0.0,ASPEN,0
+0,5,0,1,0,0,0.0,38,concerns_1,concerns,Split the related rule into context-specific branches for the concern.,rule_decomposition,R14_1 when DeployDrone and {damages} then GroundDrone,d_decompose_R14_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+R14_1 R14_1_1 when DeployDrone and {damages} and ({battery} = low) then GroundDrone
+R14_1_2 when DeployDrone and {damages} and not ({battery} = low) then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,"R14_1_1 when DeployDrone and {damages} and ({battery} = low) then GroundDrone
+R14_1_2 when DeployDrone and {damages} and not ({battery} = low) then GroundDrone",0,,1,0,1,deterministic,R14_1,2026-07-01T01:29:45.564107,55.579,ASPEN,1
+0,5,0,1,0,0,0.0,37,concerns_1,concerns,Strengthen the rule trigger using the concern context identified by the diagnosis.,trigger_strengthening,R14_1 when DeployDrone and {damages} then GroundDrone,d_strengthen_R14_1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+R14_1 when DeployDrone and {damages} and ({battery} = low) then GroundDrone
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,R14_1 when DeployDrone and {damages} and ({battery} = low) then GroundDrone,0,,0,0,1,deterministic,R14_1,2026-07-01T01:29:45.223239,55.579,ASPEN,1
+0,5,0,0,0,0,0.0,35,concerns_1,concerns,"A new rule is introduced to ensure that when a drone is deployed with low battery, it is grounded immediately to prevent potential safety issues.",new_rule_generation,"c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+c7 when DeletePictures then not InformKeeper within 5 minutes
+c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end",g1,"def_start
+    event EncounterHuman
+    event HumanNearby
+    event IdentifyActivity
+    event InformHuman
+    event InformKeeper
+	event BackUp
+	event ExitArea
+	event PreparingDrone
+	event DeployDrone
+	event GroundDrone
+	event ReturnHome
+	event MonitorLand
+	event MonitorCarbon
+
+    event CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	event AvoidInterference
+	event EncounterWildlife
+	event UpdateTerritories  // Data must include land delineations as well as airfields
+	event DeletePictures
+	event TakePictures
+	event StoreData
+	event AnonymizeHuman
+	event ImplementASPEN
+event EnsureCompliance // Does not interfere or contradict with pre-existing jurisdictional protections
+
+	measure sameLanguage: boolean
+	measure humanUnderstands: boolean
+	measure unrelatedActivity: boolean
+	measure environmentDangerous: boolean // Bad weather, dangerous terrain ahead, etc
+	measure onIndigenousLand: boolean
+	measure landTreatyInPlace: boolean
+    measure relevantLand: boolean // In relevant food & shelter priorities for local humans and animals
+    measure privateTerritory: boolean
+    measure humanIdentified: boolean
+    measure carbonFootprint: scale(low, medium, high)
+	measure benefits: scale(low1, medium1, high1)
+	measure flightCondition: scale(dangerous, unsafe, safe, ideal)
+	measure wildlifeDisturbed: boolean
+	measure wildlifeInteractswithDrone: boolean
+	measure unKnownObject: boolean
+	measure damages: boolean
+	measure battery: scale(low2, medium2, high2)
+	measure store: scale(low3, medium3, high3)
+
+def_end
+
+rule_start
+	R1 when EncounterHuman and ({sameLanguage} and {humanUnderstands})
+    then InformHuman
+
+    R2 when EncounterHuman then IdentifyActivity
+
+    R2_1 when IdentifyActivity and {unrelatedActivity} then not StoreData
+
+    R3 when HumanNearby and {environmentDangerous} then InformHuman
+
+    R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+    unless {landTreatyInPlace} then DeployDrone
+
+    R5 when DeployDrone and {relevantLand} then MonitorLand
+
+    R6 when CollectSample then AvoidInterference
+
+    R6_1 when DeployDrone then AvoidInterference
+
+    // Prior to deploying the drone, ensure territory jurisdictions updated
+    R7 when PreparingDrone then UpdateTerritories
+
+    // If area is private territory, then don’t deploy drone
+    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+
+    // If drone somehow still stumbles onto private territory
+    R7_2 when DeployDrone and {privateTerritory} then ExitArea
+
+    R8 when DeployDrone then MonitorCarbon
+
+    R8_1 when DeployDrone and (({carbonFootprint} > low) and  ({benefits} < medium))
+    then InformKeeper
+
+    R9 when TakePictures and {humanIdentified} then AnonymizeHuman
+    unless {unrelatedActivity} then DeletePictures
+
+    R10 when ImplementASPEN then EnsureCompliance
+
+    R11 when DeployDrone and ({flightCondition} < safe) then ReturnHome
+    unless ({flightCondition} = dangerous) then GroundDrone
+
+    R11_cont when ReturnHome then InformKeeper
+
+    R11_cont_1 when GroundDrone then InformKeeper
+
+    R12 when EncounterWildlife then AvoidInterference
+    unless {wildlifeDisturbed} then BackUp
+    unless {wildlifeInteractswithDrone} then ExitArea within 1 minutes
+
+    R12_1 when EncounterWildlife and {wildlifeInteractswithDrone} then InformKeeper
+
+    R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
+    then not DeployDrone
+
+    R14 when DeployDrone and {damages} then InformKeeper
+
+    R14_1 when DeployDrone and {damages} then GroundDrone
+c4_1 when DeployDroneWithLowBattery then GroundDrone immediately
+rule_end
+
+concern_start
+    c1 when PreparingDrone and {damages} then DeployDrone
+    c2 when PreparingDrone and ({battery} = low) then DeployDrone
+    c3 when DeployDrone and {damages} then not GroundDrone within 5 minutes
+    c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes
+    c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone
+    c6 when DeployDrone and ({flightCondition} = dangerous) then not GroundDrone within 5 minutes
+    c7 when DeletePictures then not InformKeeper within 5 minutes
+    c8 when EnsureCompliance then not InformKeeper within 5 minutes
+concern_end
+
+
+purpose_start
+    p1 exists CollectSample // Separate event from DeployDrone because not all deployments may result in sample collection
+	p2 exists UpdateTerritories  // Data must include land delineations as well as airfields
+	p3 exists DeletePictures
+
+	p4 exists PreparingDrone and {damages} while DeployDrone eventually
+purpose_end",,,c4_1 when DeployDroneWithLowBattery then GroundDrone immediately,0,,1,0,0,llm,c4,2026-07-01T01:29:44.829666,55.579,ASPEN,1
+1,0,1,0,0,0,0.0,36,concerns_1,concerns,The broad action 'AvoidInterference' is refined to specifically address avoiding interference with humans during drone deployment.,capability_refinement,R6_1 when DeployDrone then AvoidInterference,g2,,,,R6_1 when DeployDrone then AvoidInterferenceWithHumans,1,,0,0,1,llm,R6_1,2026-07-01T01:28:57.490587,0.0,ASPEN,0

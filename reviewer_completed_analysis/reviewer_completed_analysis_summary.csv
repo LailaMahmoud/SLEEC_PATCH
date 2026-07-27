@@ -1,0 +1,7 @@
+metric,value
+total_patch_rows,149
+reviewed_rows,69
+pending_rows,80
+verified_rows,129
+llm_rows,69
+deterministic_rows,80

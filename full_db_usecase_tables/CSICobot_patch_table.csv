@@ -1,0 +1,27 @@
+case study,issue_id,issue_type,verified_patch_count,generation_time_seconds,validation_time_seconds,patch_id,operation,rules_modified,rules_added,rules_deleted,defeaters_added,conditions_refined,capabilities_refined,rank,source,expert_similarity,requires_social_scientist_review
+CSICobot,concerns_1,concerns,2.0,10.456,0.7,g2,capability_refinement,1,0,0,0,0,1,1.0,llm,0.0,0
+CSICobot,concerns_1,concerns,2.0,10.456,0.7,g1,new_rule_generation,0,1,0,0,0,0,2.0,llm,0.0,0
+CSICobot,concerns_2,concerns,4.0,10.085,0.465,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+CSICobot,concerns_2,concerns,4.0,10.085,0.465,d_concern_defeater_R1,defeater_introduction,1,0,0,1,0,0,2.0,deterministic,0.0,0
+CSICobot,concerns_2,concerns,4.0,10.085,0.465,d_strengthen_R1,trigger_strengthening,1,0,0,0,1,0,3.0,deterministic,0.0,0
+CSICobot,concerns_2,concerns,4.0,10.085,0.465,d_decompose_R1,rule_decomposition,1,1,0,0,1,0,4.0,deterministic,0.0,0
+CSICobot,concerns_2,concerns,4.0,10.085,0.465,g2,capability_refinement,1,0,0,0,0,1,5.0,llm,0.0,1
+CSICobot,concerns_3,concerns,1.0,9.228,0.042,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+CSICobot,concerns_3,concerns,1.0,9.228,0.042,g2,capability_refinement,1,0,0,0,0,1,2.0,llm,0.0,1
+CSICobot,concerns_4,concerns,4.0,8.092,0.491,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+CSICobot,concerns_4,concerns,4.0,8.092,0.491,d_concern_defeater_R5,defeater_introduction,1,0,0,1,0,0,2.0,deterministic,0.0,0
+CSICobot,concerns_4,concerns,4.0,8.092,0.491,d_strengthen_R5,trigger_strengthening,1,0,0,0,1,0,3.0,deterministic,0.0,0
+CSICobot,concerns_4,concerns,4.0,8.092,0.491,d_decompose_R5,rule_decomposition,1,1,0,0,1,0,4.0,deterministic,0.0,0
+CSICobot,concerns_4,concerns,4.0,8.092,0.491,g2,capability_refinement,1,0,0,0,0,1,5.0,llm,0.0,1
+CSICobot,concerns_5,concerns,4.0,8.934,18.293,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+CSICobot,concerns_5,concerns,4.0,8.934,18.293,d_concern_defeater_R6,defeater_introduction,1,0,0,1,0,0,2.0,deterministic,0.0,0
+CSICobot,concerns_5,concerns,4.0,8.934,18.293,d_strengthen_R6,trigger_strengthening,1,0,0,0,1,0,3.0,deterministic,0.0,0
+CSICobot,concerns_5,concerns,4.0,8.934,18.293,d_decompose_R6,rule_decomposition,1,1,0,0,1,0,4.0,deterministic,0.0,0
+CSICobot,concerns_5,concerns,4.0,8.934,18.293,g2,capability_refinement,1,0,0,0,0,1,5.0,llm,0.0,1
+CSICobot,concerns_6,concerns,1.0,8.084,0.03,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+CSICobot,concerns_6,concerns,1.0,8.084,0.03,g2,capability_refinement,1,0,0,0,0,1,2.0,llm,0.0,1
+CSICobot,concerns_7,concerns,4.0,8.622,1.743,d_concern_defeater_R10_1,defeater_introduction,1,0,0,1,0,0,1.0,deterministic,0.0,0
+CSICobot,concerns_7,concerns,4.0,8.622,1.743,d_strengthen_R10_1,trigger_strengthening,1,0,0,0,1,0,2.0,deterministic,0.0,0
+CSICobot,concerns_7,concerns,4.0,8.622,1.743,g1,new_rule_generation,0,1,0,0,0,0,3.0,llm,0.0,0
+CSICobot,concerns_7,concerns,4.0,8.622,1.743,d_decompose_R10_1,rule_decomposition,1,1,0,0,1,0,4.0,deterministic,0.0,0
+CSICobot,concerns_7,concerns,4.0,8.622,1.743,g2,capability_refinement,1,0,0,0,0,1,5.0,llm,0.0,1

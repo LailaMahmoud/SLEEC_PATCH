@@ -1,0 +1,10 @@
+use_case,reviewed,accepted,rejected,acceptance_rate
+ALMI,7,1,6,0.1429
+ASPEN,14,4,10,0.2857
+AutoCAR,3,0,3,0.0
+BSN,6,0,6,0.0
+CSICobot,14,9,5,0.6429
+DAISY,5,2,3,0.4
+DPA,6,0,6,0.0
+DressAssist,2,1,1,0.5
+SafeSCAD,12,3,9,0.25

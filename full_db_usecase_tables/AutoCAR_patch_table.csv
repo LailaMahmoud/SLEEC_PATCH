@@ -1,0 +1,7 @@
+case study,issue_id,issue_type,verified_patch_count,generation_time_seconds,validation_time_seconds,patch_id,operation,rules_modified,rules_added,rules_deleted,defeaters_added,conditions_refined,capabilities_refined,rank,source,expert_similarity,requires_social_scientist_review
+AutoCAR,redundancies_1,redundancies,6.0,12.979,4.471,d_remove_R22,rule_removal,0,0,1,0,0,0,1.0,deterministic,0.0,0
+AutoCAR,redundancies_1,redundancies,6.0,12.979,4.471,d_merge_R22,rule_merging,1,0,0,0,0,0,2.0,deterministic,0.0,0
+AutoCAR,redundancies_1,redundancies,6.0,12.979,4.471,g1,event_specialization,1,0,0,0,1,0,3.0,llm,0.0,0
+AutoCAR,redundancies_1,redundancies,6.0,12.979,4.471,g2,measure_specialization,1,0,0,0,1,0,4.0,llm,0.0,0
+AutoCAR,redundancies_1,redundancies,6.0,12.979,4.471,g3,capability_refinement,1,0,0,0,0,1,5.0,llm,0.0,0
+AutoCAR,redundancies_1,redundancies,6.0,12.979,4.471,d_propagate_R22,defeater_propagation,1,0,0,0,1,0,6.0,deterministic,0.0,0

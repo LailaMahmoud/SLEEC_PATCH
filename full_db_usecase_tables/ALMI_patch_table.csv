@@ -1,0 +1,14 @@
+case study,issue_id,issue_type,verified_patch_count,generation_time_seconds,validation_time_seconds,patch_id,operation,rules_modified,rules_added,rules_deleted,defeaters_added,conditions_refined,capabilities_refined,rank,source,expert_similarity,requires_social_scientist_review
+ALMI,concerns_1,concerns,,,,d_concern_defeater_R3,defeater_introduction,1,0,0,1,0,0,,deterministic,0.0,0
+ALMI,concerns_1,concerns,,,,d_concern_defeater_R3,defeater_introduction,1,0,0,1,0,0,,deterministic,0.0,0
+ALMI,concerns_1,concerns,,,,d_decompose_R3,rule_decomposition,1,1,0,0,1,0,,deterministic,0.0,0
+ALMI,concerns_1,concerns,,,,d_decompose_R3,rule_decomposition,1,1,0,0,1,0,,deterministic,0.0,0
+ALMI,concerns_1,concerns,,,,d_strengthen_R3,trigger_strengthening,1,0,0,0,1,0,,deterministic,0.0,0
+ALMI,concerns_1,concerns,,,,d_strengthen_R3,trigger_strengthening,1,0,0,0,1,0,,deterministic,0.0,0
+ALMI,concerns_1,concerns,,,,g1,new_rule_generation,0,1,0,0,0,0,,llm,0.0,0
+ALMI,concerns_1,concerns,,,,g1,new_rule_generation,0,1,0,0,0,0,,llm,0.0,0
+ALMI,concerns_1,concerns,,,,g1,new_rule_generation,0,1,0,0,0,0,,llm,0.0,0
+ALMI,concerns_1,concerns,,,,g1,new_rule_generation,0,1,0,0,0,0,,llm,0.0,0
+ALMI,concerns_1,concerns,,,,g2,capability_refinement,1,0,0,0,0,1,,llm,0.0,0
+ALMI,concerns_2,concerns,,,,g1,new_rule_generation,0,1,0,0,0,0,,llm,0.0,0
+ALMI,concerns_2,concerns,,,,g1,new_rule_generation,0,1,0,0,0,0,,llm,0.0,0

@@ -1,0 +1,15 @@
+operation,decision,count
+capability_refinement,accepted,13
+capability_refinement,rejected,15
+defeater_introduction,pending,23
+defeater_propagation,pending,1
+event_specialization,rejected,8
+measure_specialization,accepted,2
+measure_specialization,rejected,7
+new_rule_generation,accepted,5
+new_rule_generation,rejected,19
+rule_decomposition,pending,21
+rule_merging,pending,6
+rule_removal,pending,2
+trigger_refinement,pending,6
+trigger_strengthening,pending,21

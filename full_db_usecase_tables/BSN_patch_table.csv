@@ -1,0 +1,16 @@
+case study,issue_id,issue_type,verified_patch_count,generation_time_seconds,validation_time_seconds,patch_id,operation,rules_modified,rules_added,rules_deleted,defeaters_added,conditions_refined,capabilities_refined,rank,source,expert_similarity,requires_social_scientist_review
+BSN,concerns_1,concerns,4.0,12.938,22.454,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+BSN,concerns_1,concerns,4.0,12.938,22.454,d_concern_defeater_Rule1,defeater_introduction,1,0,0,1,0,0,2.0,deterministic,0.0,0
+BSN,concerns_1,concerns,4.0,12.938,22.454,d_strengthen_Rule1,trigger_strengthening,1,0,0,0,1,0,3.0,deterministic,0.0,0
+BSN,concerns_1,concerns,4.0,12.938,22.454,d_decompose_Rule1,rule_decomposition,1,1,0,0,1,0,4.0,deterministic,0.0,0
+BSN,concerns_1,concerns,4.0,12.938,22.454,g2,capability_refinement,1,0,0,0,0,1,5.0,llm,0.0,1
+BSN,concerns_2,concerns,4.0,9.941,0.585,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+BSN,concerns_2,concerns,4.0,9.941,0.585,d_concern_defeater_Rule12,defeater_introduction,1,0,0,1,0,0,2.0,deterministic,0.0,0
+BSN,concerns_2,concerns,4.0,9.941,0.585,d_strengthen_Rule12,trigger_strengthening,1,0,0,0,1,0,3.0,deterministic,0.0,0
+BSN,concerns_2,concerns,4.0,9.941,0.585,d_decompose_Rule12,rule_decomposition,1,1,0,0,1,0,4.0,deterministic,0.0,0
+BSN,concerns_2,concerns,4.0,9.941,0.585,g2,capability_refinement,1,0,0,0,0,1,5.0,llm,0.0,1
+BSN,concerns_3,concerns,4.0,11.001,23.001,g1,new_rule_generation,0,1,0,0,0,0,1.0,llm,0.0,0
+BSN,concerns_3,concerns,4.0,11.001,23.001,d_concern_defeater_Rule13_1,defeater_introduction,1,0,0,1,0,0,2.0,deterministic,0.0,0
+BSN,concerns_3,concerns,4.0,11.001,23.001,d_strengthen_Rule13_1,trigger_strengthening,1,0,0,0,1,0,3.0,deterministic,0.0,0
+BSN,concerns_3,concerns,4.0,11.001,23.001,d_decompose_Rule13_1,rule_decomposition,1,1,0,0,1,0,4.0,deterministic,0.0,0
+BSN,concerns_3,concerns,4.0,11.001,23.001,g2,capability_refinement,1,0,0,0,0,1,5.0,llm,0.0,1

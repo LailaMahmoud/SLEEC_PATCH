@@ -1,0 +1,84 @@
+comment,decision,explanation,id,issue_id,issue_type,operation,original_rule,patch_id,proposed_rule,reviewer,timestamp,use_case
+It again disregarded the consent,Rejected,"A new rule is introduced to specifically address the situation when a human is on the floor and the risk level is high, ensuring emergency services are called in this critical context.",6,concerns_1,concerns,new_rule_generation,"R3 when HumanOnFloor then CallEmergencyServices
+	   unless (not {humanAssents}) then not CallEmergencyServices
+
+	R4 when InterfereSafely and (not {safePathFound}) then InformUser
+	   unless {userOccupied}
+	R5 when UserWantsToCook then AllowUserToCook
+	R5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))
+	then InterfereSafely
+	R6 when UserHasLimitation then InformUser
+	R7 when UserWantsToCook then CheckTemperature
+	R7_1 when CheckTemperature and {hazardDetected} then InformUser
+	R8 when FoodPreparation then TrackTime
+	R8_1 when TrackTime then InformUser
+	R9 when MeetingUser then CollectandRecordInformation
+	R9_1 when AgentDeployed then UpdateInformation
+	R10 when GiveSuggestion then ConsiderUserPractices
+	R11 when MeetingUser then AskForEmergencyContact
+	R11_1 when AskForEmergencyContact then InformUser
+	R12 when AgentDeployed and (not {personAuthorized}) then not ShowDataHistory
+	R12_1 when ShowDataHistory and {dataNeedsChecking} then ProvideDataSummaries
+	R13 when UserUnpredictable then not GiveUserDangerousObjects
+	R14 when AgentDeployed and (not {userAsksForAppropriateTasks}) then RemindUserOfLimitations
+		unless ({needLevel} > nmedium)
+	R15 when PreparingDeployment then AgentHasAppropriateAppearance
+		unless {userNeedsSpecialAccomodations}
+	R16 when PreparingDeployment then CalibrateSpeech
+	R17 when GivingCookingInstructions then UseFirstPersonPluralLanguage
+	R17_1 when GivingCookingInstructions then InformUser //offer to repeat
+	R18 when BeforeCookingBegins then AskForDetailLevelOfInstructions
+	R19 when UserChangeMind then RecalculateApproach
+	    unless ({riskLevel} = high)
+	R20 when UserChangeItemLocation then UpdateMap
+	    unless ({riskLevel} = high) then InterfereSafely
+	R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes
+	    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures 
+	R21_1 when FireSafetyMeasures then OpenWindows
+	R21_2 when FireSafetyMeasures then AskUserIfOK
+	R21_3 when FireSafetyMeasures then InformCaregiver",g1,R22 when HumanOnFloor and {riskLevel} = high then CallEmergencyServices,Philosopher,2026-07-01T07:32:06.022619,ALMI
+It disregards the assents complete;y,Rejected,"A new rule is introduced to ensure that emergency services are called specifically when a human is on the floor, occupied, and at high risk, addressing the concern raised in the findings.",5,concerns_1,concerns,new_rule_generation,"R3 when HumanOnFloor then CallEmergencyServices
+	   unless (not {humanAssents}) then not CallEmergencyServices
+
+	R4 when InterfereSafely and (not {safePathFound}) then InformUser
+	   unless {userOccupied}
+	R5 when UserWantsToCook then AllowUserToCook
+	R5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))
+	then InterfereSafely
+	R6 when UserHasLimitation then InformUser
+	R7 when UserWantsToCook then CheckTemperature
+	R7_1 when CheckTemperature and {hazardDetected} then InformUser
+	R8 when FoodPreparation then TrackTime
+	R8_1 when TrackTime then InformUser
+	R9 when MeetingUser then CollectandRecordInformation
+	R9_1 when AgentDeployed then UpdateInformation
+	R10 when GiveSuggestion then ConsiderUserPractices
+	R11 when MeetingUser then AskForEmergencyContact
+	R11_1 when AskForEmergencyContact then InformUser
+	R12 when AgentDeployed and (not {personAuthorized}) then not ShowDataHistory
+	R12_1 when ShowDataHistory and {dataNeedsChecking} then ProvideDataSummaries
+	R13 when UserUnpredictable then not GiveUserDangerousObjects
+	R14 when AgentDeployed and (not {userAsksForAppropriateTasks}) then RemindUserOfLimitations
+		unless ({needLevel} > nmedium)
+	R15 when PreparingDeployment then AgentHasAppropriateAppearance
+		unless {userNeedsSpecialAccomodations}
+	R16 when PreparingDeployment then CalibrateSpeech
+	R17 when GivingCookingInstructions then UseFirstPersonPluralLanguage
+	R17_1 when GivingCookingInstructions then InformUser //offer to repeat
+	R18 when BeforeCookingBegins then AskForDetailLevelOfInstructions
+	R19 when UserChangeMind then RecalculateApproach
+	    unless ({riskLevel} = high)
+	R20 when UserChangeItemLocation then UpdateMap
+	    unless ({riskLevel} = high) then InterfereSafely
+	R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes
+	    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures 
+	R21_1 when FireSafetyMeasures then OpenWindows
+	R21_2 when FireSafetyMeasures then AskUserIfOK
+	R21_3 when FireSafetyMeasures then InformCaregiver",g1,R22 when HumanOnFloor and {userOccupied} and ({riskLevel} = high) then CallEmergencyServices,Philosopher,2026-07-01T07:31:27.057327,ALMI
+"No, it is stricter because the user may be unconscious",Rejected,"The broad action CallEmergencyServices is refined to specify that it should only be executed when an injury is detected, ensuring a more targeted response.",4,concerns_1,concerns,capability_refinement,"R3 when HumanOnFloor then CallEmergencyServices
+unless (not {humanAssents}) then not CallEmergencyServices",g2,"R3 when HumanOnFloor and {injuryDetected} then CallEmergencyServicesForInjury
+unless (not {humanAssents}) then not CallEmergencyServicesForInjury",Philosopher,2026-07-01T07:30:19.529297,ALMI
+Merging measures and events,Rejected,"A new rule is introduced to specifically address the situation when a human is on the floor and the risk level is high, ensuring that emergency services are called in this critical context.",3,concerns_1,concerns,new_rule_generation,"R3 when HumanOnFloor then CallEmergencyServices
+unless (not {humanAssents}) then not CallEmergencyServices",g1,R3_1 when HumanOnFloorAndRiskHigh then CallEmergencyServices,Philosopher,2026-07-01T07:28:17.407050,ALMI
+,Rejected,"A new rule is introduced to specifically handle the situation when a human is on the floor, the user is occupied, and the risk level is high, ensuring emergency services are called in this critical context.",2,concerns_1,concerns,new_rule_generation,"R3 when HumanOnFloor then CallEmergencyServices
+unless (not {humanAssents}) then not CallEmergencyServices",g1,R3_1 when HumanOnFloor and {userOccupied} and ({riskLevel} = high) then CallEmergencyServices,Philosopher,2026-07-01T07:27:26.116486,ALMI
