@@ -1,220 +1,163 @@
+import copy
+import re
+
+
 class PatchOperationEngine:
+    """Apply selected SLEEC patches to rule dictionaries."""
 
     def apply_patches(self, rules, patches):
-        """
-        rules: list of dict rules
-        patches: list of selected GPT/stakeholder patches
-        """
+        updated = [self._to_rule_dict(r) for r in copy.deepcopy(rules or [])]
 
-        updated_rules = [
-            dict(r)
-            for r in rules
-        ]
+        for patch in patches or []:
+            if isinstance(patch, dict):
+                updated = self.apply_patch(updated, patch)
 
-        for patch in patches:
+        return updated
 
-            operation = patch.get(
-                "operation",
-                ""
-            )
+    def apply_patch(self, rules, patch):
+        operation = str(patch.get("operation") or "").strip().lower()
+        target_rule_id = str(
+            patch.get("target_rule_id")
+            or patch.get("rule_id")
+            or ""
+        ).strip()
 
-            if operation == "edit":
-                updated_rules = self.edit_rule(
-                    updated_rules,
-                    patch
-                )
+        proposed_text = str(
+            patch.get("proposed_rule")
+            or patch.get("resolution_patch")
+            or ""
+        ).strip()
 
-            elif operation == "add":
-                updated_rules = self.add_rule(
-                    updated_rules,
-                    patch
-                )
+        if operation == "rule_removal":
+            return [
+                r for r in rules
+                if self._rule_id(r).lower() != target_rule_id.lower()
+            ]
 
-            elif operation == "delete":
-                updated_rules = self.delete_rule(
-                    updated_rules,
-                    patch
-                )
-
-            elif operation == "add_defeater":
-                updated_rules = self.add_defeater(
-                    updated_rules,
-                    patch
-                )
-
-            elif operation == "refine_condition":
-                updated_rules = self.refine_condition(
-                    updated_rules,
-                    patch
-                )
-
-            elif operation == "refine_action":
-                updated_rules = self.refine_action(
-                    updated_rules,
-                    patch
-                )
-
-        return updated_rules
-
-    def edit_rule(self, rules, patch):
-        rule_ids = patch.get("rule_ids", [])
-
-        for rule in rules:
-            if rule["id"] in rule_ids:
-                parsed = self.parse_rule_text(
-                    patch.get("proposed_rule", "")
-                )
-
-                if parsed:
-                    rule["condition"] = parsed["condition"]
-                    rule["action"] = parsed["action"]
-                    rule["defeater"] = parsed["defeater"]
-
-        return rules
-
-    def add_rule(self, rules, patch):
-        parsed = self.parse_rule_text(
-            patch.get("proposed_rule", "")
-        )
-
+        parsed = self._parse_rule_texts(proposed_text)
         if not parsed:
             return rules
 
-        new_id = self.next_rule_id(rules)
+        if operation == "new_rule_generation":
+            return self._append_unique(rules, parsed)
 
-        rules.append({
-            "id": new_id,
-            "nl_text": patch.get(
-                "natural_language_explanation",
-                ""
-            ),
-            "condition": parsed["condition"],
-            "action": parsed["action"],
-            "defeater": parsed["defeater"]
-        })
+        if operation == "rule_decomposition":
+            remaining = [
+                r for r in rules
+                if self._rule_id(r).lower() != target_rule_id.lower()
+            ]
+            return self._append_unique(remaining, parsed)
 
-        return rules
+        if target_rule_id:
+            return self._replace_target(rules, target_rule_id, parsed)
 
-    def delete_rule(self, rules, patch):
-        rule_ids = patch.get("rule_ids", [])
+        return self._append_unique(rules, parsed)
 
-        return [
-            r for r in rules
-            if r["id"] not in rule_ids
-        ]
-
-    def add_defeater(self, rules, patch):
-        rule_ids = patch.get("rule_ids", [])
-
-        defeater = patch.get(
-            "defeater",
-            ""
-        )
-
-        if not defeater:
-            parsed = self.parse_rule_text(
-                patch.get("proposed_rule", "")
-            )
-            if parsed:
-                defeater = parsed["defeater"]
+    def _replace_target(self, rules, target_rule_id, replacements):
+        result = []
+        replaced = False
 
         for rule in rules:
-            if rule["id"] in rule_ids:
-                rule["defeater"] = defeater
+            if self._rule_id(rule).lower() == target_rule_id.lower():
+                if not replaced:
+                    result.extend(copy.deepcopy(replacements))
+                    replaced = True
+            else:
+                result.append(rule)
 
-        return rules
+        if not replaced:
+            result = self._append_unique(result, replacements)
 
-    def refine_condition(self, rules, patch):
-        rule_ids = patch.get("rule_ids", [])
+        return result
 
-        new_condition = patch.get(
-            "new_condition",
-            ""
-        )
-
-        if not new_condition:
-            parsed = self.parse_rule_text(
-                patch.get("proposed_rule", "")
-            )
-
-            if parsed:
-                new_condition = parsed["condition"]
-
-        for rule in rules:
-            if rule["id"] in rule_ids:
-                rule["condition"] = new_condition
-
-        return rules
-
-    def refine_action(self, rules, patch):
-        rule_ids = patch.get("rule_ids", [])
-
-        new_action = patch.get(
-            "new_action",
-            ""
-        )
-
-        if not new_action:
-            parsed = self.parse_rule_text(
-                patch.get("proposed_rule", "")
-            )
-
-            if parsed:
-                new_action = parsed["action"]
-
-        for rule in rules:
-            if rule["id"] in rule_ids:
-                rule["action"] = new_action
-
-        return rules
-
-    def parse_rule_text(self, text):
-        """
-        Parses:
-        when PatientFallen then CallSupport
-        when PatientFallen then CallSupport unless {patientNotDeaf}
-        """
-
-        import re
-
-        pattern = (
-            r"when\\s+(.+?)\\s+then\\s+(.+?)"
-            r"(?:\\s+unless\\s+\\{?(.+?)\\}?)?$"
-        )
-
-        match = re.search(
-            pattern,
-            text,
-            re.IGNORECASE
-        )
-
-        if not match:
-            return None
-
-        return {
-            "condition": match.group(1).strip(),
-            "action": match.group(2).strip(),
-            "defeater": match.group(3).strip()
-            if match.group(3)
-            else ""
+    def _append_unique(self, rules, additions):
+        result = list(rules)
+        existing_ids = {
+            self._rule_id(r).lower()
+            for r in result
+            if self._rule_id(r)
         }
 
-    def next_rule_id(self, rules):
-        nums = []
+        for rule in additions:
+            rid = self._rule_id(rule)
+            if not rid:
+                continue
 
-        for r in rules:
-            rid = str(
-                r.get("id", "")
+            if rid.lower() in existing_ids:
+                result = [
+                    rule if self._rule_id(old).lower() == rid.lower() else old
+                    for old in result
+                ]
+            else:
+                result.append(rule)
+                existing_ids.add(rid.lower())
+
+        return result
+
+    def _rule_id(self, rule):
+        if isinstance(rule, dict):
+            return str(rule.get("id") or rule.get("rule_id") or "")
+        return str(getattr(rule, "id", "") or "")
+
+    def _to_rule_dict(self, rule):
+        if isinstance(rule, dict):
+            return {
+                "id": rule.get("id") or rule.get("rule_id") or "",
+                "condition": rule.get("condition", ""),
+                "action": rule.get("action", ""),
+                "defeater": rule.get("defeater", ""),
+            }
+
+        return {
+            "id": getattr(rule, "id", ""),
+            "condition": getattr(rule, "condition", ""),
+            "action": getattr(rule, "action", ""),
+            "defeater": getattr(rule, "defeater", ""),
+        }
+
+    def _parse_rule_texts(self, text):
+        text = str(text or "").strip()
+        if not text:
+            return []
+
+        header = re.compile(
+            r"(?=^\\s*(?:Rule|R|r)\\d+(?:_\\d+)?\\s+when\\b)",
+            flags=re.IGNORECASE | re.MULTILINE,
+        )
+
+        chunks = [c.strip() for c in header.split(text) if c.strip()]
+        parsed = []
+
+        for chunk in chunks:
+            clean = re.sub(r"\\s+", " ", chunk).strip()
+
+            match = re.match(
+                r"^((?:Rule|R|r)\\d+(?:_\\d+)?)\\s+when\\s+(.+?)\\s+then\\s+(.+)$",
+                clean,
+                flags=re.IGNORECASE,
+            )
+            if not match:
+                continue
+
+            rule_id = match.group(1).strip()
+            condition = match.group(2).strip()
+            remainder = match.group(3).strip()
+
+            parts = re.split(
+                r"\\s+unless\\s+",
+                remainder,
+                maxsplit=1,
+                flags=re.IGNORECASE,
             )
 
-            if rid.startswith("r"):
-                try:
-                    nums.append(
-                        int(rid[1:])
-                    )
-                except:
-                    pass
+            action = parts[0].strip()
+            defeater = parts[1].strip() if len(parts) > 1 else ""
 
-        next_num = max(nums) + 1 if nums else 1
+            parsed.append({
+                "id": rule_id,
+                "condition": condition,
+                "action": action,
+                "defeater": defeater,
+            })
 
-        return f"r{next_num}"
+        return parsed

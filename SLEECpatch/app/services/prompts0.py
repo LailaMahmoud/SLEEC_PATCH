@@ -143,14 +143,6 @@ STRICT RULES:
 7. Prefer domain-specific concepts that are clear and interpretable.
 8. Every proposed patch must be valid SLEEC syntax.
 9. The patch will be formally verified by LEGOS-SLEEC after generation.
-10. Ground every new semantic element in the diagnosed witness, current system description,
-    or an explicit specialization/refinement relationship to existing vocabulary.
-11. Do not invent a concept merely because it sounds plausible.
-12. Preserve diagnosed temporal information. If the diagnosis contains WITHIN or another
-    time bound, the generated patch must preserve or explicitly refine that temporal dimension.
-13. For new_rule_generation, the new rule must explicitly address at least one diagnosed
-    condition, response, measure, event, or temporal constraint.
-14. Use existing declared vocabulary whenever it is sufficient.
 
 SELECTED REPAIR OPERATOR:
 {repair_operator}

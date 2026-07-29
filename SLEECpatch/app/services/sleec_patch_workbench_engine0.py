@@ -13,7 +13,6 @@ from services.repair_operator_selector import RepairOperatorSelector
 from services.deterministic_repair_engine import DeterministicRepairEngine
 from services.patch_ranker import PatchRanker
 from services.use_case_descriptions import get_use_case_description
-from services.semantic_patch_validator import SemanticPatchValidator
 
 
 class SLEECPatchWorkbenchEngine:
@@ -25,7 +24,6 @@ class SLEECPatchWorkbenchEngine:
 
         self.operator_selector = RepairOperatorSelector()
         self.deterministic_engine = DeterministicRepairEngine()
-        self.semantic_validator = SemanticPatchValidator()
         # Section C ranking:
         # structural/logical = deterministic;
         # semantic clarity/interpretability = GPT, after formal verification.
@@ -388,8 +386,7 @@ class SLEECPatchWorkbenchEngine:
             "event_specialization": "Specialize event",
             "measure_specialization": "Specialize measure",
             "capability_refinement": "Refine capability",
-            "new_rule_generation": "Add new rule",
-            "temporal_refinement": "Refine temporal bound"
+            "new_rule_generation": "Add new rule"
         }
 
         return labels.get(str(operation), str(operation or "Patch"))
@@ -1429,12 +1426,7 @@ class SLEECPatchWorkbenchEngine:
                         "patch": p
                     })
 
-            patches = list(deterministic_patches)
-
-            # GPT is generated once per issue. Process GPT candidates once,
-            # while deterministic alternatives may be retried as configured.
-            if attempts == 1:
-                patches.extend(llm_patches)
+            patches = deterministic_patches + llm_patches
 
             for patch in patches:
                 normalized_patch = self.normalize_patch(patch, sleec_text)
@@ -1466,63 +1458,6 @@ class SLEECPatchWorkbenchEngine:
                 print("--------------------------------")
 
                 start_validation = time.time()
-
-                # Generic semantic validation for every use case.
-                if source == "llm":
-                    semantic_validation = self.semantic_validator.validate(
-                        sleec_text=sleec_text,
-                        issue={
-                            "issue_type": issue_key,
-                            "value": selected_issue_value
-                        },
-                        patch=normalized_patch,
-                        existing_events=self.extract_defined_events(sleec_text),
-                        existing_measures=self.extract_defined_measures(sleec_text),
-                        existing_responses=self.extract_rule_actions(rules_json)
-                    )
-
-                    normalized_patch["semantic_validation"] = semantic_validation
-                    normalized_patch["semantic_validation_passed"] = bool(
-                        semantic_validation.get("valid")
-                    )
-                    normalized_patch["vocabulary_grounded"] = bool(
-                        semantic_validation.get("vocabulary_grounding", {}).get("passed")
-                    )
-                    normalized_patch["diagnosis_aligned"] = bool(
-                        semantic_validation.get("diagnosis_alignment", {}).get("passed")
-                    )
-                    normalized_patch["operator_valid"] = bool(
-                        semantic_validation.get("operator_validation", {}).get("passed")
-                    )
-                    normalized_patch["temporal_alignment"] = bool(
-                        semantic_validation.get("temporal_validation", {}).get("passed")
-                    )
-
-                    # Semantic validation is advisory for GPT patches.
-                    # Every executable GPT candidate still proceeds to formal
-                    # SLEEC verification. Semantic concerns are retained for
-                    # philosopher/social-scientist review.
-                    if not semantic_validation.get("valid"):
-                        normalized_patch["semantic_review_status"] = "pass_with_review"
-                        normalized_patch["semantic_warnings"] = (
-                            semantic_validation.get("errors", [])
-                            + semantic_validation.get("warnings", [])
-                        )
-                    else:
-                        normalized_patch["semantic_review_status"] = "pass"
-                        normalized_patch["semantic_warnings"] = (
-                            semantic_validation.get("warnings", [])
-                        )
-
-                    normalized_patch["requires_social_scientist_review"] = True
-
-                    print(
-                        "SEMANTIC REVIEW STATUS:",
-                        normalized_patch.get("semantic_review_status")
-                    )
-                    print("SEMANTIC VALID:", semantic_validation.get("valid"))
-                    print("SEMANTIC ERRORS:", semantic_validation.get("errors", []))
-                    print("SEMANTIC WARNINGS:", semantic_validation.get("warnings", []))
 
                 if source == "deterministic":
                     verified = self.verify_deterministic_patch_iteratively(
