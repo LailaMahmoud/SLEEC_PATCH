@@ -109,8 +109,10 @@ class SLEECDetectionEngine:
             message = ""
             data = []
 
+            success = True
+
             if isinstance(result, tuple) and len(result) == 3:
-                _, message, data = result
+                success, message, data = result
             else:
                 message = str(result)
 
@@ -124,6 +126,7 @@ class SLEECDetectionEngine:
 
             return {
                 "success": True,
+                "detected": bool(success),
                 "message": combined_message,
                 "data": data if data else [],
                 "findings": findings,

@@ -13,7 +13,14 @@ class EvaluationBFinalSpec:
             return 1.0
         return round(min(a, b) / max(a, b), 3)
 
-    def build_sleecpatch_file(self, use_case, original_sleec, all_patch_results, apply_patch_to_text):
+    def build_sleecpatch_file(
+        self,
+        use_case,
+        original_sleec,
+        all_patch_results,
+        apply_patch_to_text,
+        validate_patched_sleec=None
+    ):
         """
         Select rank-1 patch for each WFI and apply it to original_sleec.
         """
@@ -50,18 +57,32 @@ class EvaluationBFinalSpec:
             final_sleec = apply_patch_to_text(final_sleec, best_patch)
             selected_patches.append(best_patch)
 
+        cumulative = {
+            "passed": True,
+            "failure_reason": ""
+        }
+
+        if validate_patched_sleec is not None:
+            validation = validate_patched_sleec(final_sleec)
+            cumulative["passed"] = bool(validation.get("valid"))
+            cumulative["failure_reason"] = validation.get("failure_reason", "")
+
         folder = os.path.join("results", use_case)
         os.makedirs(folder, exist_ok=True)
 
         output_path = os.path.join(folder, f"{use_case}_SLEECPATCH.sleec")
 
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(final_sleec)
+        if cumulative["passed"]:
+            with open(output_path, "w", encoding="utf-8") as f:
+                f.write(final_sleec)
+        else:
+            output_path = ""
 
         return {
             "output_path": output_path,
             "final_sleec": final_sleec,
-            "selected_patches": selected_patches
+            "selected_patches": selected_patches,
+            "cumulative_verification": cumulative
         }
 
     def compare_to_original(self, original_path, target_path):

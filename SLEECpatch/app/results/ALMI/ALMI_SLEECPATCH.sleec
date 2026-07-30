@@ -73,8 +73,8 @@ rule_start
 	R2 when AgentDeployed then TrackTime
 	R2_1 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then InformCaregiver
 	R2_2 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then GiveSuggestion
-R3_1 when HumanOnFloor and (SmokeDetectorAlarm and not {userDisablesAlarm} or {alarmRestarts}) then CallEmergencyServices unless ((not {humanAssents}) then not CallEmergencyServices)
-R3_2 when HumanOnFloor and not (SmokeDetectorAlarm and not {userDisablesAlarm} or {alarmRestarts}) then CallEmergencyServices unless ((not {humanAssents}) then not CallEmergencyServices)
+R3_1 when HumanOnFloor and ({userOccupied} and {riskLevel} = high) then CallEmergencyServices unless ((not {humanAssents}) then not CallEmergencyServices)
+R3_2 when HumanOnFloor and not ({userOccupied} and {riskLevel} = high) then CallEmergencyServices unless ((not {humanAssents}) then not CallEmergencyServices)
 
 	R4 when InterfereSafely and (not {safePathFound}) then InformUser
 	   unless {userOccupied}
@@ -106,7 +106,8 @@ R3_2 when HumanOnFloor and not (SmokeDetectorAlarm and not {userDisablesAlarm} o
 	    unless ({riskLevel} = high)
 	R20 when UserChangeItemLocation then UpdateMap
 	    unless ({riskLevel} = high) then InterfereSafely
-R21 when SmokeDetectorAlarm and not (HumanOnFloor) then CallEmergencyServices within 5 minutes unless (({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures)
+	R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes
+	    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures 
 	R21_1 when FireSafetyMeasures then OpenWindows
 	R21_2 when FireSafetyMeasures then AskUserIfOK
 	R21_3 when FireSafetyMeasures then InformCaregiver

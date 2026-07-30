@@ -179,6 +179,68 @@ Never return markdown.
                 "source": "llm_error"
             }
 
+    def repair_patch_syntax(
+        self,
+        patch,
+        syntax_error,
+        original_sleec="",
+        patched_sleec=""
+    ):
+        """
+        Repair only malformed LLM patch JSON. This is never used for
+        deterministic patches, preserving their script-only boundary.
+        """
+        prompt = f"""
+The following LLM-generated SLEEC patch produced invalid SLEEC syntax.
+Return one corrected raw JSON patch object only. Do not return markdown.
+
+Rules:
+- Preserve the same repair operation.
+- Modify only the malformed fields needed to make the patch valid SLEEC.
+- Do not rewrite the full specification.
+- Keep the same target_rule_id unless it is clearly empty and inferable.
+
+Syntax error:
+{syntax_error}
+
+Original patch JSON:
+{json.dumps(patch, ensure_ascii=False, default=str)}
+
+Patched SLEEC that failed:
+{patched_sleec}
+
+Original SLEEC:
+{original_sleec}
+"""
+
+        response = _get_client().chat.completions.create(
+            model=self.model,
+            temperature=0,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You repair malformed SLEEC patch JSON. "
+                        "Return valid raw JSON only."
+                    )
+                },
+                {"role": "user", "content": prompt}
+            ]
+        )
+
+        content = response.choices[0].message.content
+        repaired = json.loads(self.clean_json(content))
+
+        if isinstance(repaired, list):
+            repaired = repaired[0] if repaired else {}
+
+        merged = dict(patch)
+        merged.update(repaired)
+        merged["source"] = "llm"
+        merged["operation"] = patch.get("operation", repaired.get("operation", ""))
+        merged["syntax_repaired"] = True
+        return merged
+
     def generate_all_patches(
         self,
         rules,

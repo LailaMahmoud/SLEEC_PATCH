@@ -255,6 +255,8 @@ class SLEECPatchEvaluationStore:
             proposed_rule TEXT,
             natural_language_explanation TEXT,
             candidate_signature TEXT,
+            candidate_status TEXT,
+            failure_reason TEXT,
             patch_json TEXT,
             timestamp TEXT
         )
@@ -309,9 +311,10 @@ class SLEECPatchEvaluationStore:
         return columns
 
     def ensure_columns(self):
-        existing_columns = self.table_columns("sleec_patch_results")
+        result_columns = self.table_columns("sleec_patch_results")
+        candidate_columns = self.table_columns("sleec_patch_candidates")
 
-        required_columns = {
+        result_required_columns = {
             "source": "TEXT",
             "target_rule_id": "TEXT",
             "original_rule": "TEXT",
@@ -323,13 +326,24 @@ class SLEECPatchEvaluationStore:
             "review_timestamp": "TEXT"
         }
 
+        candidate_required_columns = {
+            "candidate_status": "TEXT",
+            "failure_reason": "TEXT"
+        }
+
         conn = self.connect()
         cur = conn.cursor()
 
-        for col, col_type in required_columns.items():
-            if col not in existing_columns:
+        for col, col_type in result_required_columns.items():
+            if col not in result_columns:
                 cur.execute(
                     f"ALTER TABLE sleec_patch_results ADD COLUMN {col} {col_type}"
+                )
+
+        for col, col_type in candidate_required_columns.items():
+            if col not in candidate_columns:
+                cur.execute(
+                    f"ALTER TABLE sleec_patch_candidates ADD COLUMN {col} {col_type}"
                 )
 
         conn.commit()
@@ -605,10 +619,12 @@ class SLEECPatchEvaluationStore:
             proposed_rule,
             natural_language_explanation,
             candidate_signature,
+            candidate_status,
+            failure_reason,
             patch_json,
             timestamp
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             row.get("run_id", ""),
             row.get("use_case", ""),
@@ -623,6 +639,8 @@ class SLEECPatchEvaluationStore:
             patch.get("proposed_rule", ""),
             patch.get("natural_language_explanation", patch.get("explanation", "")),
             row.get("candidate_signature", ""),
+            row.get("candidate_status", patch.get("candidate_status", "generated")),
+            row.get("failure_reason", patch.get("failure_reason", "")),
             self.to_json(patch),
             datetime.now().isoformat()
         ))
@@ -796,9 +814,10 @@ class SLEECPatchEvaluationStore:
     def unreviewed_semantic_patches(self, use_case=""):
         where = """
         source = ?
+        AND verified = ?
         AND (philosopher_decision IS NULL OR philosopher_decision = '')
         """
-        params = ["llm"]
+        params = ["llm", 1]
 
         if use_case:
             where += "\n        AND use_case = ?"
@@ -843,8 +862,9 @@ class SLEECPatchEvaluationStore:
         if include_reviewed:
             where = """
             source = ?
+            AND verified = ?
             """
-            params = ["llm"]
+            params = ["llm", 1]
 
             if use_case:
                 where += "\n        AND use_case = ?"
@@ -870,7 +890,8 @@ class SLEECPatchEvaluationStore:
             philosopher_decision
         FROM sleec_patch_results
         WHERE source = ?
-        """, ("llm",)).fetchall()
+        AND verified = ?
+        """, ("llm", 1)).fetchall()
 
         conn.close()
 

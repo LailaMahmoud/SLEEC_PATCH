@@ -295,11 +295,23 @@ async function postJSON(url, data) {
             body: JSON.stringify(data)
         });
 
-        const result = await response.json();
+        // Read the raw body first so a non-JSON error page (e.g. a 500 HTML
+        // page from the server) does not blow up as an uncaught JSON.parse
+        // SyntaxError that silently aborts the caller.
+        const raw = await response.text();
+        let result = null;
+        try {
+            result = raw ? JSON.parse(raw) : null;
+        } catch (parseError) {
+            result = null;
+        }
 
-        if (!response.ok) {
-            alert(result.error || "Request failed");
-            throw new Error(result.error || "Request failed");
+        if (!response.ok || result === null) {
+            const message = (result && result.error)
+                || `Request failed (HTTP ${response.status}). `
+                   + `The server returned ${result === null ? "a non-JSON error page" : "an error"}.`;
+            alert(message);
+            throw new Error(message);
         }
 
         return result;

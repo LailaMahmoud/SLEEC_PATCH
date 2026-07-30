@@ -1,6 +1,7 @@
 
 import numpy as np, re, os
 import sys
+import traceback
 from dotenv import load_dotenv
 
 from flask import Flask, render_template, request,redirect, jsonify, abort, url_for, session, render_template_string
@@ -239,12 +240,21 @@ def api_sleec_patch_generate_verified():
 
     data = request.get_json() or {}
 
-    result = sleec_patch_engine.generate_verified_patches(
-        use_case=data.get("use_case", "Unknown"),
-        sleec_text=data.get("sleec_text", ""),
-        issue=data.get("issue", {}),
-        max_attempts=data.get("max_attempts", 3)
-    )
+    try:
+        result = sleec_patch_engine.generate_verified_patches(
+            use_case=data.get("use_case", "Unknown"),
+            sleec_text=data.get("sleec_text", ""),
+            issue=data.get("issue", {}),
+            max_attempts=data.get("max_attempts", 3)
+        )
+    except Exception as exc:
+        # Return a JSON error instead of Flask's default HTML 500 page, so the
+        # frontend can parse and display it (and we can see the real cause).
+        traceback.print_exc()
+        return jsonify({
+            "status": "ERROR",
+            "error": f"{type(exc).__name__}: {exc}"
+        }), 500
 
     return jsonify(result)
 
@@ -582,8 +592,21 @@ def api_evaluation_b():
         use_case=use_case,
         original_sleec=original_sleec,
         all_patch_results=use_case_patches,
-        apply_patch_to_text=sleec_patch_engine.apply_patch_to_text
+        apply_patch_to_text=sleec_patch_engine.apply_patch_to_text,
+        validate_patched_sleec=lambda final_sleec: (
+            sleec_patch_engine.validate_cumulative_sleec(
+                original_sleec,
+                final_sleec
+            )
+        )
     )
+
+    if not built.get("output_path"):
+        return jsonify({
+            "status": "ERROR",
+            "error": "Cumulative SLEEC-PATCH verification failed.",
+            "cumulative_verification": built.get("cumulative_verification", {})
+        }), 422
 
     result = evaluation_b.evaluate(
         use_case=use_case,
@@ -630,7 +653,11 @@ def api_non_deterministic_patches():
         if use_case and r.get("use_case") != use_case:
             continue
 
-        if r.get("source") == "llm" or r.get("operation") in semantic_ops:
+        is_verified = r.get("verified") in [True, 1, "1", "true", "True"]
+
+        if is_verified and (
+            r.get("source") == "llm" or r.get("operation") in semantic_ops
+        ):
             patches.append({
                 "use_case": r.get("use_case", ""),
                 "issue_id": r.get("issue_id", ""),
@@ -695,8 +722,21 @@ def api_export_evaluation():
         use_case=use_case,
         original_sleec=original_sleec,
         all_patch_results=use_case_patches,
-        apply_patch_to_text=sleec_patch_engine.apply_patch_to_text
+        apply_patch_to_text=sleec_patch_engine.apply_patch_to_text,
+        validate_patched_sleec=lambda final_sleec: (
+            sleec_patch_engine.validate_cumulative_sleec(
+                original_sleec,
+                final_sleec
+            )
+        )
     )
+
+    if not built.get("output_path"):
+        return jsonify({
+            "status": "ERROR",
+            "error": "Cumulative SLEEC-PATCH verification failed.",
+            "cumulative_verification": built.get("cumulative_verification", {})
+        }), 422
 
     evaluation_b_result = evaluation_b.evaluate(
         use_case=use_case,
@@ -714,7 +754,10 @@ def api_export_evaluation():
 
     semantic_patches = [
         p for p in use_case_patches
-        if p.get("source") == "llm" or p.get("operation") in semantic_ops
+        if (
+            p.get("verified") in [True, 1, "1", "true", "True"]
+            and (p.get("source") == "llm" or p.get("operation") in semantic_ops)
+        )
     ]
 
     philosopher_summary = philosopher_review_store.summary()
