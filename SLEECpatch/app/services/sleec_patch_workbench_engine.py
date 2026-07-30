@@ -1126,9 +1126,20 @@ class SLEECPatchWorkbenchEngine:
         final_sleec = original_sleec
         selected_patches = []
 
-        if verified_patches:
+        # The final written spec must still parse. LLM patches are surfaced for
+        # review even when not formally verified (development branch), so only
+        # syntactically valid candidates are eligible to be applied to the file;
+        # surfaced-but-invalid LLM patches remain visible for review but are not
+        # written into the SLEEC-PATCH artifact.
+        applicable = [
+            p for p in (verified_patches or [])
+            if p.get("syntax_valid", True) and p.get("source", "") != "llm"
+            or (p.get("source", "") == "llm" and p.get("formally_verified", False))
+        ]
+
+        if applicable:
             selected_patches = [sorted(
-                verified_patches,
+                applicable,
                 key=lambda p: (
                     int(p.get("rank", 999) or 999),
                     -float(p.get("ranking_score", 0) or 0)
@@ -1248,8 +1259,16 @@ class SLEECPatchWorkbenchEngine:
     original_structured,
     patch
 ):
+        # DEVELOPMENT BRANCH: LLM patches are surfaced for social-scientist
+        # review and are NOT hard-rejected by the SLEEC syntactic/formal gate.
+        # Verification still runs when the patch parses and is recorded as
+        # advisory metadata (`formally_verified`, `syntax_valid`,
+        # `regression_report`), but a failing check no longer discards the
+        # candidate -- the human reviewer decides. This is what stops the
+        # "No verified patch found" outcome for LLM repairs.
         current_patch = patch
         syntax_attempts = 0
+        validation_gate = None
 
         while True:
             patched_sleec = self.apply_patch_to_text(original_sleec, current_patch)
@@ -1260,13 +1279,16 @@ class SLEECPatchWorkbenchEngine:
                 break
 
             current_patch["patched_sleec"] = patched_sleec
-            current_patch["verified"] = False
-            current_patch["regression_passed"] = False
             current_patch["failure_reason"] = validation_gate["failure_reason"]
             current_patch["syntax_validation"] = validation_gate.get("syntax", {})
 
             if syntax_attempts >= 2:
-                return None
+                return self._surface_llm_patch(
+                    current_patch,
+                    patched_sleec,
+                    syntax_valid=False,
+                    failure_reason=validation_gate["failure_reason"],
+                )
 
             try:
                 current_patch = self.gpt_patch_engine.repair_patch_syntax(
@@ -1278,11 +1300,17 @@ class SLEECPatchWorkbenchEngine:
                 current_patch = self.normalize_patch(current_patch, original_sleec)
                 syntax_attempts += 1
             except Exception as exc:
-                current_patch["failure_reason"] = (
-                    f"{validation_gate['failure_reason']}; LLM syntax repair failed: {exc}"
+                return self._surface_llm_patch(
+                    current_patch,
+                    patched_sleec,
+                    syntax_valid=False,
+                    failure_reason=(
+                        f"{validation_gate['failure_reason']}; "
+                        f"LLM syntax repair failed: {exc}"
+                    ),
                 )
-                return None
 
+        # Patch parses: run advisory target/regression analysis.
         new_analysis = validation_gate["analysis"]
         new_structured = new_analysis.get("structured", {})
 
@@ -1303,25 +1331,58 @@ class SLEECPatchWorkbenchEngine:
 
         patch["target_fixed"] = target_fixed
         patch["related_issue"] = related_issue
-        patch["patched_sleec"] = patched_sleec
         patch["validation_result"] = new_structured
         patch["syntax_validation"] = validation_gate.get("syntax", {})
         patch["regression_report"] = regression_report
         patch["regression_passed"] = regression_report["regression_passed"]
 
-        if not target_fixed:
-            patch["failure_reason"] = "Target issue not fixed"
-            return None
+        formally_verified = bool(
+            target_fixed
+            and related_issue is None
+            and regression_report["regression_passed"]
+        )
 
-        if related_issue:
-            patch["failure_reason"] = "Introduced related issue involving edited rule"
-            return None
+        if not formally_verified:
+            reasons = []
+            if not target_fixed:
+                reasons.append("target issue not fixed")
+            if related_issue:
+                reasons.append("introduced related issue on edited rule")
+            if not regression_report["regression_passed"]:
+                reasons.append("introduced new WFI during regression")
+            failure_reason = "Surfaced for review; " + ", ".join(reasons)
+        else:
+            failure_reason = ""
 
-        if not regression_report["regression_passed"]:
-            patch["failure_reason"] = "Introduced new WFI during regression check"
-            return None
+        return self._surface_llm_patch(
+            patch,
+            patched_sleec,
+            syntax_valid=True,
+            formally_verified=formally_verified,
+            failure_reason=failure_reason,
+        )
 
+    def _surface_llm_patch(
+        self,
+        patch,
+        patched_sleec,
+        syntax_valid,
+        formally_verified=False,
+        failure_reason="",
+    ):
+        """Surface an LLM patch as a review candidate on the development branch.
+
+        `verified` marks it for display/ranking; `formally_verified` records
+        whether it actually cleared the SLEEC syntactic + regression gate, so no
+        information is lost even though the patch is no longer discarded.
+        """
+        patch["patched_sleec"] = patched_sleec
+        patch["syntax_valid"] = bool(syntax_valid)
+        patch["formally_verified"] = bool(formally_verified)
+        patch["regression_passed"] = bool(patch.get("regression_passed", formally_verified))
+        patch["requires_social_scientist_review"] = True
         patch["verified"] = True
+        patch["failure_reason"] = failure_reason
         return patch
 
 
@@ -1691,7 +1752,12 @@ class SLEECPatchWorkbenchEngine:
                         failed_patches.append(normalized_patch)
                         seen_failed_signatures.add(patch_signature)
 
-        if not verified_patches and semantic_ops:
+        # DEVELOPMENT BRANCH: dict-based split, not deterministic-first.
+        # Deterministic and LLM operators are generated independently from the
+        # operator plan (BASE_DETERMINISTIC_OPERATORS / BASE_LLM_OPERATORS), so
+        # GPT runs whenever the plan carries semantic operators -- regardless of
+        # whether the deterministic side already produced verified patches.
+        if semantic_ops:
             start_generation = time.time()
 
             description = get_use_case_description(use_case)
