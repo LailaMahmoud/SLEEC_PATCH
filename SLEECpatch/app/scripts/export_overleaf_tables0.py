@@ -35,54 +35,6 @@ CASE_FILES = {
     "Casper": ("Casper.sleec", "Casper-corrected.sleec"),
 }
 
-
-def discover_case_files() -> Dict[str, Tuple[str, str]]:
-    """
-    Discover all SLEEC use cases automatically.
-
-    Corrected files are matched using -corrected.sleec or _corrected.sleec.
-    CASE_FILES is retained only as a compatibility fallback for historical
-    filenames/canonical labels.
-    """
-    discovered: Dict[str, Tuple[str, str]] = {}
-    files = list(SLEEC_DIR.glob("*.sleec"))
-
-    corrected_lookup = {
-        p.name.lower(): p.name
-        for p in files
-        if "-corrected" in p.name.lower() or "_corrected" in p.name.lower()
-    }
-
-    for original in files:
-        low = original.name.lower()
-        if "-corrected" in low or "_corrected" in low:
-            continue
-
-        stem = original.stem
-        corrected_name = ""
-        for candidate in (
-            f"{stem}-corrected.sleec",
-            f"{stem}_corrected.sleec",
-        ):
-            found = corrected_lookup.get(candidate.lower())
-            if found:
-                corrected_name = found
-                break
-
-        discovered[stem] = (original.name, corrected_name)
-
-    for case, (original_name, corrected_name) in CASE_FILES.items():
-        original = SLEEC_DIR / original_name
-        corrected = SLEEC_DIR / corrected_name
-        if original.exists():
-            discovered[case] = (
-                original.name,
-                corrected.name if corrected.exists() else ""
-            )
-
-    return discovered
-
-
 LATEX_REPLACEMENTS = {
     "\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$",
     "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}",
@@ -334,74 +286,44 @@ def latest_rows_per_patch(rows: Sequence[dict]) -> List[dict]:
 
 
 def generate_patch_results_table(rows: Sequence[dict]) -> str:
-    """
-    TABLE ONE: verified patch-generation results.
-
-    Uses database results only. It does NOT read corrected.sleec.
-    """
-    patch_counts: Dict[Tuple[str, str], int] = {}
-    for row in rows:
-        key = (str(row.get("use_case") or ""), str(row.get("issue_id") or ""))
-        patch_counts[key] = patch_counts.get(key, 0) + 1
-
     lines = [
         r"\begin{table*}[t]",
-        r"\caption{Verified SLEEC-PATCH generation results. RM, RA, RD, DA, TR, RR, and CR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, response refinements, and capability refinements, respectively. Gen. and Val. denote generation and validation time in seconds.}",
+        r"\caption{Verified patch-generation results across the evaluated case studies. RM, RA, RD, DA, TR, RR, and CR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, response refinements, and capability refinements, respectively.}",
         r"\label{tab:patch-results}",
-        r"\centering",
-        r"\scriptsize",
-        r"\setlength{\tabcolsep}{2.3pt}",
+        r"\centering", r"\scriptsize", r"\setlength{\tabcolsep}{2.5pt}",
         r"\resizebox{\textwidth}{!}{%",
-        r"\begin{tabular}{lllrrrrllrrrrrrrrlll}",
+        r"\begin{tabular}{llllrrrllcccccccllcc}",
         r"\toprule",
-        r"Case & IID & WFI & \#Patch & Total & Gen. & Val. & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & M-Sim. & Source & E-Review \\",
+        r"Case & IID & WFI & Rules & Gen. & Val. & Total & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & Source & Sim. & Review \\",
         r"\midrule",
     ]
-
     if not rows:
         lines.append(r"\multicolumn{20}{c}{No verified patch results were found.}\\")
     else:
         previous_case = None
-        previous_issue = None
-
         for row in rows:
-            case = str(row.get("use_case") or "")
-            issue_id = str(row.get("issue_id") or "")
-            issue_key = (case, issue_id)
-
+            case = str(row["use_case"] or "")
             if previous_case is not None and case != previous_case:
                 lines.append(r"\midrule")
-
-            first_issue_row = issue_key != previous_issue
-
-            rank = int(row.get("rank") or 0)
+            previous_case = case
+            involved = extract_rule_ids(row["selected_issue"], row["target_rule_id"])
             values = [
-                latex_escape(case) if case != previous_case else "",
-                latex_escape(issue_id) if first_issue_row else "",
-                latex_escape(compact_wfi(str(row.get("issue_type") or ""))) if first_issue_row else "",
-                str(patch_counts[issue_key]) if first_issue_row else "",
-                f'{float(row.get("total_time_seconds") or 0):.2f}' if first_issue_row else "",
-                f'{float(row.get("generation_time_seconds") or 0):.2f}' if first_issue_row else "",
-                f'{float(row.get("validation_time_seconds") or 0):.2f}' if first_issue_row else "",
-                latex_escape(row.get("patch_id")),
-                latex_escape(row.get("operation")),
-                str(int(row.get("rules_modified") or 0)),
-                str(int(row.get("rules_added") or 0)),
-                str(int(row.get("rules_deleted") or 0)),
-                str(int(row.get("defeaters_added") or 0)),
-                str(int(row.get("conditions_refined") or 0)),
-                str(int(row.get("actions_refined") or 0)),
-                str(int(row.get("capabilities_refined") or 0)),
-                str(rank) if rank > 0 else "--",
-                f'{float(row.get("expert_similarity") or 0):.2f}',
-                latex_escape(row.get("source")),
-                yes_no(row.get("requires_social_scientist_review")),
+                latex_escape(case), latex_escape(row["issue_id"]),
+                latex_escape(compact_wfi(str(row["issue_type"] or ""))),
+                latex_escape(involved or row["target_rule_id"]),
+                f'{float(row["generation_time_seconds"] or 0):.2f}',
+                f'{float(row["validation_time_seconds"] or 0):.2f}',
+                f'{float(row["total_time_seconds"] or 0):.2f}',
+                latex_escape(row["patch_id"]), latex_escape(row["operation"]),
+                str(int(row["rules_modified"] or 0)), str(int(row["rules_added"] or 0)),
+                str(int(row["rules_deleted"] or 0)), str(int(row["defeaters_added"] or 0)),
+                str(int(row["conditions_refined"] or 0)), str(int(row["actions_refined"] or 0)),
+                str(int(row["capabilities_refined"] or 0)),
+                str(int(row["rank"] or 0)) if int(row["rank"] or 0) > 0 else "--",
+                latex_escape(row["source"]), f'{float(row["expert_similarity"] or 0):.2f}',
+                yes_no(row["requires_social_scientist_review"]),
             ]
             lines.append(" & ".join(values) + r" \\")
-
-            previous_case = case
-            previous_issue = issue_key
-
     lines += [r"\bottomrule", r"\end{tabular}%", r"}", r"\end{table*}", ""]
     return "\n".join(lines)
 
@@ -527,12 +449,6 @@ def spec_summary(spec: ParsedSpec) -> str:
 
 
 def generate_spec_comparison_table() -> str:
-    """
-    TABLE TWO only.
-
-    This is the only table that reads corrected.sleec because it explicitly
-    compares Original vs Manually Corrected vs final SLEEC-PATCH.
-    """
     lines = [
         r"\begin{table*}[t]",
         r"\caption{Comparison of original, manually corrected, and SLEEC-PATCH specifications. Each specification is reported as \#Rules (\#Capabilities, \#Defeaters, \#Constraints). ID-MR, ID-MD, and ID-RA denote modified, deleted, and added rule IDs.}",
@@ -543,11 +459,11 @@ def generate_spec_comparison_table() -> str:
         r"\cmidrule(lr){3-6}\cmidrule(lr){7-10}",
         r"& & Spec. & ID-MR & ID-MD & ID-RA & Spec. & ID-MR & ID-MD & ID-RA \\", r"\midrule",
     ]
-    for use_case, (original_name, corrected_name) in discover_case_files().items():
+    for use_case, (original_name, corrected_name) in CASE_FILES.items():
         original_path = SLEEC_DIR / original_name
         if not original_path.exists():
             continue
-        corrected_path = (SLEEC_DIR / corrected_name) if corrected_name else Path('__missing_corrected__.sleec')
+        corrected_path = SLEEC_DIR / corrected_name
         generated_path = RESULTS_DIR / use_case / f"{use_case}_SLEECPATCH.sleec"
         original = parse_spec(original_path)
         corrected = parse_spec(corrected_path)

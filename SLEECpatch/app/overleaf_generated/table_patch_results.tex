@@ -1,38 +1,41 @@
 \begin{table*}[t]
-\caption{Verified patch-generation results across the evaluated case studies. RM, RA, RD, DA, TR, RR, and CR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, response refinements, and capability refinements, respectively.}
+\caption{Verified SLEEC-PATCH generation results. RM, RA, RD, DA, TR, RR, and CR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, response refinements, and capability refinements, respectively. Gen. and Val. denote generation and validation time in seconds.}
 \label{tab:patch-results}
 \centering
 \scriptsize
-\setlength{\tabcolsep}{2.5pt}
+\setlength{\tabcolsep}{2.3pt}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{llllrrrllcccccccllcc}
+\begin{tabular}{lllrrrrllrrrrrrrrlll}
 \toprule
-Case & IID & WFI & Rules & Gen. & Val. & Total & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & Source & Sim. & Review \\
+Case & IID & WFI & \#Patch & Total & Gen. & Val. & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & M-Sim. & Source & E-Review \\
 \midrule
-ALMI & concerns\_1 & Concern & R3 & 7.67 & 0.39 & 8.14 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
-ALMI & concerns\_1 & Concern & R3 & 7.67 & 0.39 & 8.14 & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
-ALMI & concerns\_1 & Concern & R3 & 7.67 & 0.39 & 8.14 & d\_strengthen\_R3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
-ALMI & concerns\_1 & Concern & R3 & 7.67 & 0.39 & 8.14 & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & llm & 0.00 & No \\
-ALMI & concerns\_2 & Concern & R3 & 2.72 & 0.44 & 3.29 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
-ALMI & concerns\_2 & Concern & R3 & 2.72 & 0.44 & 3.29 & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
-ALMI & concerns\_2 & Concern & R3 & 2.72 & 0.44 & 3.29 & d\_strengthen\_R3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
-ALMI & concerns\_2 & Concern & R21 & 2.72 & 0.44 & 3.29 & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & llm & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 3.29 & 34.85 & 38.30 & d1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 3.29 & 34.85 & 38.30 & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 17.26 & 0.38 & 17.81 & d3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & d4 & rule\_merging & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 6 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 17.26 & 0.38 & 17.81 & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 7 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 3.29 & 34.85 & 38.30 & d\_trigger\_refine\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 3.29 & 34.85 & 38.30 & d\_trigger\_refine\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 17.26 & 0.38 & 17.81 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & llm & 0.00 & No \\
-ALMI & situational\_conflicts\_1 & Sit. conflict & R3, R21 & 20.94 & 40.92 & 61.99 & g3 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & -- & llm & 0.00 & No \\
+ALMI & concerns\_1 & Concern & 4 & 6.91 & 6.64 & 0.21 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_strengthen\_R3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & No \\
+ & concerns\_2 & Concern & 7 & 2.77 & 2.37 & 0.33 & d\_concern\_defeater\_R21 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_decompose\_R21 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_strengthen\_R21 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_strengthen\_R3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & No \\
+ & situational\_conflicts\_1 & Sit. conflict & 9 & 31.68 & 3.05 & 28.49 & d1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d4 & rule\_merging & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 6 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 7 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_trigger\_refine\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_trigger\_refine\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & llm & No \\
+ &  &  &  &  &  &  & g3 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & -- & 0.00 & llm & No \\
 \midrule
-ASPEN & redundancies\_1 & Redundancy & R14 & 17.43 & 133.12 & 151.34 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & llm & 0.00 & No \\
+ASPEN & redundancies\_1 & Redundancy & 1 & 151.34 & 17.43 & 133.12 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & No \\
 \midrule
-DressAssist & concerns\_1 & Concern & Rule7 & 18.04 & 29.18 & 47.28 & d\_concern\_defeater\_Rule7 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & deterministic & 0.00 & No \\
-DressAssist & concerns\_1 & Concern & Rule7 & 18.04 & 29.18 & 47.28 & d\_decompose\_Rule7 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & deterministic & 0.00 & No \\
-DressAssist & concerns\_1 & Concern & Rule7 & 18.04 & 29.18 & 47.28 & d\_strengthen\_Rule7 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & deterministic & 0.00 & No \\
-DressAssist & concerns\_1 & Concern & Rule10 & 18.04 & 29.18 & 47.28 & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & llm & 0.00 & No \\
+DressAssist & concerns\_1 & Concern & 4 & 47.28 & 18.04 & 29.18 & d\_concern\_defeater\_Rule7 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_decompose\_Rule7 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_strengthen\_Rule7 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & No \\
 \bottomrule
 \end{tabular}%
 }
