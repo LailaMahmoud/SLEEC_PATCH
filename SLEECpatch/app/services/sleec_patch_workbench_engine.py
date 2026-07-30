@@ -373,6 +373,13 @@ class SLEECPatchWorkbenchEngine:
         rules = []
         inside_rules = False
         current = ""
+        depth = 0
+
+        # A rule may carry any identifier (R1, Rule5, c1, R1bb, r1_prime,
+        # R3_special_case). A new rule begins only where an 'Ident when' line
+        # appears at parenthesis/brace depth 0; deeper lines (defeaters,
+        # otherwise-blocks, wrapped continuations) fold into the current rule.
+        rule_start_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\s+when\s+", re.IGNORECASE)
 
         for line in sleec_text.splitlines():
             line = line.strip()
@@ -393,17 +400,25 @@ class SLEECPatchWorkbenchEngine:
             if not inside_rules:
                 continue
 
-            if re.match(r"^(r\d+|rule\d+|c\d+)(?:_\d+)?\s+when\s+", line, re.IGNORECASE):
+            if depth == 0 and rule_start_re.match(line):
                 if current:
                     rules.append(current.strip())
                 current = line
-            else:
+            elif current:
                 current += " " + line
+            else:
+                current = line
+
+            depth += line.count("(") - line.count(")")
+            depth += line.count("{") - line.count("}")
+
+            if depth < 0:
+                depth = 0
 
         parsed_rules = []
 
         pattern = re.compile(
-            r"^((?:r\d+|rule\d+|c\d+)(?:_\d+)?)\s+when\s+(.+?)\s+then\s+(.+?)(?:\s+unless\s+(.+))?$",
+            r"^([A-Za-z_][A-Za-z0-9_]*)\s+when\s+(.+?)\s+then\s+(.+?)(?:\s+unless\s+(.+))?$",
             re.IGNORECASE
         )
 
@@ -788,10 +803,10 @@ class SLEECPatchWorkbenchEngine:
     def ensure_rule_id(self, original_rule, proposed_rule):
         proposed_rule = proposed_rule.strip()
 
-        if re.match(r"^(r\d+|rule\d+|c\d+)(?:_\d+)?\s+when\s+", proposed_rule, re.IGNORECASE):
+        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*\s+when\s+", proposed_rule, re.IGNORECASE):
             return proposed_rule
 
-        match = re.match(r"^((?:r\d+|rule\d+|c\d+)(?:_\d+)?)\s+", original_rule.strip(), re.IGNORECASE)
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s+", original_rule.strip(), re.IGNORECASE)
 
         if match:
             return f"{match.group(1)} {proposed_rule}"
@@ -870,7 +885,7 @@ class SLEECPatchWorkbenchEngine:
             return True
 
         return re.match(
-            r"^(?:Rule|R|r)\d+(?:_\d+)?\s+when\b",
+            r"^[A-Za-z_][A-Za-z0-9_]*\s+when\b",
             stripped_line,
             flags=re.IGNORECASE
         ) is not None
@@ -1386,7 +1401,8 @@ class SLEECPatchWorkbenchEngine:
                     existing_responses=self.extract_rule_actions(
                         self.sleec_text_to_rules_json(patched_sleec)
                     )
-                ).get("deterministic", [])
+                ).get("deterministic", []),
+                existing_events=self.extract_defined_events(patched_sleec)
             )
 
             for followup in followup_patches:
@@ -1578,7 +1594,8 @@ class SLEECPatchWorkbenchEngine:
                 issue_type=issue_key,
                 selected_issue=selected_issue_value,
                 rules=rules_json,
-                operators=operator_plan.get("deterministic", [])
+                operators=operator_plan.get("deterministic", []),
+                existing_events=self.extract_defined_events(sleec_text)
             )
 
             generation_time += time.time() - start_generation
