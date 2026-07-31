@@ -275,122 +275,174 @@ class DeterministicRepairEngine:
         return patches
 
     def generate_conflict_patches(self, issue_type, selected_issue, rules, operators):
+        """Generate grammar-safe deterministic repairs for rule conflicts.
+
+        The implementation avoids negating bare events, which the current
+        SLEEC grammar cannot represent as Boolean trigger operands.  Instead,
+        it derives priority conditions from existing defeaters and Boolean
+        measure predicates.  This is use-case independent: it uses only the
+        diagnosed rule pair and their parsed conditions/defeaters.
+        """
         patches = []
         conflict_rules = self.find_conflicting_rules(selected_issue, rules)
 
         if len(conflict_rules) < 2:
             return patches
 
-        r1 = conflict_rules[0]
-        r2 = conflict_rules[1]
+        r1, r2 = conflict_rules[:2]
+        seen = set()
 
-        if "defeater_introduction" in operators:
-            patches.append({
-                "id": "d1",
-                "patch_id": "d1",
-                "source": "deterministic",
-                "issue_type": issue_type,
-                "operation": "defeater_introduction",
-                "target_rule_id": r1["id"],
-                "original_rule": self.rule_to_text(r1),
-                "proposed_rule": self.add_defeater(r1, self.specific_context(r2["condition"], r1["condition"])),
-                "natural_language_explanation":
-                    "The conflicting context is converted into an explicit defeater."
-            })
+        def append_patch(patch):
+            original = self.clean_condition(patch.get("original_rule", ""))
+            proposed = self.clean_condition(patch.get("proposed_rule", ""))
+            key = (patch.get("operation", ""), proposed.lower())
+            if not proposed or proposed.lower() == original.lower() or key in seen:
+                return
+            seen.add(key)
+            patches.append(patch)
 
-            patches.append({
-                "id": "d2",
-                "patch_id": "d2",
-                "source": "deterministic",
-                "issue_type": issue_type,
-                "operation": "defeater_introduction",
-                "target_rule_id": r2["id"],
-                "original_rule": self.rule_to_text(r2),
-                "proposed_rule": self.add_defeater(r2, self.specific_context(r1["condition"], r2["condition"])),
-                "natural_language_explanation":
-                    "The opposite rule context is given an explicit defeater."
-            })
+        # A conflict often arises because one rule's defeater produces the
+        # opposite of the other rule's main response.  Resolve it using only
+        # grammar-supported Boolean measure contexts.
+        for blocker, other in ((r1, r2), (r2, r1)):
+            blocker_condition, blocker_alternative = self.split_defeater(
+                blocker.get("defeater", "")
+            )
+            other_condition, _ = self.split_defeater(other.get("defeater", ""))
 
-        if "trigger_refinement" in operators:
-            patches.append({
-                "id": "d_trigger_refine_1",
-                "patch_id": "d_trigger_refine_1",
-                "source": "deterministic",
-                "issue_type": issue_type,
-                "operation": "trigger_refinement",
-                "target_rule_id": r1["id"],
-                "original_rule": self.rule_to_text(r1),
-                "proposed_rule": self.refine_trigger_against_condition(
-                    r1,
-                    r2["condition"]
-                ),
-                "natural_language_explanation":
-                    "The trigger is refined using the other conflicting rule's context."
-            })
+            if not (
+                blocker_condition
+                and blocker_alternative
+                and self.normalize_action(blocker_alternative)
+                == self.normalize_action(other.get("action", ""))
+                and self.is_negative(blocker_alternative)
+                != self.is_negative(other.get("action", ""))
+            ):
+                continue
 
-            patches.append({
-                "id": "d_trigger_refine_2",
-                "patch_id": "d_trigger_refine_2",
-                "source": "deterministic",
-                "issue_type": issue_type,
-                "operation": "trigger_refinement",
-                "target_rule_id": r2["id"],
-                "original_rule": self.rule_to_text(r2),
-                "proposed_rule": self.refine_trigger_against_condition(
-                    r2,
-                    r1["condition"]
-                ),
-                "natural_language_explanation":
-                    "The opposite trigger is refined using the first rule's context."
-            })
+            blocker_condition = self.normalize_boolean_expression(
+                blocker_condition
+            )
+            other_condition = self.normalize_boolean_expression(other_condition)
 
-        if "trigger_strengthening" in operators:
-            patches.append({
-                "id": "d3",
-                "patch_id": "d3",
-                "source": "deterministic",
-                "issue_type": issue_type,
-                "operation": "trigger_strengthening",
-                "target_rule_id": r1["id"],
-                "original_rule": self.rule_to_text(r1),
-                "proposed_rule": self.strengthen_trigger_with_condition(
-                    r1,
-                    self.complementary_context(
-                        self.specific_context(r2["condition"], r1["condition"])
+            # Defeater prioritisation: permit the blocking response only in a
+            # context where the competing positive rule is itself defeated.
+            if "defeater_introduction" in operators and other_condition:
+                narrowed = self.and_expr(blocker_condition, other_condition)
+                proposed = (
+                    f'{blocker["id"]} when {blocker["condition"]} '
+                    f'then {blocker["action"]} '
+                    f'unless {self.parenthesize(narrowed)} '
+                    f'then {blocker_alternative}'
+                )
+                append_patch({
+                    "id": f'd_conflict_defeater_{blocker["id"]}',
+                    "patch_id": f'd_conflict_defeater_{blocker["id"]}',
+                    "source": "deterministic",
+                    "issue_type": issue_type,
+                    "operation": "defeater_introduction",
+                    "target_rule_id": blocker["id"],
+                    "original_rule": self.rule_to_text(blocker),
+                    "proposed_rule": proposed,
+                    "natural_language_explanation": (
+                        "Narrow the blocking defeater using the competing "
+                        "rule's existing exception context, so the opposite "
+                        "responses cannot be required simultaneously."
                     )
-                ),
-                "natural_language_explanation":
-                    "The trigger is strengthened using contextual information."
-            })
+                })
+
+            # Trigger prioritisation: allow the competing rule to trigger only
+            # when the blocking defeater is inactive.  This uses the Boolean
+            # complement of a measure condition, never a negated bare event.
+            if "trigger_refinement" in operators:
+                allowed_context = self.negate_boolean_expression(
+                    blocker_condition
+                )
+                if allowed_context:
+                    proposed = (
+                        f'{other["id"]} when '
+                        f'{self.and_expr(other["condition"], allowed_context)} '
+                        f'then {other["action"]}{self.defeater_suffix(other)}'
+                    )
+                    append_patch({
+                        "id": f'd_conflict_refine_{other["id"]}',
+                        "patch_id": f'd_conflict_refine_{other["id"]}',
+                        "source": "deterministic",
+                        "issue_type": issue_type,
+                        "operation": "trigger_refinement",
+                        "target_rule_id": other["id"],
+                        "original_rule": self.rule_to_text(other),
+                        "proposed_rule": proposed,
+                        "natural_language_explanation": (
+                            "Refine the competing rule with the complement of "
+                            "the opposing defeater condition, preventing both "
+                            "responses from applying in the same situation."
+                        )
+                    })
+
+        # Generic fallback for conflicts whose distinguishing context is already
+        # a Boolean measure expression.  Bare event contexts are intentionally
+        # rejected rather than emitted as invalid SLEEC or returned as no-ops.
+        for target, other, suffix in ((r1, r2, "1"), (r2, r1, "2")):
+            context = self.specific_context(
+                other.get("condition", ""),
+                target.get("condition", "")
+            )
+            context = self.normalize_boolean_expression(context)
+
+            if not context or self.is_bare_event_expression(context):
+                continue
+
+            if "defeater_introduction" in operators:
+                proposed = self.add_defeater(target, context)
+                append_patch({
+                    "id": f"d_conflict_exception_{suffix}",
+                    "patch_id": f"d_conflict_exception_{suffix}",
+                    "source": "deterministic",
+                    "issue_type": issue_type,
+                    "operation": "defeater_introduction",
+                    "target_rule_id": target["id"],
+                    "original_rule": self.rule_to_text(target),
+                    "proposed_rule": proposed,
+                    "natural_language_explanation": (
+                        "Convert the diagnosed Boolean conflict context into "
+                        "an explicit exception on the affected rule."
+                    )
+                })
+
+            if "trigger_refinement" in operators:
+                proposed = self.refine_trigger_against_condition(target, context)
+                append_patch({
+                    "id": f"d_conflict_trigger_{suffix}",
+                    "patch_id": f"d_conflict_trigger_{suffix}",
+                    "source": "deterministic",
+                    "issue_type": issue_type,
+                    "operation": "trigger_refinement",
+                    "target_rule_id": target["id"],
+                    "original_rule": self.rule_to_text(target),
+                    "proposed_rule": proposed,
+                    "natural_language_explanation": (
+                        "Refine the rule trigger using a grammar-supported "
+                        "Boolean context from the conflicting rule."
+                    )
+                })
 
         if "rule_merging" in operators and self.compatible_for_merging(r1, r2):
-            patches.append({
-                "id": "d4",
-                "patch_id": "d4",
+            append_patch({
+                "id": "d_conflict_merge",
+                "patch_id": "d_conflict_merge",
                 "source": "deterministic",
                 "issue_type": issue_type,
                 "operation": "rule_merging",
                 "target_rule_id": r1["id"],
-                "original_rule": self.rule_to_text(r1) + "\n" + self.rule_to_text(r2),
-                "proposed_rule": self.merge_conflicting_rules(r1, r2),
-                "natural_language_explanation":
-                    "The two conflicting rules are merged into one rule."
-            })
-
-        if "rule_decomposition" in operators:
-            patches.append({
-                "id": f'd_decompose_{r1["id"]}',
-                "patch_id": f'd_decompose_{r1["id"]}',
-                "source": "deterministic",
-                "issue_type": issue_type,
-                "operation": "rule_decomposition",
-                "target_rule_id": r1["id"],
                 "rule_ids": [r1["id"], r2["id"]],
-                "original_rule": self.rule_to_text(r1),
-                "proposed_rule": self.decompose_conflicting_rule(r1, r2),
+                "original_rule": (
+                    self.rule_to_text(r1) + "\n" + self.rule_to_text(r2)
+                ),
+                "proposed_rule": self.merge_conflicting_rules(r1, r2),
                 "natural_language_explanation": (
-                    "The broad rule is split into two contextual branches "
-                    "with distinct responses."
+                    "Merge compatible conflicting rules into one rule with an "
+                    "explicit priority condition."
                 )
             })
 
