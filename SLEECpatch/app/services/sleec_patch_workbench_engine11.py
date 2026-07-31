@@ -13,7 +13,6 @@ from services.repair_operator_selector import RepairOperatorSelector
 from services.deterministic_repair_engine import DeterministicRepairEngine
 from services.patch_ranker import PatchRanker
 from services.use_case_descriptions import get_use_case_description
-from services.semantic_patch_validator import SemanticPatchValidator
 
 
 class SLEECPatchWorkbenchEngine:
@@ -25,7 +24,6 @@ class SLEECPatchWorkbenchEngine:
 
         self.operator_selector = RepairOperatorSelector()
         self.deterministic_engine = DeterministicRepairEngine()
-        self.semantic_validator = SemanticPatchValidator()
         # Section C ranking:
         # structural/logical = deterministic;
         # semantic clarity/interpretability = GPT, after formal verification.
@@ -542,8 +540,7 @@ class SLEECPatchWorkbenchEngine:
             "event_specialization": "Specialize event",
             "measure_specialization": "Specialize measure",
             "capability_refinement": "Refine capability",
-            "new_rule_generation": "Add new rule",
-            "temporal_refinement": "Refine temporal bound"
+            "new_rule_generation": "Add new rule"
         }
 
         return labels.get(str(operation), str(operation or "Patch"))
@@ -787,27 +784,6 @@ class SLEECPatchWorkbenchEngine:
                 )
 
         return sleec_text
-
-    def normalize_rule_for_comparison(self, text):
-        """Normalize rule text only for no-op comparison."""
-        return " ".join(str(text or "").split()).strip().lower()
-
-    def is_noop_patch(self, patch):
-        """Return True when a candidate makes no executable rule change."""
-        original = self.normalize_rule_for_comparison(
-            patch.get("original_rule", "")
-        )
-        proposed = self.normalize_rule_for_comparison(
-            patch.get("proposed_rule", "")
-        )
-
-        operation = str(patch.get("operation", "")).strip().lower()
-
-        # Empty proposed text is valid only for an explicit removal operation.
-        if not proposed:
-            return operation != "rule_removal"
-
-        return bool(original and original == proposed)
 
     def ensure_rule_id(self, original_rule, proposed_rule):
         proposed_rule = proposed_rule.strip()
@@ -1348,16 +1324,6 @@ class SLEECPatchWorkbenchEngine:
 
         validation_gate = self.validate_patched_sleec(patched_sleec)
         if not validation_gate["valid"]:
-            print("\n========== DETERMINISTIC PATCH REJECTED ==========")
-            print("Patch ID:", patch.get("patch_id"))
-            print("Operation:", patch.get("operation"))
-            print("Target rule:", patch.get("target_rule_id"))
-            print("Original rule:", patch.get("original_rule"))
-            print("Proposed rule:", patch.get("proposed_rule"))
-            print("Failure reason:", validation_gate.get("failure_reason"))
-            print("Syntax result:", validation_gate.get("syntax", {}))
-            print("==================================================\n")
-
             patch["target_fixed"] = False
             patch["related_issue"] = None
             patch["patched_sleec"] = patched_sleec
@@ -1437,19 +1403,7 @@ class SLEECPatchWorkbenchEngine:
                 )
 
                 if augmented:
-                    final_validation = self.validate_patched_sleec(
-                        augmented["patched_sleec"]
-                    )
-
-                    if not final_validation["valid"]:
-                        print(
-                            "Skipping augmented deterministic patch because "
-                            "the cumulative SLEEC is invalid:",
-                            final_validation.get("failure_reason")
-                        )
-                        continue
-
-                    final_analysis = final_validation["analysis"]
+                    final_analysis = self.run_detector_cached(augmented["patched_sleec"])
                     final_structured = final_analysis.get("structured", {})
                     final_regression_report = self.build_regression_report(
                         issue_key,
@@ -1599,67 +1553,9 @@ class SLEECPatchWorkbenchEngine:
         print("Applicability:", operator_plan.get("applicability", {}))
         print("==============================================\n")
 
-        # Resolve the diagnosed rule(s) before GPT generation so semantic
-        # candidates are grounded in the selected issue rather than an
-        # unrelated rule from the specification.
-        gpt_target_rules = []
-        if issue_key in ("conflicts", "situational_conflicts"):
-            try:
-                gpt_target_rules = self.deterministic_engine.find_conflicting_rules(
-                    selected_issue_value, rules_json
-                ) or []
-            except Exception:
-                gpt_target_rules = []
-        else:
-            try:
-                target_rule = self.deterministic_engine.find_best_related_rule(
-                    selected_issue_value, rules_json
-                )
-            except Exception:
-                target_rule = None
-            if target_rule:
-                gpt_target_rules = [target_rule]
-
-        target_rule_texts = [
-            self.deterministic_engine.rule_to_text(rule)
-            for rule in gpt_target_rules
-            if isinstance(rule, dict)
-        ]
-        target_rule_ids = [
-            str(rule.get("id", "")).strip()
-            for rule in gpt_target_rules
-            if isinstance(rule, dict) and str(rule.get("id", "")).strip()
-        ]
-
-        finding_context = [selected_issue_value]
-        if target_rule_texts:
-            finding_context.append(
-                "AFFECTED TARGET RULE(S) — generate the semantic repair only "
-                "for these rule(s):\n" + "\n".join(target_rule_texts)
-            )
-        finding_context.append(
-            "Do not select or modify an unrelated rule. The original_rule and "
-            "target_rule_id fields must refer to the affected target rule above."
-        )
-
         selected_findings = {
-            issue_key: finding_context
+            issue_key: [selected_issue_value]
         }
-
-        # Put target rules first and tag them explicitly in the GPT payload.
-        # The full specification is still included for context.
-        target_id_set = set(target_rule_ids)
-        gpt_rules_json = []
-        for rule in rules_json:
-            enriched = dict(rule)
-            enriched["repair_target"] = enriched.get("id") in target_id_set
-            if enriched["repair_target"]:
-                gpt_rules_json.append(enriched)
-        for rule in rules_json:
-            if rule.get("id") not in target_id_set:
-                enriched = dict(rule)
-                enriched["repair_target"] = False
-                gpt_rules_json.append(enriched)
 
         semantic_ops = operator_plan.get("llm", [])
         llm_patches = []
@@ -1673,8 +1569,7 @@ class SLEECPatchWorkbenchEngine:
         # Multiple attempts
         # -------------------------------
 
-        deterministic_attempt_limit = 1
-        while attempts < deterministic_attempt_limit:
+        while attempts < max_attempts:
             attempts += 1
 
             start_generation = time.time()
@@ -1718,18 +1613,6 @@ class SLEECPatchWorkbenchEngine:
             for patch in patches:
                 normalized_patch = self.normalize_patch(patch, sleec_text)
 
-                if self.is_noop_patch(normalized_patch):
-                    failed_patch_count += 1
-                    normalized_patch["verified"] = False
-                    normalized_patch["failure_reason"] = "No-op patch: proposed rule is unchanged"
-                    normalized_patch["attempt"] = attempts
-                    failed_patches.append(normalized_patch)
-                    print(
-                        ">>> Skipping no-op deterministic patch:",
-                        normalized_patch.get("patch_id", normalized_patch.get("id", "unknown"))
-                    )
-                    continue
-
                 if normalized_patch.get("patch_id") == "not_applicable":
                     failed_patch_count += 1
                     normalized_patch["verified"] = False
@@ -1757,63 +1640,6 @@ class SLEECPatchWorkbenchEngine:
                 print("--------------------------------")
 
                 start_validation = time.time()
-
-                # Generic semantic validation for every use case.
-                if source == "llm":
-                    semantic_validation = self.semantic_validator.validate(
-                        sleec_text=sleec_text,
-                        issue={
-                            "issue_type": issue_key,
-                            "value": selected_issue_value
-                        },
-                        patch=normalized_patch,
-                        existing_events=self.extract_defined_events(sleec_text),
-                        existing_measures=self.extract_defined_measures(sleec_text),
-                        existing_responses=self.extract_rule_actions(rules_json)
-                    )
-
-                    normalized_patch["semantic_validation"] = semantic_validation
-                    normalized_patch["semantic_validation_passed"] = bool(
-                        semantic_validation.get("valid")
-                    )
-                    normalized_patch["vocabulary_grounded"] = bool(
-                        semantic_validation.get("vocabulary_grounding", {}).get("passed")
-                    )
-                    normalized_patch["diagnosis_aligned"] = bool(
-                        semantic_validation.get("diagnosis_alignment", {}).get("passed")
-                    )
-                    normalized_patch["operator_valid"] = bool(
-                        semantic_validation.get("operator_validation", {}).get("passed")
-                    )
-                    normalized_patch["temporal_alignment"] = bool(
-                        semantic_validation.get("temporal_validation", {}).get("passed")
-                    )
-
-                    # Semantic validation is advisory for GPT patches.
-                    # Every executable GPT candidate still proceeds to formal
-                    # SLEEC verification. Semantic concerns are retained for
-                    # philosopher/social-scientist review.
-                    if not semantic_validation.get("valid"):
-                        normalized_patch["semantic_review_status"] = "pass_with_review"
-                        normalized_patch["semantic_warnings"] = (
-                            semantic_validation.get("errors", [])
-                            + semantic_validation.get("warnings", [])
-                        )
-                    else:
-                        normalized_patch["semantic_review_status"] = "pass"
-                        normalized_patch["semantic_warnings"] = (
-                            semantic_validation.get("warnings", [])
-                        )
-
-                    normalized_patch["requires_social_scientist_review"] = True
-
-                    print(
-                        "SEMANTIC REVIEW STATUS:",
-                        normalized_patch.get("semantic_review_status")
-                    )
-                    print("SEMANTIC VALID:", semantic_validation.get("valid"))
-                    print("SEMANTIC ERRORS:", semantic_validation.get("errors", []))
-                    print("SEMANTIC WARNINGS:", semantic_validation.get("warnings", []))
 
                 if source == "deterministic":
                     verified = self.verify_deterministic_patch_iteratively(
@@ -1848,10 +1674,7 @@ class SLEECPatchWorkbenchEngine:
                         failed_patches.append(normalized_patch)
                         seen_failed_signatures.add(patch_signature)
 
-        # Always generate semantic GPT alternatives when semantic operators apply.
-        # Deterministic success must not suppress GPT candidates because all verified
-        # alternatives are ranked together for philosopher review.
-        if semantic_ops:
+        if not verified_patches and semantic_ops:
             start_generation = time.time()
 
             description = get_use_case_description(use_case)
@@ -1865,7 +1688,7 @@ class SLEECPatchWorkbenchEngine:
 
             try:
                 llm_patches = self.gpt_patch_engine.generate_all_patches(
-                    rules=gpt_rules_json,
+                    rules=rules_json,
                     structured_findings=selected_findings,
                     repair_operators=semantic_ops,
                     system_description=description,
@@ -1883,32 +1706,6 @@ class SLEECPatchWorkbenchEngine:
                 p["id"] = f"g{i}"
                 p["source"] = p.get("source", "llm")
 
-                # Ground missing metadata in the diagnosed target rule. Do not
-                # silently retarget a generated rule; retain a warning when GPT
-                # names a different rule so verification/review remains honest.
-                if len(gpt_target_rules) == 1:
-                    target_rule = gpt_target_rules[0]
-                    expected_id = str(target_rule.get("id", "")).strip()
-                    expected_text = self.deterministic_engine.rule_to_text(target_rule)
-                    generated_target = str(p.get("target_rule_id", "")).strip()
-
-                    if not generated_target:
-                        p["target_rule_id"] = expected_id
-                    elif generated_target != expected_id:
-                        p["target_mismatch_warning"] = (
-                            f"GPT selected {generated_target}; diagnosed target is {expected_id}."
-                        )
-
-                    if not str(p.get("original_rule", "")).strip():
-                        p["original_rule"] = expected_text
-
-                    p["diagnosed_target_rule_id"] = expected_id
-                    p["diagnosed_target_rule"] = expected_text
-
-                elif len(gpt_target_rules) > 1:
-                    p["diagnosed_target_rule_ids"] = target_rule_ids
-                    p["diagnosed_target_rules"] = target_rule_texts
-
                 self.store.save_patch_candidate({
                     "run_id": run_id,
                     "use_case": use_case,
@@ -1925,18 +1722,6 @@ class SLEECPatchWorkbenchEngine:
 
             for patch in llm_patches:
                 normalized_patch = self.normalize_patch(patch, sleec_text)
-
-                if self.is_noop_patch(normalized_patch):
-                    failed_patch_count += 1
-                    normalized_patch["verified"] = False
-                    normalized_patch["failure_reason"] = "No-op patch: proposed rule is unchanged"
-                    normalized_patch["attempt"] = attempts
-                    failed_patches.append(normalized_patch)
-                    print(
-                        ">>> Skipping no-op GPT patch:",
-                        normalized_patch.get("patch_id", normalized_patch.get("id", "unknown"))
-                    )
-                    continue
 
                 if normalized_patch.get("patch_id") == "not_applicable":
                     failed_patch_count += 1
@@ -1957,33 +1742,6 @@ class SLEECPatchWorkbenchEngine:
                     continue
 
                 start_validation = time.time()
-
-                semantic_validation = self.semantic_validator.validate(
-                    sleec_text=sleec_text,
-                    issue={
-                        "issue_type": issue_key,
-                        "value": selected_issue_value
-                    },
-                    patch=normalized_patch,
-                    existing_events=self.extract_defined_events(sleec_text),
-                    existing_measures=self.extract_defined_measures(sleec_text),
-                    existing_responses=self.extract_rule_actions(rules_json)
-                )
-                normalized_patch["semantic_validation"] = semantic_validation
-                normalized_patch["semantic_validation_passed"] = bool(
-                    semantic_validation.get("valid")
-                )
-                normalized_patch["semantic_review_status"] = (
-                    "pass" if semantic_validation.get("valid")
-                    else "pass_with_review"
-                )
-                normalized_patch["semantic_warnings"] = (
-                    semantic_validation.get("errors", [])
-                    + semantic_validation.get("warnings", [])
-                )
-                normalized_patch["requires_social_scientist_review"] = True
-                normalized_patch["requires_philosopher_review"] = True
-
                 verified = self.verify_llm_patch_once(
                     original_sleec=sleec_text,
                     issue_key=issue_key,

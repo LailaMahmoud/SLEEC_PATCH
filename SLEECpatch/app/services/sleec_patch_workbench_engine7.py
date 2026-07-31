@@ -1599,67 +1599,9 @@ class SLEECPatchWorkbenchEngine:
         print("Applicability:", operator_plan.get("applicability", {}))
         print("==============================================\n")
 
-        # Resolve the diagnosed rule(s) before GPT generation so semantic
-        # candidates are grounded in the selected issue rather than an
-        # unrelated rule from the specification.
-        gpt_target_rules = []
-        if issue_key in ("conflicts", "situational_conflicts"):
-            try:
-                gpt_target_rules = self.deterministic_engine.find_conflicting_rules(
-                    selected_issue_value, rules_json
-                ) or []
-            except Exception:
-                gpt_target_rules = []
-        else:
-            try:
-                target_rule = self.deterministic_engine.find_best_related_rule(
-                    selected_issue_value, rules_json
-                )
-            except Exception:
-                target_rule = None
-            if target_rule:
-                gpt_target_rules = [target_rule]
-
-        target_rule_texts = [
-            self.deterministic_engine.rule_to_text(rule)
-            for rule in gpt_target_rules
-            if isinstance(rule, dict)
-        ]
-        target_rule_ids = [
-            str(rule.get("id", "")).strip()
-            for rule in gpt_target_rules
-            if isinstance(rule, dict) and str(rule.get("id", "")).strip()
-        ]
-
-        finding_context = [selected_issue_value]
-        if target_rule_texts:
-            finding_context.append(
-                "AFFECTED TARGET RULE(S) — generate the semantic repair only "
-                "for these rule(s):\n" + "\n".join(target_rule_texts)
-            )
-        finding_context.append(
-            "Do not select or modify an unrelated rule. The original_rule and "
-            "target_rule_id fields must refer to the affected target rule above."
-        )
-
         selected_findings = {
-            issue_key: finding_context
+            issue_key: [selected_issue_value]
         }
-
-        # Put target rules first and tag them explicitly in the GPT payload.
-        # The full specification is still included for context.
-        target_id_set = set(target_rule_ids)
-        gpt_rules_json = []
-        for rule in rules_json:
-            enriched = dict(rule)
-            enriched["repair_target"] = enriched.get("id") in target_id_set
-            if enriched["repair_target"]:
-                gpt_rules_json.append(enriched)
-        for rule in rules_json:
-            if rule.get("id") not in target_id_set:
-                enriched = dict(rule)
-                enriched["repair_target"] = False
-                gpt_rules_json.append(enriched)
 
         semantic_ops = operator_plan.get("llm", [])
         llm_patches = []
@@ -1865,7 +1807,7 @@ class SLEECPatchWorkbenchEngine:
 
             try:
                 llm_patches = self.gpt_patch_engine.generate_all_patches(
-                    rules=gpt_rules_json,
+                    rules=rules_json,
                     structured_findings=selected_findings,
                     repair_operators=semantic_ops,
                     system_description=description,
@@ -1882,32 +1824,6 @@ class SLEECPatchWorkbenchEngine:
                 p["patch_id"] = f"g{i}"
                 p["id"] = f"g{i}"
                 p["source"] = p.get("source", "llm")
-
-                # Ground missing metadata in the diagnosed target rule. Do not
-                # silently retarget a generated rule; retain a warning when GPT
-                # names a different rule so verification/review remains honest.
-                if len(gpt_target_rules) == 1:
-                    target_rule = gpt_target_rules[0]
-                    expected_id = str(target_rule.get("id", "")).strip()
-                    expected_text = self.deterministic_engine.rule_to_text(target_rule)
-                    generated_target = str(p.get("target_rule_id", "")).strip()
-
-                    if not generated_target:
-                        p["target_rule_id"] = expected_id
-                    elif generated_target != expected_id:
-                        p["target_mismatch_warning"] = (
-                            f"GPT selected {generated_target}; diagnosed target is {expected_id}."
-                        )
-
-                    if not str(p.get("original_rule", "")).strip():
-                        p["original_rule"] = expected_text
-
-                    p["diagnosed_target_rule_id"] = expected_id
-                    p["diagnosed_target_rule"] = expected_text
-
-                elif len(gpt_target_rules) > 1:
-                    p["diagnosed_target_rule_ids"] = target_rule_ids
-                    p["diagnosed_target_rules"] = target_rule_texts
 
                 self.store.save_patch_candidate({
                     "run_id": run_id,

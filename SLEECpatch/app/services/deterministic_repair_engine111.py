@@ -120,7 +120,7 @@ class DeterministicRepairEngine:
             self.specific_context(diagnosis_context, target_rule.get("condition", ""))
             or diagnosis_context
         )
-        context = self.normalize_boolean_expression(context)
+        context = self.clean_condition(context)
 
         if not context:
             return patches
@@ -632,10 +632,8 @@ class DeterministicRepairEngine:
         existing alternative response.
         """
         base = f'{rule["id"]} when {rule["condition"]} then {rule["action"]}'
-        new_condition = self.normalize_boolean_expression(defeater)
-        if not new_condition or self.is_bare_event_expression(new_condition):
-            # Bare events cannot be used as Boolean measure conditions in the
-            # current SLEEC grammar.
+        new_condition = self.clean_condition(defeater)
+        if not new_condition:
             return self.rule_to_text(rule)
 
         existing = self.clean_condition(rule.get("defeater", ""))
@@ -653,7 +651,7 @@ class DeterministicRepairEngine:
         }:
             return self.rule_to_text(rule)
 
-        merged_condition = self.or_expr(old_condition, new_condition)
+        merged_condition = f"({old_condition}) OR ({new_condition})"
         if old_alternative:
             return f"{base} unless ({merged_condition}) then {old_alternative}"
         return f"{base} unless ({merged_condition})"
@@ -662,34 +660,27 @@ class DeterministicRepairEngine:
         return self.strengthen_trigger_with_condition(rule, context)
 
     def strengthen_trigger_with_condition(self, rule, context):
-        context = self.normalize_boolean_expression(context)
+        context = self.clean_condition(context)
 
         if not context:
             return self.rule_to_text(rule)
 
         return (
-            f'{rule["id"]} when {self.and_expr(rule["condition"], context)} '
+            f'{rule["id"]} when {rule["condition"]} and ({context}) '
             f'then {rule["action"]}{self.defeater_suffix(rule)}'
         )
 
     def refine_trigger_against_condition(self, rule, context):
         context = self.specific_context(
-            self.normalize_boolean_expression(context),
+            self.clean_condition(context),
             rule.get("condition", "")
         )
-        context = self.normalize_boolean_expression(context)
 
-        if not context or self.is_bare_event_expression(context):
-            # The current SLEEC grammar does not allow arbitrary event negation
-            # as a measure condition (for example: `and not (HumanOnFloor)`).
-            return self.rule_to_text(rule)
-
-        complement = self.negate_boolean_expression(context)
-        if not complement:
+        if not context:
             return self.rule_to_text(rule)
 
         return (
-            f'{rule["id"]} when {self.and_expr(rule["condition"], complement)} '
+            f'{rule["id"]} when {rule["condition"]} and not ({context}) '
             f'then {rule["action"]}{self.defeater_suffix(rule)}'
         )
 
@@ -730,7 +721,7 @@ class DeterministicRepairEngine:
         existing = self.clean_condition(r1.get("defeater", ""))
 
         if existing and context:
-            context = self.or_expr(existing, context)
+            context = f"({existing}) OR ({context})"
         elif existing:
             context = existing
 
@@ -886,15 +877,10 @@ class DeterministicRepairEngine:
         ):
             return ""
 
-        context = self.normalize_boolean_expression(context)
-        defeater_condition = self.normalize_boolean_expression(defeater_condition)
-        complement = self.negate_boolean_expression(context)
-        if not complement:
-            return ""
-        narrowed = self.and_expr(defeater_condition, complement)
+        narrowed = f"({defeater_condition}) and not ({context})"
         return (
             f'{rule["id"]} when {rule["condition"]} then {rule["action"]} '
-            f'unless {self.parenthesize(narrowed)} then {alternative}'
+            f'unless ({narrowed}) then {alternative}'
         )
 
     def is_negative(self, action):
@@ -919,155 +905,13 @@ class DeterministicRepairEngine:
         first_id, second_id = self.next_available_rule_ids(
             rule["id"], used_rule_ids or set(), 2
         )
-        context = self.normalize_boolean_expression(context)
-        complement = self.negate_boolean_expression(context)
-        if not context or not complement:
-            return self.rule_to_text(rule)
+        context = self.clean_condition(context)
         return (
-            f'{first_id} when {self.and_expr(rule["condition"], context)} '
+            f'{first_id} when {rule["condition"]} and ({context}) '
             f'then {desired_action}\n'
-            f'{second_id} when {self.and_expr(rule["condition"], complement)} '
+            f'{second_id} when {rule["condition"]} and not ({context}) '
             f'then {rule["action"]}{self.defeater_suffix(rule)}'
         )
-
-    def parenthesize(self, expr):
-        expr = self.normalize_boolean_expression(expr)
-        if not expr:
-            return ""
-        if expr.startswith("(") and expr.endswith(")") and self.outer_parentheses_wrap(expr):
-            return expr
-        return f"({expr})"
-
-    def and_expr(self, left, right):
-        left = self.normalize_boolean_expression(left)
-        right = self.normalize_boolean_expression(right)
-        if not left:
-            return right
-        if not right:
-            return left
-        return f"{left} and {self.parenthesize(right)}"
-
-    def or_expr(self, left, right):
-        left = self.normalize_boolean_expression(left)
-        right = self.normalize_boolean_expression(right)
-        if not left:
-            return right
-        if not right:
-            return left
-        return f"{self.parenthesize(left)} or {self.parenthesize(right)}"
-
-    def is_bare_event_expression(self, expr):
-        expr = str(expr or "").strip().strip("() ")
-        return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", expr))
-
-    def outer_parentheses_wrap(self, text):
-        text = str(text or "").strip()
-        if len(text) < 2 or text[0] != "(" or text[-1] != ")":
-            return False
-        depth = 0
-        for index, char in enumerate(text):
-            if char == "(":
-                depth += 1
-            elif char == ")":
-                depth -= 1
-                if depth == 0 and index != len(text) - 1:
-                    return False
-                if depth < 0:
-                    return False
-        return depth == 0
-
-    def strip_outer_parentheses(self, text):
-        text = str(text or "").strip()
-        while self.outer_parentheses_wrap(text):
-            text = text[1:-1].strip()
-        return text
-
-    def split_top_level_boolean(self, expr, operator):
-        expr = str(expr or "").strip()
-        depth = 0
-        token = f" {operator} "
-        lower = expr.lower()
-        start = 0
-        parts = []
-        index = 0
-        while index < len(expr):
-            char = expr[index]
-            if char == "(":
-                depth += 1
-            elif char == ")":
-                depth -= 1
-            if depth == 0 and lower.startswith(token, index):
-                parts.append(expr[start:index].strip())
-                index += len(token)
-                start = index
-                continue
-            index += 1
-        if parts:
-            parts.append(expr[start:].strip())
-        return parts
-
-    def negate_boolean_expression(self, expr):
-        """Return a SLEEC-compatible Boolean complement.
-
-        The grammar accepts negation as a parenthesized atom, but rejects
-        `and not (...)`. Compound negation is therefore rendered using
-        De Morgan's laws.
-        """
-        expr = self.normalize_boolean_expression(expr)
-        expr = self.strip_outer_parentheses(expr)
-        if not expr or self.is_bare_event_expression(expr):
-            return ""
-
-        or_parts = self.split_top_level_boolean(expr, "or")
-        if or_parts:
-            negated = [self.negate_boolean_expression(part) for part in or_parts]
-            if any(not part for part in negated):
-                return ""
-            result = negated[0]
-            for part in negated[1:]:
-                result = self.and_expr(result, part)
-            return result
-
-        and_parts = self.split_top_level_boolean(expr, "and")
-        if and_parts:
-            negated = [self.negate_boolean_expression(part) for part in and_parts]
-            if any(not part for part in negated):
-                return ""
-            result = negated[0]
-            for part in negated[1:]:
-                result = self.or_expr(result, part)
-            return result
-
-        not_match = re.fullmatch(r"\(?\s*not\s+(.+?)\s*\)?", expr, flags=re.IGNORECASE)
-        if not_match:
-            return self.normalize_boolean_expression(not_match.group(1))
-
-        return f"(not {self.parenthesize_negated_atom(expr)})"
-
-    def parenthesize_negated_atom(self, expr):
-        expr = self.normalize_boolean_expression(expr)
-        expr = self.strip_outer_parentheses(expr)
-        if re.fullmatch(r"\{[A-Za-z_][A-Za-z0-9_]*\}", expr):
-            return expr
-        return self.parenthesize(expr)
-
-    def normalize_boolean_expression(self, expression):
-        """Normalize generated conditions to the concrete SLEEC grammar."""
-        expression = self.clean_condition(expression)
-        if not expression:
-            return ""
-        expression = re.sub(r"\bAND\b", "and", expression)
-        expression = re.sub(r"\bOR\b", "or", expression)
-        expression = re.sub(r"\bNOT\b", "not", expression)
-        # A negated measure must be a grouped operand when used with and/or.
-        expression = re.sub(
-            r"(?<!\()\bnot\s+(\{[A-Za-z_][A-Za-z0-9_]*\})",
-            r"(not \1)",
-            expression,
-            flags=re.IGNORECASE,
-        )
-        expression = re.sub(r"\s+", " ", expression).strip()
-        return expression
 
     def clean_condition(self, condition):
         condition = str(condition or "").strip()
@@ -1152,7 +996,7 @@ class DeterministicRepairEngine:
             return ""
 
         condition, alternative = self.split_defeater(defeater)
-        condition = self.normalize_boolean_expression(condition)
+        condition = self.clean_condition(condition)
         if not condition:
             return ""
 
