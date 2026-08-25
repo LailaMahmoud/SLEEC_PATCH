@@ -69,6 +69,8 @@ semantic repair, and stakeholder-centered resolution.
 Only instantiate the selected LLM-assisted semantic repair operator.
 Always return valid raw JSON.
 Never return markdown.
+Never invent SLEEC syntax or SLEEC keywords.
+If a repair cannot be expressed with valid SLEEC rule syntax, return not_applicable.
 """
                 },
                 {

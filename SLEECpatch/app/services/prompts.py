@@ -42,6 +42,84 @@ LLM_SEMANTIC_OPERATORS = [
 ]
 
 
+SLEEC_SYNTAX_CONTRACT = """
+SLEEC SYNTAX CONTRACT:
+Use only the SLEEC syntax already present in the input specification.
+
+Allowed declaration lines:
+- event EventName
+- measure measureName:boolean
+- measure measureName:numeric
+- constant ConstantName = value
+
+Allowed rule shapes:
+- RuleName when Trigger then Action
+- RuleName when Trigger and Condition then Action
+- RuleName when Trigger then Action within Number seconds
+- RuleName when Trigger then Action
+       unless Condition then AlternativeAction
+- RuleName when Trigger then Action
+       unless Condition
+
+Allowed condition syntax:
+- and, or, not
+- parentheses for grouping
+- boolean measures as {measureName}
+- numeric comparisons such as {measureName} > ConstantName
+
+Forbidden syntax:
+- Do not use IF, ELSE, REQUIRES, BECAUSE, SHOULD, MUST, UNTIL, EXCEPT, IMPLIES, or arrows.
+- Do not invent new SLEEC keywords.
+- Do not put prose, bullet points, or comments inside proposed_rule.
+- Do not wrap the whole rule in parentheses.
+- Do not output def_start, def_end, rule_start, or rule_end inside proposed_rule.
+- Do not output declaration lines inside proposed_rule.
+
+Vocabulary accounting:
+- If missing_element is a new event, set new_events_added to 1.
+- If missing_element is a new measure, set new_measures_added to 1.
+- If missing_element is a new response/capability, set new_capabilities_added to 1.
+- If the patch adds a new rule, set new_rules_added to 1.
+- Otherwise the corresponding counter must be 0.
+
+If you cannot express the repair using this syntax contract, return not_applicable.
+"""
+
+
+SLEEC_FEW_SHOT_SYNTAX_EXAMPLES = """
+FEW-SHOT SLEEC SYNTAX EXAMPLES:
+These examples teach syntax shape only. Do not copy their domain vocabulary.
+
+Example 1: edit an existing event trigger
+Original rule:
+r1 when BroadEvent then SafeAction
+Correct proposed_rule:
+r1 when SpecificEvent then SafeAction
+
+Example 2: preserve an unless branch
+Original rule:
+r2 when RequestAction then DoAction
+   unless {unsafeState} then StopAction
+Correct proposed_rule:
+r2 when SpecificRequestAction then DoAction
+   unless {unsafeState} then StopAction
+
+Example 3: preserve temporal syntax
+Original rule:
+r3 when EmergencyEvent then NotifyHuman within 60 seconds
+Correct proposed_rule:
+r3 when SpecificEmergencyEvent then NotifyHuman within 60 seconds
+
+Example 4: add one new rule
+Correct proposed_rule:
+r_new when MissingConditionEvent and {relevantState} then RequiredAction
+
+Example 5: no safe semantic repair
+Correct output:
+[{"patch_id":"not_applicable","operation":"none","target_rule_id":"","original_rule":"","missing_element":"","proposed_rule":"","natural_language_explanation":"The selected semantic operator cannot be expressed safely with valid SLEEC syntax.","modification_cost":0,"new_events_added":0,"new_measures_added":0,"new_capabilities_added":0,"new_rules_added":0,"defeaters_added":0}]
+"""
+
+
 OPERATOR_EXAMPLES = {'event_specialization': 'EXAMPLE: EVENT SPECIALIZATION FOR ALMI\n'
                          'Original rules:\n'
                          'r1 when FireSafetyMeasures then InformCaregiver\n'
@@ -151,6 +229,12 @@ STRICT RULES:
 13. For new_rule_generation, the new rule must explicitly address at least one diagnosed
     condition, response, measure, event, or temporal constraint.
 14. Use existing declared vocabulary whenever it is sufficient.
+15. Follow the SLEEC syntax contract exactly.
+16. If the selected repair cannot be written in valid SLEEC syntax, return not_applicable.
+
+{SLEEC_SYNTAX_CONTRACT}
+
+{SLEEC_FEW_SHOT_SYNTAX_EXAMPLES}
 
 SELECTED REPAIR OPERATOR:
 {repair_operator}
