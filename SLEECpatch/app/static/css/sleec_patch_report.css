@@ -158,6 +158,18 @@ h4 {
   font-weight: 700;
 }
 
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.download-link {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
 .report-controls select {
   min-width: 220px;
   min-height: 40px;
@@ -409,6 +421,10 @@ pre {
 
   .header-actions {
     justify-content: flex-start;
+  }
+
+  .download-actions {
+    margin-left: 0;
   }
 
   .metrics-strip,

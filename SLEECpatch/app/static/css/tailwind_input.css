@@ -1,0 +1,377 @@
+@import "tailwindcss" source(none);
+
+@source "../../templates/**/*.html";
+@source "../js/**/*.js";
+
+@theme {
+  --font-sans: Aptos, "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "SFMono-Regular", "JetBrains Mono", Consolas, monospace;
+  --color-sleec-ink: #202020;
+  --color-sleec-dark: #3f3f3f;
+  --color-sleec-muted: #707070;
+  --color-sleec-paper: #fbfaf7;
+  --color-sleec-surface: #ffffff;
+  --color-sleec-line: #e9e4dc;
+  --color-sleec-accent: #4d4b30;
+  --color-sleec-accent-soft: #feebca;
+  --color-sleec-accent-ink: #202020;
+  --color-sleec-green: #908660;
+  --color-sleec-red: #a65c56;
+}
+
+@layer base {
+  body {
+    @apply bg-sleec-paper font-sans text-[15px] leading-7 text-sleec-ink antialiased;
+  }
+
+  label {
+    @apply mb-2 block text-xs font-semibold uppercase tracking-normal text-sleec-muted;
+  }
+
+  select,
+  input,
+  textarea {
+    @apply w-full rounded-xl border border-sleec-line bg-sleec-surface px-4 py-3 text-sm text-sleec-ink shadow-none outline-none transition focus:border-sleec-accent focus:ring-4 focus:ring-sleec-accent/25;
+  }
+
+  pre {
+    @apply rounded-xl border border-sleec-line bg-sleec-surface p-4 font-mono text-[13px] leading-6 text-sleec-ink shadow-inner shadow-neutral-100;
+  }
+}
+
+@layer components {
+  .app-navbar {
+    @apply sticky top-4 z-30 mx-auto mb-7 flex max-w-[1420px] items-center justify-between gap-6 rounded-[18px] border border-sleec-line/90 bg-white/80 px-3 py-3 shadow-[0_14px_36px_rgba(72,34,22,0.06)] backdrop-blur-xl;
+  }
+
+  .brand-mark {
+    @apply inline-flex min-w-0 cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left text-sleec-ink transition hover:-translate-y-px;
+  }
+
+  .brand-orb {
+    @apply grid size-[42px] place-items-center rounded-[14px] bg-sleec-accent-soft text-xs font-extrabold text-sleec-accent shadow-[inset_0_0_0_1px_rgba(77,75,48,0.10),0_12px_22px_rgba(72,34,22,0.10)];
+  }
+
+  .brand-mark strong {
+    @apply block text-sm font-extrabold leading-tight text-sleec-ink;
+  }
+
+  .brand-mark small {
+    @apply mt-0.5 block text-xs leading-tight text-sleec-muted;
+  }
+
+  .workflow-nav {
+    @apply flex min-w-0 items-center justify-end gap-2;
+  }
+
+  .workflow-pill {
+    @apply inline-flex min-h-9 max-w-60 items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap rounded-full border border-sleec-accent/20 bg-[#fdf7ec] px-3.5 text-xs font-bold leading-none text-sleec-accent;
+  }
+
+  .workflow-pill.muted {
+    @apply border-neutral-500/10 bg-stone-100/70 text-sleec-muted;
+  }
+
+  .workflow-pill.is-live {
+    @apply border-sleec-green/40 bg-sleec-accent-soft/70 text-sleec-accent;
+  }
+
+  .nav-reset {
+    @apply inline-flex min-h-9 items-center justify-center rounded-full border border-transparent bg-transparent px-3 text-xs font-bold leading-none text-sleec-muted transition hover:-translate-y-px hover:bg-stone-100 hover:text-sleec-ink;
+  }
+
+  .panel,
+  .wizard-shell,
+  .hero {
+    @apply border-0 bg-transparent shadow-none;
+  }
+
+  .profession-step,
+  .intro-step,
+  .use-case-step {
+    @apply min-h-[calc(100vh-9rem)] content-center;
+  }
+
+  .profession-form {
+    @apply rounded-xl border border-sleec-line bg-white p-6 shadow-[0_24px_60px_rgba(72,34,22,0.10)] sm:p-7;
+  }
+
+  .profession-form textarea {
+    @apply min-h-24 resize-none font-sans text-[15px] leading-7;
+  }
+
+  .profession-form textarea::placeholder {
+    @apply font-sans text-sm text-sleec-muted;
+  }
+
+  .primary {
+    @apply inline-flex items-center justify-center rounded-xl border border-sleec-accent bg-sleec-accent px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(77,75,48,0.16)] transition hover:-translate-y-0.5 hover:border-[#3f3d27] hover:bg-[#3f3d27] hover:shadow-[0_16px_32px_rgba(77,75,48,0.20)] disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-sleec-line bg-sleec-surface px-5 py-2.5 text-sm font-semibold text-sleec-ink shadow-sm shadow-stone-200/70 transition hover:-translate-y-0.5 hover:border-sleec-accent hover:bg-sleec-accent-soft hover:text-sleec-accent-ink hover:shadow-md disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .success {
+    @apply inline-flex items-center justify-center rounded-xl border border-sleec-green bg-sleec-green px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .danger {
+    @apply inline-flex items-center justify-center rounded-xl border border-sleec-red bg-sleec-red px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md;
+  }
+
+  .small-btn {
+    @apply px-4 py-2 text-xs;
+  }
+
+  .wizard-dot {
+    @apply grid size-9 place-items-center rounded-full border border-transparent bg-transparent p-0 text-center text-sleec-muted shadow-none transition hover:bg-sleec-accent-soft;
+  }
+
+  .wizard-dot span {
+    @apply grid size-7 shrink-0 place-items-center rounded-full border border-sleec-line bg-sleec-surface text-xs font-bold text-sleec-muted;
+  }
+
+  .wizard-dot small {
+    @apply sr-only;
+  }
+
+  .wizard-dot.is-active {
+    @apply border-sleec-accent bg-sleec-accent text-sleec-ink shadow-none;
+  }
+
+  .wizard-dot.is-active span {
+    @apply border-white/20 bg-sleec-surface text-sleec-ink;
+  }
+
+  .wizard-dot.is-complete {
+    @apply border-transparent bg-transparent text-sleec-ink;
+  }
+
+  .issue-card,
+  .patch-card,
+  .metric-card,
+  .comparison-card,
+    .evaluation-card,
+  .panel-light {
+    @apply rounded-none border-0 border-b border-sleec-line bg-transparent px-0 py-7 shadow-none;
+  }
+
+  .issue-card,
+  .patch-card {
+    @apply transition hover:border-sleec-accent;
+  }
+
+  .selected-issue,
+  .selected-patch {
+    @apply border-sleec-accent bg-transparent ring-0;
+  }
+
+  .issue-header,
+  .patch-card-header,
+  .comparison-card-top {
+    @apply mb-3 flex items-start justify-between gap-4;
+  }
+
+  .issue-type {
+    @apply text-base font-semibold text-sleec-ink;
+  }
+
+  .issue-id,
+  .badge {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+  }
+
+  .issue-id,
+  .neutral {
+    @apply bg-stone-100 text-stone-700;
+  }
+
+  .good {
+    @apply bg-emerald-50 text-emerald-700;
+  }
+
+  .bad {
+    @apply bg-red-50 text-red-700;
+  }
+
+  .issue-section {
+    @apply mt-5;
+  }
+
+  .issue-section strong,
+  .rationale-list strong {
+    @apply mb-2 block text-xs font-semibold uppercase tracking-normal text-sleec-muted;
+  }
+
+  .trace-block {
+    @apply overflow-hidden rounded-none border-0 border-b border-sleec-line bg-transparent;
+  }
+
+  .trace-block h4 {
+    @apply border-b border-sleec-line bg-transparent px-0 py-2 text-xs font-semibold uppercase tracking-normal text-sleec-muted;
+  }
+
+  .trace-block pre,
+  .sleec-highlighted-code {
+    @apply m-0 max-h-80 rounded-none border-0 bg-sleec-surface;
+  }
+
+  .sleec-code-editor {
+    @apply overflow-hidden rounded-xl border border-sleec-line bg-sleec-surface shadow-inner shadow-neutral-100;
+  }
+
+  .sleec-code-highlight,
+  .sleec-code-editor textarea {
+    @apply font-mono text-[13px] leading-6;
+  }
+
+  .sleec-code-highlight {
+    @apply text-sleec-ink;
+  }
+
+  .sleec-code-editor textarea {
+    @apply bg-transparent text-transparent caret-sleec-ink shadow-none;
+  }
+
+  .score-legend {
+    @apply mb-6 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-sleec-muted;
+  }
+
+  .compact-score-list,
+  .score-list {
+    @apply flex flex-wrap gap-x-5 gap-y-2;
+  }
+
+  .score-chip,
+  .score-list div {
+    @apply inline-flex min-w-36 items-baseline justify-between gap-3 rounded-none border-0 border-b-2 px-0 py-2;
+  }
+
+  .score-chip dt,
+  .score-list dt {
+    @apply text-[11px] font-semibold uppercase tracking-normal text-sleec-muted;
+  }
+
+  .score-chip dd,
+  .score-list dd {
+    @apply mt-0 text-xl font-semibold text-sleec-ink;
+  }
+
+  .score-chip.strong,
+  .score-list div.strong {
+    @apply border-emerald-500 bg-transparent text-emerald-700;
+  }
+
+  .score-chip.moderate,
+  .score-list div.moderate {
+    @apply border-sleec-accent bg-transparent text-sleec-ink;
+  }
+
+  .score-chip.weak,
+  .score-list div.weak {
+    @apply border-red-400 bg-transparent text-red-700;
+  }
+
+  .rationale-list,
+  .verification-result {
+    @apply rounded-none border-0 border-t border-sleec-line bg-transparent px-0 py-4 text-sm text-sleec-muted;
+  }
+
+  .decision-editor {
+    @apply grid gap-8;
+  }
+
+  .single-decision-editor {
+    @apply mx-auto max-w-5xl grid-cols-1;
+  }
+
+  .selectable-patch {
+    @apply cursor-pointer rounded-none border-0 border-b border-sleec-line bg-transparent px-0 py-9 text-left shadow-none outline-none transition hover:border-sleec-accent focus-visible:ring-4 focus-visible:ring-sleec-accent/15;
+  }
+
+  .selectable-patch h4 {
+    @apply mt-7 mb-2 text-xs font-semibold uppercase tracking-normal text-sleec-ink;
+  }
+
+  .selectable-patch .patch-card-header {
+    @apply mb-5;
+  }
+
+  .empty {
+    @apply text-sm text-sleec-muted;
+  }
+
+  .issue-run-strip {
+    @apply static mx-auto mb-8 grid max-w-5xl justify-items-center gap-3 border-b border-sleec-line bg-white px-0 py-5 text-center;
+  }
+
+  .issue-run-strip h3 {
+    @apply text-xs font-semibold uppercase tracking-normal text-sleec-muted;
+  }
+
+  .issue-run-title {
+    @apply mt-1 text-sm text-sleec-ink;
+  }
+
+  .issue-status-row {
+    @apply mt-3 flex flex-wrap justify-center gap-2;
+  }
+
+  .issue-run-actions {
+    @apply flex flex-wrap justify-center gap-2;
+  }
+
+  .patch-summary,
+  .patch-explanation {
+    @apply max-w-5xl text-sm leading-7 text-sleec-muted;
+  }
+
+  .patch-explanation {
+    @apply mt-3 border-t border-sleec-line pt-4;
+  }
+
+  .wizard-footer {
+    @apply mx-auto max-w-[1420px] rounded-[18px] border-sleec-line/90 shadow-[0_14px_36px_rgba(72,34,22,0.06)];
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 900px) {
+  @layer components {
+    .app-navbar {
+      @apply static mb-3 flex-col items-start gap-3.5;
+    }
+
+    .workflow-nav {
+      @apply w-full flex-wrap justify-start;
+    }
+
+    .workflow-pill {
+      @apply max-w-full;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  @layer components {
+    .workflow-nav {
+      @apply grid grid-cols-2;
+    }
+
+    .workflow-pill,
+    .nav-reset {
+      @apply w-full;
+    }
+  }
+}

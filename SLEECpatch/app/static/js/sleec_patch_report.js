@@ -12,6 +12,9 @@ document.addEventListener("DOMContentLoaded", () => {
         "includePatchedSleec",
         "loadReportButton",
         "jsonLink",
+        "downloadJsonLink",
+        "downloadLatexLink",
+        "downloadZipLink",
         "metricTotalRows",
         "metricVerifiedRows",
         "metricLlmRows",
@@ -67,6 +70,22 @@ async function loadReportData() {
 }
 
 function reportUrl() {
+    return buildReportUrl("/api/sleec-patch/report-data");
+}
+
+function downloadJsonUrl() {
+    return buildReportUrl("/api/sleec-patch/download-report-json");
+}
+
+function downloadLatexUrl() {
+    return buildReportUrl("/api/sleec-patch/download-report-latex");
+}
+
+function downloadZipUrl() {
+    return buildReportUrl("/api/sleec-patch/download-report-zip");
+}
+
+function buildReportUrl(basePath) {
     const params = new URLSearchParams();
     const useCase = reportEls.reportUseCase.value;
 
@@ -76,11 +95,14 @@ function reportUrl() {
 
     params.set("include_patched_sleec", reportEls.includePatchedSleec.checked ? "1" : "0");
 
-    return `/api/sleec-patch/report-data?${params.toString()}`;
+    return `${basePath}?${params.toString()}`;
 }
 
 function updateJsonLink() {
     reportEls.jsonLink.href = reportUrl();
+    reportEls.downloadJsonLink.href = downloadJsonUrl();
+    reportEls.downloadLatexLink.href = downloadLatexUrl();
+    reportEls.downloadZipLink.href = downloadZipUrl();
 }
 
 function renderReport() {

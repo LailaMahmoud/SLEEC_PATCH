@@ -310,6 +310,78 @@ class SLEECPatchEvaluationStore:
         conn.close()
         return columns
 
+    def _table_exists_with_cursor(self, cur, table_name):
+        if self.using_postgres():
+            row = cur.execute("""
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_name = %s
+                LIMIT 1
+            """, (table_name,)).fetchone()
+            return bool(row)
+
+        row = cur.execute("""
+            SELECT 1
+            FROM sqlite_master
+            WHERE type = 'table'
+            AND name = ?
+            LIMIT 1
+        """, (table_name,)).fetchone()
+        return bool(row)
+
+    def clear_persisted_data(self):
+        tables = [
+            "sleec_patch_results",
+            "sleec_patch_pipeline_runs",
+            "sleec_patch_candidates",
+            "sleec_patch_verifications",
+            "philosopher_patch_reviews"
+        ]
+
+        conn = self.connect()
+        cur = conn.cursor()
+        existing_tables = [
+            table for table in tables
+            if self._table_exists_with_cursor(cur, table)
+        ]
+        deleted_rows = {}
+
+        try:
+            for table in existing_tables:
+                count_row = self.execute(
+                    cur,
+                    f"SELECT COUNT(*) AS count FROM {table}"
+                ).fetchone()
+                deleted_rows[table] = count_row["count"] if count_row else 0
+
+            if self.using_postgres():
+                if existing_tables:
+                    cur.execute(
+                        "TRUNCATE TABLE "
+                        + ", ".join(existing_tables)
+                        + " RESTART IDENTITY CASCADE"
+                    )
+            else:
+                for table in existing_tables:
+                    cur.execute(f"DELETE FROM {table}")
+
+                if self._table_exists_with_cursor(cur, "sqlite_sequence"):
+                    placeholders = ", ".join("?" for _ in existing_tables)
+                    cur.execute(
+                        f"DELETE FROM sqlite_sequence WHERE name IN ({placeholders})",
+                        tuple(existing_tables)
+                    )
+
+            conn.commit()
+        finally:
+            conn.close()
+
+        return {
+            "backend": "postgres" if self.using_postgres() else "sqlite",
+            "cleared_tables": deleted_rows,
+            "total_rows_deleted": sum(deleted_rows.values())
+        }
+
     def ensure_columns(self):
         result_columns = self.table_columns("sleec_patch_results")
         candidate_columns = self.table_columns("sleec_patch_candidates")

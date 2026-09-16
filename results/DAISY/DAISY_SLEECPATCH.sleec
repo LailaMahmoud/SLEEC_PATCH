@@ -100,8 +100,9 @@ rule_start
 	Rule4 when Speaking then UseChoicenLanguage
 		 unless (not {languagePreferenceAvailable}) then UseDefaultasEnglish
 		 unless {userDirectsOtherwise}
-Rule5_1 when UserRequestInfo and ({informationAvailable} and {informationDisclosureNotPermitted}) then ProvideInfo unless (((not {informationAvailable}) or {informationDisclosureNotPermitted}))
-Rule5_2 when UserRequestInfo and not ({informationAvailable} and {informationDisclosureNotPermitted}) then ProvideInfo unless (((not {informationAvailable}) or {informationDisclosureNotPermitted}))
+	Rule5 when UserRequestInfo then ProvideInfo
+			  unless ((not {informationAvailable}) or {informationDisclosureNotPermitted}) 
+						  then InformUserandandReferToHumanCarer
 
 	Rule6 when InstructionFail then RepeatInstruction
 			  unless (({instructionRepeat} >= 3) or ({timeElapsed} > 20)) then CallSupport
@@ -134,7 +135,7 @@ Rule5_2 when UserRequestInfo and not ({informationAvailable} and {informationDis
 	then CollectPatientData otherwise not CollectPatientData
 
 	Rule17 when CollectingTrainingData and {trainingDataRepresentative} then TrainDaisy
-	Rule18 when MeetingUser and ({patientComfortable} and {patientAgeConsidered}) then ExaminingPatient
+Rule18 when MeetingUser and ({patientComfortable} and {patientAgeConsidered}) then ExaminingPatient unless {patientXReligion}
 	Rule19 when MeetingUser and {patientXReligion} then not ExaminingPatient
 		 unless {userDirectsOtherwise}
 		 unless {medicalEmergency}

@@ -2,7 +2,10 @@
 import numpy as np, re, os
 import sys
 import traceback
+import io
+import zipfile
 from dotenv import load_dotenv
+from pathlib import Path
 
 from flask import Flask, render_template, request,redirect, jsonify, abort, url_for, session, render_template_string
 from openai import OpenAI
@@ -46,6 +49,12 @@ from services.evaluation_excel_exporter import EvaluationExcelExporter
 evaluation_excel_exporter = EvaluationExcelExporter()
 from services.patch_level_evaluator import PatchLevelEvaluator
 patch_level_evaluator  = PatchLevelEvaluator()
+from services.use_case_descriptions import USE_CASE_DESCRIPTIONS
+from scripts.export_overleaf_tables import (
+    RESULTS_DIR as OVERLEAF_RESULTS_DIR,
+    build_overleaf_exports,
+    export_suffix as overleaf_export_suffix,
+)
 
 
 SLEEC_EXCEL_FILES = {
@@ -150,7 +159,7 @@ def load_sleec_text(use_case):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return redirect(url_for("sleec_patch_workbench"))
 
 
 @app.route("/about")
@@ -165,10 +174,7 @@ def contact():
 
 @app.route("/step6")
 def step6():
-    return render_template(
-        "step6.html",
-        use_cases=list(SLEEC_FILES.keys())
-    )
+    return redirect(url_for("sleec_patch_workbench"))
 
 
 @app.route("/sleec-patch-workbench")
@@ -185,6 +191,7 @@ def sleec_patch_workbench():
     return render_template(
         "SLEECPatchWorkbench.html",
         use_cases=list(SLEEC_FILES.keys()),
+        use_case_descriptions=USE_CASE_DESCRIPTIONS,
         selected_use_cases=selected_use_cases,
         sleec_text=""
     )
@@ -257,6 +264,34 @@ def api_sleec_patch_generate_verified():
         }), 500
 
     return jsonify(result)
+
+
+@app.route("/api/sleec-patch/verify-edited-sleec", methods=["POST"])
+def api_sleec_patch_verify_edited_sleec():
+    data = request.get_json() or {}
+    sleec_text = data.get("sleec_text", "")
+
+    if not sleec_text.strip():
+        return jsonify({
+            "status": "ERROR",
+            "valid": False,
+            "error": "Missing SLEEC text."
+        }), 400
+
+    try:
+        validation = sleec_patch_engine.validate_patched_sleec(sleec_text)
+    except Exception as exc:
+        traceback.print_exc()
+        return jsonify({
+            "status": "ERROR",
+            "valid": False,
+            "error": f"{type(exc).__name__}: {exc}"
+        }), 500
+
+    return jsonify({
+        "status": "OK",
+        **validation
+    })
 
 
 @app.route("/api/sleec-patch/evaluation-summary", methods=["POST"])
@@ -374,6 +409,25 @@ def api_sleec_patch_persistence_status():
         }), 500
 
 
+@app.route("/api/sleec-patch/clear-persisted-data", methods=["POST"])
+def api_sleec_patch_clear_persisted_data():
+    try:
+        cleared = sleec_patch_engine.store.clear_persisted_data()
+        sleec_patch_engine.detector_cache.clear()
+
+        return jsonify({
+            "status": "OK",
+            "cleared": cleared
+        })
+    except Exception as exc:
+        app.logger.exception("Failed to clear persisted SLEEC-PATCH data")
+        return jsonify({
+            "status": "ERROR",
+            "error": "Failed to clear persisted SLEEC-PATCH data.",
+            "details": str(exc)
+        }), 500
+
+
 @app.route("/api/sleec-patch/experiment-runs", methods=["POST"])
 def api_sleec_patch_experiment_runs():
     data = request.get_json() or {}
@@ -477,14 +531,17 @@ def report_metrics(rows):
     }
 
 
-@app.route("/api/sleec-patch/report-data", methods=["GET", "POST"])
-def api_sleec_patch_report_data():
+def report_request_options():
     data = request_payload()
     use_case = data.get("use_case", "").strip()
     include_patched_sleec = truthy(
         data.get("include_patched_sleec"),
         default=True
     )
+    return use_case, include_patched_sleec
+
+
+def build_report_payload(use_case="", include_patched_sleec=True):
     evaluation_summary = sleec_patch_engine.store.summary()
 
     if use_case:
@@ -522,7 +579,7 @@ def api_sleec_patch_report_data():
             if row.get("use_case") == use_case
         ]
 
-    return jsonify({
+    return {
         "status": "OK",
         "use_case": use_case or "ALL",
         "include_patched_sleec": include_patched_sleec,
@@ -538,7 +595,155 @@ def api_sleec_patch_report_data():
         "experiment_runs": experiment_runs,
         "experiment_candidates": experiment_candidates,
         "experiment_verifications": experiment_verifications
-    })
+    }
+
+
+def report_download_slug(use_case=""):
+    if not use_case:
+        return "all-use-cases"
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "-", use_case.strip()).strip("-")
+    return slug.lower() or "all-use-cases"
+
+
+def report_json_download_name(use_case=""):
+    return f"sleec-patch-report-{report_download_slug(use_case)}.json"
+
+
+def report_latex_download_name(use_case=""):
+    return f"sleec-patch-report-{report_download_slug(use_case)}.tex"
+
+
+def report_zip_download_name(use_case=""):
+    return f"sleec-patch-export-{report_download_slug(use_case)}.zip"
+
+
+def generated_result_files(use_case=""):
+    results_dir = Path(OVERLEAF_RESULTS_DIR)
+
+    if not results_dir.exists():
+        return []
+
+    selected_dirs = []
+
+    if use_case:
+        candidate = results_dir / use_case
+        if candidate.is_dir():
+            selected_dirs.append(candidate)
+    else:
+        selected_dirs = sorted(
+            path for path in results_dir.iterdir()
+            if path.is_dir()
+        )
+
+    files = []
+
+    for case_dir in selected_dirs:
+        for file_path in sorted(case_dir.iterdir()):
+            if file_path.is_file() and file_path.suffix.lower() in {".sleec", ".xlsx"}:
+                files.append((
+                    f"generated-results/{case_dir.name}/{file_path.name}",
+                    file_path
+                ))
+
+    return files
+
+
+@app.route("/api/sleec-patch/report-data", methods=["GET", "POST"])
+def api_sleec_patch_report_data():
+    use_case, include_patched_sleec = report_request_options()
+    return jsonify(
+        build_report_payload(
+            use_case=use_case,
+            include_patched_sleec=include_patched_sleec
+        )
+    )
+
+
+@app.route("/api/sleec-patch/download-report-json", methods=["GET"])
+def api_sleec_patch_download_report_json():
+    use_case, include_patched_sleec = report_request_options()
+    payload = build_report_payload(
+        use_case=use_case,
+        include_patched_sleec=include_patched_sleec
+    )
+    buffer = io.BytesIO(
+        json.dumps(payload, indent=2, ensure_ascii=False).encode("utf-8")
+    )
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="application/json",
+        as_attachment=True,
+        download_name=report_json_download_name(use_case)
+    )
+
+
+@app.route("/api/sleec-patch/download-report-latex", methods=["GET"])
+def api_sleec_patch_download_report_latex():
+    use_case, _include_patched_sleec = report_request_options()
+    latex_exports = build_overleaf_exports(use_case=use_case)
+    latex_text = latex_exports[
+        f"sleec_patch_report_{overleaf_export_suffix(use_case)}.tex"
+    ]
+    buffer = io.BytesIO(latex_text.encode("utf-8"))
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="application/x-tex",
+        as_attachment=True,
+        download_name=report_latex_download_name(use_case)
+    )
+
+
+@app.route("/api/sleec-patch/download-report-zip", methods=["GET"])
+def api_sleec_patch_download_report_zip():
+    use_case, include_patched_sleec = report_request_options()
+    payload = build_report_payload(
+        use_case=use_case,
+        include_patched_sleec=include_patched_sleec
+    )
+    latex_exports = build_overleaf_exports(use_case=use_case)
+
+    buffer = io.BytesIO()
+
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr(
+            report_json_download_name(use_case),
+            json.dumps(payload, indent=2, ensure_ascii=False)
+        )
+
+        for filename, content in latex_exports.items():
+            archive.writestr(f"latex/{filename}", content)
+
+        for archive_name, file_path in generated_result_files(use_case):
+            archive.write(file_path, archive_name)
+
+        archive.writestr(
+            "README.txt",
+            "\n".join([
+                "SLEEC-PATCH export bundle",
+                "",
+                f"Filter use case: {use_case or 'ALL'}",
+                (
+                    "Included patched SLEEC in JSON rows: "
+                    f"{'Yes' if include_patched_sleec else 'No'}"
+                ),
+                "",
+                "Contents:",
+                "- JSON report payload from /api/sleec-patch/report-data",
+                "- LaTeX tables generated from the same live results dataset",
+                "- Generated .sleec and .xlsx result files when present",
+                "",
+            ])
+        )
+
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=report_zip_download_name(use_case)
+    )
 
 
 @app.route("/api/sleec-patch/evaluation-a", methods=["POST"])

@@ -5,53 +5,99 @@
 <title>SLEEC-PATCH</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/loader.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_patch_workbench.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
 </head>
 
-<body>
-<div class="page">
+<body class="bg-sleec-paper font-sans text-sleec-ink antialiased">
+<div class="page mx-auto min-h-screen max-w-[1600px] px-6 py-8 sm:px-12 lg:px-20">
 
-<header class="hero">
-    <div>
-        <h1>SLEEC-PATCH</h1>
-        <p>Automated generation and formal validation of resolution patches for well-formedness issues in normative requirements.</p>
-    </div>
-    <div class="hero-links">
-        <a href="{{ url_for('sleec_patch_report') }}">Report Data</a>
-        <a href="{{ url_for('philosopher_review') }}">Philosopher Review</a>
+<header class="app-navbar" aria-label="SLEEC-PATCH workflow">
+    <button type="button" class="brand-mark" onclick="goToPatchStep(1)" aria-label="Return to start">
+        <span class="brand-orb">SP</span>
+        <span>
+            <strong>SLEEC-PATCH</strong>
+            <small>Requirement repair</small>
+        </span>
+    </button>
+
+    <div class="workflow-nav">
+        <span class="workflow-pill" data-wizard-counter data-counter-mode="label">Profession</span>
+        <span class="workflow-pill muted" id="headerUseCase">No use case selected</span>
+        <span class="workflow-pill muted" id="headerIssueProgress">No issue run</span>
+        <a class="nav-link report-link" href="{{ url_for('sleec_patch_report') }}">
+            Downloads & Report
+        </a>
+        <button type="button" class="nav-link admin-reset-link" onclick="clearPersistedData()">
+            Admin Reset
+        </button>
+        <button type="button" class="nav-reset" data-wizard-restart>Reset</button>
     </div>
 </header>
 
-<div class="wizard-shell">
-    <div class="wizard-topbar">
-        <div>
-            <span class="wizard-kicker">SLEEC-PATCH workflow</span>
-            <strong data-wizard-counter data-counter-mode="label">Specification Input</strong>
-        </div>
-        <button type="button" class="secondary" data-wizard-restart>Start over</button>
+<section class="panel wizard-step is-active profession-step px-0 py-12 sm:py-20" data-step="1">
+    <div class="intro-copy mx-auto max-w-4xl text-center">
+        <span class="wizard-kicker">SLEEC-PATCH</span>
+        <h1 class="mt-2 text-[30px] font-semibold text-sleec-ink">Requirement Repair Workbench</h1>
+        <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-sleec-muted">
+            Tell us about your background before you begin.
+        </p>
     </div>
 
-    <div class="wizard-stepper" data-wizard-stepper aria-label="Workflow sections"></div>
-</div>
+    <div class="profession-form mx-auto mt-9 max-w-2xl">
+        <label for="userProfession">Your profession or expertise</label>
+        <textarea id="userProfession"
+                  rows="2"
+                  spellcheck="true"
+                  placeholder="Describe your profession, background, or area of expertise"
+                  oninput="saveUserProfession()"></textarea>
+        <div class="center-actions">
+            <button class="primary rounded-xl px-7 py-3 text-sm font-semibold" type="button" onclick="continueFromProfession()">Start</button>
+        </div>
+    </div>
+</section>
 
-<section class="panel wizard-step is-active" data-step="1">
-    <h2>1. SLEEC Specification Input</h2>
+<section class="panel wizard-step intro-step px-0 py-12 sm:py-20" data-step="2">
+    <div class="intro-copy mx-auto max-w-4xl text-center">
+        <span class="wizard-kicker">Before you begin</span>
+        <h2 class="mt-2 text-[30px] font-semibold text-sleec-ink">Instructions</h2>
+        <p class="mt-3 text-sm leading-7 text-sleec-muted">
+            SLEEC-PATCH guides you through a SLEEC requirement specification,
+            diagnoses well-formedness issues, and helps you resolve them one
+            at a time.
+        </p>
+        <ol class="instruction-list mt-6 grid gap-3 text-left text-sm leading-6 text-sleec-muted">
+            <li>Choose a use case and review the system context.</li>
+            <li>Start the analysis to detect conflicting or otherwise problematic requirements.</li>
+            <li>Resolve the selected issue using generated patches or a manual edit.</li>
+            <li>Verify each edit before proceeding to the next issue.</li>
+        </ol>
+    </div>
 
-    <div class="toolbar">
-        <div>
-            <label>Use Case</label>
-            <select id="useCase">
+    <div class="center-actions">
+        <button class="primary rounded-xl px-7 py-3 text-sm font-semibold" type="button" onclick="goToPatchStep(3)">Continue</button>
+    </div>
+</section>
+
+<section class="panel wizard-step use-case-step px-0 py-12 sm:py-16" data-step="3">
+    <h2 class="text-center text-[24px] font-semibold text-sleec-ink">Choose Use Case</h2>
+
+    <div class="use-case-picker mt-6">
+        <label>Use Case</label>
+        <select class="rounded-xl border-sleec-line bg-sleec-surface px-4 py-3 text-sm focus:border-sleec-accent focus:ring-sleec-accent" id="useCase" onchange="handleUseCaseSelection()">
+            <option value="" disabled {% if not selected_use_cases %}selected{% endif %}>Select a use case</option>
                 {% for uc in use_cases %}
-                <option value="{{ uc }}" {% if uc in selected_use_cases %}selected{% endif %}>
-                    {{ uc }}
-                </option>
+            <option value="{{ uc }}" {% if uc in selected_use_cases %}selected{% endif %}>
+                {{ uc }}
+            </option>
                 {% endfor %}
-            </select>
-        </div>
-
-        <button class="secondary" onclick="loadSelectedUseCase()">Load Use Case</button>
+        </select>
+        <details id="useCaseDetails" class="use-case-details text-sm">
+            <summary>Use case description</summary>
+            <p id="useCaseDescription">Select a use case to view the domain context.</p>
+        </details>
     </div>
 
-    <div class="sleec-code-editor">
+    <div class="sleec-code-editor rounded-xl border border-sleec-line">
         <pre id="sleecInputHighlight" class="sleec-code-highlight" aria-hidden="true"></pre>
         <textarea id="sleecInput"
                   rows="16"
@@ -60,98 +106,77 @@
                   onscroll="syncSleecEditorScroll()">{{ sleec_text or "" }}</textarea>
     </div>
 
-    <div class="step-actionbar">
-        <button class="primary" onclick="diagnoseWFIs()">Diagnose WFIs</button>
+    <div class="center-actions">
+        <button class="primary wide-action rounded-xl px-7 py-3 text-sm font-semibold" onclick="diagnoseWFIs()">
+            Start Analysis of whether Requirements are Conflicting
+        </button>
     </div>
 </section>
 
-<section class="panel wizard-step" data-step="2">
-    <h2>2. Detected Well-Formedness Issues</h2>
+<section class="panel wizard-step diagnosis-step px-0 py-12 sm:py-16" data-step="4">
+    <h2 class="text-center text-[24px] font-semibold text-sleec-ink">Conflict Diagnosis</h2>
     <div id="issuesOutput" class="empty">No diagnosis yet.</div>
 </section>
 
-<section class="issue-workspace wizard-step" data-step="3">
-    <aside class="panel issue-sidebar-panel">
-        <div class="issue-sidebar-header">
-            <h2>Issues</h2>
-            <span id="issueSidebarCountStep3">0</span>
-        </div>
-        <div id="issueSidebarStep3" class="issue-sidebar-list empty">No issues selected.</div>
-    </aside>
+<section class="panel wizard-step selected-issue-step px-0 py-12 sm:py-16" data-step="5">
+    <h2 class="text-center text-[24px] font-semibold text-sleec-ink">Selected Issue</h2>
+    <div id="selectedIssueOutput" class="empty">Select one issue.</div>
 
-    <div class="panel">
-        <h2>3. Selected Issue</h2>
-        <div id="selectedIssueOutput" class="empty">Select one issue.</div>
-        <button class="success" onclick="generateVerifiedPatches()">Run Pipeline for Selected Issue</button>
+    <div class="center-actions resolution-actions">
+        <button class="primary rounded-xl px-7 py-3 text-sm font-semibold" onclick="generateVerifiedPatches()">Generate Patches</button>
+        <button class="secondary rounded-xl px-7 py-3 text-sm font-semibold" onclick="showManualResolution()">Manual Resolution</button>
+    </div>
+
+    <div id="manualResolutionOutput" class="manual-resolution empty"></div>
+</section>
+
+<section class="panel wizard-step repair-candidates-step px-0 py-12 sm:py-16" data-step="6">
+    <div class="mx-auto max-w-5xl">
+        <div id="issueRunOutput" class="issue-run-slot empty">No issue run loaded.</div>
+        <h2 class="text-center text-[24px] font-semibold text-sleec-ink">Candidate Repairs</h2>
+        <div id="deterministicOutput" class="empty">No deterministic repairs yet.</div>
+        <div id="llmOutput" class="empty">No GPT semantic repairs yet.</div>
     </div>
 </section>
 
-<section class="grid-2 repair-workspace wizard-step" data-step="4">
-    <aside class="panel issue-sidebar-panel repair-sidebar-panel">
-        <div class="issue-sidebar-header">
-            <h2>Issues</h2>
-            <span id="issueSidebarCountStep4">0</span>
+<section class="panel wizard-step verified-patches-step px-0 py-12 sm:py-16" data-step="7">
+    <div class="mx-auto max-w-6xl">
+        <div class="text-center">
+            <h2 class="text-[24px] font-semibold text-sleec-ink">Verified & Ranked Patches</h2>
+            <p class="mx-auto mt-2 max-w-2xl text-sm leading-6 text-sleec-muted">Select the best generated patch for this issue before moving to the verification handoff.</p>
         </div>
-        <div id="issueSidebarStep4" class="issue-sidebar-list empty">No issues selected.</div>
-    </aside>
-
-    <div class="panel issue-run-panel">
-        <div id="issueRunOutput" class="empty">No issue run loaded.</div>
-    </div>
-
-    <div class="panel">
-        <h2>4A. Deterministic Repairs</h2>
-        <div id="deterministicOutput" class="empty">No deterministic repairs yet.</div>
-    </div>
-
-    <div class="panel">
-        <h2>4B. GPT Semantic Repairs</h2>
-        <div id="llmOutput" class="empty">No GPT semantic repairs yet.</div>
-    </div>
-
-    <div class="panel verified-panel">
-        <h2>4C. Verified & Ranked Patches</h2>
         <div id="patchOutput" class="empty">No verified patches yet.</div>
     </div>
+</section>
 
-    <div class="panel stakeholder-panel">
-        <div class="section-header">
-            <div>
-                <h2>4D. Stakeholder Decision</h2>
-                <p>Inspect persisted patches and continue through the detected issue list.</p>
-            </div>
-        </div>
-
+<section class="panel wizard-step patch-editor-step px-0 py-12 sm:py-16" data-step="8">
+    <div class="mx-auto max-w-6xl">
         <div id="stakeholderDecisionOutput" class="empty">
             Select a verified patch to inspect.
         </div>
     </div>
 </section>
 
-<section class="panel wizard-step" data-step="5">
-    <div class="issue-workspace compact-issue-workspace">
-        <aside class="issue-sidebar-panel">
-            <div class="issue-sidebar-header">
-                <h2>Issues</h2>
-                <span id="issueSidebarCountStep5">0</span>
-            </div>
-            <div id="issueSidebarStep5" class="issue-sidebar-list empty">No issues selected.</div>
-        </aside>
-
-        <div>
-            <h2>5. Internal Verification Log</h2>
-            <div id="logOutput" class="empty">No log yet.</div>
+<section class="panel wizard-step px-0 py-12 sm:py-16" data-step="9">
+    <div class="mx-auto max-w-6xl">
+        <div class="text-center">
+            <h2 class="text-[24px] font-semibold text-sleec-ink">Verify Resolution and Continue</h2>
+            <p class="mx-auto mt-2 max-w-2xl text-sm leading-6 text-sleec-muted">
+                Confirm this issue is resolved, then use the clear call to action to continue to the next issue.
+            </p>
         </div>
+        <div id="verificationSummaryOutput" class="empty">No verified resolution selected yet.</div>
+        <div id="logOutput" class="empty">No log yet.</div>
     </div>
 </section>
 
-<section class="panel evaluation-section wizard-step" data-step="6">
+<section class="panel evaluation-section wizard-step px-0 py-12 sm:py-16" data-step="10">
 
     <div class="section-header">
 
         <div>
-            <h2>6. Evaluation</h2>
-            <p>
+            <h2 class="text-[24px] font-semibold text-sleec-ink">Evaluation</h2>
+            <p class="text-sm leading-6 text-sleec-muted">
                 Review evaluation summaries, detailed repair information,
                 and export evaluation reports.
             </p>
@@ -159,17 +184,17 @@
 
         <div class="toolbar">
 
-            <button class="secondary"
+            <button class="secondary rounded-xl px-4 py-2 text-sm"
                     onclick="loadEvaluationSummary()">
                 Load Summary
             </button>
 
-            <button class="secondary"
+            <button class="secondary rounded-xl px-4 py-2 text-sm"
                     onclick="loadDetailedEvaluationResults()">
                 Load Details
             </button>
 
-            <button class="secondary"
+            <button class="secondary rounded-xl px-4 py-2 text-sm"
                     onclick="exportEvaluationExcel()">
                 Export Excel
             </button>
@@ -205,7 +230,7 @@
 
             <h3>6A. Patch Match</h3>
 
-            <button class="primary"
+            <button class="primary rounded-xl px-4 py-2 text-sm"
                     onclick="runEvaluationA()">
                 Run
             </button>
@@ -226,7 +251,7 @@
 
             <h3>6B. Final Specification</h3>
 
-            <button class="primary"
+            <button class="primary rounded-xl px-4 py-2 text-sm"
                     onclick="runEvaluationB()">
                 Run
             </button>
@@ -247,7 +272,7 @@
 
             <h3>6C. Philosopher Review</h3>
 
-            <button class="primary"
+            <button class="primary rounded-xl px-4 py-2 text-sm"
                     onclick="loadPhilosopherReview()">
                 Load Form
             </button>
@@ -260,17 +285,34 @@
 
     </section>
 
+    <section class="danger-zone" aria-label="Persisted data controls">
+        <div>
+            <h3>Start Again With a Clean Slate</h3>
+            <p class="text-sm leading-6 text-sleec-muted">
+                Clear saved patch results, candidate runs, verifications, and philosopher review records from the local database.
+            </p>
+        </div>
+        <button class="danger rounded-xl px-5 py-3 text-sm font-semibold"
+                type="button"
+                onclick="clearPersistedData()">
+            Clear Saved Database
+        </button>
+    </section>
+
 </section>
 
-<footer class="wizard-footer" aria-label="Wizard navigation">
-    <button type="button" class="secondary" data-wizard-back>Back</button>
-    <button type="button" class="primary" data-wizard-next>Continue</button>
+<footer class="wizard-footer bg-white/80 backdrop-blur" aria-label="Wizard navigation">
+    <button type="button" class="secondary rounded-xl px-5 py-2 text-sm" data-wizard-back>Back</button>
+    <button type="button" class="primary rounded-xl px-5 py-2 text-sm" data-wizard-next>Continue</button>
 </footer>
 
 </div>
 
 <script src="{{ url_for('static', filename='js/loader.js') }}"></script>
 <script src="{{ url_for('static', filename='js/wizard.js') }}"></script>
+<script>
+window.SLEEC_USE_CASE_DESCRIPTIONS = {{ use_case_descriptions|tojson }};
+</script>
 <script src="{{ url_for('static', filename='js/sleec_patch_workbench.js') }}"></script>
 </body>
 </html>

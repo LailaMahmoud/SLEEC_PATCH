@@ -306,6 +306,14 @@ class DeterministicRepairEngine:
                     "The opposite rule context is given an explicit defeater."
             })
 
+            patches.extend(
+                self.generate_cross_defeater_patches(
+                    issue_type,
+                    r1,
+                    r2
+                )
+            )
+
         if "trigger_refinement" in operators:
             patches.append({
                 "id": "d_trigger_refine_1",
@@ -388,6 +396,55 @@ class DeterministicRepairEngine:
                     "with distinct responses."
                 )
             })
+
+        return patches
+
+    def generate_cross_defeater_patches(self, issue_type, r1, r2):
+        """Propagate an existing opposing defeater between conflicting rules.
+
+        This covers cases such as ALMI R3/R21: one rule already encodes an
+        exception with an opposite response, and a competing rule can receive
+        the same measure-based exception without inventing a new event.
+        """
+        patches = []
+
+        for source, target in ((r1, r2), (r2, r1)):
+            target_action = target.get("action", "")
+
+            for condition, defeater_action in self.defeater_clauses(source):
+                context = self.usable_context(condition)
+
+                if not context:
+                    continue
+
+                if defeater_action and not self.is_opposite_action(
+                    defeater_action,
+                    target_action
+                ):
+                    continue
+
+                original_rule = self.rule_to_text(target)
+                proposed_rule = self.add_defeater(target, context)
+
+                if self.normalize_rule_text(original_rule) == self.normalize_rule_text(proposed_rule):
+                    continue
+
+                patches.append({
+                    "id": f'd_cross_defeater_{source["id"]}_to_{target["id"]}',
+                    "patch_id": f'd_cross_defeater_{source["id"]}_to_{target["id"]}',
+                    "source": "deterministic",
+                    "issue_type": issue_type,
+                    "operation": "defeater_introduction",
+                    "target_rule_id": target["id"],
+                    "rule_ids": [source["id"], target["id"]],
+                    "original_rule": original_rule,
+                    "proposed_rule": proposed_rule,
+                    "natural_language_explanation": (
+                        f"Propagate the existing exception from {source['id']} "
+                        f"onto {target['id']} so the same priority condition "
+                        "is respected by both conflicting rules."
+                    )
+                })
 
         return patches
 
@@ -609,8 +666,18 @@ class DeterministicRepairEngine:
         return self.find_rule_by_action(action, rules)
 
     def is_opposite_action(self, a, b):
-        a = str(a).strip()
-        b = str(b).strip()
+        a = re.split(
+            r"\bwithin\b|\bunless\b|\beventually\b|\botherwise\b",
+            str(a or "").strip(),
+            maxsplit=1,
+            flags=re.IGNORECASE
+        )[0].strip()
+        b = re.split(
+            r"\bwithin\b|\bunless\b|\beventually\b|\botherwise\b",
+            str(b or "").strip(),
+            maxsplit=1,
+            flags=re.IGNORECASE
+        )[0].strip()
 
         return (
             a == f"not {b}"
@@ -1081,6 +1148,41 @@ class DeterministicRepairEngine:
             actions.append(match.group(1).strip())
 
         return actions
+
+    def defeater_clauses(self, rule):
+        raw = self.rule_raw(rule)
+        split = self.split_trigger_body(raw)
+
+        if not split:
+            return []
+
+        body = split[2]
+        clauses = []
+        unless_index = self.top_level_index(body, "unless", 0)
+
+        while unless_index >= 0:
+            after = body[unless_index + len("unless"):].strip()
+            next_unless = self.top_level_index(after, "unless", 0)
+            clause = after[:next_unless].strip() if next_unless >= 0 else after
+            then_index = self.top_level_index(clause, "then", 0)
+
+            if then_index >= 0:
+                condition = clause[:then_index].strip()
+                action = clause[then_index + len("then"):].strip()
+            else:
+                condition = clause.strip()
+                action = ""
+
+            if condition:
+                clauses.append((self.clean_condition(condition), action))
+
+            if next_unless < 0:
+                break
+
+            body = after[next_unless:]
+            unless_index = self.top_level_index(body, "unless", 0)
+
+        return clauses
 
     def defeater_suffix(self, rule):
         defeater = self.clean_condition(rule.get("defeater", ""))

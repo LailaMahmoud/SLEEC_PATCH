@@ -17,7 +17,7 @@
         <nav class="header-actions" aria-label="Report navigation">
             <a class="header-link" href="{{ url_for('sleec_patch_workbench') }}">Workbench</a>
             <a class="header-link" href="{{ url_for('philosopher_review') }}">Philosopher Review</a>
-            <a id="jsonLink" class="header-link primary-link" href="/api/sleec-patch/report-data" target="_blank" rel="noopener">Open JSON</a>
+            <a id="jsonLink" class="header-link primary-link" href="/api/sleec-patch/report-data" target="_blank" rel="noopener">Preview JSON</a>
         </nav>
     </header>
 
@@ -38,6 +38,12 @@
         </label>
 
         <button id="loadReportButton" type="button" class="primary">Load Report Data</button>
+
+        <div class="download-actions" aria-label="Download report exports">
+            <a id="downloadJsonLink" class="header-link download-link" href="/api/sleec-patch/download-report-json">Download JSON</a>
+            <a id="downloadLatexLink" class="header-link download-link" href="/api/sleec-patch/download-report-latex">Download LaTeX</a>
+            <a id="downloadZipLink" class="header-link primary-link" href="/api/sleec-patch/download-report-zip">Download ZIP Bundle</a>
+        </div>
     </section>
 
     <section class="metrics-strip" aria-label="Top-level report metrics">

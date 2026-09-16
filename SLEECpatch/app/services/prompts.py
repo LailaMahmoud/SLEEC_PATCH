@@ -1,4 +1,5 @@
 import json
+import re
 
 
 PATCH_OUTPUT_FORMAT = """
@@ -40,6 +41,47 @@ LLM_SEMANTIC_OPERATORS = [
     "capability_refinement",
     "new_rule_generation"
 ]
+
+
+def build_sleec_syntax_bank(rules):
+    rules = rules or []
+    rule_texts = [
+        str(rule.get("raw") or rule.get("text") or "").strip()
+        if isinstance(rule, dict)
+        else str(rule or "").strip()
+        for rule in rules
+    ]
+    rule_texts = [text for text in rule_texts if text]
+
+    observed = []
+    if any(" unless " in text.lower() for text in rule_texts):
+        observed.append("unless exceptions with optional alternative responses")
+    if any(" within " in text.lower() for text in rule_texts):
+        observed.append("within time bounds")
+    if any(re.search(r"\{[A-Za-z_][A-Za-z0-9_]*\}", text) for text in rule_texts):
+        observed.append("boolean measures wrapped in braces")
+    if any(re.search(r"\{?[A-Za-z_][A-Za-z0-9_]*\}?\s*[<>=]\s*[A-Za-z0-9_]+", text) for text in rule_texts):
+        observed.append("measure comparisons")
+    if any(re.search(r"\b(?:and|or|not)\b", text, flags=re.IGNORECASE) for text in rule_texts):
+        observed.append("and/or/not logical conditions")
+
+    examples = rule_texts[:5]
+
+    return {
+        "allowed_rule_templates": [
+            "RuleName when Trigger then Action",
+            "RuleName when Trigger and Condition then Action",
+            "RuleName when Trigger then Action within Number seconds",
+            "RuleName when Trigger then Action unless Condition",
+            "RuleName when Trigger then Action unless Condition then AlternativeAction",
+        ],
+        "observed_syntax_features": observed,
+        "local_rule_examples": examples,
+        "instruction": (
+            "Use only these observed SLEEC syntax forms and the supplied "
+            "vocabulary. Do not invent grammar constructs."
+        )
+    }
 
 
 SLEEC_SYNTAX_CONTRACT = """
@@ -182,6 +224,7 @@ def semantic_refinement_prompt(
         "repair_operator": repair_operator,
         "sleec_findings": findings,
         "rules": rules,
+        "syntax_bank": build_sleec_syntax_bank(rules),
         "system_description": system_description,
         "existing_events": existing_events,
         "existing_measures": existing_measures,

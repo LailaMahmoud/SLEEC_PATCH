@@ -13,6 +13,7 @@ from services.repair_operator_selector import RepairOperatorSelector
 from services.deterministic_repair_engine import DeterministicRepairEngine
 from services.patch_ranker import PatchRanker
 from services.use_case_descriptions import get_use_case_description
+from services.semantic_patch_validator import SemanticPatchValidator
 
 
 class SLEECPatchWorkbenchEngine:
@@ -24,6 +25,7 @@ class SLEECPatchWorkbenchEngine:
 
         self.operator_selector = RepairOperatorSelector()
         self.deterministic_engine = DeterministicRepairEngine()
+        self.semantic_validator = SemanticPatchValidator()
         # Section C ranking:
         # structural/logical = deterministic;
         # semantic clarity/interpretability = GPT, after formal verification.
@@ -251,10 +253,18 @@ class SLEECPatchWorkbenchEngine:
         issues = []
 
         original_rules_by_type = structured.get("original_rules_by_type", {})
+        wfi_artifacts_by_type = structured.get("wfi_artifacts_by_type", {})
+        rule_references_by_type = structured.get("rule_references_by_type", {})
+        related_rules_by_type = structured.get("related_rules_by_type", {})
 
         for issue_type, items in structured.items():
 
-            if issue_type == "original_rules_by_type":
+            if issue_type in {
+                "original_rules_by_type",
+                "wfi_artifacts_by_type",
+                "rule_references_by_type",
+                "related_rules_by_type",
+            }:
                 continue
 
             for index, item in enumerate(items, start=1):
@@ -267,11 +277,35 @@ class SLEECPatchWorkbenchEngine:
                     if index - 1 < len(rules_list):
                         original_rules = rules_list[index - 1]
 
+                wfi_artifacts = []
+                if issue_type in wfi_artifacts_by_type:
+                    artifacts_list = wfi_artifacts_by_type.get(issue_type, [])
+
+                    if index - 1 < len(artifacts_list):
+                        wfi_artifacts = artifacts_list[index - 1]
+
+                rule_references = []
+                if issue_type in rule_references_by_type:
+                    references_list = rule_references_by_type.get(issue_type, [])
+
+                    if index - 1 < len(references_list):
+                        rule_references = references_list[index - 1]
+
+                related_rules = []
+                if issue_type in related_rules_by_type:
+                    related_list = related_rules_by_type.get(issue_type, [])
+
+                    if index - 1 < len(related_list):
+                        related_rules = related_list[index - 1]
+
                 issues.append({
                     "id": f"{issue_type}_{index}",
                     "issue_type": issue_type,
                     "value": item,
                     "original_rules": original_rules,
+                    "wfi_artifacts": wfi_artifacts,
+                    "rule_references": rule_references,
+                    "related_rules": related_rules,
                     "source": "sleec"
                 })
 
@@ -1313,6 +1347,18 @@ class SLEECPatchWorkbenchEngine:
         # Patch parses: run advisory target/regression analysis.
         new_analysis = validation_gate["analysis"]
         new_structured = new_analysis.get("structured", {})
+        rules_json = self.sleec_text_to_rules_json(original_sleec)
+        semantic_validation = self.semantic_validator.validate(
+            sleec_text=original_sleec,
+            issue={
+                "issue_type": issue_key,
+                "value": selected_issue_value
+            },
+            patch=patch,
+            existing_events=self.extract_defined_events(original_sleec),
+            existing_measures=self.extract_defined_measures(original_sleec),
+            existing_responses=self.extract_rule_actions(rules_json)
+        )
 
         regression_report = self.build_regression_report(
             issue_key,
@@ -1335,15 +1381,37 @@ class SLEECPatchWorkbenchEngine:
         patch["syntax_validation"] = validation_gate.get("syntax", {})
         patch["regression_report"] = regression_report
         patch["regression_passed"] = regression_report["regression_passed"]
+        patch["semantic_validation"] = semantic_validation
+        patch["semantic_validation_passed"] = bool(
+            semantic_validation.get("valid")
+        )
+        patch["vocabulary_grounded"] = bool(
+            semantic_validation.get("vocabulary_grounding", {}).get("passed")
+        )
+        patch["diagnosis_aligned"] = bool(
+            semantic_validation.get("diagnosis_alignment", {}).get("passed")
+        )
+        patch["operator_valid"] = bool(
+            semantic_validation.get("operator_validation", {}).get("passed")
+        )
+        patch["temporal_alignment"] = bool(
+            semantic_validation.get("temporal_validation", {}).get("passed")
+        )
 
         formally_verified = bool(
             target_fixed
             and related_issue is None
             and regression_report["regression_passed"]
+            and semantic_validation.get("valid")
         )
 
         if not formally_verified:
             reasons = []
+            if not semantic_validation.get("valid"):
+                reasons.append(
+                    "semantic validation failed: "
+                    + "; ".join(semantic_validation.get("errors", []))
+                )
             if not target_fixed:
                 reasons.append("target issue not fixed")
             if related_issue:

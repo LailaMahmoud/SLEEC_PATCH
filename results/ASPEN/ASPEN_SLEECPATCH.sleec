@@ -68,7 +68,7 @@ rule_start
     R7 when PreparingDrone then UpdateTerritories
 
     // If area is private territory, then don’t deploy drone
-    R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone
+R7_1 when PreparingDrone and {privateTerritory} then not DeployDrone unless {onIndigenousLand}
 
     // If drone somehow still stumbles onto private territory
     R7_2 when DeployDrone and {privateTerritory} then ExitArea

@@ -9,33 +9,59 @@
 \toprule
 Case & IID & WFI & \#Patch & Total & Gen. & Val. & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & M-Sim. & Source & E-Review \\
 \midrule
-ALMI & concerns\_1 & Concern & 4 & 6.91 & 6.64 & 0.21 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ALMI &  & Sit. conflict & 1 & 4.16 & 3.41 & 0.73 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ & concerns\_1 & Concern & 4 & 3.52 & 2.59 & 0.89 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
  &  &  &  &  &  &  & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
  &  &  &  &  &  &  & d\_strengthen\_R3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & No \\
- & concerns\_2 & Concern & 7 & 2.77 & 2.37 & 0.33 & d\_concern\_defeater\_R21 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ & concerns\_2 & Concern & 4 & 5.95 & 2.98 & 2.93 & d\_concern\_defeater\_R21 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
  &  &  &  &  &  &  & d\_decompose\_R21 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
  &  &  &  &  &  &  & d\_strengthen\_R21 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_strengthen\_R3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & No \\
- & situational\_conflicts\_1 & Sit. conflict & 9 & 31.68 & 3.05 & 28.49 & d1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d3 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d4 & rule\_merging & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 6 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_decompose\_R3 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 7 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_trigger\_refine\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ & situational\_conflicts\_1 & Sit. conflict & 2 & 4.57 & 2.85 & 1.69 & d\_cross\_defeater\_R3\_to\_R21 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+\midrule
+ASPEN & concerns\_1 & Concern & 4 & 27.53 & 2.22 & 25.28 & d\_concern\_defeater\_R14\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_decompose\_R14\_1 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_strengthen\_R14\_1 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ & concerns\_2 & Concern & 4 & 26.38 & 2.31 & 24.03 & d\_concern\_defeater\_R4 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_decompose\_R4 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_strengthen\_R4 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ & concerns\_3 & Concern & 2 & 27.39 & 2.06 & 25.32 & d\_decompose\_R8\_1 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ & concerns\_4 & Concern & 2 & 26.52 & 1.70 & 24.82 & d\_decompose\_R8\_1 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ & redundancies\_1 & Redundancy & 4 & 35.10 & 6.36 & 28.71 & d\_remove\_R14 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & llm & Yes \\
+ &  &  &  &  &  &  & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ &  &  &  &  &  &  & g3 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & 3 & 0.00 & llm & Yes \\
+ & situational\_conflicts\_1 & Sit. conflict & 5 & 4.98 & 2.98 & 1.97 & d1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_trigger\_refine\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 5 & 0.00 & deterministic & No \\
  &  &  &  &  &  &  & d\_trigger\_refine\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & llm & No \\
- &  &  &  &  &  &  & g3 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & -- & 0.00 & llm & No \\
+ &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & llm & Yes \\
 \midrule
-ASPEN & redundancies\_1 & Redundancy & 1 & 151.34 & 17.43 & 133.12 & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & No \\
+DAISY & situational\_conflicts\_1 & Sit. conflict & 5 & 57.80 & 3.25 & 54.49 & d1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_trigger\_refine\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_trigger\_refine\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 5 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & Yes \\
 \midrule
-DressAssist & concerns\_1 & Concern & 4 & 47.28 & 18.04 & 29.18 & d\_concern\_defeater\_Rule7 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_decompose\_Rule7 & rule\_decomposition & 1 & 1 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_strengthen\_Rule7 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & No \\
+SafeSCAD & redundancies\_1 & Redundancy & 3 & 9.50 & 6.92 & 2.57 & d\_remove\_R1\_1 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ &  &  &  &  &  &  & g2 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & 2 & 0.00 & llm & Yes \\
+ & redundancies\_2 & Redundancy & 4 & 31.35 & 10.62 & 20.71 & d\_remove\_R2 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 4 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ &  &  &  &  &  &  & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & llm & Yes \\
+ &  &  &  &  &  &  & g3 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & 3 & 0.00 & llm & Yes \\
+ & redundancies\_3 & Redundancy & 3 & 5.36 & 3.73 & 1.62 & d\_remove\_R2\_1 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ &  &  &  &  &  &  & g2 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & 2 & 0.00 & llm & Yes \\
+ & situational\_conflicts\_1 & Sit. conflict & 3 & 4.36 & 3.13 & 1.18 & d2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & d\_cross\_defeater\_R4\_to\_R1\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & llm & Yes \\
 \bottomrule
 \end{tabular}%
 }

@@ -297,7 +297,12 @@ class SemanticPatchValidator:
         }
 
     def _symbols(self, text):
-        tokens = re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", str(text or ""))
+        text = re.sub(
+            r"(?m)^\s*[A-Za-z_][A-Za-z0-9_]*\s+when\b",
+            " when",
+            str(text or "")
+        )
+        tokens = re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", text)
         result = []
         for token in tokens:
             low = token.lower()
