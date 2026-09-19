@@ -1,6 +1,7 @@
 let sleecPatchState = {
     userProfession: "",
     sleecText: "",
+    originalSleecText: "",
     issues: [],
     selectedIssue: null,
     verifiedPatches: [],
@@ -59,11 +60,11 @@ function issueTypeLabel(value) {
 
 function orderedIssues(issues) {
     const order = [
+        "purpose_blocking",
+        "redundancies",
         "conflicts",
         "situational_conflicts",
-        "concerns",
-        "purpose_blocking",
-        "redundancies"
+        "concerns"
     ];
 
     return [...(issues || [])].sort((a, b) => {
@@ -754,8 +755,26 @@ function canAdvancePatchWizard(step) {
     if (step === 4) return Boolean(sleecPatchState.selectedIssue);
     if (step === 5) return hasGeneratedPatches() || hasVerifiedCurrentResolution();
     if (step === 6) return hasGeneratedPatches();
-    if (step === 7) return sleecPatchState.verifiedPatches.length > 0;
-    if (step === 8) return hasVerifiedCurrentResolution();
+    if (step === 7) {
+        return (
+            sleecPatchState.verifiedPatches.length > 0
+            || (
+                sleecPatchState.selectedIssue
+                && issueRunStatus(sleecPatchState.selectedIssue) === "attempted"
+                && sleecPatchState.verifiedPatches.length === 0
+            )
+        );
+    }   
+    if (step === 8) {
+        return (
+            hasVerifiedCurrentResolution()
+            || (
+                sleecPatchState.selectedIssue
+                && issueRunStatus(sleecPatchState.selectedIssue) === "attempted"
+                && sleecPatchState.verifiedPatches.length === 0
+            )
+        );
+    }    
     if (step === 9) return true;
     if (step === 10) return true;
     return false;
@@ -765,6 +784,7 @@ function resetPatchWorkbench() {
     sleecPatchState = {
         userProfession: "",
         sleecText: "",
+        originalSleecText: "",
         issues: [],
         selectedIssue: null,
         verifiedPatches: [],
@@ -827,6 +847,7 @@ async function diagnoseWFIs() {
     console.log("DIAGNOSE DATA:", data);
 
     sleecPatchState.sleecText = sleecText;
+    sleecPatchState.originalSleecText = sleecText;
     sleecPatchState.issues = orderedIssues(data.issues || []);
     sleecPatchState.rawDiagnosis = data;
     sleecPatchState.selectedIssue = sleecPatchState.issues[0] || null;
@@ -1026,9 +1047,9 @@ async function generateVerifiedPatches() {
         "/api/sleec-patch/generate-verified",
         {
             use_case: useCase,
-            sleec_text: sleecPatchState.sleecText,
+            sleec_text: sleecPatchState.originalSleecText,
             issue: sleecPatchState.selectedIssue,
-            max_attempts: 5
+            max_attempts: 1
         }
     );
 
@@ -1485,10 +1506,25 @@ function integrateManualResolutionAndProceed() {
 }
 
 function proceedToNextSequentialIssue() {
-    if (!hasVerifiedCurrentResolution()) {
-        alert("Verify and integrate the current issue resolution before proceeding.");
+    const selectedIssue = sleecPatchState.selectedIssue;
+
+    const verifiedResolution = hasVerifiedCurrentResolution();
+
+    const attemptedUnresolved = Boolean(
+        selectedIssue
+        && issueRunStatus(selectedIssue) === "attempted"
+        && sleecPatchState.verifiedPatches.length === 0
+    );
+
+    if (!verifiedResolution && !attemptedUnresolved) {
+        alert(
+            "Run the current issue and complete verification before proceeding."
+        );
         return;
     }
+
+    // Preserve the current issue result before moving on.
+    persistCurrentIssueUiState();
 
     const currentIndex = selectedIssueIndex();
     const nextIndex = currentIndex + 1;
@@ -1524,21 +1560,65 @@ function renderVerificationSummary() {
     }
 
     if (!choice) {
+    const noVerifiedPatch = (
+        sleecPatchState.verifiedPatches.length === 0
+        && issueRunStatus(selectedIssue) === "attempted"
+    );
+
+    if (noVerifiedPatch) {
         out.innerHTML = `
-            <div class="verification-handoff-card">
-                <div>
-                    <span class="badge neutral">Waiting for resolution</span>
-                    <h3>Finish one verified resolution before continuing</h3>
-                    <p>Select a verified patch or complete a manual resolution, then come back here to move to the next issue.</p>
+            <div class="verification-handoff-card is-ready">
+                <div class="verification-handoff-copy">
+                    <span class="badge neutral">Attempted — unresolved</span>
+                    <h3>No formally verified patch found</h3>
+                    <p>
+                        This issue was attempted, but no generated candidate
+                        passed formal verification. It remains unresolved and
+                        the evaluation can continue to the next issue.
+                    </p>
+                    <p class="verification-progress-copy">
+                        ${escapeHtml(issueProgressText())}
+                    </p>
                 </div>
+
                 <div class="verification-handoff-actions">
-                    <button class="primary" onclick="goToPatchStep(7)">Review Verified Patches</button>
-                    <button class="secondary" onclick="goToPatchStep(5)">Back to Issue Resolution</button>
+                    <button class="next-issue-cta"
+                            onclick="proceedToNextSequentialIssue()">
+                        ${isLastIssue ? "Finish All Issues" : "Proceed to Next Issue"}
+                    </button>
+
+                    <button class="secondary"
+                            onclick="goToPatchStep(5)">
+                        Back to Issue Resolution
+                    </button>
                 </div>
             </div>
         `;
         return;
     }
+
+    out.innerHTML = `
+        <div class="verification-handoff-card">
+            <div>
+                <span class="badge neutral">Waiting for resolution</span>
+                <h3>Finish one verified resolution before continuing</h3>
+                <p>
+                    Select a verified patch or complete a manual resolution,
+                    then come back here to move to the next issue.
+                </p>
+            </div>
+            <div class="verification-handoff-actions">
+                <button class="primary" onclick="goToPatchStep(7)">
+                    Review Verified Patches
+                </button>
+                <button class="secondary" onclick="goToPatchStep(5)">
+                    Back to Issue Resolution
+                </button>
+            </div>
+        </div>
+    `;
+    return;
+}
 
     let verificationBadge = `<span class="badge neutral">Verification pending</span>`;
     let summaryTitle = "Resolved with selected patch";

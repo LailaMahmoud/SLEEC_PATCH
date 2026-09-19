@@ -249,6 +249,11 @@ class SLEECPatchWorkbenchEngine:
         print("====================================\n")
         structured = result.get("structured", {})
         detections = result.get("detections", {})
+        print("[DIAG BACKEND] structured counts:", {
+        key: len(value)
+        for key, value in structured.items()
+        if isinstance(value, list)
+        })
 
         issues = []
 
@@ -744,6 +749,7 @@ class SLEECPatchWorkbenchEngine:
             "purpose_defeater",
             "trigger_refinement",
             "trigger_strengthening",
+            "temporal_refinement",
             "rule_merging",
             "rule_decomposition",
             "refine_condition",
@@ -1438,18 +1444,25 @@ class SLEECPatchWorkbenchEngine:
         formally_verified=False,
         failure_reason="",
     ):
-        """Surface an LLM patch as a review candidate on the development branch.
+        """Store the formal verification status of an LLM patch.
 
-        `verified` marks it for display/ranking; `formally_verified` records
-        whether it actually cleared the SLEEC syntactic + regression gate, so no
-        information is lost even though the patch is no longer discarded.
+        LLM candidates may still require social-scientist review, but human-review
+        status is independent from formal verification. A patch is `verified`
+        only when it has passed the formal verification pipeline.
         """
         patch["patched_sleec"] = patched_sleec
         patch["syntax_valid"] = bool(syntax_valid)
         patch["formally_verified"] = bool(formally_verified)
-        patch["regression_passed"] = bool(patch.get("regression_passed", formally_verified))
+        patch["regression_passed"] = bool(
+            patch.get("regression_passed", formally_verified)
+        )
+
         patch["requires_social_scientist_review"] = True
-        patch["verified"] = True
+
+        # IMPORTANT:
+        # `verified` means formal verification, not "surface for review".
+        patch["verified"] = bool(formally_verified)
+
         patch["failure_reason"] = failure_reason
         return patch
 
@@ -1667,9 +1680,6 @@ class SLEECPatchWorkbenchEngine:
         selected_issue_value = issue.get("value", "")
         selected_issue_value = str(selected_issue_value)
 
-        if issue_key == "redundancies":
-            selected_issue_value = self.extract_rule_from_issue_text(selected_issue_value)
-
         verified_patches = []
         failed_patches = []
         failed_patch_count = 0
@@ -1788,15 +1798,44 @@ class SLEECPatchWorkbenchEngine:
                 start_validation = time.time()
 
                 if source == "deterministic":
-                    verified = self.verify_deterministic_patch_iteratively(
+                    verification = self.verify_candidate_patch(
                         original_sleec=sleec_text,
-                        issue_key=issue_key,
-                        selected_issue_value=selected_issue_value,
-                        original_structured=original_structured,
+                        issue={
+                            "issue_type": issue_key,
+                            "value": selected_issue_value,
+                        },
                         patch=normalized_patch,
-                        depth=0,
-                        max_depth=3
                     )
+
+                    normalized_patch["patched_sleec"] = verification["patched_sleec"]
+                    normalized_patch["target_fixed"] = verification["target_fixed"]
+                    normalized_patch["related_issue"] = verification["related_issue"]
+                    normalized_patch["regression_report"] = verification["regression_report"]
+                    normalized_patch["regression_passed"] = bool(
+                        verification["regression_report"].get(
+                            "regression_passed", False
+                        )
+                    )
+                    normalized_patch["validation_result"] = (
+                        verification["new_analysis"].get("structured", {})
+                    )
+                    normalized_patch["verified"] = bool(verification["verified"])
+
+                    print("\n========== DETERMINISTIC VERIFICATION ==========")
+                    print("PATCH:", normalized_patch.get("patch_id"))
+                    print("OPERATION:", normalized_patch.get("operation"))
+                    print("VERIFIED:", verification.get("verified"))
+                    print("TARGET FIXED:", verification.get("target_fixed"))
+                    print("RELATED ISSUE:", verification.get("related_issue"))
+                    print("REGRESSION:", verification.get("regression_report"))
+                    print("FAILURE REASON:", normalized_patch.get("failure_reason"))
+                    print("SYNTAX:", normalized_patch.get("syntax_validation"))
+                    print("================================================\n")
+
+                    if verification["verified"]:
+                        verified = normalized_patch
+                    else:
+                        verified = None
                 else:
                     verified = self.verify_llm_patch_once(
                         original_sleec=sleec_text,
@@ -1808,11 +1847,14 @@ class SLEECPatchWorkbenchEngine:
 
                 validation_time += time.time() - start_validation
 
-                if verified:
+                if verified and bool(verified.get("verified", False)):
                     verified["attempt"] = attempts
                     verified_patches.append(verified)
                     seen_verified_signatures.add(patch_signature)
                 else:
+                    if verified:
+                        normalized_patch = verified
+
                     if patch_signature not in seen_failed_signatures:
                         failed_patch_count += 1
                         normalized_patch["verified"] = False
@@ -1902,16 +1944,20 @@ class SLEECPatchWorkbenchEngine:
                 )
                 validation_time += time.time() - start_validation
 
-                if verified:
+                if verified and bool(verified.get("verified", False)):
                     verified["attempt"] = attempts
                     verified_patches.append(verified)
                     seen_verified_signatures.add(patch_signature)
-                elif patch_signature not in seen_failed_signatures:
-                    failed_patch_count += 1
-                    normalized_patch["verified"] = False
-                    normalized_patch["attempt"] = attempts
-                    failed_patches.append(normalized_patch)
-                    seen_failed_signatures.add(patch_signature)
+                else:
+                    if verified:
+                        normalized_patch = verified
+
+                    if patch_signature not in seen_failed_signatures:
+                        failed_patch_count += 1
+                        normalized_patch["verified"] = False
+                        normalized_patch["attempt"] = attempts
+                        failed_patches.append(normalized_patch)
+                        seen_failed_signatures.add(patch_signature)
 
         total_time = time.time() - start_total
 
@@ -2023,12 +2069,20 @@ class SLEECPatchWorkbenchEngine:
                 "actions_refined": metrics["actions_refined"],
                 "capabilities_refined": metrics["capabilities_refined"],
 
-                "verified": True,
+                "verified": bool(
+                    patch.get(
+                        "formally_verified",
+                        patch.get("verified", False)
+                    )
+                ),
 
                 "expert_similarity": 0,
                 "expert_match": False,
-                "requires_social_scientist_review": (
-                    str(patch.get("source", "")).lower() == "llm"
+                "requires_social_scientist_review": bool(
+                    patch.get(
+                        "requires_social_scientist_review",
+                        str(patch.get("source", "")).lower() == "llm"
+                    )
                 )
             })
 

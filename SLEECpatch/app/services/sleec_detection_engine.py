@@ -119,11 +119,29 @@ class SLEECDetectionEngine:
 
             combined_message = str(message) + "\n" + str(printed_output)
 
+            # TEMP DEBUG: compare raw LEGOS situational-conflict reports
+            # with the findings produced by our parser.
+            if detector_type == "situational_conflict":
+                import re
+
+                raw_sc_count = len(
+                    re.findall(
+                        r"Situational\s+conflict\s+under\s+situation\s*:?",
+                        combined_message,
+                        re.IGNORECASE,
+                    )
+                )
+
+                print(f"[SC DEBUG] Raw LEGOS SC blocks: {raw_sc_count}")
+
             findings = self.extract_findings(
                 detector_type,
                 combined_message,
                 data
             )
+
+            if detector_type == "situational_conflict":
+                print(f"[SC DEBUG] Parsed SC findings: {len(findings)}")
 
             return {
                 "success": True,
@@ -187,11 +205,27 @@ class SLEECDetectionEngine:
         }
 
         try:
-            from sleec.sleecParser import parse_sleec
+            from sleec.sleecParser import (
+                parse_sleec,
+                scalar_mask,
+                scalar_type,
+                registered_type,
+            )
+            from sleec.Analyzer.logic_operator import text_ref
 
             model, *_ = parse_sleec(sleec_text, read_file=False)
+
         except Exception:
             return inventory
+
+        finally:
+            try:
+                scalar_mask.clear()
+                scalar_type.clear()
+                registered_type.clear()
+                text_ref.clear()
+            except (NameError, AttributeError):
+                pass
 
         for rule in getattr(getattr(model, "ruleBlock", None), "rules", []) or []:
             rule_id = str(getattr(rule, "name", "") or "").strip()
@@ -471,43 +505,187 @@ class SLEECDetectionEngine:
             if "Redundant SLEEC rule" in msg:
                 import re
 
-                matches = re.findall(
-                    r"Redundant SLEEC rule:(.*?)Because of the following SLEEC rule:",
+                # Preserve BOTH rules reported by LEGOS:
+                #   1. the redundant rule
+                #   2. the rule because of which it is redundant
+                #
+                # Both rules are formal diagnosis evidence. They must remain
+                # distinct from heuristic related_rules used only for UI context.
+                blocks = re.findall(
+                    r"Redundant SLEEC rule:(.*?)"
+                    r"Because of the following SLEEC rule:(.*?)"
+                    r"(?=Redundant SLEEC rule:|\*{10,}|$)",
                     msg,
-                    re.DOTALL
+                    re.IGNORECASE | re.DOTALL
                 )
 
-                for m in matches:
+                for redundant_text, because_text in blocks:
+                    redundant_text = redundant_text.strip()
+                    because_text = because_text.strip()
+
+                    value = (
+                        "Redundant SLEEC rule:\n"
+                        + redundant_text
+                        + "\nBecause of the following SLEEC rule:\n"
+                        + because_text
+                    )
+
+                    original_rules = []
+                    original_rules.extend(
+                        self.extract_rules_from_finding(redundant_text)
+                    )
+                    original_rules.extend(
+                        self.extract_rules_from_finding(because_text)
+                    )
+
                     findings.append({
                         "source": "sleec",
-                        "value": m.strip()
+                        "value": value,
+                        "original_rules": original_rules
                     })
 
         elif detector_type == "situational_conflict":
-
             import re
 
-            matches = re.findall(
-                r"Situational conflict under situation(.*?)(?=\*{10,}|$)",
-                msg,
-                re.DOTALL
+            # Each LEGOS situational-conflict report is a separate diagnosis.
+            # Stop at the next situational-conflict report, highlighted section,
+            # detector section, or end of output.
+            pattern = re.compile(
+                r"Situational\s+conflict\s+under\s+situation\s*:?\s*"
+                r"(.*?)"
+                r"(?="
+                r"Situational\s+conflict\s+under\s+situation\s*:?"
+                r"|TO\s+BE\s+HIGHLIGHTED"
+                r"|check\s+rule_\d+"
+                r"|$"
+                r")",
+                re.IGNORECASE | re.DOTALL,
             )
 
-            for m in matches:
-                value = m.strip()
+            seen = set()
+
+            for match in pattern.finditer(msg):
+
+                value = match.group(1).strip()
+
+                if not value:
+                    continue
+
+                original_rules = self.extract_rules_from_finding(value)
+
+                # A situational conflict must be grounded in the diagnosed
+                # rules belonging to this conflict block only.
+                normalized_rules = []
+
+                for rule in original_rules:
+                    normalized = re.sub(
+                        r"\s+",
+                        " ",
+                        str(rule)
+                    ).strip()
+
+                    if normalized and normalized not in normalized_rules:
+                        normalized_rules.append(normalized)
+
+                # Deduplicate repeated LEGOS reports while preserving
+                # genuinely different situational conflicts.
+                if normalized_rules:
+                    key = tuple(
+                        rule.lower()
+                        for rule in normalized_rules
+                    )
+                else:
+                    key = (
+                        re.sub(r"\s+", " ", value).lower(),
+                    )
+
+                if key in seen:
+                    continue
+
+                seen.add(key)
+
                 findings.append({
                     "source": "sleec",
                     "value": value,
-                    "original_rules": self.extract_rules_from_finding(value)
+                    "original_rules": normalized_rules,
                 })
 
-                
         elif detector_type == "purpose":
-            if "Blocking" in msg and "Not Blocking" not in msg:
+
+            import re
+
+            # LEGOS may print "Not Blocking" for some purposes while also
+            # reporting other purposes as blocked. Therefore, purpose findings
+            # must be extracted from each explicit "Blocked SLEEC purpose:"
+            # section rather than by testing the whole message for
+            # "Not Blocking".
+            pattern = re.compile(
+                r"Blocked\s+SLEEC\s+purpose:\s*"
+                r"(.*?)"
+                r"-{5,}\s*"
+                r"-{5,}\s*"
+                r"Because\s+of\s+the\s+following\s+SLEEC\s+rule:\s*"
+                r"-{5,}\s*"
+                r"(.*?)"
+                r"(?="
+                r"\*{10,}"
+                r"|Blocked\s+SLEEC\s+purpose:"
+                r"|TO\s+BE\s+HIGHLIGHTED"
+                r"|check\s+rule_\d+"
+                r"|$"
+                r")",
+                re.IGNORECASE | re.DOTALL,
+            )
+
+            seen = set()
+
+            for match in pattern.finditer(msg):
+
+                purpose_text = match.group(1).strip()
+                blocking_rules_text = match.group(2).strip()
+
+                # Remove separator lines if any remain.
+                purpose_text = re.sub(
+                    r"\n\s*-{5,}\s*$",
+                    "",
+                    purpose_text,
+                ).strip()
+
+                blocking_rules_text = re.sub(
+                    r"\n\s*-{5,}\s*$",
+                    "",
+                    blocking_rules_text,
+                ).strip()
+
+                # A blocked purpose may be printed more than once by LEGOS.
+                # Deduplicate using the purpose + blocking-rule pair.
+                key = (
+                    re.sub(r"\s+", " ", purpose_text).lower(),
+                    re.sub(r"\s+", " ", blocking_rules_text).lower(),
+                )
+
+                if key in seen:
+                    continue
+
+                seen.add(key)
+
+                original_rules = self.extract_rules_from_finding(
+                    blocking_rules_text
+                )
+
                 findings.append({
                     "source": "sleec",
-                    "value": "Purpose blocking detected."
+                    "value": (
+                        f"Blocked SLEEC purpose:\n"
+                        f"{purpose_text}\n\n"
+                        f"Because of the following SLEEC rule:\n"
+                        f"{blocking_rules_text}"
+                    ),
+                    "purpose": purpose_text,
+                    "blocking_rules": original_rules,
+                    "original_rules": original_rules,
                 })
+
 
         return findings
     
