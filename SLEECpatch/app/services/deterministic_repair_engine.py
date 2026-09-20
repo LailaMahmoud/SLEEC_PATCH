@@ -171,7 +171,221 @@ class DeterministicRepairEngine:
                 })
 
         return patches
+    def generate_existential_concern_patches(
+        self,
+        selected_issue,
+        rules,
+        operators
+    ):
+        """
+        Generate deterministic candidates for existential insufficiencies:
 
+            cX exists E and C
+
+        where:
+            E = witnessed undesirable event/capability/state
+            C = diagnosis-grounded undesirable context
+
+        Generic across all use cases.
+
+        Deterministic operators:
+            1. trigger_strengthening
+            2. defeater_introduction
+            3. rule_decomposition
+
+        Every returned object is only a CANDIDATE.
+        Formal correctness is decided later by LEGOS-SLEEC.
+        """
+        patches = []
+
+        concern = self.parse_concern(selected_issue)
+        condition = self.clean_condition(
+            concern.get("condition", "")
+        )
+
+        if not condition:
+            return patches
+
+        parts = self.split_top_level_and(condition)
+
+        # Existential concern needs:
+        #     witnessed capability/event + diagnostic context
+        if len(parts) < 2:
+            return patches
+
+        witnessed_action = self.clean_condition(parts[0])
+
+        if (
+            not witnessed_action
+            or self.is_measure_only_expression(witnessed_action)
+        ):
+            return patches
+
+        bad_context = self.normalize_boolean_expression(
+            " and ".join(parts[1:])
+        )
+
+        if not bad_context:
+            return patches
+
+        producers = self.find_existential_concern_producers(
+            witnessed_action,
+            rules
+        )
+
+        if not producers:
+            return patches
+
+        used_rule_ids = {
+            str(r.get("id", ""))
+            for r in rules
+            if isinstance(r, dict)
+        }
+
+        desired_action = self.opposite_action(witnessed_action)
+
+        if not desired_action:
+            return patches
+
+        for producer in producers:
+            rule_id = str(producer.get("id", "")).strip()
+
+            if not rule_id:
+                continue
+
+            original_rule = self.rule_to_text(producer)
+
+            # Determine whether the diagnosis context adds usable
+            # information to this particular producer.
+            usable_context = self.concern_specific_context(
+                condition,
+                producer.get("condition", "")
+            )
+
+            usable_context = self.normalize_boolean_expression(
+                usable_context
+            )
+
+            # If this producer already handles the diagnosed measure/context,
+            # do not manufacture contradictory or redundant candidates.
+            if not usable_context:
+                continue
+
+            # ----------------------------------------------------------
+            # 1. TRIGGER STRENGTHENING
+            #
+            # exists E and C
+            #
+            #     when T then E
+            #
+            # becomes:
+            #
+            #     when T and NOT(C) then E
+            # ----------------------------------------------------------
+            if "trigger_strengthening" in operators:
+                proposed_rule = self.refine_trigger_against_condition(
+                    producer,
+                    usable_context
+                )
+
+                if (
+                    proposed_rule
+                    and proposed_rule != original_rule
+                ):
+                    patches.append({
+                        "patch_id": f"d_exist_strengthen_{rule_id}",
+                        "id": f"d_exist_strengthen_{rule_id}",
+                        "source": "deterministic",
+                        "issue_type": "concerns",
+                        "operation": "trigger_strengthening",
+                        "target_rule_id": rule_id,
+                        "target_branch_type": "main",
+                        "target_branch_action": producer.get(
+                            "action", ""
+                        ),
+                        "original_rule": original_rule,
+                        "proposed_rule": proposed_rule,
+                        "natural_language_explanation": (
+                            "Strengthen the producer trigger with the "
+                            "complement of the diagnosis-grounded "
+                            "undesirable context."
+                        )
+                    })
+
+            # ----------------------------------------------------------
+            # 2. DEFEATER INTRODUCTION
+            #
+            #     when T then E
+            #
+            # becomes:
+            #
+            #     when T then E unless C
+            # ----------------------------------------------------------
+            if "defeater_introduction" in operators:
+                proposed_rule = self.add_defeater(
+                    producer,
+                    usable_context
+                )
+
+                if (
+                    proposed_rule
+                    and proposed_rule != original_rule
+                ):
+                    patches.append({
+                        "patch_id": f"d_exist_defeater_{rule_id}",
+                        "id": f"d_exist_defeater_{rule_id}",
+                        "source": "deterministic",
+                        "issue_type": "concerns",
+                        "operation": "defeater_introduction",
+                        "target_rule_id": rule_id,
+                        "target_branch_type": "main",
+                        "target_branch_action": producer.get(
+                            "action", ""
+                        ),
+                        "original_rule": original_rule,
+                        "proposed_rule": proposed_rule,
+                        "natural_language_explanation": (
+                            "Introduce the diagnosis-grounded undesirable "
+                            "context as an exception to the producer rule."
+                        )
+                    })
+
+            # ----------------------------------------------------------
+            # 3. RULE DECOMPOSITION
+            #
+            #     T and C     -> NOT E
+            #     T and NOT C -> E
+            # ----------------------------------------------------------
+            if "rule_decomposition" in operators:
+                proposed_rule = self.decompose_rule_for_concern(
+                    producer,
+                    usable_context,
+                    desired_action,
+                    used_rule_ids
+                )
+
+                if proposed_rule:
+                    patches.append({
+                        "patch_id": f"d_exist_decompose_{rule_id}",
+                        "id": f"d_exist_decompose_{rule_id}",
+                        "source": "deterministic",
+                        "issue_type": "concerns",
+                        "operation": "rule_decomposition",
+                        "target_rule_id": rule_id,
+                        "target_branch_type": "main",
+                        "target_branch_action": producer.get(
+                            "action", ""
+                        ),
+                        "original_rule": original_rule,
+                        "proposed_rule": proposed_rule,
+                        "natural_language_explanation": (
+                            "Decompose the producer into complementary "
+                            "diagnosis-grounded cases, preventing the "
+                            "witnessed capability in the undesirable case."
+                        )
+                    })
+
+        return patches
     def generate_concern_patches(self, selected_issue, rules, operators):
         """
         Generate deterministic candidate repairs for an insufficiency / concern.
@@ -186,8 +400,27 @@ class DeterministicRepairEngine:
         complete SLEEC specification and re-running LEGOS-SLEEC.
         """
         patches = []
-        concern = self.parse_when_then(selected_issue)
+        concern = self.parse_concern(selected_issue)
 
+        # Existential insufficiencies use the generic producer-based
+        # deterministic repair path. This is domain-independent and
+        # applies across all use cases.
+        is_existential_concern = bool(
+            re.search(
+                r"\bc\d+(?:_\d+)?\s+exists\b",
+                str(selected_issue or ""),
+                flags=re.IGNORECASE
+            )
+        )
+
+        if is_existential_concern:
+            return self.generate_existential_concern_patches(
+                selected_issue,
+                rules,
+                operators
+            )
+
+        # Standard concerns keep the existing ALMI-compatible path.
         target_context = self.find_best_related_rule_context(
             selected_issue, rules
         )
@@ -208,11 +441,29 @@ class DeterministicRepairEngine:
         diagnosis_context = (
             concern.get("condition")
             or target_rule.get("condition", "")
+            )
+
+        # Existential insufficiency:
+        # remove the witnessed capability/state before deriving repair context.
+        is_existential_concern = bool(
+            re.search(
+                r"\bc\d+(?:_\d+)?\s+exists\b",
+                str(selected_issue or ""),
+                flags=re.IGNORECASE
+            )
         )
-        context = self.specific_context(
-            diagnosis_context,
-            target_rule.get("condition", "")
-        )
+
+        if is_existential_concern:
+            context = self.concern_specific_context(
+                diagnosis_context,
+                target_rule.get("condition", "")
+            )
+        else:
+            context = self.specific_context(
+                diagnosis_context,
+                target_rule.get("condition", "")
+            )
+
         context = self.normalize_boolean_expression(context)
 
         concern_action = concern.get("action", "").strip()
@@ -559,14 +810,34 @@ class DeterministicRepairEngine:
         # 2. Trigger refinement
         if "trigger_refinement" in operators:
             for target, other, suffix in ((r1, r2, "1"), (r2, r1, "2")):
-                context = self.specific_context(
-                    other.get("condition", ""),
-                    target.get("condition", "")
-                )
-                context = self.normalize_boolean_expression(context)
-                if not context or self.is_bare_event_expression(context):
+
+                # A SLEEC rule has one triggering event.  Therefore trigger
+                # refinement must propagate only contextual measure predicates
+                # from the conflicting rule, never its triggering event.
+                #
+                # Example:
+                #   r1: when SmokeDetectorAlarm then A
+                #   r2: when HumanOnFloor and not {humanAssents} then not A
+                #
+                # becomes:
+                #   r1E: when SmokeDetectorAlarm and {humanAssents} then A
+                context = self.conflict_measure_context(other)
+
+                if not context:
                     continue
-                proposed = self.refine_trigger_against_condition(target, context)
+
+                # Propagate the complement of the conflicting rule's contextual
+                # measure predicate, following the deterministic trigger-refinement
+                # operator.
+                complement = self.complement_context(context)
+
+                if not complement:
+                    continue
+
+                proposed = self.strengthen_trigger_with_condition(
+                    target,
+                    complement
+                )
                 if proposed and proposed != self.rule_to_text(target):
                     append_patch({
                         "id": f"d_conflict_trigger_{suffix}",
@@ -600,55 +871,6 @@ class DeterministicRepairEngine:
                     "natural_language_explanation": (
                         "Merge the diagnosed conflicting rules into one conditional "
                         "rule with an explicit alternative response."
-                    )
-                })
-
-        return patches
-
-    def generate_cross_defeater_patches(self, issue_type, r1, r2):
-        """Propagate an existing opposing defeater between conflicting rules.
-
-        This covers cases such as ALMI R3/R21: one rule already encodes an
-        exception with an opposite response, and a competing rule can receive
-        the same measure-based exception without inventing a new event.
-        """
-        patches = []
-
-        for source, target in ((r1, r2), (r2, r1)):
-            target_action = target.get("action", "")
-
-            for condition, defeater_action in self.defeater_clauses(source):
-                context = self.usable_context(condition)
-
-                if not context:
-                    continue
-
-                if defeater_action and not self.is_opposite_action(
-                    defeater_action,
-                    target_action
-                ):
-                    continue
-
-                original_rule = self.rule_to_text(target)
-                proposed_rule = self.add_defeater(target, context)
-
-                if self.normalize_rule_text(original_rule) == self.normalize_rule_text(proposed_rule):
-                    continue
-
-                patches.append({
-                    "id": f'd_cross_defeater_{source["id"]}_to_{target["id"]}',
-                    "patch_id": f'd_cross_defeater_{source["id"]}_to_{target["id"]}',
-                    "source": "deterministic",
-                    "issue_type": issue_type,
-                    "operation": "defeater_introduction",
-                    "target_rule_id": target["id"],
-                    "rule_ids": [source["id"], target["id"]],
-                    "original_rule": original_rule,
-                    "proposed_rule": proposed_rule,
-                    "natural_language_explanation": (
-                        f"Propagate the existing exception from {source['id']} "
-                        f"onto {target['id']} so the same priority condition "
-                        "is respected by both conflicting rules."
                     )
                 })
 
@@ -792,7 +1014,54 @@ class DeterministicRepairEngine:
                 return rule
 
         return None
+    def find_existential_concern_producers(self, action, rules):
+        """
+        Return all rules whose MAIN response produces the witnessed
+        existential concern capability/state with the same polarity.
 
+        Example:
+            concern:
+                exists UserDriving and {substanceUse}
+
+            eligible producer:
+                when X then UserDriving
+
+            not an eligible producer:
+                when X then not UserDriving
+
+        Alternative defeater responses are intentionally excluded because
+        existential deterministic repairs operate on the main obligation.
+        """
+        action = str(action or "").strip()
+
+        if not action:
+            return []
+
+        capability = self.normalize_action(action)
+        polarity = self.is_negative(action)
+
+        producers = []
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+
+            rule_action = str(rule.get("action", "") or "").strip()
+
+            if not rule_action:
+                continue
+
+            if self.normalize_action(rule_action) != capability:
+                continue
+
+            # Preserve polarity. UserDriving and not UserDriving are
+            # different directions for existential repair.
+            if self.is_negative(rule_action) != polarity:
+                continue
+
+            producers.append(rule)
+
+        return producers
     def find_opposing_rule(self, action, rules):
         action = str(action or "").strip()
 
@@ -877,17 +1146,59 @@ class DeterministicRepairEngine:
             flags=re.IGNORECASE
         )
         return match.group(1) if match else context
+    def conflict_measure_context(self, rule):
+        """
+        Extract only contextual measure predicates from a SLEEC trigger.
 
+        SLEEC trigger structure:
+            when EVENT [and MEASURE-CONTEXT...]
+
+        The first component is the triggering event and must never be
+        propagated as contextual refinement.
+
+        Example:
+            HumanOnFloor and not {humanAssents}
+                -> not {humanAssents}
+        """
+        parts = self.condition_parts(rule.get("condition", ""))
+
+        if len(parts) <= 1:
+            return ""
+
+        contextual_parts = [
+            part
+            for part in parts[1:]
+            if self.is_measure_only_expression(part)
+        ]
+
+        if not contextual_parts:
+            return ""
+
+        return self.normalize_boolean_expression(
+            " and ".join(contextual_parts)
+        )
     def compatible_for_merging(self, r1, r2):
-        c1 = {
-            part.lower()
-            for part in self.condition_parts(r1.get("condition", ""))
-        }
-        c2 = {
-            part.lower()
-            for part in self.condition_parts(r2.get("condition", ""))
-        }
-        return bool(c1.intersection(c2))
+        """
+        Rule merging is applicable only when both diagnosed rules
+        have the same triggering event.
+
+        A SLEEC rule contains one triggering event followed optionally
+        by constraints on measures. Different triggering events cannot
+        be merged.
+        """
+        if not r1 or not r2:
+            return False
+
+        parts1 = self.condition_parts(r1.get("condition", ""))
+        parts2 = self.condition_parts(r2.get("condition", ""))
+
+        if not parts1 or not parts2:
+            return False
+
+        event1 = self.norm_atom(parts1[0])
+        event2 = self.norm_atom(parts2[0])
+
+        return bool(event1 and event2 and event1 == event2)
 
     def propagate_defeater(self, rule):
         raw = self.rule_raw(rule)
@@ -921,19 +1232,92 @@ class DeterministicRepairEngine:
         return f"{head} when {self.combine_trigger(trigger, negated)} then {new_body}".strip()
 
     def merge_conflicting_rules(self, r1, r2):
-        raw1 = self.rule_raw(r1)
-        context = self.wrap_group(self.usable_context(r2.get("condition", "")))
+        """
+        Merge two conflicting SLEEC rules only when they share the same
+        triggering event.
+
+        Expected form:
+
+            r1: when E then A
+            r2: when E and C then B
+
+        becomes:
+
+            when E then A unless C then B
+
+        where E is the single shared triggering event and C contains the
+        additional measure constraints of the more specific rule.
+
+        Different triggering events are not mergeable.
+        """
+
+        if not self.compatible_for_merging(r1, r2):
+            return None
+
+        parts1 = self.condition_parts(r1.get("condition", ""))
+        parts2 = self.condition_parts(r2.get("condition", ""))
+
+        if not parts1 or not parts2:
+            return None
+
+        # The first condition component is the single triggering event.
+        event1 = self.norm_atom(parts1[0])
+        event2 = self.norm_atom(parts2[0])
+
+        if not event1 or event1 != event2:
+            return None
+
+        # Determine which rule is general and which is specialized.
+        extra1 = parts1[1:]
+        extra2 = parts2[1:]
+
+        if not extra1 and extra2:
+            general = r1
+            specific = r2
+            context_parts = extra2
+
+        elif not extra2 and extra1:
+            general = r2
+            specific = r1
+            context_parts = extra1
+
+        else:
+            # This deterministic operator currently handles the precise
+            # general-vs-specialized pattern defined for rule merging.
+            return None
+
+        context = self.clean_condition(" and ".join(context_parts))
 
         if not context:
             return None
 
-        split2 = self.split_trigger_body(self.rule_raw(r2))
-        alternative = split2[2].strip() if split2 else str(r2.get("action", "")).strip()
+        general_split = self.split_trigger_body(self.rule_raw(general))
+        specific_split = self.split_trigger_body(self.rule_raw(specific))
 
-        if alternative:
-            return f"{raw1} unless {context} then {alternative}"
+        if not general_split or not specific_split:
+            return None
 
-        return f"{raw1} unless {context}"
+        general_head, general_trigger, general_body = general_split
+        _, _, specific_body = specific_split
+
+        # Do not copy an existing defeater chain from the specialized rule.
+        # The alternative response is its primary response only.
+        specific_unless = self.top_level_index(specific_body, "unless", 0)
+
+        if specific_unless >= 0:
+            alternative = specific_body[:specific_unless].strip()
+        else:
+            alternative = specific_body.strip()
+
+        if not alternative:
+            return None
+
+        return (
+            f"{general_head} when {general_trigger} "
+            f"then {general_body} "
+            f"unless {self.wrap_group(context)} "
+            f"then {alternative}"
+        ).strip()
 
     def decompose_conflicting_rule(self, r1, r2):
         split1 = self.split_trigger_body(self.rule_raw(r1))
@@ -1003,6 +1387,42 @@ class DeterministicRepairEngine:
         return {
             "condition": self.clean_condition(match.group(1)),
             "action": action
+        }
+    def parse_concern(self, text):
+        """
+        Parse a LEGOS concern / insufficiency diagnosis.
+
+        Supported forms:
+            c1 exists CONDITION
+            c1 when CONDITION then RESPONSE
+
+        For an 'exists' concern there is no explicit response in the
+        concern declaration, so action is left empty.
+        """
+        text = str(text or "")
+
+        # Standard when ... then ... form.
+        parsed = self.parse_when_then(text)
+        if parsed.get("condition"):
+            return parsed
+
+        # LEGOS existential concern:
+        #   c1 exists UserDriving and (not {properlyPlaced})
+        match = re.search(
+            r"\bc\d+(?:_\d+)?\s+exists\s+(.+?)(?=\s+Concern\s+is\s+raised|\n|$)",
+            text,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        if not match:
+            return {
+                "condition": "",
+                "action": ""
+            }
+
+        return {
+            "condition": self.clean_condition(match.group(1)),
+            "action": ""
         }
 
     def clean_condition(self, condition):
@@ -1165,7 +1585,42 @@ class DeterministicRepairEngine:
             return ""
 
         return f"(not {inner})"
+    
+    def complement_context(self, expr):
+        """
+        Return the logical complement of a diagnosis-grounded contextual
+        predicate for deterministic conflict refinement.
 
+        Examples:
+            not {humanAssents} -> {humanAssents}
+            {humanAssents}     -> (not {humanAssents})
+            {riskLevel} = high -> (not ({riskLevel} = high))
+        """
+        expr = self.clean_condition(expr)
+
+        if not expr:
+            return ""
+
+        # Remove redundant outer parentheses first.
+        while self.is_fully_wrapped(expr):
+            expr = expr[1:-1].strip()
+
+        # Eliminate a leading negation instead of creating double negation.
+        match = re.fullmatch(
+            r"not\s+(.+)",
+            expr,
+            flags=re.IGNORECASE
+        )
+
+        if match:
+            positive = self.clean_condition(match.group(1))
+
+            while self.is_fully_wrapped(positive):
+                positive = positive[1:-1].strip()
+
+            return positive
+
+        return self.negate_group(expr)
     def right_nest_and(self, terms):
         """Right-fold terms into a binary 'a and (b and (c))' conjunction."""
         terms = [self.clean_condition(t) for t in terms if self.clean_condition(t)]
@@ -1250,6 +1705,137 @@ class DeterministicRepairEngine:
             return " and ".join(specific)
 
         return self.clean_condition(diagnosis_condition)
+    def concern_specific_context(self, diagnosis_condition, rule_condition):
+        """
+        Extract repair context from an existential insufficiency.
+
+        Example:
+            diagnosis:
+                UserDriving and (not {properlyPlaced})
+
+            related rule:
+                SensorsConnect and (not {properlyPlaced})
+                -> not UserDriving
+
+        UserDriving is the witnessed undesirable capability/state, not
+        additional trigger context. It must therefore not be added to
+        the trigger.
+
+        Only diagnosis predicates other than the witnessed first
+        capability/event are eligible as repair context.
+        """
+        diagnosis_parts = self.split_top_level_and(
+            self.clean_condition(diagnosis_condition)
+        )
+
+        if not diagnosis_parts:
+            return ""
+
+        # For an existential concern, the first non-measure atom is the
+        # witnessed capability/state, e.g. UserDriving.
+        context_parts = []
+        witnessed_removed = False
+
+        for part in diagnosis_parts:
+            cleaned = self.clean_condition(part)
+
+            if (
+                not witnessed_removed
+                and cleaned
+                and not self.is_measure_only_expression(cleaned)
+            ):
+                witnessed_removed = True
+                continue
+
+            if cleaned:
+                context_parts.append(cleaned)
+
+        if not context_parts:
+            return ""
+
+        rule_parts = [
+            self.clean_condition(part)
+            for part in self.split_top_level_and(
+                self.clean_condition(rule_condition)
+            )
+            if self.clean_condition(part)
+        ]
+
+        rule_norms = {
+            self.norm_atom(part)
+            for part in rule_parts
+        }
+
+        def predicate_base(part):
+            """
+            Normalize a Boolean predicate while ignoring polarity.
+
+            Examples:
+                {substanceUse}       -> substanceuse
+                not {substanceUse}   -> substanceuse
+                (not {substanceUse}) -> substanceuse
+            """
+            value = self.clean_condition(part)
+
+            # Remove surrounding Boolean negation.
+            value = re.sub(
+                r"^\s*\(?\s*not\s+",
+                "",
+                value,
+                flags=re.IGNORECASE
+            )
+
+            value = value.strip("(){} ")
+            return re.sub(r"\s+", "", value).lower()
+
+        # Collect Boolean measure names appearing anywhere in the
+        # existing trigger, including inside nested AND expressions.
+        #
+        # Example:
+        #   (({health} and {hasLicense}) and (not {substanceUse}))
+        #
+        # must tell us that substanceUse is already represented.
+        rule_measure_bases = {
+            re.sub(r"\s+", "", name).lower()
+            for name in re.findall(
+                r"\{([^{}]+)\}",
+                self.clean_condition(rule_condition)
+            )
+            if name.strip()
+        }
+
+        specific = []
+
+        for part in context_parts:
+            # Same predicate already present.
+            if self.norm_atom(part) in rule_norms:
+                continue
+
+            # Same Boolean measure is already represented with the
+            # opposite polarity. Adding it would create a contradictory
+            # trigger such as:
+            #
+            #     not {substanceUse} and {substanceUse}
+            #
+            # so it is not valid strengthening context.
+            context_measure_names = {
+                re.sub(r"\s+", "", name).lower()
+                for name in re.findall(r"\{([^{}]+)\}", part)
+                if name.strip()
+            }
+
+            if (
+                context_measure_names
+                and context_measure_names.issubset(rule_measure_bases)
+            ):
+                continue
+
+            specific.append(part)
+
+        if not specific:
+            return ""
+
+        return " and ".join(specific)
 
     def condition_parts(self, condition):
         condition = self.clean_condition(condition)
@@ -1447,24 +2033,68 @@ class DeterministicRepairEngine:
             self.normalized_condition(r2.get("defeater", ""))
         )
 
-        # ---------------------------------------------------------
+                # ---------------------------------------------------------
         # Conservative removal
         # ---------------------------------------------------------
 
-        if not (
-            same_condition
-            and same_action
-            and same_defeater
-        ):
+        # Removal is safe only when the diagnosed rules have the
+        # same response and the same defeater structure.
+        if not (same_action and same_defeater):
             return None, None
 
-        # Exact duplicates.
-        # Deterministically preserve the first diagnosed rule
-        # and remove the second.
-        survivor_rule = r1
-        redundant_rule = r2
+        # ---------------------------------------------------------
+        # Case 1: exact duplicate
+        #
+        #   when A then X
+        #   when A then X
+        #
+        # Preserve the first diagnosed rule and remove the second.
+        # ---------------------------------------------------------
+        if same_condition:
+            survivor_rule = r1
+            redundant_rule = r2
+            return redundant_rule, survivor_rule
 
-        return redundant_rule, survivor_rule
+        # ---------------------------------------------------------
+        # Case 2: trigger subsumption
+        #
+        #   when A then X
+        #   when A and C then X
+        #
+        # The broader rule already covers the more specific rule.
+        # Therefore preserve the broader rule and remove the
+        # diagnosed specialized rule.
+        # ---------------------------------------------------------
+
+        parts1 = {
+            self.norm_atom(part)
+            for part in self.condition_parts(r1.get("condition", ""))
+            if self.norm_atom(part)
+        }
+
+        parts2 = {
+            self.norm_atom(part)
+            for part in self.condition_parts(r2.get("condition", ""))
+            if self.norm_atom(part)
+        }
+
+        if not parts1 or not parts2:
+            return None, None
+
+        # r1 is broader; r2 adds one or more trigger constraints.
+        if parts1 < parts2:
+            survivor_rule = r1
+            redundant_rule = r2
+            return redundant_rule, survivor_rule
+
+        # r2 is broader; r1 adds one or more trigger constraints.
+        if parts2 < parts1:
+            survivor_rule = r2
+            redundant_rule = r1
+            return redundant_rule, survivor_rule
+
+        # Neither trigger subsumes the other.
+        return None, None
 
     def find_best_related_rule_context(self, selected_issue, rules):
         """
@@ -1477,13 +2107,67 @@ class DeterministicRepairEngine:
         additional relevance bonus.
         """
         issue_text = str(selected_issue or "")
-        parsed = self.parse_when_then(issue_text)
+        parsed = self.parse_concern(issue_text)
+
         issue_condition = parsed.get("condition", "")
         issue_action = str(parsed.get("action", "") or "").strip()
+
+        # Standard concern:
+        #   when CONDITION then ACTION
         issue_capability = self.normalize_action(issue_action)
+
+        # Existential insufficiency:
+        #   c1 exists UserDriving and (not {properlyPlaced})
+        #
+        # There is no explicit "then ACTION". The first condition
+        # component is the witnessed capability/event, while the
+        # remaining components provide diagnostic context.
+        if not issue_capability and issue_condition:
+            parts = self.condition_parts(issue_condition)
+
+            if parts:
+                first_part = self.clean_condition(parts[0])
+
+                # Only use the first component as a capability when it
+                # is an event/capability atom, not a measure predicate.
+                if (
+                    first_part
+                    and not self.is_measure_only_expression(first_part)
+                ):
+                    issue_action = first_part
+                    issue_capability = self.normalize_action(first_part)
 
         if not issue_capability:
             return None
+         # Existential concerns need stronger grounding than standard
+        # when...then concerns. A candidate target must share at least
+        # one diagnostic context predicate with the concern.
+        #
+        # Example:
+        #   c1 exists UserDriving and (not {properlyPlaced})
+        #
+        # UserDriving is the witnessed capability/state. The remaining
+        # predicate(s) are the diagnostic context used for grounding.
+        is_existential_concern = bool(
+            re.search(
+                r"\bc\d+(?:_\d+)?\s+exists\b",
+                issue_text,
+                flags=re.IGNORECASE
+            )
+        )
+
+        existential_context_terms = set()
+
+        if is_existential_concern:
+            parts = self.condition_parts(issue_condition)
+
+            # Remove the witnessed capability/event (first component).
+            if len(parts) > 1:
+                context_text = " and ".join(parts[1:])
+                existential_context_terms = self.condition_terms(context_text)
+
+            if not existential_context_terms:
+                return None
 
         issue_terms = self.condition_terms(issue_condition)
         explicitly_named = {
@@ -1499,6 +2183,18 @@ class DeterministicRepairEngine:
 
             rule_condition = self.clean_condition(rule.get("condition", ""))
             rule_terms = self.condition_terms(rule_condition)
+            # Do not select an unrelated rule for an existential
+            # insufficiency merely because its response has the same
+            # capability (possibly with opposite polarity).
+            #
+            # The rule must also share diagnosis-specific context.
+            if is_existential_concern:
+                shared_existential_context = (
+                    existential_context_terms.intersection(rule_terms)
+                )
+
+                if not shared_existential_context:
+                    continue
 
             context_score = 0
             shared_terms = issue_terms.intersection(rule_terms)

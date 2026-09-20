@@ -217,15 +217,33 @@ class RepairOperatorSelector:
             ),
         )
 
+        same_event = self.same_trigger_event(r1, r2, existing_events)
+
+        defeater_applicable = (
+            same_event
+            and (
+                self.has_contextual_predicate(r1, existing_events)
+                or self.has_contextual_predicate(r2, existing_events)
+            )
+        )
+
         self._add(
             deterministic,
             applicability,
             "defeater_introduction",
-            True,
-            "Two diagnosed conflicting obligations are available for explicit prioritisation.",
+            defeater_applicable,
+            (
+                "The conflicting rules share the same triggering event and "
+                "provide a contextual predicate that can be expressed as a "
+                "SLEEC defeater."
+                if defeater_applicable
+                else
+                "Defeater introduction requires an expressible measure-based "
+                "priority condition. Cross-event 'unless another rule triggered' "
+                "is deferred until SLEEC provides suitable language support."
+            ),
         )
 
-        same_event = self.same_trigger_event(r1, r2, existing_events)
         merge_compatible = same_event and self.contextually_specialized_pair(
             r1, r2, existing_events
         )

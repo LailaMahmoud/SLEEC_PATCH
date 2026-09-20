@@ -150,28 +150,44 @@ class SLEECPatchWorkbenchEngine:
                         )
                     }
 
-        try:
-            from sleec.sleecParser import parse_sleec
+                try:
+                    from sleec.sleecParser import (
+                        parse_sleec,
+                        scalar_mask,
+                        scalar_type,
+                        registered_type,
+                    )
+                    from sleec.Analyzer.logic_operator import text_ref
 
-            model, *_ = parse_sleec(sleec_text, read_file=False)
-            rule_count = len(getattr(model.ruleBlock, "rules", []) or [])
+                    model, *_ = parse_sleec(sleec_text, read_file=False)
+                    rule_count = len(getattr(model.ruleBlock, "rules", []) or [])
 
-            if rule_count == 0:
-                return {
-                    "valid": False,
-                    "error": "SLEEC rule block contains no parseable rules."
-                }
+                    if rule_count == 0:
+                        return {
+                            "valid": False,
+                            "error": "SLEEC rule block contains no parseable rules."
+                        }
 
-            return {
-                "valid": True,
-                "error": "",
-                "rule_count": rule_count
-            }
-        except Exception as exc:
-            return {
-                "valid": False,
-                "error": str(exc)
-            }
+                    return {
+                        "valid": True,
+                        "error": "",
+                        "rule_count": rule_count
+                    }
+
+                except Exception as exc:
+                    return {
+                        "valid": False,
+                        "error": str(exc)
+                    }
+
+                finally:
+                    try:
+                        scalar_mask.clear()
+                        scalar_type.clear()
+                        registered_type.clear()
+                        text_ref.clear()
+                    except (NameError, AttributeError):
+                        pass
 
     def detector_failures(self, analysis):
         failures = {}
@@ -980,6 +996,30 @@ class SLEECPatchWorkbenchEngine:
         return text.strip().lower()
 
     def issue_fingerprint(self, issue_type, issue):
+        """
+        Build a stable identity for a diagnosed WFI.
+
+        Conflict witnesses and redundancy diagnostics may change between
+        LEGOS runs even when the same formal rules remain involved.
+        For conflict-like WFIs and redundancies, use the referenced rule IDs
+        when available instead of hashing the full diagnosis text.
+
+        Other WFI categories retain normalized diagnosis-text fingerprints.
+        """
+        issue_type = str(issue_type or "").strip().lower()
+
+        if issue_type in {"conflicts", "situational_conflicts", "redundancies"}:
+            rule_ids = self.extract_issue_rule_ids(issue)
+
+            if rule_ids:
+                normalized_ids = sorted(
+                    rid.upper()
+                    for rid in rule_ids
+                )
+                identity = "|".join(normalized_ids)
+                digest = hashlib.sha1(identity.encode("utf-8")).hexdigest()[:16]
+                return f"{issue_type}:{digest}"
+
         normalized = self.normalize_issue_text(issue)
         digest = hashlib.sha1(normalized.encode("utf-8")).hexdigest()[:16]
         return f"{issue_type}:{digest}"

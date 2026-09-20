@@ -471,7 +471,7 @@ class SLEECDetectionEngine:
 
             import re
 
-            pattern = r"((?:c\d+)(?:_\d+)?\s+when.*?Concern is raised)"
+            pattern = r"((?:c\d+)(?:_\d+)?\s+(?:when|exists)\b.*?Concern is raised)"
             matches = re.findall(
                 pattern,
                 msg,
