@@ -1961,7 +1961,7 @@ class DeterministicRepairEngine:
         # Capture complete IDs such as:
         # r1, R2, Rule3, Rule5_1, C1
         candidate_ids = re.findall(
-            r"\b(?:r\d+[A-Za-z]*(?:_\d+)*|rule\d+[A-Za-z]*(?:_\d+)*|c\d+[A-Za-z]*(?:_\d+)*)\b",
+            r"\b(?:r\d+[A-Za-z]*(?:_[A-Za-z0-9]+)*|rule\d+[A-Za-z]*(?:_[A-Za-z0-9]+)*|c\d+[A-Za-z]*(?:_[A-Za-z0-9]+)*)\b",
             issue_text,
             flags=re.IGNORECASE
         )
@@ -2039,6 +2039,81 @@ class DeterministicRepairEngine:
 
         # Removal is safe only when the diagnosed rules have the
         # same response and the same defeater structure.
+	        # ---------------------------------------------------------
+        # Case 0: diagnosis-proven transitive redundancy
+        #
+        #   A -> C          redundant rule
+        #   A -> B
+        #   B -> C
+        #
+        # The diagnosis must explicitly reference all three rules.
+        # No new semantic relation is inferred outside the diagnosed
+        # rules.
+        # ---------------------------------------------------------
+
+        if len(matched_rules) >= 3:
+            for direct in matched_rules:
+                direct_condition = self.normalized_condition(
+                    direct.get("condition", "")
+                )
+                direct_action = self.norm_atom(
+                    direct.get("action", "")
+                )
+
+                if not direct_condition or not direct_action:
+                    continue
+
+                # Be conservative: do not remove a rule carrying
+                # its own defeater.
+                if self.normalized_condition(
+                    direct.get("defeater", "")
+                ):
+                    continue
+
+                for first in matched_rules:
+                    if first is direct:
+                        continue
+
+                    first_condition = self.normalized_condition(
+                        first.get("condition", "")
+                    )
+                    first_action = self.norm_atom(
+                        first.get("action", "")
+                    )
+
+                    # A -> C and A -> B must have the same trigger.
+                    if first_condition != direct_condition:
+                        continue
+
+                    if not first_action:
+                        continue
+
+                    for second in matched_rules:
+                        if second is direct or second is first:
+                            continue
+
+                        second_condition = self.normalized_condition(
+                            second.get("condition", "")
+                        )
+                        second_action = self.norm_atom(
+                            second.get("action", "")
+                        )
+
+                        # Require:
+                        # first:  A -> B
+                        # second: B -> C
+                        # direct: A -> C
+                        if (
+                            self.norm_atom(second_condition) == first_action
+                            and second_action == direct_action
+                            and not self.normalized_condition(
+                                first.get("defeater", "")
+                            )
+                            and not self.normalized_condition(
+                                second.get("defeater", "")
+                            )
+                        ):
+                            return direct, first
         if not (same_action and same_defeater):
             return None, None
 
@@ -2970,7 +3045,24 @@ class DeterministicRepairEngine:
                 used.add(candidate.lower())
             index += 1
         return result
+    def sleec_trigger_expression(self, expression):
+        """
+        Serialize a Boolean expression for the SLEEC `when` position.
 
+        SLEEC requires the trigger to begin with an event identifier, so
+        remove only redundant parentheses that wrap the complete trigger.
+        Preserve all internal Boolean grouping.
+        """
+        expression = str(expression or "").strip()
+
+        while (
+            expression.startswith("(")
+            and expression.endswith(")")
+            and self.outer_parentheses_wrap(expression)
+        ):
+            expression = expression[1:-1].strip()
+
+        return expression
     def decompose_rule_for_concern(
         self, rule, context, desired_action, used_rule_ids=None
     ):
@@ -3016,17 +3108,68 @@ class DeterministicRepairEngine:
             rule.get("condition", "")
         )
 
-        branch_1_trigger = self.and_expr(
-            original_condition,
-            specific
+        # Build decomposition branches without wrapping the event-led
+        # original trigger in parentheses. SLEEC requires the trigger
+        # to start with the event identifier.
+        
+        original_trigger = self.sleec_trigger_expression(
+            original_condition
         )
 
-        branch_2_trigger = self.and_expr(
-            original_condition,
-            complement
-        )
+        specific = self.normalize_boolean_expression(specific)
+        complement = self.normalize_boolean_expression(complement)
 
-        # Structural guards
+        # SLEEC Boolean conditions are binary.
+        # Preserve the first event as the trigger and group all remaining
+        # conditions into the right-hand Boolean branch.
+        trigger_parts = self.split_top_level_and(original_trigger)
+
+        if not trigger_parts:
+            return None
+
+        trigger_event = trigger_parts[0]
+        if len(trigger_parts) == 1:
+            specific = self.sleec_trigger_expression(specific)
+            complement = self.sleec_trigger_expression(complement)
+
+            branch_1_trigger = (
+                f"{trigger_event} and ({specific})"
+            )
+            branch_2_trigger = (
+                f"{trigger_event} and ({complement})"
+            )
+
+        else:
+            existing_context = self.normalize_boolean_expression(
+                " and ".join(trigger_parts[1:])
+            )
+
+            branch_1_context = self.and_expr(
+                existing_context,
+                specific
+            )
+            branch_2_context = self.and_expr(
+                existing_context,
+                complement
+            )
+
+            # Remove redundant parentheses around the complete
+            # right-hand Boolean context before attaching it to
+            # the event-led SLEEC trigger.
+            branch_1_context = self.sleec_trigger_expression(
+                branch_1_context
+            )
+            branch_2_context = self.sleec_trigger_expression(
+                branch_2_context
+            )
+
+            branch_1_trigger = (
+                f"{trigger_event} and ({branch_1_context})"
+            )
+            branch_2_trigger = (
+                f"{trigger_event} and ({branch_2_context})"
+            )
+        
         if not branch_1_trigger or not branch_2_trigger:
             return None
 

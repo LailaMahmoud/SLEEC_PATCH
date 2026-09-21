@@ -953,31 +953,33 @@ class SLEECPatchWorkbenchEngine:
         original_structured,
         new_structured
     ):
-        selected_fingerprint = self.issue_fingerprint(issue_type, selected_issue_value)
-        after_records = self.issue_records(new_structured)
+        """
+        Determine whether the specifically selected WFI has disappeared.
 
-        if selected_fingerprint in after_records:
+        Verification is based on the stable WFI fingerprint, not:
+        - a decrease in the number of WFIs,
+        - diagnosis wording changes, or
+        - incidental rule IDs appearing in a witness trace.
+        """
+        issue_type = str(issue_type or "").strip().lower()
+
+        selected_fingerprint = self.issue_fingerprint(
+            issue_type,
+            selected_issue_value
+        )
+
+        # Guard: the selected issue must genuinely belong to the
+        # original diagnosis.
+        original_records = self.issue_records(original_structured)
+
+        if selected_fingerprint not in original_records:
             return False
 
-        selected_rule_ids = set(self.extract_issue_rule_ids(selected_issue_value))
+        # Re-analyzed specification after applying the candidate.
+        after_records = self.issue_records(new_structured)
 
-        if selected_rule_ids:
-            for issue in new_structured.get(issue_type, []):
-                after_rule_ids = set(self.extract_issue_rule_ids(issue))
-
-                if selected_rule_ids.issubset(after_rule_ids):
-                    return False
-
-        before = original_structured.get(issue_type, [])
-        after = new_structured.get(issue_type, [])
-
-        if len(after) < len(before):
-            return True
-
-        selected_text = str(selected_issue_value).strip()
-        after_text = "\n".join(str(x) for x in after)
-
-        return selected_text not in after_text
+        # The target is fixed only when its stable identity is absent.
+        return selected_fingerprint not in after_records
 
     def issue_types(self):
         return [
@@ -994,7 +996,71 @@ class SLEECPatchWorkbenchEngine:
         text = re.sub(r"^\s*.+?\s*:\s*\[\d+\s*,\s*\d+\]\s*$", " ", text, flags=re.MULTILINE)
         text = re.sub(r"\s+", " ", text)
         return text.strip().lower()
+    def extract_wfi_id(self, issue_type, issue):
+        """
+        Extract an explicit WFI identifier when LEGOS provides one.
 
+        Examples:
+            concerns         -> c1, c4
+            purpose_blocking -> p6, p7
+
+        Returns None when the WFI category has no explicit identifier.
+        """
+        issue_type = str(issue_type or "").strip().lower()
+        text = str(issue or "")
+
+        if issue_type == "concerns":
+            match = re.search(
+                r"^\s*(c\d+(?:_[A-Za-z0-9]+)*)\b",
+                text,
+                flags=re.IGNORECASE | re.MULTILINE
+            )
+            if match:
+                return match.group(1).lower()
+
+        if issue_type == "purpose_blocking":
+            match = re.search(
+                r"Blocked\s+SLEEC\s+purpose:\s*"
+                r"(p\d+(?:_[A-Za-z0-9]+)*)\b",
+                text,
+                flags=re.IGNORECASE | re.DOTALL
+            )
+            if match:
+                return match.group(1).lower()
+
+        return None
+    def extract_conflict_rule_pair(self, issue):
+        """
+        Extract the two primary rules identified by LEGOS for a
+        conflict/situational-conflict diagnosis.
+
+        Ignores additional rules that appear later in the causal chain.
+        """
+        text = str(issue or "")
+
+        rule_pattern = (
+            r"((?:Rule|R|r)\d+[A-Za-z]*(?:_[A-Za-z0-9]+)*)\b"
+        )
+
+        primary_match = re.search(
+            r"For rule:\s*-*\s*" + rule_pattern,
+            text,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        opposing_match = re.search(
+            r"Because of the following SLEEC rule:\s*-*\s*" + rule_pattern,
+            text,
+            flags=re.IGNORECASE | re.DOTALL
+        )
+
+        if not primary_match or not opposing_match:
+            return []
+
+        return sorted({
+            primary_match.group(1).upper(),
+            opposing_match.group(1).upper()
+        })
     def issue_fingerprint(self, issue_type, issue):
         """
         Build a stable identity for a diagnosed WFI.
@@ -1007,17 +1073,32 @@ class SLEECPatchWorkbenchEngine:
         Other WFI categories retain normalized diagnosis-text fingerprints.
         """
         issue_type = str(issue_type or "").strip().lower()
+        explicit_wfi_id = self.extract_wfi_id(issue_type, issue)
 
-        if issue_type in {"conflicts", "situational_conflicts", "redundancies"}:
+        if explicit_wfi_id:
+            return f"{issue_type}:{explicit_wfi_id}"
+
+        if issue_type in {"conflicts", "situational_conflicts"}:
+            rule_ids = self.extract_conflict_rule_pair(issue)
+
+            if rule_ids:
+                identity = "|".join(rule_ids)
+                digest = hashlib.sha1(
+                    identity.encode("utf-8")
+                ).hexdigest()[:16]
+                return f"{issue_type}:{digest}"
+
+        if issue_type == "redundancies":
             rule_ids = self.extract_issue_rule_ids(issue)
 
             if rule_ids:
                 normalized_ids = sorted(
-                    rid.upper()
-                    for rid in rule_ids
+                    rid.upper() for rid in rule_ids
                 )
                 identity = "|".join(normalized_ids)
-                digest = hashlib.sha1(identity.encode("utf-8")).hexdigest()[:16]
+                digest = hashlib.sha1(
+                    identity.encode("utf-8")
+                ).hexdigest()[:16]
                 return f"{issue_type}:{digest}"
 
         normalized = self.normalize_issue_text(issue)
@@ -1025,9 +1106,21 @@ class SLEECPatchWorkbenchEngine:
         return f"{issue_type}:{digest}"
 
     def extract_issue_rule_ids(self, issue):
+        """
+        Extract SLEEC rule identifiers from a diagnosis/witness.
+
+        Supports examples such as:
+            R3
+            R14_1
+            R11_cont_1
+            R4b
+            Rule18
+            Rule5_1
+        """
         return sorted(set(re.findall(
-            r"\b(?:Rule|R|r)\d+(?:_\d+)?\b",
-            str(issue or "")
+            r"\b(?:Rule|R|r)\d+[A-Za-z]*(?:_[A-Za-z0-9]+)*\b",
+            str(issue or ""),
+            flags=re.IGNORECASE
         )))
 
     def issue_summary(self, issue, max_length=220):
