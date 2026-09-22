@@ -17,8 +17,17 @@ Each patch must use this format:
     "missing_element": "UserRequestsDressingWhileInPain",
     "proposed_rule": "r2 when UserRequestsDressingWhileInPain then StopDressing",
 
-    "natural_language_explanation": "The broad event UserRequestsDressing is specialized into a pain-related event so the stop rule applies only in that context.",
+    "grounding_evidence": {
+      "source": "system_description",
+      "source_terms": [
+        "pain"
+      ],
+      "existing_element": "UserRequestsDressing",
+      "new_element": "UserRequestsDressingWhileInPain",
+      "relationship": "The new event specializes the existing event using domain context explicitly supported by the supplied source."
+    },
 
+    "natural_language_explanation": "The broad event UserRequestsDressing is specialized into a pain-related event so the stop rule applies only in that context.",
     "modification_cost": 1,
     "new_events_added": 1,
     "new_measures_added": 0,
@@ -162,46 +171,191 @@ Correct output:
 """
 
 
-OPERATOR_EXAMPLES = {'event_specialization': 'EXAMPLE: EVENT SPECIALIZATION FOR ALMI\n'
-                         'Original rules:\n'
-                         'r1 when FireSafetyMeasures then InformCaregiver\n'
-                         'r2 when FireSafetyMeasures and not humanAssents then not InformCaregiver\n'
-                         '\n'
-                         'Correct patch:\n'
-                         '[{"patch_id":"p1","issue_type":"situational_conflict","operation":"event_specialization","applicability":{"is_applicable":true,"reason":"The '
-                         'event FireSafetyMeasures is too broad."},"target_rule_id":"r1","original_rule":"r1 when '
-                         'FireSafetyMeasures then '
-                         'InformCaregiver","missing_element":"ConfirmedFireHazard","proposed_rule":"r1 when '
-                         'ConfirmedFireHazard then InformCaregiver","natural_language_explanation":"The broad event is '
-                         'specialized into '
-                         'ConfirmedFireHazard.","modification_cost":1,"new_events_added":1,"new_measures_added":0,"new_capabilities_added":0,"new_rules_added":0,"defeaters_added":0}]',
- 'measure_specialization': 'EXAMPLE: MEASURE SPECIALIZATION FOR ALMI\n'
-                           'Original rules:\n'
-                           'r1 when UserWantsToCook and riskLevel=high then InterfereSafely\n'
-                           'r2 when UserChangeMind and riskLevel=high then RecalculateApproach\n'
-                           '\n'
-                           'Correct patch:\n'
-                           '[{"patch_id":"p1","issue_type":"situational_conflict","operation":"measure_specialization","applicability":{"is_applicable":true,"reason":"riskLevel '
-                           'is too broad for different ALMI contexts."},"target_rule_id":"r1","original_rule":"r1 when '
-                           'UserWantsToCook and riskLevel=high then '
-                           'InterfereSafely","missing_element":"cookingRiskLevel","proposed_rule":"r1 when '
-                           'UserWantsToCook and cookingRiskLevel=high then '
-                           'InterfereSafely","natural_language_explanation":"The general risk measure is refined into '
-                           'a cooking-specific risk '
-                           'measure.","modification_cost":1,"new_events_added":0,"new_measures_added":1,"new_capabilities_added":0,"new_rules_added":0,"defeaters_added":0}]',
-  'capability_refinement': 'EXAMPLE: CAPABILITY REFINEMENT FOR RESTRICTIVENESS\n'
-                          'Blocking rule:\n'
-                          'r1 when HumanOnFloor and not humanAssents then not CallEmergencyServices within 500 seconds\n'
-                          'Intended purpose:\n'
-                          'when HumanOnFloor and UserUnconscious and not humanAssents then CallEmergencyServices within 4 minutes\n'
-                          '\n'
-                          'Selected operator:\n'
-                          'capability_refinement\n'
-                          '\n'
-                          'Correct patch:\n'
-                          '[{"patch_id":"p1","issue_type":"purpose","operation":"capability_refinement","target_rule_id":"r1","original_rule":"r1 when HumanOnFloor and not humanAssents then not CallEmergencyServices within 500 seconds","missing_element":"RequestUrgentCareAssessment","proposed_rule":"r1 when HumanOnFloor and not humanAssents then not RequestUrgentCareAssessment within 500 seconds","natural_language_explanation":"The broad emergency-response capability is refined into a more specific urgent-care assessment capability.","modification_cost":1,"new_events_added":0,"new_measures_added":0,"new_capabilities_added":1,"new_rules_added":0,"defeaters_added":0}]',
-'new_rule_generation': 'Use new_rule_generation only when no existing rule can be minimally edited. Add one '
-                        'domain-specific rule and preserve all unrelated rules.'}
+OPERATOR_EXAMPLES = {
+'event_specialization': '''EXAMPLE: EVENT SPECIALIZATION
+
+This example demonstrates the repair pattern and grounding format only.
+Do not copy its domain vocabulary into another use case.
+
+System description excerpt:
+"The dressing assistant monitors the user for signs of pain during dressing."
+
+Original rule:
+r1 when UserRequestsDressing then ContinueDressing
+
+Diagnosis:
+The broad event UserRequestsDressing does not distinguish requests made while the user is experiencing pain.
+
+Selected operator:
+event_specialization
+
+Correct patch:
+[{
+  "patch_id": "p1",
+  "issue_type": "situational_conflict",
+  "operation": "event_specialization",
+  "applicability": {
+    "is_applicable": true,
+    "reason": "The supplied domain description explicitly supports pain as a relevant dressing context."
+  },
+  "target_rule_id": "r1",
+  "original_rule": "r1 when UserRequestsDressing then ContinueDressing",
+  "missing_element": "UserRequestsDressingWhileInPain",
+  "proposed_rule": "r1 when UserRequestsDressingWhileInPain then ContinueDressing",
+  "grounding_evidence": {
+    "source": "system_description",
+    "source_terms": ["pain", "during dressing"],
+    "existing_element": "UserRequestsDressing",
+    "new_element": "UserRequestsDressingWhileInPain",
+    "relationship": "The new event specializes UserRequestsDressing using the explicitly described pain context."
+  },
+  "natural_language_explanation": "The broad request event is specialized using an explicitly supported domain context.",
+  "modification_cost": 1,
+  "new_events_added": 1,
+  "new_measures_added": 0,
+  "new_capabilities_added": 0,
+  "new_rules_added": 0,
+  "defeaters_added": 0
+}]''',
+
+'measure_specialization': '''EXAMPLE: MEASURE SPECIALIZATION
+
+This example demonstrates the repair pattern and grounding format only.
+Do not copy its domain vocabulary into another use case.
+
+System description excerpt:
+"The monitoring system measures room temperature to distinguish unsafe environmental conditions."
+
+Original rule:
+r1 when UserEntersRoom and {environmentRisk} then IssueWarning
+
+Diagnosis:
+The general environmentRisk measure does not distinguish the temperature-related situation identified in the diagnosis.
+
+Selected operator:
+measure_specialization
+
+Correct patch:
+[{
+  "patch_id": "p1",
+  "issue_type": "situational_conflict",
+  "operation": "measure_specialization",
+  "applicability": {
+    "is_applicable": true,
+    "reason": "The supplied domain description explicitly identifies room temperature as a monitored environmental condition."
+  },
+  "target_rule_id": "r1",
+  "original_rule": "r1 when UserEntersRoom and {environmentRisk} then IssueWarning",
+  "missing_element": "unsafeRoomTemperature",
+  "proposed_rule": "r1 when UserEntersRoom and {unsafeRoomTemperature} then IssueWarning",
+  "grounding_evidence": {
+    "source": "system_description",
+    "source_terms": ["room temperature", "unsafe environmental conditions"],
+    "existing_element": "environmentRisk",
+    "new_element": "unsafeRoomTemperature",
+    "relationship": "The new measure specializes the broad environmentRisk measure using the explicitly described temperature condition."
+  },
+  "natural_language_explanation": "The broad environmental measure is specialized using an explicitly supported environmental property.",
+  "modification_cost": 1,
+  "new_events_added": 0,
+  "new_measures_added": 1,
+  "new_capabilities_added": 0,
+  "new_rules_added": 0,
+  "defeaters_added": 0
+}]''',
+
+'capability_refinement': '''EXAMPLE: CAPABILITY REFINEMENT
+
+This example demonstrates the repair pattern and grounding format only.
+Do not copy its domain vocabulary into another use case.
+
+System description excerpt:
+"The assistance system can contact a specialist support service when general user assistance is insufficient."
+
+Original rule:
+r1 when AssistanceNeeded then ContactSupport
+
+Diagnosis:
+The broad ContactSupport response does not distinguish the specialist-support capability required in the diagnosed situation.
+
+Selected operator:
+capability_refinement
+
+Correct patch:
+[{
+  "patch_id": "p1",
+  "issue_type": "purpose_blocking",
+  "operation": "capability_refinement",
+  "applicability": {
+    "is_applicable": true,
+    "reason": "The supplied domain description explicitly identifies specialist support as a system capability."
+  },
+  "target_rule_id": "r1",
+  "original_rule": "r1 when AssistanceNeeded then ContactSupport",
+  "missing_element": "ContactSpecialistSupport",
+  "proposed_rule": "r1 when AssistanceNeeded then ContactSpecialistSupport",
+  "grounding_evidence": {
+    "source": "system_description",
+    "source_terms": ["specialist support service", "general user assistance"],
+    "existing_element": "ContactSupport",
+    "new_element": "ContactSpecialistSupport",
+    "relationship": "The new capability refines ContactSupport into the more specific specialist-support capability explicitly described by the domain source."
+  },
+  "natural_language_explanation": "The broad support capability is refined using a more specific capability explicitly supported by the domain description.",
+  "modification_cost": 1,
+  "new_events_added": 0,
+  "new_measures_added": 0,
+  "new_capabilities_added": 1,
+  "new_rules_added": 0,
+  "defeaters_added": 0
+}]''',
+
+    'new_rule_generation': '''EXAMPLE: NEW RULE GENERATION
+
+This example demonstrates the repair pattern and grounding format only.
+Do not copy its domain vocabulary into another use case.
+
+System description excerpt:
+"The monitoring system detects a user fall and can notify a caregiver."
+
+Existing rule:
+r1 when UserRequestsHelp then NotifyCaregiver
+
+Diagnosis:
+The diagnosed concern identifies missing normative behaviour after a detected user fall.
+
+Selected operator:
+new_rule_generation
+
+Correct patch:
+[{
+  "patch_id": "p1",
+  "issue_type": "concerns",
+  "operation": "new_rule_generation",
+  "applicability": {
+    "is_applicable": true,
+    "reason": "The diagnosis identifies missing behaviour, and the supplied domain description explicitly supports both fall detection and caregiver notification."
+  },
+  "target_rule_id": "",
+  "original_rule": "",
+  "missing_element": "UserFall -> NotifyCaregiver",
+  "proposed_rule": "r_new when UserFall then NotifyCaregiver",
+  "grounding_evidence": {
+    "source": "system_description",
+    "source_terms": ["detects a user fall", "notify a caregiver"],
+    "existing_element": "NotifyCaregiver",
+    "new_element": "UserFall -> NotifyCaregiver",
+    "relationship": "The new rule connects the explicitly described fall event to the explicitly described caregiver-notification capability to address the diagnosed missing behaviour."
+  },
+  "natural_language_explanation": "A new normative rule is introduced for behaviour that is explicitly supported by both the diagnosis and the supplied domain description.",
+  "modification_cost": 1,
+  "new_events_added": 1,
+  "new_measures_added": 0,
+  "new_capabilities_added": 0,
+  "new_rules_added": 1,
+  "defeaters_added": 0
+}]'''
+}
 
 def semantic_refinement_prompt(
     issue_type,
@@ -264,17 +418,41 @@ STRICT RULES:
 7. Prefer domain-specific concepts that are clear and interpretable.
 8. Every proposed patch must be valid SLEEC syntax.
 9. The patch will be formally verified by LEGOS-SLEEC after generation.
-10. Ground every new semantic element in the diagnosed witness, current system description,
-    or an explicit specialization/refinement relationship to existing vocabulary.
-11. Do not invent a concept merely because it sounds plausible.
-12. Preserve diagnosed temporal information. If the diagnosis contains WITHIN or another
-    time bound, the generated patch must preserve or explicitly refine that temporal dimension.
-13. For new_rule_generation, the new rule must explicitly address at least one diagnosed
-    condition, response, measure, event, or temporal constraint.
-14. Use existing declared vocabulary whenever it is sufficient.
-15. Follow the SLEEC syntax contract exactly.
-16. If the selected repair cannot be written in valid SLEEC syntax, return not_applicable.
+10. Every newly introduced semantic element MUST be grounded in at least one permitted source:
+    - system_description: the supplied original case-study Description;
+    - diagnosis: the supplied LEGOS-SLEEC diagnosis;
+    - witness: the supplied LEGOS-SLEEC witness/trace;
+    - existing_vocabulary: an explicit event, measure, response, or rule supplied in the input.
 
+11. For every new semantic element, populate grounding_evidence.
+    - source must identify the permitted source used.
+    - source_terms must contain exact words, phrases, or formal identifiers present in that source.
+    - existing_element must identify the existing SLEEC element being specialized or refined,
+      when the selected operator modifies an existing semantic element.
+    - new_element must exactly identify the semantic element introduced by the patch.
+    - relationship must explain how the cited source evidence supports the specialization,
+      refinement, or missing behaviour.
+
+12. Do NOT claim grounding from general knowledge, common sense, an unstated domain assumption,
+    the worked example, or a concept that merely sounds plausible.
+
+13. Do NOT copy semantic concepts from the worked example unless those concepts are independently
+    supported by the current use case's permitted sources.
+
+14. If no permitted source supports the semantic element required by the selected operator,
+    return not_applicable rather than inventing a concept.
+
+15. Preserve diagnosed temporal information. If the diagnosis contains WITHIN or another
+    time bound, the generated patch must preserve or explicitly refine that temporal dimension.
+
+16. For new_rule_generation, the new rule must explicitly address at least one diagnosed
+    condition, response, measure, event, or temporal constraint.
+
+17. Use existing declared vocabulary whenever it is sufficient.
+
+18. Follow the SLEEC syntax contract exactly.
+
+19. If the selected repair cannot be written in valid SLEEC syntax, return not_applicable.
 {SLEEC_SYNTAX_CONTRACT}
 
 {SLEEC_FEW_SHOT_SYNTAX_EXAMPLES}
@@ -341,8 +519,7 @@ OPERATOR-SPECIFIC WORKED EXAMPLE:
 Use this example only as a repair pattern. Do not copy concepts that are absent from the current use case.
 
 INPUT:
-{json.dumps(payload, indent=2)}
-
+{json.dumps(payload, indent=2, ensure_ascii=False)}
 {PATCH_OUTPUT_FORMAT}
 """
 
@@ -520,7 +697,7 @@ AND, OR, NOT, WHEN, THEN, UNLESS, and WITHIN are SLEEC syntax, not predicates.
 If proposed_rule contains multiple rules, assess the complete repair.
 
 INPUT:
-{json.dumps(payload, indent=2)}
+{json.dumps(payload, indent=2, ensure_ascii=False)}
 
 Return ONLY this raw JSON object:
 {{

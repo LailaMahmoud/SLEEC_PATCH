@@ -24,6 +24,7 @@ class SemanticPatchValidator:
         existing_events: List[str],
         existing_measures: List[str],
         existing_responses: List[str],
+        system_description: str = "",
     ) -> dict:
         issue_text = str((issue or {}).get("value", "") or "")
         issue_type = str((issue or {}).get("issue_type", "") or "")
@@ -35,6 +36,14 @@ class SemanticPatchValidator:
             patch, proposed_rule, original_rule,
             existing_events, existing_measures, existing_responses
         )
+        grounding = self._check_grounding_evidence(
+            patch=patch,
+            issue_text=issue_text,
+            system_description=system_description,
+            existing_events=existing_events,
+            existing_measures=existing_measures,
+            existing_responses=existing_responses,
+            )
         alignment = self._check_diagnosis_alignment(
             issue_text, proposed_rule
         )
@@ -47,13 +56,23 @@ class SemanticPatchValidator:
 
         errors = []
         warnings = []
-        for section in (vocabulary, alignment, operator, temporal):
+        for section in (vocabulary, grounding, operator, temporal):
             errors.extend(section.get("errors", []))
             warnings.extend(section.get("warnings", []))
 
+        # Diagnosis alignment is retained as diagnostic evidence only.
+        # It no longer determines semantic validity because semantic repairs may
+        # legitimately introduce grounded concepts that do not lexically reproduce
+        # at least 50% of the LEGOS diagnosis symbols.
+        warnings.extend(
+            f"Legacy diagnosis-alignment diagnostic: {msg}"
+            for msg in alignment.get("errors", [])
+        )
+        warnings.extend(alignment.get("warnings", []))
+
         valid = all([
             vocabulary["passed"],
-            alignment["passed"],
+            grounding["passed"],
             operator["passed"],
             temporal["passed"],
         ])
@@ -63,6 +82,7 @@ class SemanticPatchValidator:
             "issue_type": issue_type,
             "operation": operation,
             "vocabulary_grounding": vocabulary,
+            "grounding_evidence_validation": grounding,
             "diagnosis_alignment": alignment,
             "operator_validation": operator,
             "temporal_validation": temporal,
@@ -126,6 +146,173 @@ class SemanticPatchValidator:
             "passed": not errors,
             "new_symbols": sorted(set(new_symbols)),
             "unsupported_new_symbols": sorted(set(unsupported)),
+            "errors": errors,
+            "warnings": warnings,
+        }
+    def _check_grounding_evidence(
+        self,
+        patch,
+        issue_text,
+        system_description,
+        existing_events,
+        existing_measures,
+        existing_responses,
+    ):
+        evidence = patch.get("grounding_evidence") or {}
+
+        errors = []
+        warnings = []
+
+        if not isinstance(evidence, dict) or not evidence:
+            return {
+                "passed": False,
+                "source": "",
+                "source_terms": [],
+                "verified_source_terms": [],
+                "unverified_source_terms": [],
+                "existing_element": "",
+                "new_element": "",
+                "relationship": "",
+                "errors": ["Missing grounding_evidence for semantic repair."],
+                "warnings": [],
+            }
+
+        source = str(evidence.get("source", "") or "").strip().lower()
+
+        source_terms = evidence.get("source_terms") or []
+        if isinstance(source_terms, str):
+            source_terms = [source_terms]
+
+        source_terms = [
+            str(term).strip()
+            for term in source_terms
+            if str(term).strip()
+        ]
+
+        existing_element = str(
+            evidence.get("existing_element", "") or ""
+        ).strip()
+
+        new_element = str(
+            evidence.get("new_element", "") or ""
+        ).strip()
+
+        relationship = str(
+            evidence.get("relationship", "") or ""
+        ).strip()
+
+        permitted_sources = {
+            "system_description",
+            "diagnosis",
+            "witness",
+            "existing_vocabulary",
+        }
+
+        if source not in permitted_sources:
+            errors.append(
+                "Grounding source must be one of: "
+                + ", ".join(sorted(permitted_sources))
+            )
+
+        vocabulary = [
+            str(x).strip()
+            for x in (
+                (existing_events or [])
+                + (existing_measures or [])
+                + (existing_responses or [])
+            )
+            if str(x).strip()
+        ]
+
+        if source == "system_description":
+            source_text = str(system_description or "")
+
+        elif source in {"diagnosis", "witness"}:
+            # At present the workbench supplies the selected LEGOS finding
+            # through issue_text. This remains deterministic evidence.
+            source_text = str(issue_text or "")
+
+        elif source == "existing_vocabulary":
+            source_text = "\n".join(vocabulary)
+
+        else:
+            source_text = ""
+
+        verified_terms = []
+        unverified_terms = []
+
+        normalized_source = re.sub(
+            r"\s+", " ", source_text
+        ).strip().lower()
+
+        for term in source_terms:
+            normalized_term = re.sub(
+                r"\s+", " ", term
+            ).strip().lower()
+
+            if normalized_term and normalized_term in normalized_source:
+                verified_terms.append(term)
+            else:
+                unverified_terms.append(term)
+
+        if not source_terms:
+            errors.append("grounding_evidence.source_terms is empty.")
+
+        if unverified_terms:
+            errors.append(
+                "Grounding source term(s) not found in claimed source: "
+                + ", ".join(unverified_terms)
+            )
+
+        missing_element = str(
+            patch.get("missing_element")
+            or patch.get("new_event")
+            or patch.get("new_measure")
+            or patch.get("new_capability")
+            or ""
+        ).strip()
+
+        if not new_element:
+            errors.append("grounding_evidence.new_element is empty.")
+
+        elif missing_element and new_element.lower() != missing_element.lower():
+            errors.append(
+                "grounding_evidence.new_element does not match "
+                "the patch missing_element."
+            )
+
+        operation = str(patch.get("operation", "") or "").strip()
+
+        if operation in {
+            "event_specialization",
+            "measure_specialization",
+            "capability_refinement",
+        }:
+            if not existing_element:
+                errors.append(
+                    "Semantic specialization/refinement requires "
+                    "grounding_evidence.existing_element."
+                )
+            elif existing_element.lower() not in {
+                x.lower() for x in vocabulary
+            }:
+                errors.append(
+                    "grounding_evidence.existing_element is not present "
+                    "in the supplied SLEEC vocabulary."
+                )
+
+        if not relationship:
+            errors.append("grounding_evidence.relationship is empty.")
+
+        return {
+            "passed": not errors,
+            "source": source,
+            "source_terms": source_terms,
+            "verified_source_terms": verified_terms,
+            "unverified_source_terms": unverified_terms,
+            "existing_element": existing_element,
+            "new_element": new_element,
+            "relationship": relationship,
             "errors": errors,
             "warnings": warnings,
         }

@@ -721,6 +721,12 @@ class SLEECPatchWorkbenchEngine:
 
             "proposed_rule": patch.get("proposed_rule", ""),
             "missing_element": patch.get("missing_element", ""),
+
+            # Preserve GPT V2 provenance evidence through normalization so the
+            # semantic validator can verify the proposed semantic concept against
+            # the permitted source.
+            "grounding_evidence": patch.get("grounding_evidence", {}),
+
             "new_event": patch.get("new_event", patch.get("missing_element", "")),
             "new_measure": patch.get("new_measure", patch.get("missing_element", "")),
             "new_capability": patch.get("new_capability", patch.get("missing_element", "")),
@@ -1430,8 +1436,9 @@ class SLEECPatchWorkbenchEngine:
     issue_key,
     selected_issue_value,
     original_structured,
-    patch
-):
+    patch,
+    system_description="",
+    ):
         # DEVELOPMENT BRANCH: LLM patches are surfaced for social-scientist
         # review and are NOT hard-rejected by the SLEEC syntactic/formal gate.
         # Verification still runs when the patch parses and is recorded as
@@ -1487,6 +1494,11 @@ class SLEECPatchWorkbenchEngine:
         new_analysis = validation_gate["analysis"]
         new_structured = new_analysis.get("structured", {})
         rules_json = self.sleec_text_to_rules_json(original_sleec)
+        print("\n========== GPT V2 SEMANTIC CONTEXT ==========")
+        print("Description chars:", len(system_description or ""))
+        print("Description preview:", (system_description or "")[:200])
+        print("Grounding evidence:", patch.get("grounding_evidence"))
+        print("=============================================\n")
         semantic_validation = self.semantic_validator.validate(
             sleec_text=original_sleec,
             issue={
@@ -1496,7 +1508,8 @@ class SLEECPatchWorkbenchEngine:
             patch=patch,
             existing_events=self.extract_defined_events(original_sleec),
             existing_measures=self.extract_defined_measures(original_sleec),
-            existing_responses=self.extract_rule_actions(rules_json)
+            existing_responses=self.extract_rule_actions(rules_json),
+            system_description=system_description,
         )
 
         regression_report = self.build_regression_report(
@@ -1849,6 +1862,10 @@ class SLEECPatchWorkbenchEngine:
         llm_patches = []
         gpt_warning = None
 
+        # Load the authoritative case-study Description once.
+        # The same description is used for GPT generation and semantic validation.
+        description = get_use_case_description(use_case)
+
         seen_candidate_signatures = set()
         seen_verified_signatures = set()
         seen_failed_signatures = set()
@@ -1975,7 +1992,8 @@ class SLEECPatchWorkbenchEngine:
                         issue_key=issue_key,
                         selected_issue_value=selected_issue_value,
                         original_structured=original_structured,
-                        patch=normalized_patch
+                        patch=normalized_patch,
+                        system_description=description,
                     )
 
                 validation_time += time.time() - start_validation
@@ -2003,7 +2021,6 @@ class SLEECPatchWorkbenchEngine:
         if semantic_ops:
             start_generation = time.time()
 
-            description = get_use_case_description(use_case)
 
             print("\n========== USE CASE CONTEXT ==========")
             print("Use case:", use_case)
@@ -2066,14 +2083,14 @@ class SLEECPatchWorkbenchEngine:
 
                 if patch_signature in seen_verified_signatures:
                     continue
-
                 start_validation = time.time()
                 verified = self.verify_llm_patch_once(
                     original_sleec=sleec_text,
                     issue_key=issue_key,
                     selected_issue_value=selected_issue_value,
                     original_structured=original_structured,
-                    patch=normalized_patch
+                    patch=normalized_patch,
+                    system_description=description,
                 )
                 validation_time += time.time() - start_validation
 
