@@ -73,8 +73,7 @@ class GPTPatchEngine:
             except (TypeError, ValueError):
                 normalized[key] = 0
 
-        if normalized.get("patch_id") == "not_applicable":
-            normalized["operation"] = "none"
+
 
         return normalized
 
@@ -116,11 +115,27 @@ class GPTPatchEngine:
 You are an expert in normative requirements, SLEEC reasoning,
 semantic repair, and stakeholder-centered resolution.
 
+The repair operator has already been selected by SLEEC-PATCH.
+
 Only instantiate the selected LLM-assisted semantic repair operator.
+Generate only the missing semantic/syntactic element required by that operator.
+
+Do not select another repair operator.
+Do not decide whether the selected operator is applicable.
+Do not claim that the generated candidate is formally correct or verified.
+Do not claim that the targeted well-formedness issue has been eliminated.
+
+Preserve the original stakeholder intent.
+Do not modify unrelated parts of the specification.
+Do not invent unsupported domain vocabulary.
+Never invent SLEEC syntax or SLEEC keywords.
+
 Always return valid raw JSON.
 Never return markdown.
-Never invent SLEEC syntax or SLEEC keywords.
-If a repair cannot be expressed with valid SLEEC rule syntax, return not_applicable.
+
+The generated output is a candidate repair.
+Formal correctness is determined later by SLEEC-PATCH through
+LEGOS-SLEEC re-analysis.
 """
                 },
                 {

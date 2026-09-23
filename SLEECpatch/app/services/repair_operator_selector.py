@@ -37,30 +37,29 @@ class RepairOperatorSelector:
     }
 
     BASE_LLM_OPERATORS = {
-        "conflicts": [
-            "event_specialization",
-            "measure_specialization",
-        ],
+    "conflicts": [
+        "conflict_event_specialization",
+        "conflict_measure_specialization",
+    ],
 
-        "situational_conflicts": [
-            "event_specialization",
-            "measure_specialization",
-        ],
+    "situational_conflicts": [
+        "conflict_event_specialization",
+        "conflict_measure_specialization",
+    ],
 
-        "redundancies": [
-            "event_specialization",
-            "measure_specialization",
-        ],
+    "redundancies": [
+        "redundancy_event_specialization",
+        "redundancy_measure_specialization",
+    ],
 
-        "concerns": [
-            "new_rule_generation",
-        ],
+    "concerns": [
+        "concern_new_rule_generation",
+    ],
 
-        "purpose_blocking": [
-            "capability_refinement",
-        ],
-    }
-
+    "purpose_blocking": [
+        "purpose_capability_refinement",
+    ],
+   }
     ISSUE_ALIASES = {
         "conflict": "conflicts",
         "situational_conflict": "situational_conflicts",
@@ -88,12 +87,14 @@ class RepairOperatorSelector:
         existing_events: Optional[Sequence[str]] = None,
         existing_measures: Optional[Sequence[str]] = None,
         existing_responses: Optional[Sequence[str]] = None,
+        system_description: str = "",
     ) -> Dict[str, object]:
         issue_type = self.ISSUE_ALIASES.get(issue_type, issue_type)
         rules = list(rules or [])
         existing_events = list(existing_events or [])
         existing_measures = list(existing_measures or [])
         existing_responses = list(existing_responses or [])
+        system_description = str(system_description or "")
 
         deterministic: List[str] = []
         llm: List[str] = []
@@ -110,6 +111,8 @@ class RepairOperatorSelector:
                 selected_issue,
                 existing_events,
                 existing_measures,
+                system_description,
+
             )
         elif issue_type == "redundancies":
             self._select_redundancy_operators(
@@ -171,6 +174,8 @@ class RepairOperatorSelector:
         selected_issue,
         existing_events,
         existing_measures,
+        system_description="",
+
     ):
         if len(issue_rules) < 2:
             # Do not claim deterministic applicability when the diagnosis does
@@ -189,11 +194,11 @@ class RepairOperatorSelector:
                 "Two diagnosed conflicting rules are required to establish merge compatibility.",
             )
             self._add(
-                llm, applicability, "event_specialization", False,
+                llm, applicability, "conflict_event_specialization", False,
                 "A diagnosed conflicting rule pair is required before semantic event specialization is attempted.",
             )
             self._add(
-                llm, applicability, "measure_specialization", False,
+                llm, applicability, "conflict_measure_specialization", False,
                 "Two diagnosed conflicting rules are required to establish a shared environmental measure.",
             )
             return
@@ -201,19 +206,33 @@ class RepairOperatorSelector:
         r1, r2 = issue_rules[:2]
 
         has_context = (
-            self.has_contextual_predicate(r1, existing_events)
-            or self.has_contextual_predicate(r2, existing_events)
-            or self.issue_mentions_measure(selected_issue, existing_measures)
+            self.has_conflict_measure_context(
+                r1,
+                existing_events,
+                existing_measures,
+            )
+            or
+            self.has_conflict_measure_context(
+                r2,
+                existing_events,
+                existing_measures,
+            )
         )
+
         self._add(
             deterministic,
             applicability,
             "trigger_refinement",
             has_context,
             (
-                "The diagnosed conflict contains contextual predicates that can be propagated into a trigger."
+                "At least one diagnosed conflicting rule contains a declared "
+                "contextual measure predicate whose complement can be "
+                "propagated into the other rule's trigger."
                 if has_context
-                else "No contextual predicate was identified for trigger refinement."
+                else
+                "Trigger refinement requires a declared contextual measure "
+                "predicate in one of the diagnosed conflicting rules; "
+                "event co-occurrence alone is insufficient."
             ),
         )
 
@@ -259,19 +278,29 @@ class RepairOperatorSelector:
             ),
         )
 
-        event_applicable = bool(
-            self.trigger_event(r1, existing_events)
-            or self.trigger_event(r2, existing_events)
+        event_context = self.find_event_specialization_context(
+            issue_rules=[r1, r2],
+            selected_issue=selected_issue,
+            existing_events=existing_events,
+            system_description=system_description,
+
         )
+
+        event_applicable = event_context is not None
+
         self._add(
             llm,
             applicability,
-            "event_specialization",
+            "conflict_event_specialization",
             event_applicable,
             (
-                "At least one diagnosed rule has a triggering event that can be semantically specialized."
+                "The diagnosis provides independent semantic evidence for a "
+                "finer-grained or intermediary event distinction."
                 if event_applicable
-                else "No triggering event was identified for event specialization."
+                else
+                "No independently grounded event-specialization relationship "
+                "was identified. Distinct events that merely co-occur in the "
+                "conflict are insufficient."
             ),
         )
 
@@ -281,7 +310,7 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "measure_specialization",
+            "conflict_measure_specialization",
             bool(shared_measures),
             (
                 "The conflicting rules share declared measure(s): "
@@ -345,20 +374,30 @@ class RepairOperatorSelector:
         # LLM
         # -----------------------------
 
-        event_applicable = bool(
-            redundant_rule
-            and self.trigger_event(redundant_rule, existing_events)
+        event_context = self.find_event_specialization_context(
+            issue_rules=[redundant_rule] if redundant_rule else [],
+            selected_issue=selected_issue,
+            existing_events=existing_events,
+            system_description=system_description,
+
         )
+
+        event_applicable = event_context is not None
 
         self._add(
             llm,
             applicability,
-            "event_specialization",
+            "redundancy_event_specialization",
             event_applicable,
             (
-                "The redundant rule has a trigger event that can be semantically specialized."
+                "The diagnosed redundancy contains a trigger event and a distinct "
+                "grounded event in the declared vocabulary that can represent the "
+                "required semantic distinction."
                 if event_applicable
-                else "Event specialization requires a triggering event."
+                else
+                "Event specialization requires a diagnosed trigger event and a "
+                "distinct grounded event supported by the supplied vocabulary "
+                "and diagnosis."
             ),
         )
 
@@ -371,7 +410,7 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "measure_specialization",
+            "redundancy_measure_specialization",
             bool(target_measures),
             (
                 "The redundant rule uses declared measure(s): "
@@ -434,7 +473,7 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "new_rule_generation",
+            "concern_new_rule_generation",
             True,
             "An insufficiency represents missing normative behaviour; a new rule is a candidate semantic repair.",
         )
@@ -594,7 +633,7 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "capability_refinement",
+            "purpose_capability_refinement",
             bool(purpose_action),
             (
                 "The intended purpose contains a response that can be "
@@ -662,6 +701,77 @@ class RepairOperatorSelector:
                 found.append(rule)
 
         return found[:2]
+    def find_event_specialization_context(
+        self,
+        issue_rules,
+        selected_issue,
+        existing_events,
+        system_description="",
+    ):
+        """
+        Determine whether event_specialization has sufficient grounded
+        event-level evidence to be attempted.
+
+        Event specialization is selected only when the diagnosed rules expose
+        at least two distinct declared trigger events.
+
+        Events appearing only as responses/actions do not count as candidate
+        trigger specializations.
+
+        Measures, Boolean states, defeaters, and diagnosis phrases are not
+        converted into events.
+
+        This method selects an operator only.
+        It does not generate or formally verify a patch.
+        """
+
+        if not issue_rules:
+            return None
+
+        existing_events = [
+            str(event).strip()
+            for event in (existing_events or [])
+            if str(event).strip()
+        ]
+
+        # Collect only events that actually occur in the CONDITION/TRIGGER
+        # of the diagnosed rules.
+        diagnosed_trigger_events = []
+
+        for rule in issue_rules:
+
+            if not isinstance(rule, dict):
+                continue
+
+            condition = str(rule.get("condition", "") or "")
+
+            for event in existing_events:
+
+                if re.search(
+                    rf"(?<![A-Za-z0-9_])"
+                    rf"{re.escape(event)}"
+                    rf"(?![A-Za-z0-9_])",
+                    condition,
+                    flags=re.IGNORECASE,
+                ):
+                    if event not in diagnosed_trigger_events:
+                        diagnosed_trigger_events.append(event)
+
+        # Event specialization needs an event-level distinction.
+        # One trigger event alone is insufficient.
+        # Multiple distinct trigger events in the same diagnosis establish
+        # co-occurrence/conflict only. They do NOT establish that one event
+        # specializes, refines, or is a subtype/component of another.
+        #conflict_event_specialization
+        # Therefore, do not select semantic event specialization solely from
+        # distinct diagnosed trigger events.
+        if len(diagnosed_trigger_events) < 2:
+            return None
+
+        return None
+
+
+
 
     def trigger_event(self, rule: Optional[dict], existing_events: Sequence[str]) -> str:
         if not rule:
@@ -713,7 +823,77 @@ class RepairOperatorSelector:
             or c2.issubset(c1)
             or bool(c1.intersection(c2))
         )
+    def has_conflict_measure_context(
+        self,
+        rule,
+        existing_events,
+        existing_measures,
+    ) -> bool:
+        """
+        Return True only when the rule trigger contains a declared
+        contextual measure in addition to its leading trigger event.
 
+        This mirrors the applicability requirement used by deterministic
+        conflict trigger refinement: event co-occurrence alone is not
+        sufficient.
+        """
+        if not rule:
+            return False
+
+        event = self.trigger_event(rule, existing_events)
+
+        measures = self.declared_measures_in_rule(
+            rule,
+            existing_measures,
+        )
+
+        if not measures:
+            return False
+
+        # A measure is contextual only when it occurs in the trigger
+        # condition in addition to the leading event.
+        condition = str(rule.get("condition", "") or "").strip()
+
+        if not condition:
+            return False
+
+        if event:
+            event_pattern = (
+                rf"^\s*{re.escape(str(event))}"
+                rf"(?=\s+and\b|\s*$)"
+            )
+
+            remainder = re.sub(
+                event_pattern,
+                "",
+                condition,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+
+            remainder = re.sub(
+                r"^and\b",
+                "",
+                remainder,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+        else:
+            remainder = condition
+
+        if not remainder:
+            return False
+
+        return any(
+            re.search(
+                rf"(?<![A-Za-z0-9_])"
+                rf"{re.escape(str(measure))}"
+                rf"(?![A-Za-z0-9_])",
+                remainder,
+                flags=re.IGNORECASE,
+            )
+            for measure in measures
+        )
     def has_contextual_predicate(self, rule, existing_events) -> bool:
         event = self.trigger_event(rule, existing_events)
         terms = self.condition_terms(rule.get("condition", ""))

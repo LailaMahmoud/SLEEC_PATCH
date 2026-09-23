@@ -756,42 +756,61 @@ class SLEECPatchWorkbenchEngine:
             target_rule_id = rule_ids[0]
 
         delete_operations = [
-            "delete",
-            "delete_rule",
-            "delete_redundant_rule",
-            "rule_removal"
-        ]
+                "delete",
+                "delete_rule",
+                "delete_redundant_rule",
+                "rule_removal"
+            ]
 
         replace_operations = [
-            "edit",
-            "edit_rule",
-            "add_defeater",
-            "defeater_introduction",
-            "defeater_propagation",
-            "purpose_defeater",
-            "trigger_refinement",
-            "trigger_strengthening",
-            "temporal_refinement",
-            "rule_merging",
-            "rule_decomposition",
-            "refine_condition",
-            "specialize_condition",
-            "add_contextual_constraint",
-            "replace_action",
-            "refine_vague_predicate",
-            "refine_action",
-            "capability_refinement",
-            "event_specialization",
-            "measure_specialization"
+        # Deterministic operators
+        "edit",
+        "edit_rule",
+        "add_defeater",
+        "defeater_introduction",
+        "defeater_propagation",
+        "purpose_defeater",
+        "trigger_refinement",
+        "trigger_strengthening",
+        "temporal_refinement",
+        "rule_merging",
+        "rule_decomposition",
+        "refine_condition",
+        "specialize_condition",
+        "add_contextual_constraint",
+        "replace_action",
+        "refine_vague_predicate",
+        "refine_action",
+
+        # Legacy semantic operator names
+        "capability_refinement",
+        "event_specialization",
+        "measure_specialization",
+
+        # WFI-specific semantic operators
+        "redundancy_event_specialization",
+        "redundancy_measure_specialization",
+        "purpose_capability_refinement",
+        "conflict_event_specialization",
+        "conflict_measure_specialization",
         ]
 
         add_operations = [
             "add",
             "add_rule",
-            "new_rule_generation"
+
+            # Legacy semantic operator
+            "new_rule_generation",
+
+            # WFI-specific semantic operator
+            "concern_new_rule_generation",
         ]
 
-        if operation == "event_specialization":
+        if operation in {
+            "event_specialization",
+            "redundancy_event_specialization",
+            "conflict_event_specialization",
+        }:
             new_event = patch.get("new_event") or patch.get("missing_element", "")
 
             if new_event and f"event {new_event}" not in sleec_text:
@@ -800,7 +819,11 @@ class SLEECPatchWorkbenchEngine:
                     f"event {new_event}\ndef_end"
                 )
 
-        if operation == "measure_specialization":
+        if operation in {
+            "measure_specialization",
+            "redundancy_measure_specialization",
+            "conflict_measure_specialization",
+        }:
             new_measure = patch.get("new_measure") or patch.get("missing_element", "")
 
             if new_measure and f"measure {new_measure}" not in sleec_text:
@@ -809,7 +832,10 @@ class SLEECPatchWorkbenchEngine:
                     f"measure {new_measure}:boolean\ndef_end"
                 )
 
-        if operation == "capability_refinement":
+        if operation in {
+            "capability_refinement",
+            "purpose_capability_refinement",
+        }:
             new_capability = (
                 patch.get("new_capability")
                 or patch.get("missing_element")
@@ -1838,13 +1864,19 @@ class SLEECPatchWorkbenchEngine:
         attempts = 0
 
         rules_json = self.sleec_text_to_rules_json(sleec_text)
+
+        # Load the authoritative case-study description once.
+        # It is used for operator selection, GPT generation, and semantic validation.
+        description = get_use_case_description(use_case)
+
         operator_plan = self.operator_selector.select(
             issue_type=issue_key,
             rules=rules_json,
             selected_issue=selected_issue_value,
             existing_events=self.extract_defined_events(sleec_text),
             existing_measures=self.extract_defined_measures(sleec_text),
-            existing_responses=self.extract_rule_actions(rules_json)
+            existing_responses=self.extract_rule_actions(rules_json),
+            system_description=description
         )
 
         print("\n========== REPAIR OPERATOR SELECTION ==========")
@@ -1862,9 +1894,7 @@ class SLEECPatchWorkbenchEngine:
         llm_patches = []
         gpt_warning = None
 
-        # Load the authoritative case-study Description once.
-        # The same description is used for GPT generation and semantic validation.
-        description = get_use_case_description(use_case)
+
 
         seen_candidate_signatures = set()
         seen_verified_signatures = set()
@@ -2043,7 +2073,12 @@ class SLEECPatchWorkbenchEngine:
                 llm_patches = []
                 gpt_warning = f"GPT semantic repair generation failed: {gpt_error}"
                 print(">>> GPT GENERATION FAILED:", repr(gpt_error))
-
+            print("\n========== GPT RETURNED PATCHES ==========")
+            print("COUNT:", len(llm_patches))
+            for idx, candidate in enumerate(llm_patches, start=1):
+                print(f"\nGPT CANDIDATE {idx}:")
+                print(candidate)
+            print("==========================================\n")
             for i, p in enumerate(llm_patches, start=1):
                 p["patch_id"] = f"g{i}"
                 p["id"] = f"g{i}"
@@ -2084,6 +2119,13 @@ class SLEECPatchWorkbenchEngine:
                 if patch_signature in seen_verified_signatures:
                     continue
                 start_validation = time.time()
+                print("\n========== ENTERING LLM VERIFICATION ==========")
+                print("PATCH ID:", normalized_patch.get("patch_id"))
+                print("OPERATION:", normalized_patch.get("operation"))
+                print("MISSING ELEMENT:", normalized_patch.get("missing_element"))
+                print("PROPOSED RULE:", normalized_patch.get("proposed_rule"))
+                print("GROUNDING:", normalized_patch.get("grounding_evidence"))
+                print("================================================\n")
                 verified = self.verify_llm_patch_once(
                     original_sleec=sleec_text,
                     issue_key=issue_key,
@@ -2092,6 +2134,9 @@ class SLEECPatchWorkbenchEngine:
                     patch=normalized_patch,
                     system_description=description,
                 )
+                print("\n========== LLM VERIFICATION RETURN ==========")
+                print(verified)
+                print("=============================================\n")
                 validation_time += time.time() - start_validation
 
                 if verified and bool(verified.get("verified", False)):
