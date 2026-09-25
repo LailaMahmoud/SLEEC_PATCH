@@ -727,9 +727,22 @@ class SLEECPatchWorkbenchEngine:
             # the permitted source.
             "grounding_evidence": patch.get("grounding_evidence", {}),
 
-            "new_event": patch.get("new_event", patch.get("missing_element", "")),
-            "new_measure": patch.get("new_measure", patch.get("missing_element", "")),
-            "new_capability": patch.get("new_capability", patch.get("missing_element", "")),
+            "new_event": (
+                patch.get("new_event", "")
+                if operation == "semantic_rule_merging"
+                else patch.get("new_event", patch.get("missing_element", ""))
+            ),
+            "new_measure": (
+                patch.get("new_measure", "")
+                if operation == "semantic_rule_merging"
+                else patch.get("new_measure", patch.get("missing_element", ""))
+            ),
+            "new_capability": (
+                patch.get("new_capability", "")
+                if operation == "semantic_rule_merging"
+                else patch.get("new_capability", patch.get("missing_element", ""))
+            ),
+
             "new_rule": patch.get("new_rule", patch.get("proposed_rule", "")),
             "applicability": patch.get("applicability", {}),
             "natural_language_explanation": patch.get(
@@ -793,6 +806,7 @@ class SLEECPatchWorkbenchEngine:
         "purpose_capability_refinement",
         "conflict_event_specialization",
         "conflict_measure_specialization",
+        "semantic_rule_merging",
         ]
 
         add_operations = [
@@ -858,6 +872,49 @@ class SLEECPatchWorkbenchEngine:
                 return sleec_text.replace(original_rule, "")
 
             return self.delete_rules_by_id(sleec_text, ids_to_delete)
+
+        # ---------------------------------------------------------
+        # RULE MERGING
+        # Replace the primary diagnosed rule with the merged rule
+        # and remove the other diagnosed conflicting rule(s).
+        # ---------------------------------------------------------
+        if operation in {"rule_merging", "semantic_rule_merging"}:
+            if not proposed_rule:
+                return sleec_text
+
+            merge_rule_ids = list(rule_ids or [])
+
+            if target_rule_id and target_rule_id not in merge_rule_ids:
+                merge_rule_ids.insert(0, target_rule_id)
+
+            if not merge_rule_ids:
+                return sleec_text
+
+            primary_rule_id = target_rule_id or merge_rule_ids[0]
+
+            # First replace the primary rule with the merged rule.
+            patched = self.replace_rule_by_id(
+                sleec_text,
+                primary_rule_id,
+                proposed_rule
+            )
+
+            if patched == sleec_text:
+                return sleec_text
+
+            # Then remove the other rules absorbed by the merge.
+            absorbed_rule_ids = {
+                rid for rid in merge_rule_ids
+                if rid.lower() != primary_rule_id.lower()
+            }
+
+            if absorbed_rule_ids:
+                patched = self.delete_rules_by_id(
+                    patched,
+                    absorbed_rule_ids
+                )
+
+            return patched
 
         if operation in replace_operations:
             if target_rule_id and proposed_rule:
@@ -1576,26 +1633,34 @@ class SLEECPatchWorkbenchEngine:
             semantic_validation.get("temporal_validation", {}).get("passed")
         )
 
-        formally_verified = bool(
-            target_fixed
-            and related_issue is None
-            and regression_report["regression_passed"]
-            and semantic_validation.get("valid")
+        # Semantic validation is advisory.
+        # It does not determine formal verification.
+        semantic_warning = not semantic_validation.get("valid")
+
+        patch["semantic_warning"] = semantic_warning
+        patch["semantic_warning_reason"] = (
+            "; ".join(semantic_validation.get("errors", []))
+            if semantic_warning
+            else ""
         )
+        formally_verified = bool(
+        target_fixed
+        and related_issue is None
+        and regression_report["regression_passed"]
+         )
 
         if not formally_verified:
             reasons = []
-            if not semantic_validation.get("valid"):
-                reasons.append(
-                    "semantic validation failed: "
-                    + "; ".join(semantic_validation.get("errors", []))
-                )
+
             if not target_fixed:
                 reasons.append("target issue not fixed")
+
             if related_issue:
                 reasons.append("introduced related issue on edited rule")
+
             if not regression_report["regression_passed"]:
                 reasons.append("introduced new WFI during regression")
+
             failure_reason = "Surfaced for review; " + ", ".join(reasons)
         else:
             failure_reason = ""
@@ -1890,6 +1955,19 @@ class SLEECPatchWorkbenchEngine:
             issue_key: [selected_issue_value]
         }
 
+        # Diagnosed rules referenced by the selected WFI.
+        # Reuse the same extraction logic as the repair-operator selector.
+        diagnosed_issue_rules = self.operator_selector.find_issue_rules(
+            selected_issue_value,
+            rules_json
+        )
+
+        diagnosed_rule_ids = [
+            str(rule.get("id", "")).strip()
+            for rule in diagnosed_issue_rules
+            if str(rule.get("id", "")).strip()
+        ]
+
         semantic_ops = operator_plan.get("llm", [])
         llm_patches = []
         gpt_warning = None
@@ -2083,6 +2161,9 @@ class SLEECPatchWorkbenchEngine:
                 p["patch_id"] = f"g{i}"
                 p["id"] = f"g{i}"
                 p["source"] = p.get("source", "llm")
+
+                if p.get("operation") == "semantic_rule_merging":
+                    p["rule_ids"] = diagnosed_rule_ids
 
                 self.store.save_patch_candidate({
                     "run_id": run_id,

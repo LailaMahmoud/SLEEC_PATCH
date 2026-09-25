@@ -143,32 +143,83 @@ class DeterministicRepairEngine:
         # =========================================================
         # 2. DEFEATER PROPAGATION
         # =========================================================
+        #
+        # Applicability contract:
+        #
+        #   R1: when A and C then E1
+        #
+        #   R2: when A then E2
+        #       unless C then E1
+        #
+        # The alternative response E1 in R2 is redundant with R1.
+        # Preserve R1 and propagate the defeater condition into
+        # the trigger of R2:
+        #
+        #   R2': when A and not C then E2
+        #
+        # This operator is therefore pair-aware. A rule merely
+        # containing a defeater is not sufficient for applicability.
+        # =========================================================
 
-        if (
-            "defeater_propagation" in operators
-            and target_rule
-            and target_rule.get("defeater")
-        ):
-            proposed_rule = self.propagate_defeater(target_rule)
+        if "defeater_propagation" in operators:
 
-            # None means the formal transformation is not applicable.
-            if proposed_rule:
-                patches.append({
-                    "patch_id": f"d_propagate_{rule_id}",
-                    "id": f"d_propagate_{rule_id}",
-                    "source": "deterministic",
-                    "issue_type": "redundancies",
-                    "operation": "defeater_propagation",
-                    "target_rule_id": rule_id,
-                    "original_rule": original_rule,
-                    "proposed_rule": proposed_rule,
-                    "natural_language_explanation": (
-                        f"Propagate the defeater condition of {rule_id} "
-                        "into its trigger according to the transformation "
-                        "'when A then B unless C' -> "
-                        "'when A and not C then B'."
-                    )
-                })
+            supporting_rule, defeater_rule = (
+                self.find_defeater_propagation_pair(
+                    selected_issue,
+                    rules
+                )
+            )
+
+            if supporting_rule and defeater_rule:
+
+                proposed_rule = self.propagate_defeater(
+                    defeater_rule
+                )
+
+                if proposed_rule:
+
+                    defeater_rule_id = str(
+                        defeater_rule.get("id", "")
+                    ).strip()
+
+                    supporting_rule_id = str(
+                        supporting_rule.get("id", "")
+                    ).strip()
+
+                    patches.append({
+                        "patch_id": (
+                            f"d_propagate_{defeater_rule_id}"
+                        ),
+                        "id": (
+                            f"d_propagate_{defeater_rule_id}"
+                        ),
+                        "source": "deterministic",
+                        "issue_type": "redundancies",
+                        "operation": "defeater_propagation",
+
+                        # R2 is the rule actually changed.
+                        "target_rule_id": defeater_rule_id,
+
+                        # R1 provides the redundant alternative
+                        # response and remains unchanged.
+                        "supporting_rule_id": supporting_rule_id,
+
+                        "original_rule": self.rule_to_text(
+                            defeater_rule
+                        ),
+
+                        "proposed_rule": proposed_rule,
+
+                        "natural_language_explanation": (
+                            f"Propagate the defeater condition of "
+                            f"{defeater_rule_id} into its trigger. "
+                            f"Its alternative response is already "
+                            f"provided by {supporting_rule_id}, so "
+                            f"{supporting_rule_id} is preserved and "
+                            f"{defeater_rule_id} is restricted to "
+                            "the complement of the defeater context."
+                        )
+                    })
 
         return patches
     def generate_existential_concern_patches(
@@ -1179,12 +1230,23 @@ class DeterministicRepairEngine:
         )
     def compatible_for_merging(self, r1, r2):
         """
-        Rule merging is applicable only when both diagnosed rules
-        have the same triggering event.
+        Check applicability of the confirmed cross-event Rule Merging pattern.
 
-        A SLEEC rule contains one triggering event followed optionally
-        by constraints on measures. Different triggering events cannot
-        be merged.
+        Supported pattern:
+
+            R1: when E1 then A
+            R2: when E2 and C then opposite(A)
+
+        becomes:
+
+            when E1
+            then A
+            unless E2 and C
+            then opposite(A)
+
+        E1 and E2 may be different triggering events.
+        Exactly one rule must provide the additional context C.
+        The two primary actions must have opposite polarity.
         """
         if not r1 or not r2:
             return False
@@ -1198,7 +1260,26 @@ class DeterministicRepairEngine:
         event1 = self.norm_atom(parts1[0])
         event2 = self.norm_atom(parts2[0])
 
-        return bool(event1 and event2 and event1 == event2)
+        if not event1 or not event2:
+            return False
+
+        # Confirm the conflicting responses:
+        # A versus opposite(A).
+        if not self.is_opposite_action(
+            r1.get("action", ""),
+            r2.get("action", "")
+        ):
+            return False
+
+        # Confirm the known E1 -> A / E2 and C -> opposite(A) shape.
+        r1_has_context = len(parts1) > 1
+        r2_has_context = len(parts2) > 1
+
+        # Exactly one rule must contain the additional context C.
+        if r1_has_context == r2_has_context:
+            return False
+
+        return True
 
     def propagate_defeater(self, rule):
         raw = self.rule_raw(rule)
@@ -1230,25 +1311,38 @@ class DeterministicRepairEngine:
         new_body = f"{primary} {kept}".strip() if kept else primary
 
         return f"{head} when {self.combine_trigger(trigger, negated)} then {new_body}".strip()
-
     def merge_conflicting_rules(self, r1, r2):
         """
-        Merge two conflicting SLEEC rules only when they share the same
-        triggering event.
+        Apply one of the two confirmed Rule Merging contracts.
 
-        Expected form:
+        Contract 1 — Same event:
 
-            r1: when E then A
-            r2: when E and C then B
+            R1: when E then A
+            R2: when E and C then opposite(A)
 
         becomes:
 
-            when E then A unless C then B
+            when E
+            then A
+            unless C
+            then opposite(A)
 
-        where E is the single shared triggering event and C contains the
-        additional measure constraints of the more specific rule.
+        Contract 2 — Cross event:
 
-        Different triggering events are not mergeable.
+            R1: when E1 then A
+            R2: when E2 and C then opposite(A)
+
+        becomes:
+
+            when E1
+            then A
+            unless E2 and C
+            then opposite(A)
+
+        Exactly one rule must be the base rule and exactly one rule
+        must contain additional contextual conditions.
+
+        Temporal constraints on both responses are preserved.
         """
 
         if not self.compatible_for_merging(r1, r2):
@@ -1260,65 +1354,105 @@ class DeterministicRepairEngine:
         if not parts1 or not parts2:
             return None
 
-        # The first condition component is the single triggering event.
-        event1 = self.norm_atom(parts1[0])
-        event2 = self.norm_atom(parts2[0])
+        # Identify:
+        #   base rule      = E1 -> A
+        #   exception rule = E2 and C -> opposite(A)
+        if len(parts1) == 1 and len(parts2) > 1:
+            base_rule = r1
+            exception_rule = r2
+            base_parts = parts1
+            exception_parts = parts2
 
-        if not event1 or event1 != event2:
-            return None
-
-        # Determine which rule is general and which is specialized.
-        extra1 = parts1[1:]
-        extra2 = parts2[1:]
-
-        if not extra1 and extra2:
-            general = r1
-            specific = r2
-            context_parts = extra2
-
-        elif not extra2 and extra1:
-            general = r2
-            specific = r1
-            context_parts = extra1
+        elif len(parts2) == 1 and len(parts1) > 1:
+            base_rule = r2
+            exception_rule = r1
+            base_parts = parts2
+            exception_parts = parts1
 
         else:
-            # This deterministic operator currently handles the precise
-            # general-vs-specialized pattern defined for rule merging.
             return None
 
-        context = self.clean_condition(" and ".join(context_parts))
+        base_split = self.split_trigger_body(
+            self.rule_raw(base_rule)
+        )
+        exception_split = self.split_trigger_body(
+            self.rule_raw(exception_rule)
+        )
 
-        if not context:
+        if not base_split or not exception_split:
             return None
 
-        general_split = self.split_trigger_body(self.rule_raw(general))
-        specific_split = self.split_trigger_body(self.rule_raw(specific))
+        base_head, base_trigger, base_body = base_split
+        _, exception_trigger, exception_body = exception_split
 
-        if not general_split or not specific_split:
+        if not base_trigger or not exception_trigger:
             return None
 
-        general_head, general_trigger, general_body = general_split
-        _, _, specific_body = specific_split
+        base_event = self.norm_atom(base_parts[0])
+        exception_event = self.norm_atom(exception_parts[0])
 
-        # Do not copy an existing defeater chain from the specialized rule.
-        # The alternative response is its primary response only.
-        specific_unless = self.top_level_index(specific_body, "unless", 0)
+        if not base_event or not exception_event:
+            return None
 
-        if specific_unless >= 0:
-            alternative = specific_body[:specific_unless].strip()
+        # ---------------------------------------------------------
+        # Contract 1: SAME EVENT
+        #
+        #   E -> A
+        #   E and C -> opposite(A)
+        #
+        # becomes:
+        #
+        #   E -> A unless C then opposite(A)
+        # ---------------------------------------------------------
+        if base_event == exception_event:
+            context_parts = exception_parts[1:]
+
+            if not context_parts:
+                return None
+
+            defeater_condition = self.clean_condition(
+                " and ".join(context_parts)
+            )
+
+        # ---------------------------------------------------------
+        # Contract 2: CROSS EVENT
+        #
+        #   E1 -> A
+        #   E2 and C -> opposite(A)
+        #
+        # becomes:
+        #
+        #   E1 -> A unless E2 and C then opposite(A)
+        # ---------------------------------------------------------
         else:
-            alternative = specific_body.strip()
+            defeater_condition = exception_trigger
+
+        if not defeater_condition:
+            return None
+
+        # Preserve only the primary response of the exception rule.
+        # Do not copy its existing defeater chain into the alternative.
+        exception_unless = self.top_level_index(
+            exception_body,
+            "unless",
+            0
+        )
+
+        if exception_unless >= 0:
+            alternative = exception_body[:exception_unless].strip()
+        else:
+            alternative = exception_body.strip()
 
         if not alternative:
             return None
 
         return (
-            f"{general_head} when {general_trigger} "
-            f"then {general_body} "
-            f"unless {self.wrap_group(context)} "
+            f"{base_head} when {base_trigger} "
+            f"then {base_body} "
+            f"unless {self.wrap_group(defeater_condition)} "
             f"then {alternative}"
         ).strip()
-
+    
     def decompose_conflicting_rule(self, r1, r2):
         split1 = self.split_trigger_body(self.rule_raw(r1))
         context = self.specific_context(
@@ -1942,6 +2076,203 @@ class DeterministicRepairEngine:
     def rule_to_text(self, rule):
         return self.rule_raw(rule)
 
+    def find_defeater_propagation_pair(self, selected_issue, rules):
+        """
+        Find the diagnosed redundancy pattern required for
+        deterministic defeater propagation.
+
+        Required structure:
+
+            R1: when A and C then E1
+
+            R2: when A then E2
+                unless C then E1
+
+        The alternative response E1 in R2 is redundant with R1.
+
+        Propagation preserves R1 and transforms R2 into:
+
+            R2': when A and not C then E2
+
+        Returns:
+            (supporting_rule, defeater_rule)
+
+        or:
+            (None, None)
+
+        when the formal applicability conditions do not hold.
+        """
+
+        issue_text = str(selected_issue or "")
+
+        # Extract only rules explicitly identified by the diagnosis.
+        candidate_ids = re.findall(
+            r"\b(?:r\d+[A-Za-z]*(?:_[A-Za-z0-9]+)*|"
+            r"rule\d+[A-Za-z]*(?:_[A-Za-z0-9]+)*|"
+            r"c\d+[A-Za-z]*(?:_[A-Za-z0-9]+)*)\b",
+            issue_text,
+            flags=re.IGNORECASE
+        )
+
+        matched_rules = []
+
+        for candidate_id in candidate_ids:
+            found = self.find_rule(candidate_id, rules)
+
+            if not found:
+                continue
+
+            actual_id = str(found.get("id", "")).strip()
+
+            if not actual_id:
+                continue
+
+            if any(
+                str(existing.get("id", "")).lower()
+                == actual_id.lower()
+                for existing in matched_rules
+            ):
+                continue
+
+            matched_rules.append(found)
+
+        if len(matched_rules) < 2:
+            return None, None
+
+        # Either diagnosed rule may be the rule containing
+        # the alternative-response defeater.
+        for defeater_rule in matched_rules:
+
+            raw = self.rule_raw(defeater_rule)
+            split = self.split_trigger_body(raw)
+
+            if not split:
+                continue
+
+            _, base_trigger, body = split
+
+            unless_index = self.top_level_index(
+                body,
+                "unless",
+                0
+            )
+
+            if unless_index < 0:
+                continue
+
+            after_unless = body[
+                unless_index + len("unless"):
+            ].strip()
+
+            # Propagation requires an alternative response:
+            #
+            #     unless C then E1
+            #
+            then_index = self.top_level_index(
+                after_unless,
+                "then",
+                0
+            )
+
+            if then_index < 0:
+                continue
+
+            defeater_condition = self.clean_condition(
+                after_unless[:then_index]
+            )
+
+            alternative_response = self.clean_condition(
+                after_unless[
+                    then_index + len("then"):
+                ]
+            )
+
+            # This operator handles one alternative-response
+            # defeater at a time. Do not absorb a later defeater
+            # into E1.
+            next_unless = self.top_level_index(
+                alternative_response,
+                "unless",
+                0
+            )
+
+            if next_unless >= 0:
+                alternative_response = self.clean_condition(
+                    alternative_response[:next_unless]
+                )
+
+            if not defeater_condition or not alternative_response:
+                continue
+
+            base_parts = {
+                self.norm_atom(part)
+                for part in self.condition_parts(base_trigger)
+                if self.norm_atom(part)
+            }
+
+            if not base_parts:
+                continue
+
+            defeater_atom = self.norm_atom(
+                defeater_condition
+            )
+
+            alternative_atom = self.norm_atom(
+                alternative_response
+            )
+
+            if not defeater_atom or not alternative_atom:
+                continue
+
+            for supporting_rule in matched_rules:
+
+                if supporting_rule is defeater_rule:
+                    continue
+
+                supporting_parts = {
+                    self.norm_atom(part)
+                    for part in self.condition_parts(
+                        supporting_rule.get("condition", "")
+                    )
+                    if self.norm_atom(part)
+                }
+
+                supporting_action = self.norm_atom(
+                    supporting_rule.get("action", "")
+                )
+
+                if not supporting_parts or not supporting_action:
+                    continue
+
+                # Required:
+                #
+                # supporting rule: A AND C -> E1
+                # defeater rule:   A -> E2 unless C -> E1
+                #
+                # Therefore:
+                #   1. A must be contained in A AND C
+                #   2. C must be the additional context
+                #   3. E1 must match the alternative response.
+
+                if not base_parts < supporting_parts:
+                    continue
+
+                extra_parts = supporting_parts - base_parts
+
+                if len(extra_parts) != 1:
+                    continue
+
+                extra_context = next(iter(extra_parts))
+
+                if extra_context != defeater_atom:
+                    continue
+
+                if supporting_action != alternative_atom:
+                    continue
+
+                return supporting_rule, defeater_rule
+
+        return None, None
     def find_redundant_rule_pair(self, selected_issue, rules):
         """
         Return (redundant_rule, survivor_rule) only when the redundancy

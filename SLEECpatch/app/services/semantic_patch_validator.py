@@ -699,12 +699,52 @@ class SemanticPatchValidator:
                     "Specialized conflict measure is not used in "
                     "the proposed rule."
                 )
+        # ---------------------------------------------------------
+        # CONFLICT — SEMANTIC RULE MERGING
+        # ---------------------------------------------------------
+        elif operation == "semantic_rule_merging":
+            if not proposed_rule:
+                errors.append(
+                    "Semantic Rule Merging did not produce a merged rule."
+                )
+
+            # Semantic Rule Merging should combine the diagnosed
+            # conflicting rules rather than inventing a new event,
+            # measure, or capability merely to avoid the conflict.
+            new_event = str(
+                patch.get("new_event", "") or ""
+            ).strip()
+
+            new_measure = str(
+                patch.get("new_measure", "") or ""
+            ).strip()
+
+            new_capability = str(
+                patch.get("new_capability", "") or ""
+            ).strip()
+
+            if new_event or new_measure or new_capability:
+                errors.append(
+                    "Semantic Rule Merging must merge the diagnosed rules "
+                    "without introducing an unrelated new event, measure, "
+                    "or capability."
+                )
+
+            # A semantic merge should represent the diagnosed pair.
+            # Formal correctness is NOT decided here; the resulting
+            # specification will be checked by LEGOS-SLEEC.
+            if not original_rule:
+                errors.append(
+                    "Semantic Rule Merging requires the diagnosed "
+                    "conflicting rules as its original-rule context."
+                )        
 
         return {
             "passed": not errors,
             "errors": errors,
             "warnings": warnings,
         }
+    
 
     def _check_temporal_alignment(self, issue_text, original_rule, proposed_rule):
         issue_bounds = self._time_bounds(issue_text)

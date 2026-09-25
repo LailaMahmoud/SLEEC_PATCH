@@ -77,6 +77,7 @@ LLM_SEMANTIC_OPERATORS = [
     # Situational conflict
     "conflict_event_specialization",
     "conflict_measure_specialization",
+    "semantic_rule_merging",
 ]
 
 
@@ -141,10 +142,46 @@ Allowed rule shapes:
        unless Condition
 
 Allowed condition syntax:
-- and, or, not
-- parentheses for grouping
+- "and" may combine trigger events and supported conditions.
+- "not" may negate supported boolean conditions.
+- "or" is allowed only inside supported condition/measure expressions;
+  it must NOT be used to combine alternative trigger events.
+- parentheses for grouping supported condition/measure expressions
 - boolean measures as {measureName}
 - numeric comparisons such as {measureName} > ConstantName
+
+IMPORTANT EVENT-TRIGGER RESTRICTION:
+- A SLEEC rule has exactly ONE trigger event immediately after "when".
+
+- After the trigger event, "and" may introduce only a supported
+  condition/measure expression. It must NOT introduce another event.
+
+- Do NOT write:
+      when EventA or EventB then Action
+
+- Do NOT write:
+      when EventA and EventB then Action
+
+- VALID shapes include:
+      when EventA then Action
+      when EventA and {{measureA}} then Action
+      when EventA and (not {{measureA}}) then Action
+      when EventA and ({{measureA}} or {{measureB}}) then Action
+
+- INVALID shapes include:
+      when EventA or EventB then Action
+      when EventA and EventB then Action
+
+- Event names are NOT boolean conditions and must not be placed after
+  "and", "or", or "not" as if they were measures.
+
+- Alternative trigger events cannot be combined into one trigger using
+  either "and" or "or".
+
+- If a repair requires combining two different trigger events and no
+  equivalent repair can be expressed using one existing trigger event
+  plus grounded measure conditions, defeaters, responses, or temporal
+  constraints, do NOT invent a merged rule. Return no candidate.
 
 Forbidden syntax:
 - Do not use IF, ELSE, REQUIRES, BECAUSE, SHOULD, MUST, UNTIL, EXCEPT, IMPLIES, or arrows.
@@ -1658,6 +1695,153 @@ Do not manufacture measure-name variants.
 
 {PATCH_OUTPUT_FORMAT}
 """
+def semantic_rule_merging_prompt(
+    issue_type,
+    rules,
+    findings,
+    system_description="",
+    existing_events=None,
+    existing_measures=None,
+    existing_responses=None
+):
+    repair_operator = "semantic_rule_merging"
+
+    payload = _build_semantic_payload(
+        issue_type=issue_type,
+        rules=rules,
+        findings=findings,
+        repair_operator=repair_operator,
+        system_description=system_description,
+        existing_events=existing_events,
+        existing_measures=existing_measures,
+        existing_responses=existing_responses
+    )
+
+    return f"""
+{_semantic_common_instructions()}
+
+WFI:
+Situational Conflict
+
+WFI DEFINITION:
+A situational conflict occurs when individually meaningful rules can become
+applicable in a diagnosed situation while requiring conflicting or partially
+conflicting behaviours.
+
+SELECTED REPAIR OPERATOR:
+{repair_operator}
+
+OPERATOR DEFINITION:
+Semantically merge the rules identified by LEGOS-SLEEC as participating
+in the diagnosed situational conflict when deterministic rule_merging is
+not applicable.
+
+The purpose of this operator is NOT to discover new conflicting rules.
+The conflicting rules have already been identified by LEGOS-SLEEC.
+
+TASK:
+1. Identify the exact rules supplied in the diagnosed situational conflict.
+2. Use only those diagnosed rules as the rules to be merged.
+3. Examine their triggers, responses, defeaters, temporal constraints,
+   diagnosis, and witness.
+4. Determine a semantically meaningful way to represent their intended
+   behaviours in a merged SLEEC rule.
+5. Preserve the intent of both diagnosed rules.
+6. Use the diagnosed witness and system description only as semantic
+   grounding for the merge.
+7. Generate up to 3 semantically distinct merged-rule candidates.
+
+IMPORTANT CONSTRAINTS:
+- Do NOT select unrelated rules from the specification.
+- Do NOT claim that a candidate resolves the conflict.
+- Do NOT claim that a candidate is verified.
+- Do NOT remove behaviour merely to make the conflict disappear.
+- Do NOT invent unsupported system semantics.
+- Preserve relevant temporal constraints.
+- Preserve relevant defeater behaviour unless the proposed merge explicitly
+  and meaningfully represents that behaviour.
+- Do not generate cosmetic variants of the same merged rule.
+- Every candidate must represent a genuine semantic alternative.
+SLEEC SYNTAX CONTRACT:
+Every proposed merged rule MUST be syntactically valid SLEEC.
+
+- Do NOT combine alternative trigger events using "or".
+  INVALID:
+      when EventA or EventB then Response
+
+- Event triggers may be combined only using structures already supported
+  by the supplied SLEEC specification.
+
+- Boolean "or" may be used only inside supported measure expressions,
+  for example:
+      ({{measureA}} or {{measureB}})
+  when that syntax is already supported by the specification.
+
+- Do NOT invent new SLEEC syntax, operators, keywords, or rule forms.
+
+- Use only events, measures, responses, constants, and temporal units
+  grounded in CURRENT USE-CASE INPUT.
+
+- A semantic merge must reconcile the diagnosed rules; merely placing
+  their trigger events on opposite sides of "or" is NOT a semantic merge.
+
+- Preserve the distinct semantics of the diagnosed rules. If the rules
+  have different defeaters, alternative responses, or temporal bounds,
+  explicitly reason about those differences when constructing the
+  candidate.
+
+- If a temporal constraint from a diagnosed rule remains relevant to the
+  behaviour represented by the merged candidate, preserve it on the
+  corresponding response. Do NOT arbitrarily transfer that temporal
+  constraint to behaviour originating from another rule.
+
+- The proposed_rule MUST be directly parseable as a SLEEC rule without
+  requiring a later syntax-repair step.
+
+- If no meaningful merged rule can be expressed using the existing SLEEC
+  grammar and grounded vocabulary, return no candidate instead of
+  inventing syntax.
+DETERMINISTIC FALLBACK RELATION:
+This operator is intended for diagnosed situational conflicts for which
+deterministic rule_merging is not structurally applicable.
+
+It must not simply reproduce a deterministic rule_merging candidate.
+
+VERIFICATION:
+The generated rules are CANDIDATE PATCHES ONLY.
+
+SLEEC-PATCH will independently:
+1. apply each candidate to the complete SLEEC specification;
+2. rerun LEGOS-SLEEC;
+3. determine whether the original target situational conflict is removed;
+4. detect whether the candidate introduces other WFIs.
+
+A candidate must therefore never describe itself as successful, correct,
+safe, or verified.
+
+PRESERVE:
+Preserve unaffected rules, intended behaviours, relevant conditions,
+temporal constraints, and system semantics.
+
+CURRENT USE-CASE INPUT:
+
+{json.dumps(payload, indent=2, ensure_ascii=False)}
+
+CANDIDATE REQUIREMENT:
+
+Return up to 3 genuinely semantically distinct rule-merging candidates.
+
+Do not manufacture cosmetic rule variants.
+Do not return the same semantic merge with only wording, formatting,
+parentheses, or rule-ID differences.
+
+If the supplied evidence does not support a meaningful semantic merge,
+return no candidate rather than inventing one.
+
+{PATCH_OUTPUT_FORMAT}
+
+"""
+
 def build_prompt(
     issue_type,
     rules,
@@ -1686,6 +1870,8 @@ def build_prompt(
 
     "conflict_measure_specialization":
         conflict_measure_specialization_prompt,
+    "semantic_rule_merging":
+        semantic_rule_merging_prompt,    
    }
 
     if repair_operator not in LLM_SEMANTIC_OPERATORS:

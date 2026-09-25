@@ -40,11 +40,15 @@ class RepairOperatorSelector:
     "conflicts": [
         "conflict_event_specialization",
         "conflict_measure_specialization",
+        "semantic_rule_merging",
+
     ],
 
     "situational_conflicts": [
         "conflict_event_specialization",
         "conflict_measure_specialization",
+        "semantic_rule_merging",
+
     ],
 
     "redundancies": [
@@ -123,6 +127,7 @@ class RepairOperatorSelector:
                 selected_issue,
                 existing_events,
                 existing_measures,
+                system_description,
             )
         elif issue_type == "concerns":
             self._select_concern_operators(
@@ -200,6 +205,10 @@ class RepairOperatorSelector:
             self._add(
                 llm, applicability, "conflict_measure_specialization", False,
                 "Two diagnosed conflicting rules are required to establish a shared environmental measure.",
+            )
+            self._add(
+                llm, applicability, "semantic_rule_merging", False,
+                "Two diagnosed conflicting rules are required before Semantic Rule Merging can be attempted.",
             )
             return
 
@@ -319,6 +328,27 @@ class RepairOperatorSelector:
                 else "The conflicting rules do not share a declared environmental measure."
             ),
         )
+        semantic_merge_applicable = (
+            len(issue_rules) >= 2
+            and not merge_compatible
+        )
+
+        self._add(
+            llm,
+            applicability,
+            "semantic_rule_merging",
+            semantic_merge_applicable,
+            (
+                "LEGOS-SLEEC identified the conflicting rules, but the pair "
+                "does not satisfy the structural contract for deterministic "
+                "rule_merging. Semantic Rule Merging may therefore propose "
+                "alternative merged-rule candidates for formal verification."
+                if semantic_merge_applicable
+                else
+                "Semantic Rule Merging is reserved for diagnosed conflict "
+                "pairs for which deterministic rule_merging is not applicable."
+            ),
+        )
 
     def _select_redundancy_operators(
         self,
@@ -329,6 +359,7 @@ class RepairOperatorSelector:
         selected_issue,
         existing_events,
         existing_measures,
+        system_description,
     ):
         # LEGOS redundancy diagnosis should contain TWO rules.
         if len(issue_rules) >= 2:

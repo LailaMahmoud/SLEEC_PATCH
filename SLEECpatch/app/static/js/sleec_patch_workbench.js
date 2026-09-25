@@ -60,11 +60,12 @@ function issueTypeLabel(value) {
 
 function orderedIssues(issues) {
     const order = [
-        "concerns",
         "purpose_blocking",
         "redundancies",
+        "situational_conflicts",
         "conflicts",
-        "situational_conflicts"
+        "concerns",
+       
     ];
 
     return [...(issues || [])].sort((a, b) => {
