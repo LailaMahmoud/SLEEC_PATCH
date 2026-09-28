@@ -1394,72 +1394,147 @@ WFI:
 Purpose Blocking / Restrictiveness
 
 WFI DEFINITION:
-A purpose-blocking WFI occurs when a normative rule restricts behaviour
-in a way that obstructs an intended system purpose or prevents relevant
-functionality from being exercised.
+A purpose-blocking WFI occurs when an existing normative rule obstructs
+an intended system purpose in the diagnosed situation.
 
 SELECTED REPAIR OPERATOR:
 {repair_operator}
 
 OPERATOR DEFINITION:
-Address the diagnosed restrictiveness by refining or decomposing the
-restricted system capability so that a more specific or partial capability
-can remain available without simply removing the normative restriction.
+Refine a broad system response/capability into a more specific capability
+when the diagnosed purpose-blocking WFI shows that the existing response
+is too broad for the intended behaviour.
+
+This follows the capability-refinement principle used by SLEEC-PATCH:
+- identify the response/action that is too broad;
+- refine that response into a more specific system capability;
+- preserve the rest of the affected rule unless changing it is required
+  by the selected capability refinement.
 
 TASK:
-1. Identify the restrictive rule.
-2. Identify the capability or response whose restriction blocks the
-   intended purpose.
-3. Identify the intended purpose from the supplied evidence.
-4. Determine whether the broad capability can be represented by a more
-   specific, distinguishable, or partial capability.
-5. Generate that refined capability.
-6. Replace only the capability component required by this operator.
-7. Generate up to 3 candidates when the evidence supports multiple
-   genuinely different capability refinements.
+1. Identify the exact rule involved in the diagnosed purpose blocking.
 
-NEW VOCABULARY:
-This operator MAY introduce a new/refined capability.
+2. Identify the response/action whose current meaning is too broad for
+   the intended purpose.
 
-The refined capability does not need to already occur in the specification.
+3. Use the diagnosed purpose, witness, affected rules, existing vocabulary,
+   and system description to determine the required response distinction.
 
-It must:
-- represent a meaningful refinement, decomposition, or partial form of
-  the existing capability;
-- be supported by the system description, purpose, diagnosis, or
-  affected rule;
-- preserve relevant intended functionality;
-- be distinguishable from the original broad capability.
+4. Generate a more specific system capability or response expressing that
+   distinction.
 
-Do not invent a capability name with no evidence of what the system
-could perform.
+5. Modify only the response/capability required by this operator.
+
+6. Preserve the trigger, contextual conditions, temporal constraint, and
+   existing defeaters unless the capability refinement itself requires
+   otherwise.
+
+7. Generate up to 3 genuinely semantically distinct candidates only when
+   the supplied evidence supports different capability refinements.
+
+GROUNDING:
+The refined capability must be grounded in the CURRENT use case.
+
+Prefer a capability already present in existing_responses when it expresses
+the required distinction.
+
+A new capability may be introduced only when its meaning is explicitly and
+unambiguously supported by at least one of:
+- the system description;
+- the diagnosed purpose;
+- the diagnosis/witness;
+- the affected rules or existing current-use-case vocabulary.
+
+Do not invent a capability merely because it sounds plausible.
+
+Do not create a new capability simply by attaching diagnosis wording,
+purpose wording, or contextual words to the original response name.
+
+The diagnosis and witness identify WHY refinement is required. They do not,
+by themselves, justify arbitrary new functionality.
 
 PRESERVE:
-Preserve the normative purpose of the restrictive rule, unaffected
-conditions, temporal constraints, defeaters, and unrelated rules.
+- stakeholder intent;
+- the original domain meaning;
+- the affected rule's trigger;
+- relevant contextual conditions;
+- temporal constraints;
+- existing defeaters;
+- unrelated rules.
 
-Do not solve the WFI by adding a purpose defeater; that is a different
-repair operator.
+Do NOT solve the WFI by:
+- introducing a purpose defeater;
+- trigger refinement;
+- trigger strengthening;
+- rule decomposition;
+- rule removal;
+- adding an unrelated new rule.
 
-WORKED EXAMPLE:
-Suppose:
+Those are different repair operators.
 
-when A then not PerformAssistance
+OPERATOR-SPECIFIC WORKED EXAMPLE:
 
-blocks an intended purpose requiring a limited form of assistance.
+EXAMPLE: CAPABILITY REFINEMENT FOR RESTRICTIVENESS
 
-If the system evidence explicitly supports ProvideLimitedAssistance,
-a candidate may refine the broad capability using that more specific
-capability.
+Blocking rule:
 
-Do not invent ProvideLimitedAssistance unless the current-use-case
-evidence supports that functionality.
+    r1 when HumanOnFloor and not humanAssents
+       then not CallEmergencyServices within 500 seconds
+
+Intended purpose:
+
+    when HumanOnFloor and UserUnconscious and not humanAssents
+    then CallEmergencyServices within 4 minutes
+
+Selected operator:
+
+    capability_refinement
+
+Candidate capability refinement:
+
+    r1 when HumanOnFloor and not humanAssents
+       then not RequestUrgentCareAssessment within 500 seconds
+
+In this example, the broad emergency-response capability
+CallEmergencyServices is refined into the more specific
+RequestUrgentCareAssessment capability.
+
+Notice what the repair preserves:
+- the original trigger HumanOnFloor;
+- the contextual condition not humanAssents;
+- the negative response form;
+- the temporal bound within 500 seconds.
+
+Only the capability required by capability refinement is changed.
+
+IMPORTANT:
+This example demonstrates the capability-refinement repair pattern only.
+
+Do NOT copy HumanOnFloor, humanAssents, CallEmergencyServices,
+RequestUrgentCareAssessment, or any other ALMI-specific concept into
+another use case unless that concept is independently grounded in the
+CURRENT use-case evidence.
+
+For the current use case, derive the refined capability from the supplied
+purpose, diagnosis/witness, system description, affected rules, and
+current-use-case vocabulary.
+
+IMPORTANT:
+The generated result is only a candidate repair.
+
+Do not claim that it resolves the purpose-blocking WFI.
+Do not claim that it introduces no new WFIs.
+
+SLEEC-PATCH will apply the candidate to the original specification and
+LEGOS-SLEEC re-analysis will determine whether the targeted WFI is
+eliminated without unacceptable regression.
 
 CURRENT USE-CASE INPUT:
 {json.dumps(payload, indent=2, ensure_ascii=False)}
 
 CANDIDATE REQUIREMENT:
 Return up to 3 genuinely semantically distinct capability refinements.
+Do not manufacture cosmetic renamings merely to produce three candidates.
 
 {PATCH_OUTPUT_FORMAT}
 """

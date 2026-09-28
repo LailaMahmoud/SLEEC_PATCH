@@ -1929,6 +1929,9 @@ class SLEECPatchWorkbenchEngine:
         attempts = 0
 
         rules_json = self.sleec_text_to_rules_json(sleec_text)
+        print("\n========== EXISTING RESPONSES ==========")
+        print(self.extract_rule_actions(rules_json))
+        print("========================================\n")
 
         # Load the authoritative case-study description once.
         # It is used for operator selection, GPT generation, and semantic validation.
