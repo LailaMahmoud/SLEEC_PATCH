@@ -6,12 +6,16 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "build:css": "tailwindcss -i SLEECpatch/app/static/css/tailwind_input.css -o SLEECpatch/app/static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i SLEECpatch/app/static/css/tailwind_input.css -o SLEECpatch/app/static/css/tailwind.css --watch",
     "types": "wrangler types"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.2",
     "wrangler": "^4.105.0"
   }

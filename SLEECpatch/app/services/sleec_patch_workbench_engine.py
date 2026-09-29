@@ -181,6 +181,34 @@ class SLEECPatchWorkbenchEngine:
         validation["introduced_issues"] = []
         return validation
 
+    def verify_edited_sleec(self, original_sleec, patched_sleec, issue):
+        """Check a human edit against the same target and regression gates as a repair.
+
+        Manual edits are previews, not generated experimental candidates, and
+        are not persisted as automatic repair results.
+        """
+        baseline = self.validate_patched_sleec(original_sleec)
+        if not baseline["valid"]:
+            return {**baseline, "failure_reason": "Original input: " + baseline["failure_reason"]}
+        before = baseline["analysis"].get("structured", {})
+        kind, value = issue.get("issue_type"), issue.get("value")
+        if kind not in self.issue_types() or value not in before.get(kind, []):
+            return {"valid": False, "failure_reason": "The selected issue is not in the original diagnosis. Diagnose the input again."}
+        validation = self.validate_cumulative_sleec(original_sleec, patched_sleec)
+        if not validation["valid"]:
+            return validation
+        report = self.build_regression_report(
+            kind, value, before, validation["analysis"].get("structured", {})
+        )
+        passed = report["regression_passed"] is True
+        return {
+            "valid": passed,
+            "failure_reason": "" if passed else "The selected issue still exists or the edit introduces a new issue.",
+            "syntax": validation["syntax"],
+            "regression_report": report,
+            "semantic_review_status": "pending",
+        }
+
     def diagnose(self, sleec_text):
         result = self.run_detector_cached(sleec_text)
         failures = self.detector_failures(result)

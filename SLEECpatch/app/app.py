@@ -109,6 +109,7 @@ from sleec.sleec_api import *
 
 from services.sleec_patch_workbench_engine import SLEECPatchWorkbenchEngine
 from services.evaluation_reporting import build_report_payload
+from services.use_case_descriptions import USE_CASE_DESCRIPTIONS
 
 
 app = Flask(__name__)
@@ -151,7 +152,7 @@ def load_sleec_text(use_case):
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return redirect(url_for("sleec_patch_workbench"))
 
 
 @app.route("/about")
@@ -175,7 +176,7 @@ def step6():
 @app.route("/sleec-patch-workbench")
 def sleec_patch_workbench():
 
-    selected = request.args.get("use_cases", "DAISY")
+    selected = request.args.get("use_cases", "")
 
     selected_use_cases = [
         x.strip()
@@ -187,6 +188,7 @@ def sleec_patch_workbench():
         "SLEECPatchWorkbench.html",
         use_cases=list(SLEEC_FILES.keys()),
         selected_use_cases=selected_use_cases,
+        use_case_descriptions=USE_CASE_DESCRIPTIONS,
         sleec_text=""
     )
 
@@ -258,6 +260,20 @@ def api_sleec_patch_generate_verified():
         }), 500
 
     return jsonify(result)
+
+
+@app.route("/api/sleec-patch/verify-edited-sleec", methods=["POST"])
+def api_sleec_patch_verify_edited_sleec():
+    data = request.get_json() or {}
+    if (not isinstance(data, dict)
+            or not isinstance(data.get("original_sleec"), str)
+            or not isinstance(data.get("sleec_text"), str)
+            or not isinstance(data.get("issue"), dict)):
+        return jsonify(status="ERROR", error="Original input, edited text and selected issue are required."), 400
+    result = sleec_patch_engine.verify_edited_sleec(
+        data["original_sleec"], data["sleec_text"], data["issue"]
+    )
+    return jsonify(status="OK", **result)
 
 
 @app.route("/api/sleec-patch/evaluation-summary", methods=["POST"])

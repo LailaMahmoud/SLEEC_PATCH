@@ -1,4 +1,5 @@
 let sleecPatchState = {
+    userProfession: "",
     sleecText: "",
     issues: [],
     selectedIssue: null,
@@ -12,10 +13,14 @@ let sleecPatchState = {
     approvedPatchIndex: null,
     patchDecisions: {},
     log: null,
-    rawDiagnosis: null
+    rawDiagnosis: null,
+    manualVerification: null,
+    resolutionChoice: null
 };
 
 let patchWizard = null;
+// Any input, case or issue change invalidates outstanding UI requests.
+let workbenchVersion = 0;
 
 
 function escapeHtml(value) {
@@ -36,6 +41,73 @@ function escapeCodeHtml(value) {
 
 function patchDisplayLabel(patch) {
     return patch.operation_label || patch.operation || "Patch";
+}
+
+function issueTypeLabel(value) {
+    const labels = {
+        conflicts: "Conflict",
+        situational_conflicts: "Situational Conflict",
+        concerns: "Concern",
+        purpose_blocking: "Insufficiency",
+        redundancies: "Redundancy",
+        conflict: "Conflict",
+        concern: "Concern",
+        purpose: "Insufficiency",
+        redundancy: "Redundancy"
+    };
+
+    return labels[value] || String(value || "Issue").replaceAll("_", " ");
+}
+
+function orderedIssues(issues) {
+    const order = [
+        "conflicts",
+        "situational_conflicts",
+        "concerns",
+        "purpose_blocking",
+        "redundancies"
+    ];
+
+    return [...(issues || [])].sort((a, b) => {
+        const ai = order.indexOf(a.issue_type);
+        const bi = order.indexOf(b.issue_type);
+        return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi);
+    });
+}
+
+function issueProgressText() {
+    if (!sleecPatchState.issues.length) return "No issues";
+    const index = sleecPatchState.issues.findIndex(
+        issue => issueKey(issue) === currentIssueKey()
+    );
+    return `Issue ${Math.max(index, 0) + 1} of ${sleecPatchState.issues.length}`;
+}
+
+function selectedIssueIndex() {
+    return sleecPatchState.issues.findIndex(
+        issue => issueKey(issue) === currentIssueKey()
+    );
+}
+
+function renderHighlightedCode(value) {
+    return `<pre class="sleec-highlighted-code">${highlightSleecCode(value || "")}</pre>`;
+}
+
+function rankingBand(score) {
+    const numeric = Number(score) || 0;
+    if (numeric >= 85) return "strong";
+    if (numeric >= 70) return "moderate";
+    return "weak";
+}
+
+function scoreBadge(label, value) {
+    const band = rankingBand(value);
+    return `
+        <div class="score-chip ${band}">
+            <dt>${escapeHtml(label)}</dt>
+            <dd>${escapeHtml(value || 0)}</dd>
+        </div>
+    `;
 }
 
 function renderInlineBadges(items, className = "neutral") {
@@ -285,6 +357,26 @@ function syncSleecEditorScroll() {
     highlight.scrollLeft = input.scrollLeft;
 }
 
+function updatePatchEditorHighlight() {
+    const input = document.getElementById("stakeholderProposedRule");
+    const highlight = document.getElementById("stakeholderProposedRuleHighlight");
+
+    if (!input || !highlight) return;
+
+    highlight.innerHTML = highlightSleecCode(input.value) + "\n";
+    syncPatchEditorScroll();
+}
+
+function syncPatchEditorScroll() {
+    const input = document.getElementById("stakeholderProposedRule");
+    const highlight = document.getElementById("stakeholderProposedRuleHighlight");
+
+    if (!input || !highlight) return;
+
+    highlight.scrollTop = input.scrollTop;
+    highlight.scrollLeft = input.scrollLeft;
+}
+
 async function postJSON(url, data) {
     const loaderText = loaderTextForUrl(url);
 
@@ -324,15 +416,55 @@ function loaderTextForUrl(url) {
     if (url.includes("evaluation")) return "Loading evaluation results...";
     if (url.includes("load-usecase")) return "Loading SLEEC use case...";
     if (url.includes("philosopher")) return "Saving review...";
+    if (url.includes("verify-edited-sleec")) return "Verifying the selected issue and checking for new issues...";
     return "Working...";
 }
 
 function refreshPatchWizard() {
     if (patchWizard) patchWizard.refresh();
+    updateWorkflowHeader();
 }
 
 function goToPatchStep(step) {
     if (patchWizard) patchWizard.goToStep(step);
+    updateWorkflowHeader(step);
+}
+
+function updateWorkflowHeader(step) {
+    const useCasePill = document.getElementById("headerUseCase");
+    const issuePill = document.getElementById("headerIssueProgress");
+    const useCase = document.getElementById("useCase")?.value || "";
+    const activeStep = step || patchWizard?.getCurrentStep?.() || 1;
+
+    if (useCasePill) {
+        useCasePill.textContent = useCase || "No use case selected";
+        useCasePill.classList.toggle("is-live", Boolean(useCase));
+        useCasePill.classList.toggle("muted", !useCase);
+    }
+
+    if (issuePill) {
+        const hasIssue = Boolean(sleecPatchState.selectedIssue);
+        issuePill.textContent = hasIssue ? issueProgressText() : "No issue run";
+        issuePill.classList.toggle("is-live", hasIssue && activeStep >= 4);
+        issuePill.classList.toggle("muted", !hasIssue || activeStep < 4);
+    }
+}
+
+function saveUserProfession() {
+    const input = document.getElementById("userProfession");
+    sleecPatchState.userProfession = (input?.value || "").trim();
+    refreshPatchWizard();
+}
+
+function continueFromProfession() {
+    saveUserProfession();
+
+    if (!sleecPatchState.userProfession) {
+        alert("Please describe your profession or area of expertise before continuing.");
+        return;
+    }
+
+    goToPatchStep(2);
 }
 
 function hasGeneratedPatches() {
@@ -342,6 +474,11 @@ function hasGeneratedPatches() {
         sleecPatchState.deterministicCandidates.length ||
         sleecPatchState.llmCandidates.length
     );
+}
+
+function hasVerifiedCurrentResolution() {
+    const saved = currentIssueResult();
+    return resolutionChoiceVerified(saved);
 }
 
 function issueKey(issue) {
@@ -357,6 +494,46 @@ function currentIssueResult() {
     return sleecPatchState.issueResults[currentIssueKey()] || null;
 }
 
+function hasAttemptedIssueResult(result) {
+    if (!result) return false;
+
+    return Boolean(
+        result.log ||
+        (result.verifiedPatches || []).length ||
+        (result.deterministicCandidates || []).length ||
+        (result.llmCandidates || []).length ||
+        result.manualVerification
+    );
+}
+
+function patchIsVerified(patch) {
+    if (!patch) return false;
+    if (patch.stakeholder_edited) {
+        return patch.edit_verified === true
+            && patch.edit_verification?.valid === true
+            && patch.edit_verification?.verified_text === patch.patched_sleec;
+    }
+    return patch.verified === true && patch.formally_verified === true;
+}
+
+function currentPatchReport(patch) {
+    return patch.stakeholder_edited ? patch.edit_verification?.regression_report : patch.regression_report;
+}
+
+function resolutionChoiceVerified(result) {
+    const choice = result?.resolutionChoice;
+    if (!choice) return false;
+    if (choice.kind === "manual") {
+        return result.manualVerification?.valid === true
+            && result.manualVerification.verified_text === choice.sleecText;
+    }
+    if (choice.kind === "patch") {
+        const patch = result.verifiedPatches?.[choice.patchIndex];
+        return patchIsVerified(patch) && patch.patched_sleec === choice.sleecText;
+    }
+    return false;
+}
+
 function resetCurrentRunState() {
     sleecPatchState.verifiedPatches = [];
     sleecPatchState.deterministicCandidates = [];
@@ -367,6 +544,8 @@ function resetCurrentRunState() {
     sleecPatchState.approvedPatchIndex = null;
     sleecPatchState.patchDecisions = {};
     sleecPatchState.log = null;
+    sleecPatchState.manualVerification = null;
+    sleecPatchState.resolutionChoice = null;
 }
 
 function captureCurrentRunState(data = null) {
@@ -380,6 +559,8 @@ function captureCurrentRunState(data = null) {
         patchDecisions: sleecPatchState.patchDecisions,
         approvedPatchIndex: sleecPatchState.approvedPatchIndex,
         log: sleecPatchState.log,
+        manualVerification: sleecPatchState.manualVerification,
+        resolutionChoice: sleecPatchState.resolutionChoice,
         raw: data
     };
 }
@@ -400,6 +581,7 @@ function restoreIssueResult(result) {
         document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
         document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
         document.getElementById("stakeholderDecisionOutput").innerHTML = "Run the pipeline for this issue.";
+        document.getElementById("verificationSummaryOutput").innerHTML = "No verified resolution selected yet.";
         document.getElementById("logOutput").innerHTML = "No log yet.";
         return;
     }
@@ -415,6 +597,8 @@ function restoreIssueResult(result) {
     sleecPatchState.patchDecisions = result.patchDecisions || {};
     sleecPatchState.approvedPatchIndex = result.approvedPatchIndex ?? null;
     sleecPatchState.log = result.log || null;
+    sleecPatchState.manualVerification = result.manualVerification || null;
+    sleecPatchState.resolutionChoice = result.resolutionChoice || null;
 
     renderCandidatePatches(
         "deterministicOutput",
@@ -430,12 +614,14 @@ function restoreIssueResult(result) {
     renderStakeholderDecision();
     renderLog();
     renderIssueRunOutput();
+    renderVerificationSummary();
 }
 
 function issueRunStatus(issue) {
     const result = sleecPatchState.issueResults[issueKey(issue)];
     if (!result) return "not run";
-    if (result.log && result.log.successful) return "resolved";
+    if (resolutionChoiceVerified(result)) return "resolved";
+    if (hasAttemptedIssueResult(result)) return "attempted";
     return "attempted";
 }
 
@@ -541,12 +727,13 @@ function renderIssueRunOutput() {
     const llmCount = sleecPatchState.llmCandidates.length;
     const deterministicCount = sleecPatchState.deterministicCandidates.length;
     const verifiedCount = sleecPatchState.verifiedPatches.length;
+    const readyForNext = hasVerifiedCurrentResolution();
 
     out.innerHTML = `
-        <div class="issue-run-summary">
+        <div class="issue-run-strip">
             <div>
                 <h3>Issue Run</h3>
-                <p>
+                <p class="issue-run-title">
                     <strong>${escapeHtml(selected?.id || "No issue selected")}</strong>
                     ${selected ? `- ${escapeHtml(selected.issue_type || "")}` : ""}
                 </p>
@@ -559,9 +746,12 @@ function renderIssueRunOutput() {
                     <span class="badge neutral">Verified: ${escapeHtml(verifiedCount)}</span>
                 </div>
             </div>
-            <div class="issue-run-actions">
-                <button class="secondary small-btn" onclick="goToPatchStep(2)">Issue List</button>
-                <button class="primary small-btn" onclick="selectNextUnresolvedIssue()">Next Unresolved</button>
+            <div class="issue-run-actions ${readyForNext ? "issue-run-actions-ready" : ""}">
+                <button class="secondary small-btn" onclick="goToPatchStep(4)">Current Diagnosis</button>
+                <button class="${readyForNext ? "next-issue-cta" : "primary small-btn"}"
+                        onclick="${readyForNext ? "goToPatchStep(9)" : "goToPatchStep(7)"}">
+                    ${readyForNext ? "Review Next-Issue Handoff" : "Choose Verified Patch"}
+                </button>
                 <button class="success small-btn" onclick="generateVerifiedPatches()">Run Again</button>
             </div>
         </div>
@@ -569,16 +759,24 @@ function renderIssueRunOutput() {
 }
 
 function canAdvancePatchWizard(step) {
-    if (step === 1) return sleecPatchState.issues.length > 0;
-    if (step === 2) return Boolean(sleecPatchState.selectedIssue);
-    if (step === 3) return hasGeneratedPatches();
-    if (step === 4) return hasGeneratedPatches();
-    if (step === 5) return Boolean(sleecPatchState.log);
+    if (step === 1) return Boolean(sleecPatchState.userProfession || document.getElementById("userProfession")?.value.trim());
+    if (step === 2) return true;
+    if (step === 3) return Boolean(sleecPatchState.rawDiagnosis);
+    if (step === 4) return Boolean(sleecPatchState.selectedIssue);
+    if (step === 5) return hasGeneratedPatches() || hasVerifiedCurrentResolution();
+    if (step === 6) return hasGeneratedPatches();
+    if (step === 7) return sleecPatchState.verifiedPatches.length > 0;
+    if (step === 8) return hasVerifiedCurrentResolution();
+    if (step === 9) return true;
+    if (step === 10) return true;
     return false;
 }
 
-function resetPatchWorkbench() {
+function resetPatchWorkbench(keepProfession = false) {
+    workbenchVersion += 1;
+    const profession = keepProfession ? sleecPatchState.userProfession : "";
     sleecPatchState = {
+        userProfession: profession,
         sleecText: "",
         issues: [],
         selectedIssue: null,
@@ -592,18 +790,25 @@ function resetPatchWorkbench() {
         approvedPatchIndex: null,
         patchDecisions: {},
         log: null,
-        rawDiagnosis: null
+        rawDiagnosis: null,
+        manualVerification: null,
+        resolutionChoice: null
     };
 
     document.getElementById("issuesOutput").innerHTML = "No diagnosis yet.";
     document.getElementById("selectedIssueOutput").innerHTML = "Select one issue.";
+    const manualOutput = document.getElementById("manualResolutionOutput");
+    if (manualOutput) manualOutput.innerHTML = "";
     document.getElementById("deterministicOutput").innerHTML = "No deterministic repairs yet.";
     document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
     document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
     document.getElementById("stakeholderDecisionOutput").innerHTML = "Select a verified patch to review.";
+    document.getElementById("verificationSummaryOutput").innerHTML = "No verified resolution selected yet.";
     document.getElementById("logOutput").innerHTML = "No log yet.";
     const issueRunOutput = document.getElementById("issueRunOutput");
     if (issueRunOutput) issueRunOutput.innerHTML = "No issue run loaded.";
+    const professionInput = document.getElementById("userProfession");
+    if (professionInput) professionInput.value = profession;
     document.getElementById("summaryOutput").innerHTML = "No evaluation summary loaded.";
     document.getElementById("patchDetailOutput").innerHTML = `
         Click an operation in the evaluation tables to view the
@@ -612,30 +817,48 @@ function resetPatchWorkbench() {
     document.getElementById("evaluationAOutput").innerHTML = "No Evaluation A results yet.";
     document.getElementById("evaluationBOutput").innerHTML = "No Evaluation B results yet.";
     document.getElementById("evaluationCOutput").innerHTML = "No philosopher review loaded.";
+    window.latestDetailedResults = [];
+    window.semanticPatchesForReview = [];
     renderIssueSidebars();
 
-    goToPatchStep(1);
+    if (!keepProfession) {
+        document.getElementById("sleecInput").value = "";
+        document.getElementById("useCase").value = "";
+        updateSleecEditorHighlight();
+        goToPatchStep(1);
+    }
     refreshPatchWizard();
 }
 
+function onSpecificationInput() {
+    const text = document.getElementById("sleecInput").value;
+    if (text !== sleecPatchState.sleecText) {
+        resetPatchWorkbench(true);
+        sleecPatchState.sleecText = text;
+    }
+    updateSleecEditorHighlight();
+}
+
 async function diagnoseWFIs() {
-    const sleecText = document.getElementById("sleecInput").value.trim();
+    const sleecText = document.getElementById("sleecInput").value;
 
     if (!sleecText) {
         alert("Please enter SLEEC specification.");
         return;
     }
 
+    resetPatchWorkbench(true);
+    const version = workbenchVersion;
     const data = await postJSON("/api/sleec-patch/diagnose", {
         sleec_text: sleecText
     });
 
-    console.log("DIAGNOSE DATA:", data);
+    if (version !== workbenchVersion) return;
 
     sleecPatchState.sleecText = sleecText;
-    sleecPatchState.issues = data.issues || [];
+    sleecPatchState.issues = orderedIssues(data.issues || []);
     sleecPatchState.rawDiagnosis = data;
-    sleecPatchState.selectedIssue = null;
+    sleecPatchState.selectedIssue = sleecPatchState.issues[0] || null;
     sleecPatchState.verifiedPatches = [];
     sleecPatchState.deterministicCandidates = [];
     sleecPatchState.llmCandidates = [];
@@ -646,19 +869,25 @@ async function diagnoseWFIs() {
     sleecPatchState.approvedPatchIndex = null;
     sleecPatchState.patchDecisions = {};
     sleecPatchState.log = null;
+    sleecPatchState.manualVerification = null;
 
     renderIssues();
     renderIssueSidebars();
-    document.getElementById("selectedIssueOutput").innerHTML = "Select one issue.";
+    if (sleecPatchState.selectedIssue) {
+        renderSelectedIssue();
+    } else {
+        document.getElementById("selectedIssueOutput").innerHTML = "No issue selected.";
+    }
     document.getElementById("deterministicOutput").innerHTML = "No deterministic repairs yet.";
     document.getElementById("llmOutput").innerHTML = "No GPT semantic repairs yet.";
     document.getElementById("patchOutput").innerHTML = "No verified patches yet.";
     document.getElementById("stakeholderDecisionOutput").innerHTML = "Select a verified patch to review.";
+    document.getElementById("verificationSummaryOutput").innerHTML = "No verified resolution selected yet.";
     document.getElementById("logOutput").innerHTML = "No log yet.";
     const issueRunOutput = document.getElementById("issueRunOutput");
     if (issueRunOutput) issueRunOutput.innerHTML = "No issue run loaded.";
     refreshPatchWizard();
-    goToPatchStep(2);
+    goToPatchStep(4);
 }
 
 function shortIssueText(value) {
@@ -677,6 +906,20 @@ function shortIssueText(value) {
     return text;
 }
 
+function refsToText(refs) {
+    return (refs || [])
+        .map(ref => {
+            if (!ref) return "";
+
+            const label = [ref.role, ref.id].filter(Boolean).join(": ");
+            const text = ref.text || "";
+
+            return label ? `${label}\n${text}` : text;
+        })
+        .filter(Boolean)
+        .join("\n\n");
+}
+
 function renderIssues() {
     const out = document.getElementById("issuesOutput");
 
@@ -685,78 +928,100 @@ function renderIssues() {
         return;
     }
 
-    let html = "";
+    const issue = sleecPatchState.selectedIssue || sleecPatchState.issues[0];
+    const index = Math.max(0, selectedIssueIndex());
+    const remaining = sleecPatchState.issues.length - index - 1;
+    const status = issueRunStatus(issue);
+    const artifactText = refsToText(issue.wfi_artifacts || []) || issue.diagnosis?.source_text || "";
+    const directRuleText = refsToText(issue.diagnosis?.rule_references || issue.rule_references || []);
+    const relatedRuleText = refsToText(issue.related_rules || []);
+    const originalRuleText = (issue.original_rules || []).join("\n");
 
-    sleecPatchState.issues.forEach((issue, index) => {
-        const status = issueRunStatus(issue);
-        const selectedClass =
-            sleecPatchState.selectedIssue &&
-            sleecPatchState.selectedIssue.id === issue.id
-                ? " selected-issue"
-                : "";
-        const resolvedClass = status === "resolved" ? " is-resolved" : "";
-
-        html += `
-            <div class="issue-card${selectedClass}${resolvedClass}" onclick="selectIssue(${index})">
-                <div class="issue-header">
-                    <span class="issue-type">${issue.issue_type}</span>
-                    <span class="issue-id">${issue.id}</span>
-                </div>
-                <div class="issue-status-row">
-                    <span class="badge ${status === "resolved" ? "good" : status === "attempted" ? "neutral" : "bad"}">
-                        ${escapeHtml(status)}
-                    </span>
-                </div>
-
-                <div class="issue-section">
-                    <strong>Original Rule(s)</strong>
-                    <pre>${escapeHtml((issue.original_rules || []).join("\n") || "No original rule extracted.")}</pre>
-                </div>
-
-                <div class="issue-section">
-                    <strong>Diagnosis Trace</strong>
-                    ${formatDiagnosisTrace(shortIssueText(issue.diagnosis?.raw_report || issue.value), {
-                        maxBlocks: 3,
-                        maxChars: 650
-                    })}
-                </div>
-
-                <button class="secondary small-btn" onclick="event.stopPropagation(); selectIssue(${index});">
-                    Select Issue
-                </button>
+    out.innerHTML = `
+        <div class="issue-card selected-issue first-issue-card">
+            <div class="issue-header">
+                <span class="issue-type">${escapeHtml(issueTypeLabel(issue.issue_type))}</span>
+                <span class="issue-id">${escapeHtml(issueProgressText())}</span>
             </div>
-        `;
-    });
+            <div class="issue-status-row">
+                <span class="badge ${status === "resolved" ? "good" : status === "attempted" ? "neutral" : "bad"}">
+                    ${escapeHtml(status)}
+                </span>
+                <span class="badge neutral">${escapeHtml(remaining)} remaining after this</span>
+            </div>
 
-    out.innerHTML = html;
+            <div class="issue-section">
+                <strong>WFI Artifact(s)</strong>
+                ${renderHighlightedCode(artifactText || "No concern/purpose artifact linked.")}
+            </div>
+
+            <div class="issue-section">
+                <strong>Referenced Rule(s)</strong>
+                ${renderHighlightedCode(directRuleText || originalRuleText || "No direct source rule linked.")}
+            </div>
+
+            <div class="issue-section">
+                <strong>Related Rule(s)</strong>
+                ${renderHighlightedCode(relatedRuleText || "No related rule inferred.")}
+            </div>
+
+            <div class="issue-section">
+                <strong>Diagnosis Trace</strong>
+                ${formatDiagnosisTrace(issue.diagnosis?.raw_report || issue.value, {
+                    maxBlocks: 3,
+                    maxChars: 650
+                })}
+            </div>
+
+            <div class="center-actions">
+                <button class="primary" onclick="goToPatchStep(5)">Resolve This Issue</button>
+            </div>
+        </div>
+    `;
 }
 
-function selectIssue(index) {
-    sleecPatchState.selectedIssue = sleecPatchState.issues[index];
+function renderSelectedIssue() {
+    if (!sleecPatchState.selectedIssue) {
+        document.getElementById("selectedIssueOutput").innerHTML = "No issue selected.";
+        return;
+    }
+
     const savedResult = currentIssueResult();
+    const issue = sleecPatchState.selectedIssue;
 
     document.getElementById("selectedIssueOutput").innerHTML = `
         <div class="issue-card selected-issue">
             <div class="issue-header">
-                <span class="issue-type">${sleecPatchState.selectedIssue.issue_type}</span>
-                <span class="issue-id">${sleecPatchState.selectedIssue.id}</span>
+                <span class="issue-type">${escapeHtml(issueTypeLabel(issue.issue_type))}</span>
+                <span class="issue-id">${escapeHtml(issueProgressText())}</span>
             </div>
             <div class="issue-status-row">
                 <span class="badge ${savedResult ? "good" : "neutral"}">
-                    ${savedResult ? "Run result already loaded" : "Ready to run"}
+                    ${savedResult ? "Resolution state loaded" : "Ready"}
                 </span>
             </div>
 
             <p><strong>Selected WFI diagnosis trace</strong></p>
-            ${formatDiagnosisTrace(sleecPatchState.selectedIssue.diagnosis?.raw_report || sleecPatchState.selectedIssue.value)}
+            ${formatDiagnosisTrace(issue.diagnosis?.raw_report || issue.value)}
         </div>
     `;
+}
 
+function selectIssue(index) {
+    if (!sleecPatchState.issues[index]) return;
+    workbenchVersion += 1;
+    document.getElementById("manualResolutionOutput").innerHTML = "";
+    sleecPatchState.selectedIssue = sleecPatchState.issues[index];
+    const savedResult = currentIssueResult();
+
+    renderSelectedIssue();
     restoreIssueResult(savedResult);
     renderIssues();
     renderIssueSidebars();
     refreshPatchWizard();
-    goToPatchStep(savedResult ? 4 : 3);
+    goToPatchStep(
+        !savedResult ? 5 : issueRunStatus(sleecPatchState.selectedIssue) === "resolved" ? 9 : 6
+    );
 }
 
 async function generateVerifiedPatches() {
@@ -779,6 +1044,8 @@ async function generateVerifiedPatches() {
             </p>
         </div>
     `;
+    const manualOutput = document.getElementById("manualResolutionOutput");
+    if (manualOutput) manualOutput.innerHTML = "";
 
     document.getElementById("logOutput").innerHTML = `
         <div class="metric-card">
@@ -787,6 +1054,7 @@ async function generateVerifiedPatches() {
         </div>
     `;
 
+    const version = ++workbenchVersion;
     const data = await postJSON(
         "/api/sleec-patch/generate-verified",
         {
@@ -797,7 +1065,7 @@ async function generateVerifiedPatches() {
         }
     );
 
-    console.log("VERIFIED PATCH DATA:", data);
+    if (version !== workbenchVersion) return;
 
     // save everything
 
@@ -808,7 +1076,7 @@ async function generateVerifiedPatches() {
         data.llm_candidates || [];
 
     sleecPatchState.verifiedPatches =
-        data.verified_patches || [];
+        (data.verified_patches || []).filter(patchIsVerified);
     sleecPatchState.failedPatches =
     data.failed_patches || [];
     sleecPatchState.selectedPatchIndex =
@@ -817,6 +1085,7 @@ async function generateVerifiedPatches() {
         sleecPatchState.verifiedPatches.slice(0, 2).map((_, index) => index);
     sleecPatchState.approvedPatchIndex = null;
     sleecPatchState.patchDecisions = {};
+    sleecPatchState.resolutionChoice = null;
 
     sleecPatchState.log =
         data.log || {};
@@ -842,10 +1111,11 @@ async function generateVerifiedPatches() {
 
     renderLog();
     renderIssueRunOutput();
+    renderVerificationSummary();
     renderIssues();
     renderIssueSidebars();
     refreshPatchWizard();
-    goToPatchStep(4);
+    goToPatchStep(6);
 }
 function renderCandidatePatches(containerId, patches, title) {
 
@@ -894,7 +1164,6 @@ function renderCandidatePatches(containerId, patches, title) {
     container.innerHTML = html;
 }
 
-
 function renderVerifiedPatches() {
     const out = document.getElementById("patchOutput");
 
@@ -904,24 +1173,34 @@ function renderVerifiedPatches() {
                 <span class="badge bad">No verified patch found</span>
                 <p>The system could not generate a formally verified patch within the attempt limit.</p>
                 ${sleecPatchState.log?.repair_notice ? `<p>${escapeHtml(sleecPatchState.log.repair_notice)}</p>` : ""}
+                <button class="secondary" onclick="goToPatchStep(5)">Return to Issue Resolution</button>
             </div>
         `;
         renderStakeholderDecision();
         return;
     }
 
-    let html = "";
+    let html = `
+        <div class="score-legend" aria-label="Patch grade legend">
+            <span><i class="legend-dot strong"></i>85-100 strong</span>
+            <span><i class="legend-dot moderate"></i>70-84 moderate</span>
+            <span><i class="legend-dot weak"></i>0-69 review carefully</span>
+        </div>
+    `;
 
 sleecPatchState.verifiedPatches.forEach((p, index) => {
 
     const ranking = p.ranking || {};
     const isSelected = sleecPatchState.selectedPatchIndex === index;
-    const isCompared = sleecPatchState.comparisonPatchIndexes.includes(index);
     const rationale = p.ranking_rationale || ranking.rationale || [];
     const isLLM = (p.source || "").toLowerCase() === "llm";
 
     html += `
-        <div class="patch-card ${isSelected ? "selected-patch" : ""}">
+        <article class="patch-card selectable-patch ${isSelected ? "selected-patch" : ""}"
+                 role="button"
+                 tabindex="0"
+                 onclick="selectPatchForReview(${index})"
+                 onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectPatchForReview(${index}); }">
 
             <div class="patch-card-header">
                 <div>
@@ -931,55 +1210,38 @@ sleecPatchState.verifiedPatches.forEach((p, index) => {
                 </div>
 
                 <span class="badge ${isLLM ? "neutral" : "good"}">
-                    Formally verified · ${p.semantic_review_status === "not_required" ? "Meaning review not required" : "Awaiting meaning review"}
+                    ${!patchIsVerified(p) ? "Edited · Requires verification" : p.semantic_review_status === "pending" || p.stakeholder_edited ? "Formally verified · Awaiting meaning review" : "Formally verified"}
                 </span>
             </div>
 
             <p class="patch-summary">${escapeHtml(p.stakeholder_summary || "")}</p>
             ${renderInlineBadges(p.review_flags)}
-            ${renderRegressionReport(p.regression_report)}
+            ${renderRegressionReport(currentPatchReport(p))}
 
-            <p><strong>Ranking Score:</strong> ${escapeHtml(p.ranking_score || 0)}</p>
-
-            <div class="metric-card">
-
-                <p><strong>Structural Simplicity:</strong> ${escapeHtml(ranking.structural_simplicity || 0)}</p>
-
-                <p><strong>Logical Simplicity:</strong> ${escapeHtml(ranking.logical_simplicity || 0)}</p>
-
-                <p><strong>Semantic Clarity:</strong> ${escapeHtml(ranking.semantic_clarity || 0)}</p>
-
-                <p><strong>Interpretability:</strong> ${escapeHtml(ranking.interpretability || 0)}</p>
-
-            </div>
+            <dl class="score-list compact-score-list">
+                ${scoreBadge("Overall", p.ranking_score || ranking.total_score || 0)}
+                ${scoreBadge("Logical", ranking.logical_simplicity || 0)}
+                ${scoreBadge("Semantic", ranking.semantic_clarity || 0)}
+                ${scoreBadge("Interpretability", ranking.interpretability || 0)}
+            </dl>
 
             ${renderRationaleList(rationale)}
 
             <div class="patch-actions">
-                <button class="primary small-btn" onclick="selectPatchForReview(${index})">Inspect</button>
-                <label class="compare-toggle">
-                    <input type="checkbox"
-                           ${isCompared ? "checked" : ""}
-                           onchange="toggleComparePatch(${index}, this.checked)">
-                    Compare
-                </label>
+                <span class="badge ${isSelected ? "good" : "neutral"}">
+                    ${isSelected ? "Selected" : "Select patch"}
+                </span>
             </div>
 
-            <p><strong>Verified by SLEEC</strong></p>
-
             <h4>Original Rule</h4>
-            <pre>${escapeHtml(p.original_rule || (p.source_requirement_id ? "Existing rules are preserved." : ""))}</pre>
+            ${renderHighlightedCode(p.original_rule || "")}
 
             <h4>Proposed Patch</h4>
-            <pre>${escapeHtml(p.proposed_rule || "")}</pre>
+            ${renderHighlightedCode(p.proposed_rule || "")}
 
             <h4>Explanation</h4>
-            <p>${escapeHtml(p.natural_language_explanation || "")}</p>
-
-            <h4>Patched SLEEC</h4>
-            <pre>${escapeHtml(p.patched_sleec || "")}</pre>
-
-        </div>
+            <p class="patch-explanation">${escapeHtml(p.natural_language_explanation || "")}</p>
+        </article>
     `;
 });
 
@@ -987,7 +1249,9 @@ sleecPatchState.verifiedPatches.forEach((p, index) => {
 }
 
 function selectPatchForReview(index) {
+    workbenchVersion += 1;
     sleecPatchState.selectedPatchIndex = index;
+    sleecPatchState.approvedPatchIndex = index;
 
     if (!sleecPatchState.comparisonPatchIndexes.includes(index)) {
         sleecPatchState.comparisonPatchIndexes = [
@@ -999,6 +1263,7 @@ function selectPatchForReview(index) {
     persistCurrentIssueUiState();
     renderVerifiedPatches();
     renderStakeholderDecision();
+    goToPatchStep(8);
 }
 
 function toggleComparePatch(index, checked) {
@@ -1047,32 +1312,42 @@ function rejectPatch(index) {
 function saveStakeholderEdit() {
     const index = sleecPatchState.selectedPatchIndex;
     const patch = sleecPatchState.verifiedPatches[index];
-
-    if (!patch) return;
-
-    const previousProposed = patch.proposed_rule || "";
-    const proposed = document.getElementById("stakeholderProposedRule").value.trim();
-    const explanation = document.getElementById("stakeholderExplanation").value.trim();
-
-    if (!proposed) {
-        alert("The proposed rule cannot be empty.");
-        return;
+    if (!patch) return false;
+    const previous = patch.proposed_rule || "";
+    const proposed = document.getElementById("stakeholderProposedRule").value;
+    patch.natural_language_explanation = document.getElementById("stakeholderExplanation").value;
+    if (proposed === previous) return true;
+    // The preview must contain one unambiguous edit target. This also avoids
+    // claiming to edit an already deleted rule or silently checking old text.
+    if (!previous || !patch.patched_sleec || patch.patched_sleec.split(previous).length !== 2) {
+        alert("This patch cannot be edited here. Use Manual Resolution to edit its full specification.");
+        return false;
     }
-
+    patch.patched_sleec = patch.patched_sleec.replace(previous, () => proposed);
     patch.proposed_rule = proposed;
-    patch.natural_language_explanation = explanation;
     patch.stakeholder_edited = true;
-
-    if (patch.patched_sleec && previousProposed && patch.patched_sleec.includes(previousProposed)) {
-        patch.patched_sleec = patch.patched_sleec.replace(previousProposed, proposed);
-    }
-
-    if (!sleecPatchState.patchDecisions[index]) {
-        sleecPatchState.patchDecisions[index] = "edited";
-    }
-
+    patch.edit_verified = false;
+    patch.edit_verification = null;
+    sleecPatchState.resolutionChoice = null;
+    persistCurrentIssueUiState();
     renderVerifiedPatches();
     renderStakeholderDecision();
+    renderVerificationSummary();
+    return true;
+}
+
+function onPatchEdit() {
+    workbenchVersion += 1;
+    const patch = sleecPatchState.verifiedPatches[sleecPatchState.selectedPatchIndex];
+    if (patch) {
+        patch.edit_verified = false;
+        patch.edit_verification = null;
+    }
+    sleecPatchState.resolutionChoice = null;
+    document.getElementById("patchVerificationOutput").textContent = "Unsaved edit. Save and verify before using this patch.";
+    persistCurrentIssueUiState();
+    updatePatchEditorHighlight();
+    refreshPatchWizard();
 }
 
 function resetStakeholderEdit() {
@@ -1083,21 +1358,344 @@ function resetStakeholderEdit() {
 
     document.getElementById("stakeholderProposedRule").value = patch.proposed_rule || "";
     document.getElementById("stakeholderExplanation").value = patch.natural_language_explanation || "";
+    updatePatchEditorHighlight();
 }
 
-function applyApprovedPatchToEditor() {
-    const patch = sleecPatchState.verifiedPatches[sleecPatchState.approvedPatchIndex];
+async function verifySleecTextForProceed(sleecText, outputId) {
+    const version = ++workbenchVersion;
+    const data = await postJSON("/api/sleec-patch/verify-edited-sleec", {
+        original_sleec: sleecPatchState.sleecText,
+        sleec_text: sleecText,
+        issue: sleecPatchState.selectedIssue
+    });
+    if (version !== workbenchVersion) return null;
+    const out = document.getElementById(outputId);
+    if (out) {
+        out.className = `verification-result ${data.valid ? "passed" : "failed"}`;
+        out.innerHTML = data.valid
+            ? `<span class="badge good">Formally verified</span><p>The selected issue is fixed and no new issues were detected. Meaning review is still required.</p>`
+            : `<span class="badge bad">Not verified</span><p>${escapeHtml(data.failure_reason || data.error || "Verification failed.")}</p>`;
+    }
+    return {...data, verified_text: sleecText};
+}
+
+async function verifySelectedPatchEdit() {
+    if (!saveStakeholderEdit()) return;
+    const patch = sleecPatchState.verifiedPatches[sleecPatchState.selectedPatchIndex];
+    if (!patch?.patched_sleec) return;
+    const validation = await verifySleecTextForProceed(patch.patched_sleec, "patchVerificationOutput");
+    if (!validation) return;
+    patch.edit_verified = validation.valid === true;
+    patch.edit_verification = validation;
+    persistCurrentIssueUiState();
+    renderVerificationSummary();
+    refreshPatchWizard();
+}
+
+async function integrateSelectedPatchAndProceed() {
+    const patch = sleecPatchState.verifiedPatches[sleecPatchState.selectedPatchIndex];
 
     if (!patch || !patch.patched_sleec) {
-        alert("Approve a patch with a generated SLEEC preview first.");
+        alert("Select a patch with a generated SLEEC preview first.");
         return;
     }
 
-    const input = document.getElementById("sleecInput");
-    input.value = patch.patched_sleec;
-    sleecPatchState.sleecText = patch.patched_sleec;
-    updateSleecEditorHighlight();
-    alert("Approved patch loaded into the SLEEC editor.");
+    if (document.getElementById("stakeholderProposedRule").value !== (patch.proposed_rule || "") || !patchIsVerified(patch)) {
+        alert("Save and verify the edited patch before using it.");
+        return;
+    }
+    // Keep the experiment input unchanged for the next independent issue.
+    // The chosen repair remains available in the handoff preview.
+
+    sleecPatchState.approvedPatchIndex = sleecPatchState.selectedPatchIndex;
+    sleecPatchState.patchDecisions[sleecPatchState.selectedPatchIndex] = "approved";
+    sleecPatchState.resolutionChoice = {
+        kind: "patch",
+        patchIndex: sleecPatchState.selectedPatchIndex,
+        patchId: patch.patch_id || "",
+        operation: patch.operation || "",
+        sleecText: patch.patched_sleec
+    };
+    sleecPatchState.issueResults[currentIssueKey()] = captureCurrentRunState();
+    renderIssueRunOutput();
+    renderIssues();
+    renderIssueSidebars();
+    renderVerificationSummary();
+    refreshPatchWizard();
+    goToPatchStep(9);
+}
+
+function showManualResolution() {
+    if (!sleecPatchState.selectedIssue) {
+        alert("Select one WFI first.");
+        return;
+    }
+
+    const out = document.getElementById("manualResolutionOutput");
+    if (!out) return;
+
+    out.className = "manual-resolution";
+    out.innerHTML = `
+        <div class="manual-editor-shell">
+            <label for="manualSleecEditor">Manual SLEEC Resolution</label>
+            <div class="sleec-code-editor manual-editor">
+                <pre id="manualSleecEditorHighlight" class="sleec-code-highlight" aria-hidden="true"></pre>
+                <textarea id="manualSleecEditor"
+                          spellcheck="false"
+                          oninput="onManualEdit()"
+                          onscroll="syncManualEditorScroll()">${escapeHtml(sleecPatchState.sleecText || document.getElementById("sleecInput").value || "")}</textarea>
+            </div>
+            <div id="manualVerificationOutput" class="verification-result empty">Edit the rules, then verify.</div>
+            <div class="center-actions">
+                <button class="secondary" onclick="verifyManualResolution()">Verify Manual Resolution</button>
+                <button class="primary" onclick="integrateManualResolutionAndProceed()">Use Manual Resolution</button>
+            </div>
+        </div>
+    `;
+
+    const saved = sleecPatchState.manualVerification;
+    if (saved?.verified_text) document.getElementById("manualSleecEditor").value = saved.verified_text;
+    updateManualEditorHighlight();
+}
+
+function updateManualEditorHighlight() {
+    const input = document.getElementById("manualSleecEditor");
+    const highlight = document.getElementById("manualSleecEditorHighlight");
+
+    if (!input || !highlight) return;
+
+    highlight.innerHTML = highlightSleecCode(input.value) + "\n";
+    syncManualEditorScroll();
+}
+
+function syncManualEditorScroll() {
+    const input = document.getElementById("manualSleecEditor");
+    const highlight = document.getElementById("manualSleecEditorHighlight");
+
+    if (!input || !highlight) return;
+
+    highlight.scrollTop = input.scrollTop;
+    highlight.scrollLeft = input.scrollLeft;
+}
+
+async function verifyManualResolution() {
+    const editor = document.getElementById("manualSleecEditor");
+    if (!editor) return;
+
+    const validation = await verifySleecTextForProceed(
+        editor.value,
+        "manualVerificationOutput"
+    );
+
+    if (!validation) return;
+    sleecPatchState.manualVerification = validation;
+    sleecPatchState.resolutionChoice = null;
+    sleecPatchState.issueResults[currentIssueKey()] = captureCurrentRunState();
+    renderVerificationSummary();
+    refreshPatchWizard();
+}
+
+function onManualEdit() {
+    workbenchVersion += 1;
+    sleecPatchState.manualVerification = null;
+    sleecPatchState.resolutionChoice = null;
+    document.getElementById("manualVerificationOutput").textContent = "Edit changed. Verify again before using it.";
+    persistCurrentIssueUiState();
+    updateManualEditorHighlight();
+    refreshPatchWizard();
+}
+
+function integrateManualResolutionAndProceed() {
+    const editor = document.getElementById("manualSleecEditor");
+    if (!editor) return;
+    const verification = sleecPatchState.manualVerification;
+    if (verification?.valid !== true || verification.verified_text !== editor.value) {
+        alert("Please verify the current manual resolution before proceeding.");
+        return;
+    }
+    sleecPatchState.resolutionChoice = {kind: "manual", sleecText: editor.value};
+    sleecPatchState.issueResults[currentIssueKey()] = captureCurrentRunState();
+    renderIssueRunOutput();
+    renderIssues();
+    renderVerificationSummary();
+    refreshPatchWizard();
+    goToPatchStep(9);
+}
+
+function proceedToNextSequentialIssue() {
+    if (!hasVerifiedCurrentResolution()) {
+        alert("Verify and integrate the current issue resolution before proceeding.");
+        return;
+    }
+
+    const currentIndex = selectedIssueIndex();
+    const nextIndex = currentIndex + 1;
+
+    renderIssues();
+    renderIssueSidebars();
+    refreshPatchWizard();
+
+    if (nextIndex >= sleecPatchState.issues.length) {
+        goToPatchStep(10);
+        return;
+    }
+
+    selectIssue(nextIndex);
+    goToPatchStep(4);
+}
+
+function leaveIssueUnresolved() {
+    // Moving on is not a successful repair and does not change stored results.
+    const next = selectedIssueIndex() + 1;
+    if (next >= sleecPatchState.issues.length) {
+        goToPatchStep(10);
+    } else {
+        selectIssue(next);
+        goToPatchStep(4);
+    }
+}
+
+function renderVerificationSummary() {
+    const out = document.getElementById("verificationSummaryOutput");
+    if (!out) return;
+
+    const choice = sleecPatchState.resolutionChoice;
+    const selectedIssue = sleecPatchState.selectedIssue;
+    const currentIndex = selectedIssueIndex();
+    const isLastIssue = (
+        currentIndex >= 0
+        && currentIndex === sleecPatchState.issues.length - 1
+    );
+
+    if (!selectedIssue) {
+        out.innerHTML = "No issue selected.";
+        return;
+    }
+
+    if (!choice) {
+        out.innerHTML = `
+            <div class="verification-handoff-card">
+                <div>
+                    <span class="badge neutral">Waiting for resolution</span>
+                    <h3>Finish one verified resolution before continuing</h3>
+                    <p>Select a verified patch or complete a manual resolution, then come back here to move to the next issue.</p>
+                </div>
+                <div class="verification-handoff-actions">
+                    <button class="primary" onclick="goToPatchStep(7)">Review Verified Patches</button>
+                    <button class="secondary" onclick="goToPatchStep(5)">Back to Issue Resolution</button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    let verificationBadge = `<span class="badge neutral">Verification pending</span>`;
+    let summaryTitle = "Resolved with selected patch";
+    let summaryBody = "";
+    let detailHtml = "";
+    let canProceed = false;
+
+    if (choice.kind === "patch") {
+        const patch = sleecPatchState.verifiedPatches[choice.patchIndex];
+
+        if (!patch) {
+            out.innerHTML = `
+                <div class="verification-handoff-card">
+                    <span class="badge bad">Selected patch missing</span>
+                    <p>Re-open the verified patch list and select a patch again.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const editWasRequired = Boolean(patch.stakeholder_edited);
+        const editedVerification = patch.edit_verification;
+        canProceed = hasVerifiedCurrentResolution();
+        verificationBadge = canProceed
+            ? `<span class="badge good">${editWasRequired ? "Edited patch verified" : "Generated patch verified"}</span>`
+            : `<span class="badge bad">Edited patch not yet verified</span>`;
+        summaryBody = `
+            <p><strong>${escapeHtml(patch.patch_id || "Patch")}</strong> is selected for <strong>${escapeHtml(selectedIssue.id || "this issue")}</strong>.</p>
+            <p>${escapeHtml(patch.stakeholder_summary || patch.natural_language_explanation || "")}</p>
+        `;
+        detailHtml = `
+            <div class="verification-detail-grid">
+                <div class="metric-card">
+                    <h3>Chosen Patch</h3>
+                    <p><strong>Operation:</strong> ${escapeHtml(patchDisplayLabel(patch))}</p>
+                    <p><strong>Source:</strong> ${escapeHtml(patch.source || "llm")}</p>
+                    <p><strong>Edited by user:</strong> ${editWasRequired ? "Yes" : "No"}</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Verification Result</h3>
+                    <p><strong>Status:</strong> ${canProceed ? "Ready to continue" : "Needs re-verification"}</p>
+                    <p><strong>Formal verification:</strong> ${patchIsVerified(patch) ? "Passed" : "Needs verification"}</p>
+                    <p><strong>Edit re-check:</strong> ${editWasRequired ? (patch.edit_verified ? "Passed" : "Not passed yet") : "Not required"}</p>
+                    ${editedVerification && !editedVerification.valid ? `<p><strong>Reason:</strong> ${escapeHtml(editedVerification.failure_reason || editedVerification.error || "")}</p>` : ""}
+                </div>
+            </div>
+            ${renderRegressionReport(currentPatchReport(patch))}
+        `;
+    } else {
+        summaryTitle = "Resolved with manual edit";
+        canProceed = hasVerifiedCurrentResolution();
+        verificationBadge = canProceed
+            ? `<span class="badge good">Manual resolution verified</span>`
+            : `<span class="badge bad">Manual resolution not verified</span>`;
+        summaryBody = `
+            <p><strong>${escapeHtml(selectedIssue.id || "This issue")}</strong> will use the manually edited SLEEC specification.</p>
+            <p>The selected issue must be fixed, with valid syntax and no new issues, before continuing.</p>
+        `;
+        detailHtml = `
+            <div class="verification-detail-grid">
+                <div class="metric-card">
+                    <h3>Resolution Type</h3>
+                    <p><strong>Mode:</strong> Manual edit</p>
+                    <p><strong>Saved for this issue:</strong> Yes</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Verification Result</h3>
+                    <p><strong>Status:</strong> ${canProceed ? "Ready to continue" : "Needs verification"}</p>
+                    <p><strong>Detector and syntax check:</strong> ${canProceed ? "Passed" : "Not passed yet"}</p>
+                    ${
+                        sleecPatchState.manualVerification && !sleecPatchState.manualVerification.valid
+                            ? `<p><strong>Reason:</strong> ${escapeHtml(sleecPatchState.manualVerification.failure_reason || sleecPatchState.manualVerification.error || "")}</p>`
+                            : ""
+                    }
+                </div>
+            </div>
+        `;
+    }
+
+    out.innerHTML = `
+        <div class="verification-handoff-card ${canProceed ? "is-ready" : "is-blocked"}">
+            <div class="verification-handoff-copy">
+                ${verificationBadge}
+                <h3>${escapeHtml(summaryTitle)}</h3>
+                ${summaryBody}
+                <p class="verification-progress-copy">
+                    ${escapeHtml(issueProgressText())}
+                    ${isLastIssue ? " is the final detected issue." : " is ready to hand off to the next issue."}
+                </p>
+            </div>
+            <div class="verification-handoff-actions">
+                <button class="${canProceed ? "next-issue-cta" : "secondary"}"
+                        onclick="${canProceed ? "proceedToNextSequentialIssue()" : `goToPatchStep(${choice.kind === "patch" ? 8 : 5})`}">
+                    ${canProceed ? (isLastIssue ? "Finish All Issues" : "Proceed to Next Issue") : "Finish Verification First"}
+                </button>
+                <button class="secondary" onclick="goToPatchStep(${choice.kind === "patch" ? 8 : 5})">
+                    ${choice.kind === "patch" ? "Review Patch Edit" : "Review Manual Edit"}
+                </button>
+            </div>
+        </div>
+        ${detailHtml}
+        <details><summary>Chosen resolution preview</summary>${renderHighlightedCode(choice.sleecText || "")}</details>
+        <p>Each issue uses the original input. Human edits remain local previews and are not counted as automatically generated repairs.</p>
+    `;
+}
+
+function applyApprovedPatchToEditor() {
+    return integrateSelectedPatchAndProceed();
 }
 
 function renderStakeholderDecision() {
@@ -1109,12 +1707,10 @@ function renderStakeholderDecision() {
         const llmCount = sleecPatchState.llmCandidates.length;
         out.innerHTML = `
             <div class="metric-card">
-                <h3>Persistence State</h3>
-                <p><strong>LLM patches persisted immediately:</strong> ${escapeHtml(llmCount)}</p>
+                <h3>No Verified Patch Selected</h3>
+                <p><strong>LLM candidates generated:</strong> ${escapeHtml(llmCount)}</p>
                 <p><strong>Verified patches:</strong> 0</p>
-                <p>Deterministic repairs continue through verification before becoming final persisted results.</p>
-                <button class="secondary small-btn" onclick="selectNextUnresolvedIssue()">Next Unresolved Issue</button>
-                <a class="secondary small-btn" href="/philosopher-review" target="_blank" rel="noopener">Open Philosopher Review</a>
+                <p>Use manual resolution if no generated patch is suitable.</p>
             </div>
         `;
         return;
@@ -1125,68 +1721,10 @@ function renderStakeholderDecision() {
     }
 
     const selectedPatch = sleecPatchState.verifiedPatches[sleecPatchState.selectedPatchIndex];
-    const deterministicVerified = sleecPatchState.verifiedPatches.filter(
-        patch => (patch.source || "").toLowerCase() === "deterministic"
-    ).length;
-    const llmVerified = sleecPatchState.verifiedPatches.filter(
-        patch => (patch.source || "").toLowerCase() === "llm"
-    ).length;
-    const comparisonIndexes = sleecPatchState.comparisonPatchIndexes.length
-        ? sleecPatchState.comparisonPatchIndexes
-        : [sleecPatchState.selectedPatchIndex];
-
-    const comparisonCards = comparisonIndexes.map(index => {
-        const patch = sleecPatchState.verifiedPatches[index];
-        if (!patch) return "";
-
-        const ranking = patch.ranking || {};
-        const rationale = patch.ranking_rationale || ranking.rationale || [];
-        const isLLM = (patch.source || "").toLowerCase() === "llm";
-
-        return `
-            <article class="comparison-card">
-                <div class="comparison-card-top">
-                    <strong>Rank #${escapeHtml(patch.rank || "-")}</strong>
-                    <span class="badge ${isLLM ? "neutral" : "good"}">${isLLM ? "LLM" : "Deterministic"}</span>
-                </div>
-                <p><strong>${escapeHtml(patchDisplayLabel(patch))}</strong></p>
-                <p>${escapeHtml(patch.patch_id)} - ${escapeHtml(patch.operation)}</p>
-                <p class="patch-summary compact">${escapeHtml(patch.stakeholder_summary || "")}</p>
-                ${renderRegressionReport(patch.regression_report)}
-                <dl class="score-list">
-                    <div><dt>Total</dt><dd>${escapeHtml(patch.ranking_score || 0)}</dd></div>
-                    <div><dt>Structural</dt><dd>${escapeHtml(ranking.structural_simplicity || 0)}</dd></div>
-                    <div><dt>Logical</dt><dd>${escapeHtml(ranking.logical_simplicity || 0)}</dd></div>
-                    <div><dt>Semantic</dt><dd>${escapeHtml(ranking.semantic_clarity || 0)}</dd></div>
-                    <div><dt>Interpretability</dt><dd>${escapeHtml(ranking.interpretability || 0)}</dd></div>
-                </dl>
-                ${renderRationaleList(rationale)}
-                <h4>Proposed Rule</h4>
-                <pre>${escapeHtml(patch.proposed_rule || "")}</pre>
-                <button class="secondary small-btn" onclick="selectPatchForReview(${index})">Inspect</button>
-            </article>
-        `;
-    }).join("");
+    const ranking = selectedPatch.ranking || {};
 
     out.innerHTML = `
-        <div class="decision-summary">
-            <div class="metric-card">
-                <h3>Persistence State</h3>
-                <p><strong>Verified patches:</strong> ${sleecPatchState.verifiedPatches.length}</p>
-                <p><strong>Deterministic verified:</strong> ${deterministicVerified}</p>
-                <p><strong>LLM generated and persisted:</strong> ${sleecPatchState.llmCandidates.length}</p>
-                <p><strong>LLM verified:</strong> ${llmVerified}</p>
-            </div>
-
-            <div class="metric-card">
-                <h3>Next Step</h3>
-                <p>LLM accept/reject decisions are handled on the philosopher page.</p>
-                <button class="secondary small-btn" onclick="selectNextUnresolvedIssue()">Next Unresolved Issue</button>
-                <a class="primary small-btn" href="/philosopher-review" target="_blank" rel="noopener">Open Philosopher Review</a>
-            </div>
-        </div>
-
-        <div class="decision-editor">
+        <div class="decision-editor single-decision-editor">
             <div>
                 <h3>Selected Verified Patch</h3>
                 <p>
@@ -1196,38 +1734,48 @@ function renderStakeholderDecision() {
                 </p>
                 <p class="patch-summary">${escapeHtml(selectedPatch.stakeholder_summary || "")}</p>
                 ${renderInlineBadges(selectedPatch.review_flags)}
-                ${renderRegressionReport(selectedPatch.regression_report)}
+                ${renderRegressionReport(currentPatchReport(selectedPatch))}
                 ${renderRationaleList(
                     selectedPatch.ranking_rationale ||
                     (selectedPatch.ranking || {}).rationale ||
                     []
                 )}
-
-                <h4>Proposed Rule</h4>
-                <pre>${escapeHtml(selectedPatch.proposed_rule || "")}</pre>
-
-                <h4>Explanation</h4>
-                <p>${escapeHtml(selectedPatch.natural_language_explanation || "")}</p>
+                <dl class="score-list compact-score-list">
+                    ${scoreBadge("Overall", selectedPatch.ranking_score || ranking.total_score || 0)}
+                    ${scoreBadge("Logical", ranking.logical_simplicity || 0)}
+                    ${scoreBadge("Semantic", ranking.semantic_clarity || 0)}
+                    ${scoreBadge("Interpretability", ranking.interpretability || 0)}
+                </dl>
             </div>
 
             <div>
-                <h3>Verification Preview</h3>
-                <p>
-                    <strong>Status:</strong>
-                    Verified by SLEEC.
-                </p>
-                <h4>Original Rule</h4>
-                <pre>${escapeHtml(selectedPatch.original_rule || "")}</pre>
-                <h4>Patched SLEEC</h4>
-                <pre>${escapeHtml(selectedPatch.patched_sleec || "")}</pre>
+                <h3>Edit Patch</h3>
+                <label for="stakeholderProposedRule">Proposed Rule</label>
+                <div class="sleec-code-editor compact-editor">
+                    <pre id="stakeholderProposedRuleHighlight" class="sleec-code-highlight" aria-hidden="true"></pre>
+                    <textarea id="stakeholderProposedRule"
+                              spellcheck="false"
+                              oninput="onPatchEdit()"
+                              onscroll="syncPatchEditorScroll()">${escapeHtml(selectedPatch.proposed_rule || "")}</textarea>
+                </div>
+
+                <label for="stakeholderExplanation">Explanation</label>
+                <textarea id="stakeholderExplanation" class="plain-editor" spellcheck="true">${escapeHtml(selectedPatch.natural_language_explanation || "")}</textarea>
+
+                <div id="patchVerificationOutput" class="verification-result empty">
+                    ${selectedPatch.stakeholder_edited ? (patchIsVerified(selectedPatch) ? "Edited patch formally verified. Meaning review remains pending." : "Edited patch requires verification.") : "Generated patch formally verified. Re-verify after edits; meaning review remains separate."}
+                </div>
+
+                <div class="center-actions">
+                    <button class="secondary" onclick="saveStakeholderEdit()">Save Edit</button>
+                    <button class="secondary" onclick="verifySelectedPatchEdit()">Verify Edit</button>
+                    <button class="primary" onclick="integrateSelectedPatchAndProceed()">Use Patch and Open Next-Issue Verification</button>
+                </div>
             </div>
         </div>
-
-        <h3>Comparison</h3>
-        <div class="comparison-grid">
-            ${comparisonCards}
-        </div>
     `;
+
+    updatePatchEditorHighlight();
 }
 
 function renderLog() {
@@ -1422,22 +1970,38 @@ function showPatchDetails(row) {
 
 async function loadSelectedUseCase() {
     const useCase = document.getElementById("useCase").value;
-
+    resetPatchWorkbench(true);
+    document.getElementById("sleecInput").value = "";
+    updateSleecEditorHighlight();
+    const version = workbenchVersion;
+    let text = "";
     if (useCase === "Custom") {
-        const customText = sessionStorage.getItem("sleecPatchCustomText") || "";
-        document.getElementById("sleecInput").value = customText;
-        updateSleecEditorHighlight();
-        return;
+        text = sessionStorage.getItem("sleecPatchCustomText") || "";
+    } else if (useCase) {
+        const data = await postJSON("/api/sleec-patch/load-usecase", {use_case: useCase});
+        if (version !== workbenchVersion) return;
+        text = data.sleec_text || "";
+    }
+    document.getElementById("sleecInput").value = text;
+    sleecPatchState.sleecText = text;
+    updateSleecEditorHighlight();
+    refreshPatchWizard();
+}
+
+async function handleUseCaseSelection() {
+    const select = document.getElementById("useCase");
+    const details = document.getElementById("useCaseDetails");
+    const description = document.getElementById("useCaseDescription");
+    const useCase = select ? select.value : "";
+    const descriptions = window.SLEEC_USE_CASE_DESCRIPTIONS || {};
+
+    if (description) {
+        description.textContent = descriptions[useCase] || "No detailed description is currently available.";
     }
 
-    const data = await postJSON("/api/sleec-patch/load-usecase", {
-        use_case: useCase
-    });
+    if (details) details.open = true;
 
-    console.log("LOAD RESPONSE:", data);
-
-    document.getElementById("sleecInput").value = data.sleec_text || "";
-    updateSleecEditorHighlight();
+    await loadSelectedUseCase();
 }
 
 function pct(x) {
@@ -1655,6 +2219,8 @@ async function exportEvaluationExcel() {
     alert("Excel exported: " + data.excel_path);
 }
 
+
+
 async function submitPhilosopherReview(patch, decision) {
     const comment = prompt("Optional comment:");
 
@@ -1688,21 +2254,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateSleecEditorHighlight();
+    if (useCaseSelect && useCaseSelect.value) {
+        const description = document.getElementById("useCaseDescription");
+        const details = document.getElementById("useCaseDetails");
+        const descriptions = window.SLEEC_USE_CASE_DESCRIPTIONS || {};
+        if (description) description.textContent = descriptions[useCaseSelect.value] || "";
+        if (details && description && description.textContent) details.open = true;
+    }
 
     if (!window.SleecWizard) return;
 
     patchWizard = window.SleecWizard.init({
         root: document,
-        total: 6,
+        total: 10,
         labels: [
-            "Specification",
-            "Detected WFIs",
-            "Selected issue",
-            "Repairs",
-            "Verification log",
+            "Profession",
+            "Instructions",
+            "Use case",
+            "Diagnosis",
+            "Resolution",
+            "Candidates",
+            "Patches",
+            "Edit patch",
+            "Verify and next",
             "Evaluation"
         ],
         canAdvance: canAdvancePatchWizard,
-        onRestart: resetPatchWorkbench
+        onStepChange: updateWorkflowHeader,
+        onRestart: () => resetPatchWorkbench()
     });
+
+    updateWorkflowHeader();
+    if (!customText && useCaseSelect?.value) handleUseCaseSelection();
 });
