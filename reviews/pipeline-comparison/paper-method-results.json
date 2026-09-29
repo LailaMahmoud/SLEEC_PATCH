@@ -1,0 +1,115 @@
+{
+  "recorded_at": "2026-09-29T15:44:40.435903+00:00",
+  "method": "Section III.B generation split: no deterministic new-rule generation",
+  "scope": "Regenerate current candidates from saved detector diagnoses; no new full-BSN solver run or model call.",
+  "diagnosis_source": "bsn-investigation.json",
+  "input_sha256": {
+    "BSN.sleec": "997d1dd5aadd381507bbf1ee8d43e586d9702dc0488c4d3305177ada35bcea1a",
+    "BSN-corrected.sleec": "26ea33109d0252410a0b22fadf5994ab818aef1bb9e2d2ea2289aa67822dc0c4"
+  },
+  "cases": [
+    {
+      "case": "BSN.sleec",
+      "source_id": "C2",
+      "deterministic_operators": [],
+      "deterministic_candidates": 0,
+      "llm_operators": [
+        "new_rule_generation"
+      ],
+      "resolved_rule_ids": [],
+      "addition_context_only": {
+        "source_id": "C2",
+        "source_text": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate",
+        "trigger_event": "TrackVitals",
+        "condition": "({canDeactivate} and ({patientDiscomfort} > low))",
+        "response_event": "CaregiverCanDeactivate",
+        "response_negated": true,
+        "timing": ""
+      }
+    },
+    {
+      "case": "BSN.sleec",
+      "source_id": "C8",
+      "deterministic_operators": [],
+      "deterministic_candidates": 0,
+      "llm_operators": [
+        "new_rule_generation"
+      ],
+      "resolved_rule_ids": [
+        "Rule12"
+      ],
+      "addition_context_only": {
+        "source_id": "C8",
+        "source_text": "C8 when DataCollected then not AnonymizeData eventually",
+        "trigger_event": "DataCollected",
+        "condition": "",
+        "response_event": "AnonymizeData",
+        "response_negated": true,
+        "timing": "eventually"
+      }
+    },
+    {
+      "case": "BSN.sleec",
+      "source_id": "C9",
+      "deterministic_operators": [
+        "trigger_strengthening",
+        "defeater_introduction",
+        "rule_decomposition"
+      ],
+      "deterministic_candidates": 0,
+      "llm_operators": [
+        "new_rule_generation"
+      ],
+      "resolved_rule_ids": [
+        "Rule13_1"
+      ],
+      "addition_context_only": {
+        "source_id": "C9",
+        "source_text": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually",
+        "trigger_event": "UserWantsToRemoveSensors",
+        "condition": "",
+        "response_event": "RemoveSensors",
+        "response_negated": true,
+        "timing": "eventually"
+      }
+    },
+    {
+      "case": "BSN-corrected.sleec",
+      "source_id": "C9",
+      "deterministic_operators": [],
+      "deterministic_candidates": 0,
+      "llm_operators": [
+        "new_rule_generation"
+      ],
+      "resolved_rule_ids": [],
+      "addition_context_only": {
+        "source_id": "C9",
+        "source_text": "C9 when UserWantsToRemoveSensors and {canPatientDeactivate} then not RemoveSensors eventually",
+        "trigger_event": "UserWantsToRemoveSensors",
+        "condition": "{canPatientDeactivate}",
+        "response_event": "RemoveSensors",
+        "response_negated": true,
+        "timing": "eventually"
+      }
+    }
+  ],
+  "live_llm_calls": 0,
+  "live_llm_repair_result": "not_measured",
+  "tests": {
+    "count": 70,
+    "result": "passed",
+    "log": "paper-method-tests.txt"
+  },
+  "excluded_artifacts": "excluded-nonpaper/manifest.json",
+  "implementation_sha256": {
+    "SLEECpatch/app/services/evidence_repair.py": "67806bf355fc29db29cea9afeba0abb34499c253afe96f9b423b603f4f3aefc8",
+    "SLEECpatch/app/services/repair_operator_selector.py": "9bf248f3c985097ddbe44c130731fd5e96fa679a287655b0df3c468978b9cbd1",
+    "SLEECpatch/app/services/structured_semantic_edit.py": "a2fe4ba7f04c8bffc0ab1ba82d12dd1f2bbfd4cb872861af1647afffe7eb360b",
+    "SLEECpatch/app/services/prompts.py": "563078d78a367388e1b42e4084c9cadfa0ed8cb966884512bf4903b5c069cbe0",
+    "SLEECpatch/app/services/candidate_status.py": "0fbd62e3049cda365bc537e7fd21a58176fac0e08d87685dae1904d686629cb4",
+    "SLEECpatch/app/services/rule_model.py": "b94e76b64f987c90546704b2b4aa93f5212063712b427ebb4d9e1f8c9245b482",
+    "SLEECpatch/app/services/sleec_patch_workbench_engine.py": "f47769d9963fee957e9d4ca7a6858ddbf358e7fc60d46db6d8280ed471bb0fbf",
+    "sleec/SleecNorm.py": "82b1a886e3c949853f7281d87c8eab6bc92e51aa8a742e60b2958948fb329a65",
+    "tests/test_bsn_repairs.py": "6a10d8aba2c0988879954e43258e1fbc9fd915cd30d361643adcaf55156385cf"
+  }
+}

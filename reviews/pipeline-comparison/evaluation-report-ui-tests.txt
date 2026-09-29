@@ -1,0 +1,12 @@
+✔ a late response cannot overwrite the newly selected use case (5.434667ms)
+✔ changing filters clears previous values and failed loads remain empty (1.638709ms)
+✔ patch count, diagnosis count and use-case count are shown separately (1.2215ms)
+✔ missing recorded diagnosis is not presented as zero issues (0.981625ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 154.310833

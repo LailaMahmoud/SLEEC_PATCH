@@ -29,6 +29,41 @@ from sleec.sleec_api import (
     check_purpose,
     check_situational
 )
+from sleec.analysis_runtime import ANALYSIS_LOCK, AnalysisError
+from services.diagnosis_evidence import extract_evidence
+from services.rule_model import rules_from_text
+
+
+DETECTOR_ISSUE_TYPES = {
+    "concern": "concerns",
+    "conflict": "conflicts",
+    "purpose": "purpose_blocking",
+    "redundancy": "redundancies",
+    "situational_conflict": "situational_conflicts",
+}
+
+
+def analysis_failures(analysis):
+    """Reject failed, missing or malformed detector results before verification."""
+    if not isinstance(analysis, dict):
+        return {"analysis": "No valid analysis result was returned."}
+    failures = {}
+    if analysis.get("status") != "OK":
+        failures["analysis"] = analysis.get("error") or "Analysis did not complete successfully."
+    detections = analysis.get("detections")
+    structured = analysis.get("structured")
+    if not isinstance(detections, dict) or not isinstance(structured, dict):
+        failures["analysis"] = "Incomplete detector results."
+        return failures
+    for name, issue_type in DETECTOR_ISSUE_TYPES.items():
+        result = detections.get(name)
+        if not isinstance(result, dict) or result.get("success") is not True:
+            failures[name] = (result.get("message") if isinstance(result, dict) else None) or "Detector did not complete."
+        elif type(result.get("detected")) is not bool or not isinstance(structured.get(issue_type), list):
+            failures[name] = "Malformed detector findings."
+        elif result["detected"] != bool(structured[issue_type]):
+            failures[name] = "Detector outcome and extracted findings disagree."
+    return failures
 
 
 class SLEECDetectionEngine:
@@ -73,24 +108,9 @@ class SLEECDetectionEngine:
     def run(self, excel_file):
 
         sleec_text = self.excel_to_full_sleec(excel_file)
-
-        detections = {
-            "concern": self.safe_call("concern", check_concern, sleec_text),
-            "conflict": self.safe_call("conflict", check_conflict, sleec_text),
-            "purpose": self.safe_call("purpose", check_purpose, sleec_text),
-            "redundancy": self.safe_call("redundancy", check_redundancy, sleec_text),
-            "situational_conflict": self.safe_call("situational_conflict", check_situational, sleec_text)
-        }
-        structured = self.build_structured_results(detections)
-
-        return {
-            "status": "OK",
-            "excel_file": excel_file,
-            "sleec_input": sleec_text,
-            "detections": detections,
-            "structured": structured
-
-        }
+        result = self.run_text(sleec_text)
+        result["excel_file"] = excel_file
+        return result
 
 
     def safe_call(self, detector_type, detector, text):
@@ -99,35 +119,40 @@ class SLEECDetectionEngine:
         from contextlib import redirect_stdout
 
         try:
+            # Validate source identity before running or attributing any proof.
+            rules_from_text(text)
             buffer = io.StringIO()
 
-            with redirect_stdout(buffer):
+            # stdout capture is process-wide, as is LEGOS state. Hold the same
+            # lock as the underlying detector for the entire capture window.
+            with ANALYSIS_LOCK, redirect_stdout(buffer):
                 result = detector(text)
 
             printed_output = buffer.getvalue()
 
-            message = ""
-            data = []
-
-            success = True
-
-            if isinstance(result, tuple) and len(result) == 3:
-                success, message, data = result
-            else:
-                message = str(result)
+            if not isinstance(result, tuple) or len(result) != 3:
+                raise AnalysisError("Detector returned an invalid result format.")
+            detected, message, data = result
+            if type(detected) is not bool or not isinstance(message, str) or not isinstance(data, list):
+                raise AnalysisError("Detector returned an incomplete or invalid outcome.")
 
             combined_message = str(message) + "\n" + str(printed_output)
 
             findings = self.extract_findings(
                 detector_type,
-                combined_message,
-                data
+                message,
+                data,
+                text
             )
+            if detected != bool(findings):
+                raise AnalysisError("Detector outcome and extracted findings disagree; diagnosis is incomplete.")
 
             return {
                 "success": True,
-                "detected": bool(success),
+                "detected": detected,
                 "message": combined_message,
+                "report": message,
+                "debug_output": printed_output,
                 "data": data if data else [],
                 "findings": findings,
                 "count": len(findings)
@@ -136,161 +161,29 @@ class SLEECDetectionEngine:
         except Exception as e:
             return {
                 "success": False,
+                "detected": None,
                 "message": str(e),
                 "data": [],
                 "findings": [],
                 "count": 0
             }
 
-    def extract_rules_from_finding(self, text):
-        import re
+    def extract_findings(self, detector_type, message, data, sleec_text):
+        return extract_evidence(detector_type, message, sleec_text)
 
-        rules = re.findall(
-            r"(r\d+\s+when\s+.*?then\s+.*?)(?=\n|-{5,}|$)",
-            str(text),
-            re.IGNORECASE
-        )
-
-        clean_rules = []
-
-        for r in rules:
-            rule = r.strip()
-
-            if rule and rule not in clean_rules:
-                clean_rules.append(rule)
-
-        return clean_rules
-
-    def extract_findings(self, detector_type, message, data):
-
-        msg = str(message) if message else ""
-        findings = []
-
-        if detector_type == "concern":
-
-            import re
-
-            pattern = r"((?:c\d+)(?:_\d+)?\s+when.*?Concern is raised)"
-            matches = re.findall(
-                pattern,
-                msg,
-                re.IGNORECASE | re.DOTALL
-            )
-
-            for m in matches:
-                findings.append({
-                    "source": "sleec",
-                    "value": m.strip()
-                })
-
-
-        elif detector_type == "conflict":
-
-            import re
-
-            conflicts = re.findall(
-                r"Conflict detected.*?TO BE HIGHLIGHTED(.*?)(?=\*{10,}|$)",
-                msg,
-                re.DOTALL
-            )
-
-            for c in conflicts:
-                findings.append({
-                    "source": "sleec",
-                    "value": c.strip()
-                })
-
-        elif detector_type == "redundancy":
-            if "Redundant SLEEC rule" in msg:
-                import re
-
-                matches = re.findall(
-                    r"Redundant SLEEC rule:(.*?)Because of the following SLEEC rule:",
-                    msg,
-                    re.DOTALL
-                )
-
-                for m in matches:
-                    findings.append({
-                        "source": "sleec",
-                        "value": m.strip()
-                    })
-
-        elif detector_type == "situational_conflict":
-
-            import re
-
-            matches = re.findall(
-                r"Situational conflict under situation(.*?)(?=\*{10,}|$)",
-                msg,
-                re.DOTALL
-            )
-
-            for m in matches:
-                value = m.strip()
-                findings.append({
-                    "source": "sleec",
-                    "value": value,
-                    "original_rules": self.extract_rules_from_finding(value)
-                })
-
-                
-        elif detector_type == "purpose":
-            if "Blocking" in msg and "Not Blocking" not in msg:
-                findings.append({
-                    "source": "sleec",
-                    "value": "Purpose blocking detected."
-                })
-
-        return findings
-    
     def build_structured_results(self, detections):
+        structured = {}
+        original_rules = {}
+        diagnoses = {}
+        for detector_type, issue_type in DETECTOR_ISSUE_TYPES.items():
+            findings = detections[detector_type]["findings"]
+            structured[issue_type] = [finding["value"] for finding in findings]
+            original_rules[issue_type] = [finding["original_rules"] for finding in findings]
+            diagnoses[issue_type] = [finding["diagnosis"] for finding in findings]
+        structured["original_rules_by_type"] = original_rules
+        structured["diagnoses_by_type"] = diagnoses
+        return structured
 
-        return {
-            "concerns": [
-                x["value"]
-                for x in detections["concern"]["findings"]
-            ],
-            "conflicts": [
-                x["value"]
-                for x in detections["conflict"]["findings"]
-            ],
-            "purpose_blocking": [
-                x["value"]
-                for x in detections["purpose"]["findings"]
-            ],
-            "redundancies": [
-                x["value"]
-                for x in detections["redundancy"]["findings"]
-            ],
-            "situational_conflicts": [
-                x["value"]
-                for x in detections["situational_conflict"]["findings"]
-            ],
-            "original_rules_by_type": {
-                "concerns": [
-                    x.get("original_rules", [])
-                    for x in detections["concern"]["findings"]
-                ],
-                "conflicts": [
-                    x.get("original_rules", [])
-                    for x in detections["conflict"]["findings"]
-                ],
-                "purpose_blocking": [
-                    x.get("original_rules", [])
-                    for x in detections["purpose"]["findings"]
-                ],
-                "redundancies": [
-                    x.get("original_rules", [])
-                    for x in detections["redundancy"]["findings"]
-                ],
-                "situational_conflicts": [
-                    x.get("original_rules", [])
-                    for x in detections["situational_conflict"]["findings"]
-                ]
-            }
-        }
-    
     def run_text(self, sleec_text):
         
 
@@ -304,8 +197,10 @@ class SLEECDetectionEngine:
 
         structured = self.build_structured_results(detections)
 
+        failures = {name: result["message"] for name, result in detections.items() if not result["success"]}
         return {
-            "status": "OK",
+            "status": "ERROR" if failures else "OK",
+            "error": f"SLEEC analysis failed: {failures}" if failures else "",
             "sleec_input": sleec_text,
             "detections": detections,
             "structured": structured

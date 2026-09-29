@@ -25,6 +25,21 @@ class SemanticPatchValidator:
         existing_measures: List[str],
         existing_responses: List[str],
     ) -> dict:
+        if patch.get("change") is not None:
+            from services.structured_semantic_edit import materialize_semantic_edit
+            try:
+                proposal = {key: patch[key] for key in ("operation", "target_rule_id", "change", "natural_language_explanation")}
+                if patch.get("source_requirement_id"):
+                    proposal["source_requirement_id"] = patch["source_requirement_id"]
+                resolution = patch.get("target_resolution", {})
+                expected = materialize_semantic_edit(sleec_text, proposal, resolution.get("rule_ids", []), resolution.get("addition_scope"))
+                if (patch.get("proposed_rule") != expected["proposed_rule"]
+                        or patch.get("declaration_text", "") != expected["declaration_text"]):
+                    raise ValueError("The patch differs from its validated structured edit.")
+                return {"valid": True, "errors": [], "warnings": ["The new meaning and its observability require stakeholder review."],
+                        "meaning_verified": False, "validation_basis": "structured_edit"}
+            except (ValueError, TypeError, KeyError, AttributeError) as exc:
+                return {"valid": False, "errors": [str(exc)], "warnings": [], "meaning_verified": False}
         issue_text = str((issue or {}).get("value", "") or "")
         issue_type = str((issue or {}).get("issue_type", "") or "")
         operation = str(patch.get("operation", "") or "")

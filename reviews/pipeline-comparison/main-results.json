@@ -1,0 +1,472 @@
+{
+  "snapshot": "/private/var/folders/b1/bq5g_mpx1_52dgf5dshc6hcc0000gn/T/sleec-pipeline-comparison-4gzu49nx/main",
+  "deterministic": {
+    "timed_boolean_concern": {
+      "input_syntax_valid": true,
+      "detector_failures": {},
+      "findings": [
+        "c1 when Start and {urgent} then not Act within 2 minutes\nConcern is raised"
+      ],
+      "repairs": [
+        {
+          "operation": "trigger_strengthening",
+          "target": "R1",
+          "proposed_rule": "R1 when Start and ({urgent}) then Act within 2 minutes",
+          "syntax_valid": false,
+          "syntax_error": "None:10:28: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) then Act'",
+          "formally_verified": false
+        },
+        {
+          "operation": "rule_decomposition",
+          "target": "R1",
+          "proposed_rule": "R1_1 when Start and ({urgent}) then Act within 2 minutes\nR1_2 when Start and (not {urgent}) then Act within 5 minutes",
+          "syntax_valid": false,
+          "syntax_error": "None:10:30: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) then Act'",
+          "formally_verified": false
+        }
+      ],
+      "operator_plan": {
+        "deterministic": [
+          "trigger_strengthening",
+          "defeater_introduction",
+          "rule_decomposition"
+        ],
+        "llm": [
+          "new_rule_generation"
+        ],
+        "applicability": {
+          "trigger_strengthening": {
+            "is_applicable": true,
+            "reason": "The witness concern provides contextual conditions that can strengthen a related rule."
+          },
+          "defeater_introduction": {
+            "is_applicable": true,
+            "reason": "The witness concern can be converted into an explicit exception on a related rule."
+          },
+          "rule_decomposition": {
+            "is_applicable": true,
+            "reason": "A related rule can be split into context-specific branches using the witness concern."
+          },
+          "new_rule_generation": {
+            "is_applicable": true,
+            "reason": "An insufficiency represents missing normative behaviour; a new rule is a candidate semantic repair."
+          }
+        }
+      }
+    },
+    "timed_compound_concern": {
+      "input_syntax_valid": true,
+      "detector_failures": {},
+      "findings": [
+        "c1 when Start and ((not {urgent}) or {ready}) then not Act within 2 minutes\nConcern is raised"
+      ],
+      "repairs": [
+        {
+          "operation": "trigger_strengthening",
+          "target": "R1",
+          "proposed_rule": "R1 when Start and ((not {urgent}) or {ready}) then Act within 2 minutes",
+          "syntax_valid": true,
+          "syntax_error": "",
+          "formally_verified": true,
+          "target_fixed": true,
+          "new_issue_count": 0,
+          "remaining_target_findings": [],
+          "detector_failures": {}
+        },
+        {
+          "operation": "rule_decomposition",
+          "target": "R1",
+          "proposed_rule": "R1_1 when Start and ((not {urgent}) or {ready}) then Act within 2 minutes\nR1_2 when Start and ({urgent} and (not {ready})) then Act within 5 minutes",
+          "syntax_valid": true,
+          "syntax_error": "",
+          "formally_verified": true,
+          "target_fixed": true,
+          "new_issue_count": 0,
+          "remaining_target_findings": [],
+          "detector_failures": {}
+        }
+      ],
+      "operator_plan": {
+        "deterministic": [
+          "trigger_strengthening",
+          "defeater_introduction",
+          "rule_decomposition"
+        ],
+        "llm": [
+          "new_rule_generation"
+        ],
+        "applicability": {
+          "trigger_strengthening": {
+            "is_applicable": true,
+            "reason": "The witness concern provides contextual conditions that can strengthen a related rule."
+          },
+          "defeater_introduction": {
+            "is_applicable": true,
+            "reason": "The witness concern can be converted into an explicit exception on a related rule."
+          },
+          "rule_decomposition": {
+            "is_applicable": true,
+            "reason": "A related rule can be split into context-specific branches using the witness concern."
+          },
+          "new_rule_generation": {
+            "is_applicable": true,
+            "reason": "An insufficiency represents missing normative behaviour; a new rule is a candidate semantic repair."
+          }
+        }
+      }
+    },
+    "defeater_concern": {
+      "input_syntax_valid": true,
+      "detector_failures": {},
+      "findings": [
+        "c1 when Start and ({urgent} and {ready}) then not Act\nConcern is raised"
+      ],
+      "repairs": [
+        {
+          "operation": "trigger_strengthening",
+          "target": "R1",
+          "proposed_rule": "R1 when Start and ({urgent} and {ready}) then Act",
+          "syntax_valid": true,
+          "syntax_error": "",
+          "formally_verified": true,
+          "target_fixed": true,
+          "new_issue_count": 0,
+          "remaining_target_findings": [],
+          "detector_failures": {}
+        },
+        {
+          "operation": "defeater_introduction",
+          "target": "R1",
+          "proposed_rule": "R1 when Start then Act unless ({urgent} and ((not {urgent}) or (not {ready}))) then not Act",
+          "syntax_valid": true,
+          "syntax_error": "",
+          "formally_verified": true,
+          "target_fixed": true,
+          "new_issue_count": 0,
+          "remaining_target_findings": [],
+          "detector_failures": {}
+        },
+        {
+          "operation": "rule_decomposition",
+          "target": "R1",
+          "proposed_rule": "R1_1 when Start and ({urgent} and {ready}) then Act\nR1_2 when Start and ((not {urgent}) or (not {ready})) then Act unless ({urgent}) then not Act",
+          "syntax_valid": false,
+          "syntax_error": "None:11:80: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) then not'",
+          "formally_verified": false
+        }
+      ],
+      "operator_plan": {
+        "deterministic": [
+          "trigger_strengthening",
+          "defeater_introduction",
+          "rule_decomposition"
+        ],
+        "llm": [
+          "new_rule_generation"
+        ],
+        "applicability": {
+          "trigger_strengthening": {
+            "is_applicable": true,
+            "reason": "The witness concern provides contextual conditions that can strengthen a related rule."
+          },
+          "defeater_introduction": {
+            "is_applicable": true,
+            "reason": "The witness concern can be converted into an explicit exception on a related rule."
+          },
+          "rule_decomposition": {
+            "is_applicable": true,
+            "reason": "A related rule can be split into context-specific branches using the witness concern."
+          },
+          "new_rule_generation": {
+            "is_applicable": true,
+            "reason": "An insufficiency represents missing normative behaviour; a new rule is a candidate semantic repair."
+          }
+        }
+      }
+    },
+    "measure_situational_conflict": {
+      "input_syntax_valid": true,
+      "detector_failures": {},
+      "findings": [
+        ":\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=True)\nat time 0: blocked_Act(end=0)\nat time 1: Act()\n\nFor rule:\nR1 when Start and {urgent} then Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Start and {ready} then not Act\n----------------------------------------------------------------------------------------------------\nSituational conflict under situation :\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=True)\nat time 0: blocked_not_Act(end=0)\nat time 1: Act()\n\nFor rule:\nR2 when Start and {ready} then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR1 when Start and {urgent} then Act\n----------------------------------------------------------------------------------------------------\n\nwhen Start then ( (urgent => Act within 0 seconds) )\nwhen Start then ( (ready => not_Act within 0 seconds) )\nchecking when Start then ( (urgent => Act within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\nfind trace\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=True)\nat time 0: blocked_Act(end=0)\nat time 1: Act()\nvol: 4\nsolving under config: restart False, bcr False, ub False, min False\nmerged\nmerged\ndomain size 10\nunsat\ndetect conflict, and start backward checking\n['F204', 'F198', 'F197', 'F194', 'F193', 'F183', 'F182', 'F181', 'F176', 'F165', 'F164', 'F163', 'F162', 'F161', 'F160', 'F159', 'F155', 'F154', 'F153', 'F152', 'F151', 'F92', 'F91', 'F86', 'F85', 'F84', 'F83', 'F82', 'F81', 'F80', 'F79', 'F78', 'F77', 'F76', 'F75', 'F74', 'F73', 'F72', 'F71', 'F70', 'F52', 'F48', 'F47', 'F33', 'F31', 'F30', 'F22', 'F21', 'F18', 'F17', 'F16', 'F15', 'F0', 'F2', 'F1']\nConflict detected, start backward checking\nUNSAT CORE\nSituational conflict under situation :\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=True)\nat time 0: blocked_Act(end=0)\nat time 1: Act()\n\nFor rule:\nR1 when Start and {urgent} then Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Start and {ready} then not Act\n----------------------------------------------------------------------------------------------------\n\nTO BE HIGHLIGHTED\nStart : [168, 173]\n{urgent} : [178, 186]\nAct : [192, 195]\n{ready} : [554, 561]\nAct : [571, 574]\nchecking when Start then ( (ready => not_Act within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\nfind trace\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=True)\nat time 0: blocked_not_Act(end=0)\nat time 1: Act()\nvol: 4\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 8\nunsat\ndetect conflict, and start backward checking\n['F169', 'F165', 'F164', 'F161', 'F160', 'F135', 'F134', 'F131', 'F130', 'F129', 'F128', 'F127', 'F126', 'F125', 'F124', 'F123', 'F122', 'F121', 'F120', 'F119', 'F118', 'F117', 'F107', 'F86', 'F85', 'F84', 'F83', 'F82', 'F81', 'F80', 'F79', 'F78', 'F77', 'F76', 'F75', 'F74', 'F73', 'F72', 'F71', 'F70', 'F52', 'F48', 'F47', 'F33', 'F31', 'F30', 'F22', 'F21', 'F18', 'F17', 'F16', 'F15', 'F0', 'F2', 'F1']\nConflict detected, start backward checking\nUNSAT CORE\nSituational conflict under situation :\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=True)\nat time 0: blocked_Act(end=0)\nat time 1: Act()\n\nFor rule:\nR1 when Start and {urgent} then Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Start and {ready} then not Act\n----------------------------------------------------------------------------------------------------\nSituational conflict under situation :\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=True)\nat time 0: blocked_not_Act(end=0)\nat time 1: Act()\n\nFor rule:\nR2 when Start and {ready} then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR1 when Start and {urgent} then Act\n----------------------------------------------------------------------------------------------------\n\nTO BE HIGHLIGHTED\nStart : [1227, 1232]\n{urgent} : [1237, 1245]\nAct : [1251, 1254]\nAct : [875, 878]\n{ready} : [858, 865]"
+      ],
+      "repairs": [
+        {
+          "operation": "defeater_introduction",
+          "target": "R1",
+          "proposed_rule": "R1 when Start and {urgent} then Act unless ({ready})",
+          "syntax_valid": false,
+          "syntax_error": "None:10:52: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => 's ({ready}*) R2 when '",
+          "formally_verified": false
+        },
+        {
+          "operation": "trigger_refinement",
+          "target": "R1",
+          "proposed_rule": "R1 when Start and {urgent} and (not {ready}) then Act",
+          "syntax_valid": false,
+          "syntax_error": "None:10:28: Expected 'then' => ' {urgent} *and (not {'",
+          "formally_verified": false
+        },
+        {
+          "operation": "defeater_introduction",
+          "target": "R2",
+          "proposed_rule": "R2 when Start and {ready} then not Act unless ({urgent})",
+          "syntax_valid": false,
+          "syntax_error": "None:11:56: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) rule_end'",
+          "formally_verified": false
+        },
+        {
+          "operation": "trigger_refinement",
+          "target": "R2",
+          "proposed_rule": "R2 when Start and {ready} and (not {urgent}) then not Act",
+          "syntax_valid": false,
+          "syntax_error": "None:11:27: Expected 'then' => 'd {ready} *and (not {'",
+          "formally_verified": false
+        }
+      ],
+      "operator_plan": {
+        "deterministic": [
+          "trigger_refinement",
+          "defeater_introduction"
+        ],
+        "llm": [
+          "event_specialization"
+        ],
+        "applicability": {
+          "trigger_refinement": {
+            "is_applicable": true,
+            "reason": "The diagnosed conflict contains contextual predicates that can be propagated into a trigger."
+          },
+          "defeater_introduction": {
+            "is_applicable": true,
+            "reason": "Two diagnosed conflicting obligations are available for explicit prioritisation."
+          },
+          "rule_merging": {
+            "is_applicable": false,
+            "reason": "Rule merging requires the same triggering event and compatible default/specialized contexts."
+          },
+          "event_specialization": {
+            "is_applicable": true,
+            "reason": "At least one diagnosed rule has a triggering event that can be semantically specialized."
+          },
+          "measure_specialization": {
+            "is_applicable": false,
+            "reason": "The conflicting rules do not share a declared environmental measure."
+          }
+        }
+      }
+    },
+    "opposing_defeater_situation": {
+      "input_syntax_valid": true,
+      "detector_failures": {},
+      "findings": [
+        ":\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\n\nFor rule:\nR1 when Start then Act unless (not {urgent}) then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Other then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup\n----------------------------------------------------------------------------------------------------\n\nwhen Start then ( ((not urgent) => not_Act within 0 seconds) )\nwhen Start then ( ((not (not urgent)) => Act within 0 seconds) )\nwhen Other then ( ((ready and (not urgent)) => Backup within 0 seconds) )\nwhen Other then ( ((not (ready and (not urgent))) => Act within 300 seconds) )\nchecking when Start then ( ((not urgent) => not_Act within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\nfind trace\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\nvol: 6\nsolving under config: restart False, bcr False, ub False, min False\nmerged\ndomain size 11\nunsat\ndetect conflict, and start backward checking\n['F185', 'F217', 'F153', 'F218', 'F152', 'F154', 'F155', 'F156', 'F157', 'F158', 'F159', 'F160', 'F161', 'F162', 'F163', 'F164', 'F175', 'F177', 'F181', 'F180', 'F178', 'F0', 'F1', 'F179', 'F9', 'F10', 'F11', 'F14', 'F13', 'F15', 'F16', 'F19', 'F21', 'F22', 'F26', 'F32', 'F33', 'F35', 'F184', 'F54', 'F60', 'F2', 'F61', 'F62', 'F68', 'F69', 'F88', 'F106', 'F70', 'F108', 'F73', 'F74', 'F105', 'F130', 'F99', 'F20', 'F109', 'F86', 'F53', 'F90', 'F93', 'F101', 'F95', 'F92', 'F100', 'F103', 'F94', 'F104', 'F72', 'F107', 'F12', 'F97', 'F71', 'F91', 'F110']\nConflict detected, start backward checking\nUNSAT CORE\nSituational conflict under situation :\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\n\nFor rule:\nR1 when Start then Act unless (not {urgent}) then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Other then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup\n----------------------------------------------------------------------------------------------------\n\nTO BE HIGHLIGHTED\nOther : [646, 651]\n{ready} : [686, 693]\nAct : [657, 660]\n5 minutes : [668, 677]\nAct : [294, 297]\nStart : [248, 253]\n{urgent} : [275, 283]\nchecking when Start then ( ((not (not urgent)) => Act within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 5\nunsat\nchecking when Other then ( ((ready and (not urgent)) => Backup within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 3\nunsat\nchecking when Other then ( ((not (ready and (not urgent))) => Act within 300 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 4\nunsat"
+      ],
+      "repairs": [
+        {
+          "operation": "defeater_introduction",
+          "target": "R1",
+          "proposed_rule": "R1 when Start then Act unless ((not {urgent}) and ({ready} and (not {urgent}))) then not Act",
+          "syntax_valid": true,
+          "syntax_error": "",
+          "formally_verified": false,
+          "target_fixed": false,
+          "new_issue_count": 1,
+          "remaining_target_findings": [
+            ":\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\n\nFor rule:\nR1 when Start then Act unless ((not {urgent}) and ({ready} and (not {urgent}))) then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Other then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup\n----------------------------------------------------------------------------------------------------\n\nwhen Start then ( (((not urgent) and (ready and (not urgent))) => not_Act within 0 seconds) )\nwhen Start then ( ((not ((not urgent) and (ready and (not urgent)))) => Act within 0 seconds) )\nwhen Other then ( ((ready and (not urgent)) => Backup within 0 seconds) )\nwhen Other then ( ((not (ready and (not urgent))) => Act within 300 seconds) )\nchecking when Start then ( (((not urgent) and (ready and (not urgent))) => not_Act within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\nfind trace\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\nvol: 6\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 10\nunsat\ndetect conflict, and start backward checking\n['F1', 'F32', 'F33', 'F0', 'F12', 'F21', 'F150', 'F239', 'F169', 'F196', 'F173', 'F20', 'F22', 'F170', 'F168', 'F19', 'F26', 'F13', 'F15', 'F109', 'F146', 'F139', 'F138', 'F114', 'F136', 'F133', 'F113', 'F116', 'F53', 'F74', 'F180', 'F111', 'F62', 'F175', 'F177', 'F135', 'F105', 'F61', 'F54', 'F176', 'F35', 'F108', 'F181', 'F60', 'F115', 'F2', 'F208', 'F106', 'F110', 'F183', 'F162', 'F207', 'F185', 'F186', 'F137', 'F184', 'F112', 'F149', 'F117', 'F171', 'F107', 'F188', 'F68', 'F147', 'F11', 'F16', 'F195', 'F14', 'F238', 'F9', 'F167', 'F10', 'F148', 'F166', 'F164', 'F194', 'F179', 'F182']\nConflict detected, start backward checking\nUNSAT CORE\nSituational conflict under situation :\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\n\nFor rule:\nR1 when Start then Act unless ((not {urgent}) and ({ready} and (not {urgent}))) then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Other then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup\n----------------------------------------------------------------------------------------------------\n\nTO BE HIGHLIGHTED\nStart : [248, 253]\n{urgent} : [276, 284]\n{ready} : [291, 298]\nOther : [681, 686]\n{ready} : [721, 728]\nAct : [692, 695]\n5 minutes : [703, 712]\nAct : [329, 332]\nchecking when Start then ( ((not ((not urgent) and (ready and (not urgent)))) => Act within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 5\nunsat\nchecking when Other then ( ((ready and (not urgent)) => Backup within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 3\nunsat\nchecking when Other then ( ((not (ready and (not urgent))) => Act within 300 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 4\nunsat"
+          ],
+          "detector_failures": {}
+        },
+        {
+          "operation": "trigger_refinement",
+          "target": "R2",
+          "proposed_rule": "R2 when Other and ({urgent}) then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup",
+          "syntax_valid": false,
+          "syntax_error": "None:11:28: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) then Act'",
+          "formally_verified": false
+        }
+      ],
+      "operator_plan": {
+        "deterministic": [
+          "trigger_refinement",
+          "defeater_introduction"
+        ],
+        "llm": [
+          "event_specialization"
+        ],
+        "applicability": {
+          "trigger_refinement": {
+            "is_applicable": true,
+            "reason": "The diagnosed conflict contains contextual predicates that can be propagated into a trigger."
+          },
+          "defeater_introduction": {
+            "is_applicable": true,
+            "reason": "Two diagnosed conflicting obligations are available for explicit prioritisation."
+          },
+          "rule_merging": {
+            "is_applicable": false,
+            "reason": "Rule merging requires the same triggering event and compatible default/specialized contexts."
+          },
+          "event_specialization": {
+            "is_applicable": true,
+            "reason": "At least one diagnosed rule has a triggering event that can be semantically specialized."
+          },
+          "measure_specialization": {
+            "is_applicable": false,
+            "reason": "The conflicting rules do not share a declared environmental measure."
+          }
+        }
+      }
+    },
+    "redundant_rule": {
+      "input_syntax_valid": true,
+      "detector_failures": {},
+      "findings": [
+        "R1 when Start then Act\n----------------------------------------------------------------------------------------------------",
+        "R2 when Start then Act\n----------------------------------------------------------------------------------------------------"
+      ],
+      "repairs": [
+        {
+          "operation": "rule_removal",
+          "target": "R1",
+          "proposed_rule": "",
+          "syntax_valid": true,
+          "syntax_error": "",
+          "formally_verified": true,
+          "target_fixed": true,
+          "new_issue_count": 0,
+          "remaining_target_findings": [],
+          "detector_failures": {}
+        }
+      ],
+      "operator_plan": {
+        "deterministic": [
+          "rule_removal"
+        ],
+        "llm": [
+          "event_specialization",
+          "capability_refinement"
+        ],
+        "applicability": {
+          "rule_removal": {
+            "is_applicable": true,
+            "reason": "The diagnosed redundant rule can be removed."
+          },
+          "defeater_propagation": {
+            "is_applicable": false,
+            "reason": "Defeater propagation requires an existing defeater."
+          },
+          "event_specialization": {
+            "is_applicable": true,
+            "reason": "The redundant rule has a trigger event that can be semantically specialized."
+          },
+          "measure_specialization": {
+            "is_applicable": false,
+            "reason": "Measure specialization requires an environmental measure in the redundant rule."
+          },
+          "capability_refinement": {
+            "is_applicable": true,
+            "reason": "The redundant rule has a response that can be replaced by a more distinguishable capability."
+          }
+        }
+      }
+    }
+  },
+  "llm_invalid_syntax": {
+    "returned_candidate": false,
+    "syntax_repair_attempts": 2
+  },
+  "llm_unresolved_target": {
+    "returned_candidate": false,
+    "syntax_repair_attempts": 0
+  },
+  "trace_retention": {
+    "raw_message_has_timed_trace": true,
+    "selected_findings_have_timed_trace": false,
+    "raw_message": "c1 when Start and {urgent} then not Act within 2 minutes\nConcern is raised\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=False)\nat time 121: Act()\n----------------------------------------------------------------------------------------------------\n****************************************************************************************************\n\ncheck concern_1\nsolving under config: restart False, bcr False, ub False, min False\nfind trace\nat time 0: Start()\nat time 0: Measure(urgent=True, ready=False)\nat time 121: Act()\nvol: 3\nConcern is raised\n****************************************************************************************************\n",
+    "selected_findings": [
+      "c1 when Start and {urgent} then not Act within 2 minutes\nConcern is raised"
+    ]
+  },
+  "detector_failure": {
+    "result": {
+      "success": true,
+      "detected": false,
+      "message": "controlled solver failure\n",
+      "data": [],
+      "findings": [],
+      "count": 0
+    },
+    "gate_recognizes_failure": false
+  },
+  "unidentified_trace_target": [
+    "R1",
+    "R2"
+  ],
+  "exists_concern_extraction": [],
+  "purpose_detail_extraction": [
+    {
+      "source": "sleec",
+      "value": "Purpose blocking detected."
+    }
+  ],
+  "rule_preservation": {
+    "original": "R1 when Start and ({urgent} and {ready}) then Act within 5 minutes unless {urgent} then Backup unless {ready} then not Act",
+    "serialized": "R1 when Start and ({urgent} and {ready}) then Act within 5 minutes unless ({urgent}) then Backup unless {ready} then not Act",
+    "identical": false,
+    "serialized_syntax_valid": false
+  },
+  "custom_rule_identifiers": [],
+  "prompt_correct_patch_syntax": {
+    "event_specialization": {
+      "proposed_rule": "r1 when ConfirmedFireHazard then InformCaregiver",
+      "syntax_valid": true
+    },
+    "measure_specialization": {
+      "proposed_rule": "r1 when UserWantsToCook and cookingRiskLevel=high then InterfereSafely",
+      "syntax_valid": false,
+      "error": "None:7:29: Expected 'true' or 'false' or '{' or '(' => 'oCook and *cookingRis'"
+    },
+    "capability_refinement": {
+      "proposed_rule": "r1 when HumanOnFloor and not humanAssents then not RequestUrgentCareAssessment within 500 seconds",
+      "syntax_valid": false,
+      "error": "None:7:26: Expected 'true' or 'false' or '{' or '(' => 'Floor and *not humanA'"
+    }
+  },
+  "scalar_syntax_then_verification": {
+    "gate_valid": true,
+    "syntax": {
+      "valid": true,
+      "error": "",
+      "rule_count": 1
+    },
+    "detectors": {
+      "concern": {
+        "success": true,
+        "message": "cannot unpack non-iterable function object\n",
+        "count": 0
+      },
+      "conflict": {
+        "success": true,
+        "message": "cannot unpack non-iterable function object\n",
+        "count": 0
+      },
+      "purpose": {
+        "success": true,
+        "message": "cannot unpack non-iterable function object\n",
+        "count": 0
+      },
+      "redundancy": {
+        "success": true,
+        "message": "cannot unpack non-iterable function object\n",
+        "count": 0
+      },
+      "situational_conflict": {
+        "success": true,
+        "message": "cannot unpack non-iterable function object\nwhen Start then ( Act within 300 seconds )\n",
+        "count": 0
+      }
+    },
+    "concerns_after_gate": []
+  }
+}

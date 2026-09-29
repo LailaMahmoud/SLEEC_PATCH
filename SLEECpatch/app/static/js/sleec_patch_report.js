@@ -1,7 +1,8 @@
 const reportState = {
     data: null,
     details: [],
-    selectedIndex: -1
+    selectedIndex: -1,
+    requestVersion: 0
 };
 
 const reportEls = {};
@@ -25,31 +26,43 @@ document.addEventListener("DOMContentLoaded", () => {
         "patchDetailOutput",
         "philosopherOutput",
         "logsOutput",
-        "reportToast"
+        "reportToast",
+        "diagnosisOutput",
+        "diagnosisCount",
+        "reportScope"
     ].forEach((id) => {
         reportEls[id] = document.getElementById(id);
     });
 
     reportEls.loadReportButton.addEventListener("click", loadReportData);
-    reportEls.reportUseCase.addEventListener("change", updateJsonLink);
-    reportEls.includePatchedSleec.addEventListener("change", updateJsonLink);
+    reportEls.reportUseCase.addEventListener("change", loadReportData);
+    reportEls.includePatchedSleec.addEventListener("change", loadReportData);
 
     loadReportData();
 });
 
 async function loadReportData() {
+    const version = ++reportState.requestVersion;
+    const scope = reportEls.reportUseCase.value || "All use cases";
     setLoading(true);
     updateJsonLink();
+    reportState.data = null;
+    reportState.details = [];
+    reportState.selectedIndex = -1;
+    renderReport();
+    reportEls.reportScope.textContent = `Loading ${scope}…`;
 
     try {
         const response = await fetch(reportUrl(), {
+            cache: "no-store",
             headers: {
                 "Accept": "application/json"
             }
         });
         const data = await response.json().catch(() => ({}));
+        if (version !== reportState.requestVersion) return;
 
-        if (!response.ok || data.status === "ERROR") {
+        if (!response.ok || data.status !== "OK" || !Array.isArray(data.evaluation_details)) {
             throw new Error(data.error || `Request failed: ${response.status}`);
         }
 
@@ -58,11 +71,14 @@ async function loadReportData() {
         reportState.selectedIndex = reportState.details.length ? 0 : -1;
 
         renderReport();
+        reportEls.reportScope.textContent = `${scope}: saved patch records across all recorded runs. Repeated runs may add more patch records.`;
         showToast(`Loaded ${reportState.details.length} saved patch row${reportState.details.length === 1 ? "" : "s"}.`);
     } catch (error) {
+        if (version !== reportState.requestVersion) return;
+        reportEls.reportScope.textContent = `Could not load ${scope}. No results are displayed for this selection.`;
         showToast(error.message);
     } finally {
-        setLoading(false);
+        if (version === reportState.requestVersion) setLoading(false);
     }
 }
 
@@ -91,9 +107,10 @@ function renderReport() {
     reportEls.metricVerifiedRows.textContent = metrics.verified_patch_rows || 0;
     reportEls.metricLlmRows.textContent = metrics.llm_patch_rows || 0;
     reportEls.metricDetRows.textContent = metrics.deterministic_patch_rows || 0;
-    reportEls.metricAvgTime.textContent = `${Number(metrics.avg_total_time_seconds || 0).toFixed(3)}s`;
+    reportEls.metricAvgTime.textContent = formatSeconds(metrics.avg_run_time_seconds);
 
     renderSummary(data.evaluation_summary || []);
+    renderDiagnoses(data.recorded_diagnoses || []);
     renderBreakdowns(metrics);
     renderDetails();
     renderSelectedPatch();
@@ -102,7 +119,7 @@ function renderReport() {
 }
 
 function renderSummary(rows) {
-    reportEls.summaryCount.textContent = `${rows.length} row${rows.length === 1 ? "" : "s"}`;
+    reportEls.summaryCount.textContent = `${rows.length} use case${rows.length === 1 ? "" : "s"}`;
 
     if (!rows.length) {
         reportEls.summaryOutput.className = "table-wrap empty-state";
@@ -116,10 +133,11 @@ function renderSummary(rows) {
             <thead>
                 <tr>
                     <th>Use Case</th>
-                    <th>Total</th>
-                    <th>Verified</th>
-                    <th>Avg Attempts</th>
-                    <th>Avg Time</th>
+                    <th>Patch Records</th>
+                    <th>Verified Patches</th>
+                    <th>Repair Runs</th>
+                    <th>Avg Attempts / Run</th>
+                    <th>Avg Time / Run</th>
                     <th>Modified</th>
                     <th>Added</th>
                     <th>Deleted</th>
@@ -132,8 +150,9 @@ function renderSummary(rows) {
                         <td>${escapeHTML(row.use_case)}</td>
                         <td>${escapeHTML(row.total_records || 0)}</td>
                         <td>${escapeHTML(row.verified_patches || 0)}</td>
-                        <td>${formatNumber(row.avg_attempts)}</td>
-                        <td>${formatNumber(row.avg_total_time)}s</td>
+                        <td>${escapeHTML(row.repair_run_count || 0)}</td>
+                        <td>${formatOptionalNumber(row.avg_run_attempts)}</td>
+                        <td>${formatSeconds(row.avg_run_time)}</td>
                         <td>${escapeHTML(row.rules_modified || 0)}</td>
                         <td>${escapeHTML(row.rules_added || 0)}</td>
                         <td>${escapeHTML(row.rules_deleted || 0)}</td>
@@ -145,10 +164,31 @@ function renderSummary(rows) {
     `;
 }
 
+function renderDiagnoses(rows) {
+    reportEls.diagnosisCount.textContent = `${rows.length} repair run${rows.length === 1 ? "" : "s"}`;
+    reportEls.diagnosisOutput.className = rows.length ? "table-wrap" : "table-wrap empty-state";
+    if (!rows.length) {
+        reportEls.diagnosisOutput.textContent = "No diagnosis records saved with repair runs for this selection.";
+        return;
+    }
+    reportEls.diagnosisOutput.innerHTML = `
+        <table><thead><tr><th>Use Case</th><th>Repair Run</th><th>Input Fingerprint</th>
+            <th>Diagnosed Issues</th><th>Selected Issue</th><th>Timestamp</th></tr></thead><tbody>
+        ${rows.map(row => `<tr>
+            <td>${escapeHTML(row.use_case)}</td>
+            <td title="${escapeHTML(row.run_id)}">${escapeHTML(String(row.run_id || "").slice(0, 12))}</td>
+            <td title="${escapeHTML(row.input_sha256 || "")}">${escapeHTML(row.input_sha256 ? row.input_sha256.slice(0, 12) : "Not recorded")}</td>
+            <td>${row.status === "recorded" && Number.isInteger(row.issue_count) ? row.issue_count :
+                (row.status === "inconsistent_record" ? "Inconsistent record" : "Not recorded")}</td>
+            <td>${escapeHTML(row.selected_issue_id || "—")}</td>
+            <td>${escapeHTML(row.timestamp || "—")}</td>
+        </tr>`).join("")}</tbody></table>`;
+}
+
 function renderBreakdowns(metrics) {
     const groups = [
         ["Use Case", metrics.by_use_case || {}],
-        ["Issue Type", metrics.by_issue_type || {}],
+        ["Patches by Issue Type", metrics.by_issue_type || {}],
         ["Operation", metrics.by_operation || {}],
         ["Source", metrics.by_source || {}]
     ];
@@ -265,15 +305,14 @@ function renderSelectedPatch() {
 
 function renderPhilosopher(data) {
     const metrics = data.philosopher_review_metrics?.overall || {};
-    const legacySummary = data.philosopher_review_summary || {};
     const reviews = data.philosopher_reviews || [];
 
     reportEls.philosopherOutput.className = "summary-stack";
     reportEls.philosopherOutput.innerHTML = `
         <div class="count-row"><span>LLM review rows</span><strong>${escapeHTML(metrics.total || 0)}</strong></div>
         <div class="count-row"><span>Pending</span><strong>${escapeHTML(metrics.pending || 0)}</strong></div>
-        <div class="count-row"><span>Accepted</span><strong>${escapeHTML(metrics.accepted || legacySummary.accepted || 0)}</strong></div>
-        <div class="count-row"><span>Rejected</span><strong>${escapeHTML(metrics.rejected || legacySummary.rejected || 0)}</strong></div>
+        <div class="count-row"><span>Accepted</span><strong>${escapeHTML(metrics.accepted ?? 0)}</strong></div>
+        <div class="count-row"><span>Rejected</span><strong>${escapeHTML(metrics.rejected ?? 0)}</strong></div>
         <div class="count-row"><span>Saved review records</span><strong>${escapeHTML(reviews.length)}</strong></div>
     `;
 }
@@ -287,11 +326,11 @@ function renderLogs(data) {
     reportEls.logsOutput.className = "summary-stack";
     reportEls.logsOutput.innerHTML = `
         <div class="count-row"><span>Backend</span><strong>${escapeHTML(persistence.backend || "-")}</strong></div>
-        <div class="count-row"><span>Total patch rows</span><strong>${escapeHTML(persistence.total_patch_rows || 0)}</strong></div>
+        <div class="count-row"><span>Saved patches (selected use cases)</span><strong>${escapeHTML(data.report_metrics?.total_patch_rows || 0)}</strong></div>
         <div class="count-row"><span>Pipeline runs</span><strong>${escapeHTML(runs.length)}</strong></div>
         <div class="count-row"><span>Patch candidates</span><strong>${escapeHTML(candidates.length)}</strong></div>
         <div class="count-row"><span>Patch verifications</span><strong>${escapeHTML(verifications.length)}</strong></div>
-        <div class="count-row"><span>Latest patch</span><strong>${escapeHTML(persistence.latest_patch_timestamp || "-")}</strong></div>
+        <div class="count-row"><span>Latest saved patch (selected use cases)</span><strong>${escapeHTML(data.evaluation_details?.[0]?.timestamp || "-")}</strong></div>
     `;
 }
 
@@ -311,6 +350,14 @@ function showToast(message) {
 
 function formatNumber(value) {
     return Number(value || 0).toFixed(2);
+}
+
+function formatOptionalNumber(value) {
+    return value === null || value === undefined ? "Not recorded" : formatNumber(value);
+}
+
+function formatSeconds(value) {
+    return value === null || value === undefined ? "Not recorded" : `${Number(value).toFixed(3)}s`;
 }
 
 function escapeHTML(value) {

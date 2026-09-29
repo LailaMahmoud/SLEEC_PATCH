@@ -40,25 +40,27 @@
         <button id="loadReportButton" type="button" class="primary">Load Report Data</button>
     </section>
 
+    <p id="reportScope" role="status" aria-live="polite">Loading saved report data…</p>
+
     <section class="metrics-strip" aria-label="Top-level report metrics">
         <div class="metric">
-            <span>Total Rows</span>
+            <span>Saved Patches</span>
             <strong id="metricTotalRows">0</strong>
         </div>
         <div class="metric">
-            <span>Verified</span>
+            <span>Verified Patches</span>
             <strong id="metricVerifiedRows">0</strong>
         </div>
         <div class="metric">
-            <span>LLM</span>
+            <span>LLM Patches</span>
             <strong id="metricLlmRows">0</strong>
         </div>
         <div class="metric">
-            <span>Deterministic</span>
+            <span>Deterministic Patches</span>
             <strong id="metricDetRows">0</strong>
         </div>
         <div class="metric">
-            <span>Avg Time</span>
+            <span>Avg Time / Repair Run</span>
             <strong id="metricAvgTime">0s</strong>
         </div>
     </section>
@@ -67,17 +69,29 @@
         <article class="panel">
             <div class="panel-heading">
                 <h2>Evaluation Summary</h2>
-                <span id="summaryCount">0 rows</span>
+                <span id="summaryCount">0 use cases</span>
             </div>
             <div id="summaryOutput" class="table-wrap empty-state">No summary loaded.</div>
         </article>
 
         <article class="panel">
             <div class="panel-heading">
-                <h2>Breakdowns</h2>
+                <h2>Patch Breakdowns</h2>
             </div>
             <div id="breakdownOutput" class="breakdown-grid empty-state">No breakdown loaded.</div>
         </article>
+    </section>
+
+    <section class="panel diagnosis-panel">
+        <div class="panel-heading">
+            <h2>Diagnosis Recorded for Each Repair Run</h2>
+            <span id="diagnosisCount">0 repair runs</span>
+        </div>
+        <p>Each count is the number of issues in the input before repairing the selected issue.
+           Multiple patches or repeated repair runs do not increase that diagnosis count.
+           Matching input fingerprints identify the same specification. Older runs may have no fingerprint.
+           Diagnoses without a saved repair run are not included.</p>
+        <div id="diagnosisOutput" class="table-wrap empty-state">No recorded diagnoses loaded.</div>
     </section>
 
     <section class="grid-two detail-grid">

@@ -1,6 +1,7 @@
 from pysmt.fnode import FNode
 from termcolor import colored
 import os
+from .analysis_runtime import AnalysisError, isolated_analysis, serialized, require_conclusive_result
 from .Analyzer.analyzer import check_property_refining, clear_all
 from .Analyzer.proof_reader import check_and_minimize, Fact
 from .Analyzer.type_constructor import create_type, create_action, union
@@ -52,6 +53,14 @@ scalar_mask = {}
 registered_type = set()
 
 
+def reset_parser_state():
+    constants.clear()
+    scalar_type.clear()
+    scalar_mask.clear()
+    registered_type.clear()
+    text_ref.clear()
+
+
 def add_scale(scalePaarams):
     sps = scalePaarams.scaleParams
     for index in range(len(sps)):
@@ -62,7 +71,7 @@ def add_scale(scalePaarams):
 
 
 def process_scalar(measure, type_dict):
-    if measure.name not in registered_type:
+    if measure.name not in type_dict:
         scalar = measure.type
         add_scale(measure.type)
         create_type(measure.name, type_dict, upper_bound=len(scalar.scaleParams) - 1, lower_bound=0)
@@ -81,16 +90,17 @@ def parse_measure_def(measure, type_dict):
 
 def parse_constants(constant, constants):
     value = constant.value
-    if value.value:
-        cur_val = value.value
-    else:
+    if value.constant is not None:
         cur_val = parse_constants(value.constant, constants)
+    else:
+        cur_val = value.value
     if constant.name not in constants:
         constants[constant.name] = cur_val
     return cur_val
 
 
 def parse_definitions(defs):
+    reset_parser_state()
     ACTION_Mapping = {}
     _measures = [("time", "time")]
     type_dict = dict()
@@ -670,6 +680,7 @@ def check_concerns(model, rules, concerns, relations, Action_Mapping, Actions, m
                                           universal_blocking=False, vol_bound=VOL_BOUND,
                                           record_proof=False)
 
+        require_conclusive_result(res)
         if isinstance(res, str):
             concern_raised = True
             if to_print:
@@ -681,12 +692,6 @@ def check_concerns(model, rules, concerns, relations, Action_Mapping, Actions, m
             output += "Concern is raised\n"
             output += res
             output += ("-" * 100 + '\n')
-        elif res == -1:
-            if to_print:
-                print("Likely not raised")
-            else:
-                output += "Likely not raised\n"
-
         else:
             print("concern not raised")
 
@@ -773,17 +778,12 @@ def check_conflict(model, rules, relations, Action_Mapping, Actions, model_str="
                                           universal_blocking=False, vol_bound=VOL_BOUND,
                                           record_proof=check_proof)
 
+        require_conclusive_result(res)
         if isinstance(res, str):
             if to_print:
                 print("Not Conflicting")
             else:
                 output += "Not Conflicting\n"
-
-        elif res == -1:
-            if to_print:
-                print("Likely Conflicting")
-            else:
-                output += "Likely Conflicting\n"
 
         else:
             conflict_res = True
@@ -791,15 +791,7 @@ def check_conflict(model, rules, relations, Action_Mapping, Actions, model_str="
         if res == 0 and check_proof:
             result = check_and_minimize("proof.txt", "simplified.txt")
             if not result:
-                print("warning Redundency info is not available")
-                output += ("-" * 100 + '\n')
-                clear_all(Actions)
-                reset_rules(rules)
-                measure_inv.clear()
-                derivation_rule.reset()
-                clear_relational_constraints(relations)
-                [r.clear() for r in first_inv]
-                continue
+                raise AnalysisError("Conflict proof could not be extracted.")
             UNSAT_CORE, derivation = result
 
             # print("*" * 100)
@@ -947,17 +939,12 @@ def check_purposes(model, purposes, rules, relations, Action_Mapping, Actions, m
                                           universal_blocking=False, vol_bound=VOL_BOUND,
                                           record_proof=check_proof)
 
+        require_conclusive_result(res)
         if isinstance(res, str):
             if to_print:
                 print("Not Blocking")
             else:
                 output += "Not Blocking\n"
-
-        elif res == -1:
-            if to_print:
-                print("Likely  blocking")
-            else:
-                output += "Likely  blocking\n"
 
         else:
             conflict_res = True
@@ -1136,17 +1123,12 @@ def check_red(model, rules, relations, Action_Mapping, Actions, model_str="", ch
                                           universal_blocking=False, vol_bound=VOL_BOUND,
                                           record_proof=check_proof)
 
+        require_conclusive_result(res)
         if isinstance(res, str):
             if to_print:
                 print("Not Redundant")
             else:
                 output += "Not Redundant\n"
-
-        elif res == 2:
-            if to_print:
-                print("Likely Redundant")
-            else:
-                output += "Likely Redundant\n"
 
         else:
             red_result = True
@@ -1154,16 +1136,7 @@ def check_red(model, rules, relations, Action_Mapping, Actions, model_str="", ch
         if res == 0 and check_proof:
             result = check_and_minimize("proof.txt", "simplified.txt")
             if not result:
-                print("warning Redundency info is not available")
-                output += ("-" * 100 + '\n')
-                clear_all(Actions)
-                reset_rules(rules)
-                measure_inv.clear()
-                clear_relational_constraints(relations)
-                [r.clear() for r in first_inv]
-                derivation_rule.reset()
-                rule.get_neg_rule().clear()
-                continue
+                raise AnalysisError("Redundancy proof could not be extracted.")
 
             UNSAT_CORE, derivation = result
 
@@ -1275,13 +1248,20 @@ def read_model_file(file_path):
         return file.read()
 
 
+@serialized
+def parse_sleec_ast(model_str):
+    """Parse syntax and resolve declarations without constructing solver state."""
+    return mm.model_from_str(model_str)
+
+
+@serialized
 def parse_sleec(model_file, read_file=True):
     if read_file:
         model_str = read_model_file(model_file)
     else:
         model_str = model_file
     # Parse the model using the metamodel
-    model = mm.model_from_str(model_str)
+    model = parse_sleec_ast(model_str)
     Action_Mapping = parse_definitions(model.definitions)
     Actions = list(Action_Mapping.values())
     rules = parse_rules(model.ruleBlock, Action_Mapping)
@@ -1307,51 +1287,35 @@ def parse_sleec(model_file, read_file=True):
 # model_str = read_model_file("dressingrobot.sleec")
 # check_red(model, rules, Action_Mapping, Actions, check_proof=True, model_str=model_str)
 
+@isolated_analysis
 def check_input_red(model_str, multi_entry=False):
     model, rules, concerns, purposes, relations, Action_Mapping, Actions = parse_sleec(model_str, read_file=False)
     res = check_red(model, rules, relations, Action_Mapping, Actions, check_proof=True, model_str=model_str,
                     multi_entry=multi_entry)
-    # reset
-    scalar_mask.clear()
-    scalar_type.clear()
-    registered_type.clear()
-    text_ref.clear()
     return res
 
 
+@isolated_analysis
 def check_input_conflict(model_str, multi_entry=False):
     model, rules, concerns, purposes, relations, Action_Mapping, Actions = parse_sleec(model_str, read_file=False)
     res = check_conflict(model, rules, relations, Action_Mapping, Actions, check_proof=True, model_str=model_str,
                          multi_entry=multi_entry)
-    # reset
-    scalar_mask.clear()
-    scalar_type.clear()
-    registered_type.clear()
-    text_ref.clear()
     return res
 
 
+@isolated_analysis
 def check_input_purpose(model_str, multi_entry=False):
     model, rules, concerns, purposes, relations, Action_Mapping, Actions = parse_sleec(model_str, read_file=False)
     res = check_purposes(model, purposes, rules, relations, Action_Mapping, Actions, check_proof=True,
                          model_str=model_str,
                          multi_entry=multi_entry)
-    # reset
-    scalar_mask.clear()
-    scalar_type.clear()
-    registered_type.clear()
-    text_ref.clear()
     return res
 
 
+@isolated_analysis
 def check_input_concerns(model_str):
     model, rules, concerns, purposes, relations, Action_Mapping, Actions = parse_sleec(model_str, read_file=False)
     res = check_concerns(model, rules, concerns, relations, Action_Mapping, Actions, model_str=model_str)
-    # reset
-    scalar_mask.clear()
-    scalar_type.clear()
-    registered_type.clear()
-    text_ref.clear()
     return res
 
 

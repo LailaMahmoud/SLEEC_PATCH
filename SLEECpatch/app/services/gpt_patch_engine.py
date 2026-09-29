@@ -87,8 +87,9 @@ Never return markdown.
                 parsed = [parsed]
 
             for patch in parsed:
+                if patch.get("operation") != repair_operator:
+                    raise ValueError("The proposal changed the selected repair operator.")
                 patch["source"] = "llm"
-                patch["operation"] = repair_operator
 
             return parsed
 

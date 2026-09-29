@@ -1,0 +1,628 @@
+{
+  "recorded_at": "2026-09-29T15:34:56.529657+00:00",
+  "scope": "Step 1 only: deterministic operator ablation on four diagnosed concerns across two BSN inputs.",
+  "method": "Regenerate both variants using the same saved diagnosis, source and current improved generator. Disable only concern_completion. Reuse saved verification only when the regenerated repaired specification is byte-identical and recorded implementation hashes match.",
+  "solver_rerun": false,
+  "llm_calls": 0,
+  "input_sha256": {
+    "BSN.sleec": "997d1dd5aadd381507bbf1ee8d43e586d9702dc0488c4d3305177ada35bcea1a",
+    "BSN-corrected.sleec": "26ea33109d0252410a0b22fadf5994ab818aef1bb9e2d2ea2289aa67822dc0c4"
+  },
+  "implementation_sha256": {
+    "sleec/SleecNorm.py": "82b1a886e3c949853f7281d87c8eab6bc92e51aa8a742e60b2958948fb329a65",
+    "SLEECpatch/app/services/evidence_repair.py": "14772227c3131f9ba3edbb10031be10af8ef9734283573f5bacfeb30efc3b831",
+    "SLEECpatch/app/services/structured_semantic_edit.py": "edc6350c71207b55924736ec5cf99e1dabbbf5f8866a0d51a562f1a7df04095d",
+    "SLEECpatch/app/services/sleec_patch_workbench_engine.py": "ad5fcccb05546a5c70f145bf8c7f0e740e8f866c654869d10eb592e71fbf8462",
+    "SLEECpatch/app/services/prompts.py": "c7b62fc476b4e12debc6e39a52a02674b5dc2542e94ede3f9a2e106ab1e544e1"
+  },
+  "cases": [
+    {
+      "case": "BSN.sleec",
+      "concern": "C2",
+      "diagnosis": {
+        "source_id": "C2",
+        "source_text": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate",
+        "raw_report": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\nConcern is raised\nat time 0: TrackVitals()\nat time 0: UserCanCallEmergency()\nat time 0: Measure(patientDiscomfort=p_moderate, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=True, canDeactivate=True, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=True, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)\n----------------------------------------------------------------------------------------------------",
+        "trace": [
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "TrackVitals",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: TrackVitals()"
+          },
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "UserCanCallEmergency",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: UserCanCallEmergency()"
+          },
+          {
+            "kind": "measure",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "Measure",
+            "values": {
+              "patientDiscomfort": "p_moderate",
+              "riskLevel": "r_low",
+              "batteryConsumption": "low",
+              "numUsersKnown": false,
+              "numSampleKnown": true,
+              "canDeactivate": true,
+              "patientIsHome": false,
+              "signsImpaired": false,
+              "signsDetached": false,
+              "isWaterproof": false,
+              "hasFallAlertPendant": false,
+              "allowsBathroomTracking": false,
+              "canCommunicateRegularly": false,
+              "authorizedParties": false,
+              "emergencyDetected": false,
+              "messageOnTime": true,
+              "alternateSensorsDeployed": false,
+              "timeToFailureKnown": false,
+              "anomalyDetected": false,
+              "unusualActivity": false,
+              "sensorMalfunction": false,
+              "sensorMisplacement": false,
+              "userResponds": false,
+              "caregiverResponds": false,
+              "dataNeededForTraining": false,
+              "userWantsToStop": false,
+              "caregiverConsent": false,
+              "seeHealthHistory": false,
+              "seeDemographics": false,
+              "seeLocation": false,
+              "accurateHealthComparison": false
+            },
+            "arguments_raw": "patientDiscomfort=p_moderate, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=True, canDeactivate=True, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=True, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False",
+            "raw": "at time 0: Measure(patientDiscomfort=p_moderate, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=True, canDeactivate=True, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=True, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)"
+          }
+        ],
+        "affected_rule_ids": [],
+        "rule_references": [],
+        "rule_id_provenance": "unavailable"
+      },
+      "enabled": {
+        "operators": [
+          "concern_completion"
+        ],
+        "generated": 1,
+        "verified": 1,
+        "candidates": [
+          {
+            "operation": "concern_completion",
+            "proposed_rule": "repair_C2_1 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then CaregiverCanDeactivate",
+            "verified": true,
+            "verification_basis": "Saved verification of byte-identical repaired specification; implementation hashes matched.",
+            "regression_report": {
+              "selected_issue_fixed": true,
+              "new_issues_introduced": false,
+              "regression_passed": true,
+              "before_issue_count": 3,
+              "after_issue_count": 2,
+              "new_issue_count": 0,
+              "resolved_issue_count": 1,
+              "remaining_issue_count": 2,
+              "before_counts_by_type": {
+                "concerns": 3,
+                "conflicts": 0,
+                "purpose_blocking": 0,
+                "redundancies": 0,
+                "situational_conflicts": 0
+              },
+              "after_counts_by_type": {
+                "concerns": 2,
+                "conflicts": 0,
+                "purpose_blocking": 0,
+                "redundancies": 0,
+                "situational_conflicts": 0
+              },
+              "new_issues": [],
+              "resolved_issues": [
+                {
+                  "fingerprint": "concerns:91f6b58037342056",
+                  "issue_type": "concerns",
+                  "source_id": "C2",
+                  "value": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\nConcern is raised",
+                  "summary": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate Concern is raised",
+                  "rule_ids": []
+                }
+              ],
+              "remaining_issues": [
+                {
+                  "fingerprint": "concerns:7afa155ca3af34c3",
+                  "issue_type": "concerns",
+                  "source_id": "C8",
+                  "value": "C8 when DataCollected then not AnonymizeData eventually\nConcern is raised",
+                  "summary": "C8 when DataCollected then not AnonymizeData eventually Concern is raised",
+                  "rule_ids": []
+                },
+                {
+                  "fingerprint": "concerns:ce32c8b3f58535aa",
+                  "issue_type": "concerns",
+                  "source_id": "C9",
+                  "value": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\nConcern is raised",
+                  "summary": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually Concern is raised",
+                  "rule_ids": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "disabled": {
+        "operators": [],
+        "generated": 0,
+        "verified": 0,
+        "outcome": "no_supported_candidate"
+      }
+    },
+    {
+      "case": "BSN.sleec",
+      "concern": "C8",
+      "diagnosis": {
+        "source_id": "C8",
+        "source_text": "C8 when DataCollected then not AnonymizeData eventually",
+        "raw_report": "C8 when DataCollected then not AnonymizeData eventually\nConcern is raised\nat time 0: DataCollected()\nat time 0: DeleteData()\nat time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)\n----------------------------------------------------------------------------------------------------",
+        "trace": [
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "DataCollected",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: DataCollected()"
+          },
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "DeleteData",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: DeleteData()"
+          },
+          {
+            "kind": "measure",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "Measure",
+            "values": {
+              "patientDiscomfort": "p_low",
+              "riskLevel": "r_low",
+              "batteryConsumption": "low",
+              "numUsersKnown": false,
+              "numSampleKnown": false,
+              "canDeactivate": false,
+              "patientIsHome": false,
+              "signsImpaired": false,
+              "signsDetached": false,
+              "isWaterproof": false,
+              "hasFallAlertPendant": false,
+              "allowsBathroomTracking": false,
+              "canCommunicateRegularly": false,
+              "authorizedParties": false,
+              "emergencyDetected": false,
+              "messageOnTime": false,
+              "alternateSensorsDeployed": false,
+              "timeToFailureKnown": false,
+              "anomalyDetected": false,
+              "unusualActivity": false,
+              "sensorMalfunction": false,
+              "sensorMisplacement": false,
+              "userResponds": false,
+              "caregiverResponds": false,
+              "dataNeededForTraining": false,
+              "userWantsToStop": false,
+              "caregiverConsent": false,
+              "seeHealthHistory": false,
+              "seeDemographics": false,
+              "seeLocation": false,
+              "accurateHealthComparison": false
+            },
+            "arguments_raw": "patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False",
+            "raw": "at time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)"
+          }
+        ],
+        "affected_rule_ids": [],
+        "rule_references": [],
+        "rule_id_provenance": "unavailable"
+      },
+      "enabled": {
+        "operators": [
+          "concern_completion"
+        ],
+        "generated": 1,
+        "verified": 1,
+        "candidates": [
+          {
+            "operation": "concern_completion",
+            "proposed_rule": "repair_C8_1 when DataCollected then AnonymizeData eventually",
+            "verified": true,
+            "verification_basis": "Saved verification of byte-identical repaired specification; implementation hashes matched.",
+            "regression_report": {
+              "selected_issue_fixed": true,
+              "new_issues_introduced": false,
+              "regression_passed": true,
+              "before_issue_count": 3,
+              "after_issue_count": 2,
+              "new_issue_count": 0,
+              "resolved_issue_count": 1,
+              "remaining_issue_count": 2,
+              "before_counts_by_type": {
+                "concerns": 3,
+                "conflicts": 0,
+                "purpose_blocking": 0,
+                "redundancies": 0,
+                "situational_conflicts": 0
+              },
+              "after_counts_by_type": {
+                "concerns": 2,
+                "conflicts": 0,
+                "purpose_blocking": 0,
+                "redundancies": 0,
+                "situational_conflicts": 0
+              },
+              "new_issues": [],
+              "resolved_issues": [
+                {
+                  "fingerprint": "concerns:7afa155ca3af34c3",
+                  "issue_type": "concerns",
+                  "source_id": "C8",
+                  "value": "C8 when DataCollected then not AnonymizeData eventually\nConcern is raised",
+                  "summary": "C8 when DataCollected then not AnonymizeData eventually Concern is raised",
+                  "rule_ids": []
+                }
+              ],
+              "remaining_issues": [
+                {
+                  "fingerprint": "concerns:91f6b58037342056",
+                  "issue_type": "concerns",
+                  "source_id": "C2",
+                  "value": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\nConcern is raised",
+                  "summary": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate Concern is raised",
+                  "rule_ids": []
+                },
+                {
+                  "fingerprint": "concerns:ce32c8b3f58535aa",
+                  "issue_type": "concerns",
+                  "source_id": "C9",
+                  "value": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\nConcern is raised",
+                  "summary": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually Concern is raised",
+                  "rule_ids": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "disabled": {
+        "operators": [],
+        "generated": 0,
+        "verified": 0,
+        "outcome": "no_supported_candidate"
+      }
+    },
+    {
+      "case": "BSN.sleec",
+      "concern": "C9",
+      "diagnosis": {
+        "source_id": "C9",
+        "source_text": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually",
+        "raw_report": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\nConcern is raised\nat time 0: InformUser()\nat time 0: UserWantsToRemoveSensors()\nat time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=True, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)\n----------------------------------------------------------------------------------------------------",
+        "trace": [
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "InformUser",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: InformUser()"
+          },
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "UserWantsToRemoveSensors",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: UserWantsToRemoveSensors()"
+          },
+          {
+            "kind": "measure",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "Measure",
+            "values": {
+              "patientDiscomfort": "p_low",
+              "riskLevel": "r_low",
+              "batteryConsumption": "low",
+              "numUsersKnown": false,
+              "numSampleKnown": false,
+              "canDeactivate": false,
+              "patientIsHome": false,
+              "signsImpaired": false,
+              "signsDetached": false,
+              "isWaterproof": false,
+              "hasFallAlertPendant": false,
+              "allowsBathroomTracking": false,
+              "canCommunicateRegularly": false,
+              "authorizedParties": false,
+              "emergencyDetected": false,
+              "messageOnTime": false,
+              "alternateSensorsDeployed": false,
+              "timeToFailureKnown": false,
+              "anomalyDetected": false,
+              "unusualActivity": false,
+              "sensorMalfunction": false,
+              "sensorMisplacement": false,
+              "userResponds": true,
+              "caregiverResponds": false,
+              "dataNeededForTraining": false,
+              "userWantsToStop": false,
+              "caregiverConsent": false,
+              "seeHealthHistory": false,
+              "seeDemographics": false,
+              "seeLocation": false,
+              "accurateHealthComparison": false
+            },
+            "arguments_raw": "patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=True, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False",
+            "raw": "at time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=True, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)"
+          }
+        ],
+        "affected_rule_ids": [],
+        "rule_references": [],
+        "rule_id_provenance": "unavailable"
+      },
+      "enabled": {
+        "operators": [
+          "concern_completion",
+          "trigger_strengthening",
+          "defeater_introduction",
+          "rule_decomposition"
+        ],
+        "generated": 1,
+        "verified": 1,
+        "candidates": [
+          {
+            "operation": "concern_completion",
+            "proposed_rule": "repair_C9_1 when UserWantsToRemoveSensors then RemoveSensors eventually",
+            "verified": true,
+            "verification_basis": "Saved verification of byte-identical repaired specification; implementation hashes matched.",
+            "regression_report": {
+              "selected_issue_fixed": true,
+              "new_issues_introduced": false,
+              "regression_passed": true,
+              "before_issue_count": 3,
+              "after_issue_count": 2,
+              "new_issue_count": 0,
+              "resolved_issue_count": 1,
+              "remaining_issue_count": 2,
+              "before_counts_by_type": {
+                "concerns": 3,
+                "conflicts": 0,
+                "purpose_blocking": 0,
+                "redundancies": 0,
+                "situational_conflicts": 0
+              },
+              "after_counts_by_type": {
+                "concerns": 2,
+                "conflicts": 0,
+                "purpose_blocking": 0,
+                "redundancies": 0,
+                "situational_conflicts": 0
+              },
+              "new_issues": [],
+              "resolved_issues": [
+                {
+                  "fingerprint": "concerns:ce32c8b3f58535aa",
+                  "issue_type": "concerns",
+                  "source_id": "C9",
+                  "value": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\nConcern is raised",
+                  "summary": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually Concern is raised",
+                  "rule_ids": []
+                }
+              ],
+              "remaining_issues": [
+                {
+                  "fingerprint": "concerns:7afa155ca3af34c3",
+                  "issue_type": "concerns",
+                  "source_id": "C8",
+                  "value": "C8 when DataCollected then not AnonymizeData eventually\nConcern is raised",
+                  "summary": "C8 when DataCollected then not AnonymizeData eventually Concern is raised",
+                  "rule_ids": []
+                },
+                {
+                  "fingerprint": "concerns:91f6b58037342056",
+                  "issue_type": "concerns",
+                  "source_id": "C2",
+                  "value": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\nConcern is raised",
+                  "summary": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate Concern is raised",
+                  "rule_ids": []
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "disabled": {
+        "operators": [
+          "trigger_strengthening",
+          "defeater_introduction",
+          "rule_decomposition"
+        ],
+        "generated": 0,
+        "verified": 0,
+        "outcome": "no_supported_candidate"
+      }
+    },
+    {
+      "case": "BSN-corrected.sleec",
+      "concern": "C9",
+      "diagnosis": {
+        "source_id": "C9",
+        "source_text": "C9 when UserWantsToRemoveSensors and {canPatientDeactivate} then not RemoveSensors eventually",
+        "raw_report": "C9 when UserWantsToRemoveSensors and {canPatientDeactivate} then not RemoveSensors eventually\nConcern is raised\nat time 0: InformUser()\nat time 0: CaregiverCanDeactivate()\nat time 0: UserWantsToRemoveSensors()\nat time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canPatientDeactivate=True, canCaregiverDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=True, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=True, timeToFailureKnown=True, anomalyDetected=False, unusualActivity=True, sensorMalfunction=True, sensorMisplacement=False, userResponds=True, caregiverResponds=True, dataNeededForTraining=True, userWantsToStop=True, caregiverConsent=False, seeHealthHistory=False, seeDemographics=True, seeLocation=False, accurateHealthComparison=False)\n----------------------------------------------------------------------------------------------------",
+        "trace": [
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "InformUser",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: InformUser()"
+          },
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "CaregiverCanDeactivate",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: CaregiverCanDeactivate()"
+          },
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "UserWantsToRemoveSensors",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: UserWantsToRemoveSensors()"
+          },
+          {
+            "kind": "measure",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "Measure",
+            "values": {
+              "patientDiscomfort": "p_low",
+              "riskLevel": "r_low",
+              "batteryConsumption": "low",
+              "numUsersKnown": false,
+              "numSampleKnown": false,
+              "canPatientDeactivate": true,
+              "canCaregiverDeactivate": false,
+              "patientIsHome": false,
+              "signsImpaired": false,
+              "signsDetached": false,
+              "isWaterproof": false,
+              "hasFallAlertPendant": true,
+              "allowsBathroomTracking": false,
+              "canCommunicateRegularly": false,
+              "authorizedParties": false,
+              "emergencyDetected": false,
+              "messageOnTime": false,
+              "alternateSensorsDeployed": true,
+              "timeToFailureKnown": true,
+              "anomalyDetected": false,
+              "unusualActivity": true,
+              "sensorMalfunction": true,
+              "sensorMisplacement": false,
+              "userResponds": true,
+              "caregiverResponds": true,
+              "dataNeededForTraining": true,
+              "userWantsToStop": true,
+              "caregiverConsent": false,
+              "seeHealthHistory": false,
+              "seeDemographics": true,
+              "seeLocation": false,
+              "accurateHealthComparison": false
+            },
+            "arguments_raw": "patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canPatientDeactivate=True, canCaregiverDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=True, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=True, timeToFailureKnown=True, anomalyDetected=False, unusualActivity=True, sensorMalfunction=True, sensorMisplacement=False, userResponds=True, caregiverResponds=True, dataNeededForTraining=True, userWantsToStop=True, caregiverConsent=False, seeHealthHistory=False, seeDemographics=True, seeLocation=False, accurateHealthComparison=False",
+            "raw": "at time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canPatientDeactivate=True, canCaregiverDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=True, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=True, timeToFailureKnown=True, anomalyDetected=False, unusualActivity=True, sensorMalfunction=True, sensorMisplacement=False, userResponds=True, caregiverResponds=True, dataNeededForTraining=True, userWantsToStop=True, caregiverConsent=False, seeHealthHistory=False, seeDemographics=True, seeLocation=False, accurateHealthComparison=False)"
+          }
+        ],
+        "affected_rule_ids": [],
+        "rule_references": [],
+        "rule_id_provenance": "unavailable"
+      },
+      "enabled": {
+        "operators": [
+          "concern_completion",
+          "trigger_strengthening",
+          "defeater_introduction",
+          "rule_decomposition"
+        ],
+        "generated": 1,
+        "verified": 1,
+        "candidates": [
+          {
+            "operation": "concern_completion",
+            "proposed_rule": "repair_C9_1 when UserWantsToRemoveSensors and {canPatientDeactivate} then RemoveSensors eventually",
+            "verified": true,
+            "verification_basis": "Saved verification of byte-identical repaired specification; implementation hashes matched.",
+            "regression_report": {
+              "selected_issue_fixed": true,
+              "new_issues_introduced": false,
+              "regression_passed": true,
+              "before_issue_count": 1,
+              "after_issue_count": 0,
+              "new_issue_count": 0,
+              "resolved_issue_count": 1,
+              "remaining_issue_count": 0,
+              "before_counts_by_type": {
+                "concerns": 1,
+                "conflicts": 0,
+                "purpose_blocking": 0,
+                "redundancies": 0,
+                "situational_conflicts": 0
+              },
+              "after_counts_by_type": {
+                "concerns": 0,
+                "conflicts": 0,
+                "purpose_blocking": 0,
+                "redundancies": 0,
+                "situational_conflicts": 0
+              },
+              "new_issues": [],
+              "resolved_issues": [
+                {
+                  "fingerprint": "concerns:ce32c8b3f58535aa",
+                  "issue_type": "concerns",
+                  "source_id": "C9",
+                  "value": "C9 when UserWantsToRemoveSensors and {canPatientDeactivate} then not RemoveSensors eventually\nConcern is raised",
+                  "summary": "C9 when UserWantsToRemoveSensors and {canPatientDeactivate} then not RemoveSensors eventually Concern is raised",
+                  "rule_ids": []
+                }
+              ],
+              "remaining_issues": []
+            }
+          }
+        ]
+      },
+      "disabled": {
+        "operators": [
+          "trigger_strengthening",
+          "defeater_introduction",
+          "rule_decomposition"
+        ],
+        "generated": 0,
+        "verified": 0,
+        "outcome": "no_supported_candidate"
+      }
+    }
+  ]
+}

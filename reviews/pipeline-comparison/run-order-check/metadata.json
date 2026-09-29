@@ -1,0 +1,18 @@
+{
+  "scope": "Offline, uncached sequential diagnosis only. No repair generation, live LLM request, report database or deployment.",
+  "development_commit": "aee947a8d412afea413b8c8180c89ebee1cf0501",
+  "current_branch": "improvement/pipeline-robustness",
+  "current_uncommitted_implementation_sha256": {
+    "SLEECpatch/app/services/sleec_detection_engine.py": "71a6d12d67808a78e199caa20b2513e221f9207f1778b935fb11466ba98f8b5e",
+    "sleec/sleecParser.py": "88bf707834a0dbfec7bbe2a23f1373a68b4ec7b44e73346337c042a5769e63c1",
+    "sleec/SleecNorm.py": "82b1a886e3c949853f7281d87c8eab6bc92e51aa8a742e60b2958948fb329a65",
+    "sleec/analysis_runtime.py": "3440bc78501fac2f3c5df450968308493cc73f37d05949a52b185dcd47879d32",
+    "sleec/sleec_api.py": "c8db5b00a10f38c421269adad32700f2315c6c5d53eb83bb0b54b841f7b7001c"
+  },
+  "conclusion": "Reported fresh 9 followed by a reduced count was not reproduced in this sequence.",
+  "limitations": [
+    "Different fresh counts between implementations are observations, not a claim of ground truth.",
+    "The source_lines field does not distinguish situational-conflict identities; compare counts only for that category.",
+    "The co-author's exact deployed version, original input and interleaved repair actions remain unconfirmed."
+  ]
+}

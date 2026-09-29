@@ -6,7 +6,12 @@ import time
 import os
 import threading
 import uuid
-from services.sleec_detection_engine import SLEECDetectionEngine
+from services.sleec_detection_engine import SLEECDetectionEngine, analysis_failures
+from services.diagnosis_evidence import diagnosis_for_issue, finding_identity
+from services.rule_model import rules_from_text, apply_rule_patch, preserved_requirements
+from services.evidence_repair import target_resolution
+from services.structured_semantic_edit import materialize_semantic_edit
+from services.candidate_status import formally_verified, update_candidate_status
 from services.gpt_patch_engine import GPTPatchEngine
 from services.sleec_patch_evaluation_store import SLEECPatchEvaluationStore
 from services.repair_operator_selector import RepairOperatorSelector
@@ -47,7 +52,7 @@ class SLEECPatchWorkbenchEngine:
         GPT assesses semantic clarity and interpretability; it does not
         re-decide formal correctness.
         """
-        context = getattr(self, "_ranking_context", {}) or {}
+        context = patch.get("ranking_context", {}) or {}
 
         quality_patch = dict(patch)
         quality_patch["selected_issue"] = context.get("selected_issue", "")
@@ -79,6 +84,9 @@ class SLEECPatchWorkbenchEngine:
 
         result = self.detector.run_text(sleec_text)
 
+        if self.detector_failures(result):
+            return result
+
         with self.detector_cache_lock:
             self.detector_cache[cache_key] = copy.deepcopy(result)
 
@@ -88,99 +96,17 @@ class SLEECPatchWorkbenchEngine:
         return result
 
     def check_sleec_syntax(self, sleec_text):
-        if "def_start" not in str(sleec_text) or "def_end" not in str(sleec_text):
-            return {
-                "valid": False,
-                "error": "Missing SLEEC definition block."
-            }
-
-        if "rule_start" not in str(sleec_text) or "rule_end" not in str(sleec_text):
-            return {
-                "valid": False,
-                "error": "Missing SLEEC rule block."
-            }
-
-        rule_block_match = re.search(
-            r"rule_start(?P<body>.*?)rule_end",
-            str(sleec_text),
-            re.IGNORECASE | re.DOTALL
-        )
-        rule_like = re.compile(r"^\s*(?:r|rule)\w*\b", re.IGNORECASE)
-        valid_rule = re.compile(
-            r"^\s*(?:r|rule)\w*\s+when\b.+\bthen\b.+",
-            re.IGNORECASE
-        )
-
-        if rule_block_match:
-            rule_lines = rule_block_match.group("body").splitlines()
-
-            for index, line in enumerate(rule_lines):
-                stripped = line.strip()
-
-                if not stripped or stripped.startswith("//"):
-                    continue
-
-                if not rule_like.match(line):
-                    continue
-
-                entry_lines = [stripped]
-
-                for continuation in rule_lines[index + 1:]:
-                    continuation_stripped = continuation.strip()
-
-                    if not continuation_stripped:
-                        continue
-
-                    if continuation_stripped.startswith("//"):
-                        continue
-
-                    if rule_like.match(continuation):
-                        break
-
-                    entry_lines.append(continuation_stripped)
-
-                rule_entry = " ".join(entry_lines)
-
-                if not valid_rule.match(rule_entry):
-                    return {
-                        "valid": False,
-                        "error": (
-                            f"Malformed SLEEC rule starting at line {index + 1}: "
-                            f"{rule_entry}"
-                        )
-                    }
-
         try:
-            from sleec.sleecParser import parse_sleec
-
-            model, *_ = parse_sleec(sleec_text, read_file=False)
-            rule_count = len(getattr(model.ruleBlock, "rules", []) or [])
-
-            if rule_count == 0:
-                return {
-                    "valid": False,
-                    "error": "SLEEC rule block contains no parseable rules."
-                }
-
-            return {
-                "valid": True,
-                "error": "",
-                "rule_count": rule_count
-            }
+            rules = rules_from_text(sleec_text)
+            ids = [rule["id"] for rule in rules]
+            if len(set(ids)) != len(ids):
+                raise ValueError("Rule IDs must be unique.")
+            return {"valid": True, "error": "", "rule_count": len(rules)}
         except Exception as exc:
-            return {
-                "valid": False,
-                "error": str(exc)
-            }
+            return {"valid": False, "error": str(exc)}
 
     def detector_failures(self, analysis):
-        failures = {}
-
-        for name, result in (analysis.get("detections", {}) or {}).items():
-            if not result.get("success", False):
-                failures[name] = result.get("message", "Detector failed.")
-
-        return failures
+        return analysis_failures(analysis)
 
     def validate_patched_sleec(self, patched_sleec):
         syntax = self.check_sleec_syntax(patched_sleec)
@@ -217,7 +143,21 @@ class SLEECPatchWorkbenchEngine:
             validation["passed"] = False
             return validation
 
+        try:
+            preserved_requirements(original_sleec, final_sleec)
+        except ValueError as exc:
+            validation.update(valid=False, passed=False, failure_reason=str(exc))
+            return validation
+
         original_analysis = self.run_detector_cached(original_sleec)
+        failures = self.detector_failures(original_analysis)
+        if failures:
+            return {
+                "valid": False,
+                "passed": False,
+                "failure_reason": f"Original SLEEC analysis failed: {failures}",
+                "analysis": original_analysis,
+            }
         before_records = self.issue_records(
             original_analysis.get("structured", {})
         )
@@ -243,6 +183,17 @@ class SLEECPatchWorkbenchEngine:
 
     def diagnose(self, sleec_text):
         result = self.run_detector_cached(sleec_text)
+        failures = self.detector_failures(result)
+        if failures:
+            return {
+                "status": "ERROR",
+                "error": f"SLEEC analysis failed: {failures}",
+                "sleec_text": sleec_text,
+                "structured": result.get("structured", {}) if isinstance(result, dict) else {},
+                "detections": result.get("detections", {}) if isinstance(result, dict) else {},
+                "issues": [],
+                "issue_count": 0,
+            }
 
         print("\n========== DETECTOR OUTPUT ==========")
         print(result)
@@ -254,10 +205,8 @@ class SLEECPatchWorkbenchEngine:
 
         original_rules_by_type = structured.get("original_rules_by_type", {})
 
-        for issue_type, items in structured.items():
-
-            if issue_type == "original_rules_by_type":
-                continue
+        for issue_type in self.issue_types():
+            items = structured.get(issue_type, [])
 
             for index, item in enumerate(items, start=1):
 
@@ -274,24 +223,11 @@ class SLEECPatchWorkbenchEngine:
                     "issue_type": issue_type,
                     "value": item,
                     "original_rules": original_rules,
+                    "diagnosis": diagnosis_for_issue(structured, issue_type, item, f"{issue_type}_{index}"),
                     "source": "sleec"
                 })
 
 
-
-        if not issues:
-            fallback = self.fallback_wfi_detection(sleec_text)
-
-            for issue_type, items in fallback.items():
-                for index, item in enumerate(items, start=1):
-                    issues.append({
-                        "id": f"{issue_type}_{index}",
-                        "issue_type": issue_type,
-                        "value": item,
-                        "source": "fallback"
-                    })
-
-            structured.update(fallback)
 
         return {
             "status": "OK",
@@ -361,69 +297,12 @@ class SLEECPatchWorkbenchEngine:
         )
 
     def rule_to_text(self, rule):
-        text = f'{rule["id"]} when {rule["condition"]} then {rule["action"]}'
-
-        if rule.get("defeater"):
-            text += f' unless {{{rule["defeater"]}}}'
-
-
-        return text
+        return rule.get("raw") or self.deterministic_engine.rule_to_text(rule)
 
 
 
     def sleec_text_to_rules_json(self, sleec_text):
-        rules = []
-        inside_rules = False
-        current = ""
-
-        for line in sleec_text.splitlines():
-            line = line.strip()
-
-            if not line or line.startswith("//"):
-                continue
-
-            if line.lower() == "rule_start":
-                inside_rules = True
-                continue
-
-            if line.lower() == "rule_end":
-                inside_rules = False
-                if current:
-                    rules.append(current.strip())
-                break
-
-            if not inside_rules:
-                continue
-
-            if re.match(r"^(r\d+|rule\d+|c\d+)(?:_\d+)?\s+when\s+", line, re.IGNORECASE):
-                if current:
-                    rules.append(current.strip())
-                current = line
-            else:
-                current += " " + line
-
-        parsed_rules = []
-
-        pattern = re.compile(
-            r"^((?:r\d+|rule\d+|c\d+)(?:_\d+)?)\s+when\s+(.+?)\s+then\s+(.+?)(?:\s+unless\s+(.+))?$",
-            re.IGNORECASE
-        )
-
-        for text in rules:
-            match = pattern.search(text)
-
-            if match:
-                parsed_rules.append({
-                    "id": match.group(1).strip(),
-                    "condition": match.group(2).strip(),
-                    "action": match.group(3).strip(),
-                    "defeater": match.group(4).strip() if match.group(4) else "",
-                    "raw": text
-                })
-
-        print("RULES PARSED:", len(parsed_rules))
-
-        return parsed_rules
+        return rules_from_text(sleec_text)
 
     def parse_rule_block(self, rule_text):
         clean = re.sub(r"\s+", " ", str(rule_text or "")).strip()
@@ -481,39 +360,7 @@ class SLEECPatchWorkbenchEngine:
 
 
     def extract_rule_by_id(self, sleec_text, rule_id):
-        if not rule_id:
-            return ""
-
-        lines = sleec_text.splitlines()
-        collected = []
-        inside = False
-
-        start_pattern = re.compile(
-            rf"^\s*{re.escape(rule_id)}\s+when\s+",
-            re.IGNORECASE
-        )
-
-        next_rule_pattern = re.compile(
-            r"^\s*(r\d+|rule\d+|c\d+)(?:_\d+)?\s+when\s+",
-            re.IGNORECASE
-        )
-
-        for line in lines:
-            stripped = line.strip()
-
-            if start_pattern.match(stripped):
-                inside = True
-                collected.append(stripped)
-                continue
-
-            if inside:
-                if next_rule_pattern.match(stripped) or stripped.lower() == "rule_end":
-                    break
-
-                if stripped and not stripped.startswith("//"):
-                    collected.append(stripped)
-
-        return " ".join(collected).strip()
+        return next((rule["raw"] for rule in rules_from_text(sleec_text) if rule["id"] == rule_id), "")
 
 
     def clean_original_rule(self, original_rule, sleec_text, target_rule_id):
@@ -643,7 +490,12 @@ class SLEECPatchWorkbenchEngine:
             "source": patch.get("source", "llm"),
             "issue_type": patch.get("issue_type", ""),
             "rule_ids": patch.get("rule_ids", []),
+            "diagnosis": copy.deepcopy(patch.get("diagnosis", {})),
+            "target_resolution": copy.deepcopy(patch.get("target_resolution", {})),
+            "change": copy.deepcopy(patch.get("change")),
+            "declaration_text": patch.get("declaration_text", ""),
             "target_rule_id": target_rule_id,
+            "source_requirement_id": patch.get("source_requirement_id", ""),
             "operation": operation,
             "operation_label": operation_label,
             "stakeholder_summary": self.stakeholder_summary(patch, operation_label),
@@ -673,120 +525,15 @@ class SLEECPatchWorkbenchEngine:
         }
 
     def apply_patch_to_text(self, sleec_text, patch):
-        operation = patch.get("operation", "")
-        original_rule = patch.get("original_rule", "")
-        proposed_rule = patch.get("proposed_rule", "")
-        target_rule_id = patch.get("target_rule_id", "")
-        rule_ids = patch.get("rule_ids", [])
-
-        if not target_rule_id and rule_ids:
-            target_rule_id = rule_ids[0]
-
-        delete_operations = [
-            "delete",
-            "delete_rule",
-            "delete_redundant_rule",
-            "rule_removal"
-        ]
-
-        replace_operations = [
-            "edit",
-            "edit_rule",
-            "add_defeater",
-            "defeater_introduction",
-            "defeater_propagation",
-            "purpose_defeater",
-            "trigger_refinement",
-            "trigger_strengthening",
-            "rule_merging",
-            "rule_decomposition",
-            "refine_condition",
-            "specialize_condition",
-            "add_contextual_constraint",
-            "replace_action",
-            "refine_vague_predicate",
-            "refine_action",
-            "capability_refinement",
-            "event_specialization",
-            "measure_specialization"
-        ]
-
-        add_operations = [
-            "add",
-            "add_rule",
-            "new_rule_generation"
-        ]
-
-        if operation == "event_specialization":
-            new_event = patch.get("new_event") or patch.get("missing_element", "")
-
-            if new_event and f"event {new_event}" not in sleec_text:
-                sleec_text = sleec_text.replace(
-                    "def_end",
-                    f"event {new_event}\ndef_end"
-                )
-
-        if operation == "measure_specialization":
-            new_measure = patch.get("new_measure") or patch.get("missing_element", "")
-
-            if new_measure and f"measure {new_measure}" not in sleec_text:
-                sleec_text = sleec_text.replace(
-                    "def_end",
-                    f"measure {new_measure}:boolean\ndef_end"
-                )
-
-        if operation == "capability_refinement":
-            new_capability = (
-                patch.get("new_capability")
-                or patch.get("missing_element")
-                or ""
-            )
-
-            if new_capability and f"event {new_capability}" not in sleec_text:
-                sleec_text = sleec_text.replace(
-                    "def_end",
-                    f"event {new_capability}\ndef_end"
-                )
-
-        if operation in delete_operations:
-            ids_to_delete = set(rule_ids)
-
-            if target_rule_id:
-                ids_to_delete.add(target_rule_id)
-
-            if not ids_to_delete and original_rule:
-                return sleec_text.replace(original_rule, "")
-
-            return self.delete_rules_by_id(sleec_text, ids_to_delete)
-
-        if operation in replace_operations:
-            if target_rule_id and proposed_rule:
-                patched = self.replace_rule_by_id(
-                    sleec_text,
-                    target_rule_id,
-                    proposed_rule
-                )
-
-                if patched != sleec_text:
-                    return patched
-
-        if operation in replace_operations:
-            if original_rule and proposed_rule and original_rule in sleec_text:
-                return sleec_text.replace(
-                    original_rule,
-                    self.ensure_rule_id(original_rule, proposed_rule)
-                )
-
-        if operation in add_operations:
-            new_rule = patch.get("new_rule") or proposed_rule
-
-            if new_rule:
-                return sleec_text.replace(
-                    "rule_end",
-                    f"{new_rule}\nrule_end"
-                )
-
-        return sleec_text
+        updated = apply_rule_patch(sleec_text, patch)
+        if self.check_sleec_syntax(updated)["valid"]:
+            preserved_requirements(sleec_text, updated)
+            originals = {rule["id"]: rule["raw"] for rule in rules_from_text(sleec_text)}
+            after = {rule["id"]: rule["raw"] for rule in rules_from_text(updated)}
+            for rule_id, raw in originals.items():
+                if rule_id != patch.get("target_rule_id") and after.get(rule_id) != raw:
+                    raise ValueError("The repair changed an unrelated rule.")
+        return updated
 
     def normalize_rule_for_comparison(self, text):
         """Normalize rule text only for no-op comparison."""
@@ -822,56 +569,13 @@ class SLEECPatchWorkbenchEngine:
 
         return proposed_rule
 
-    def replace_rule_by_id(self, sleec_text, target_rule_id, proposed_rule):
-        lines = sleec_text.splitlines()
-        output = []
-        skipping_target = False
-        replaced = False
-
-        for line in lines:
-            stripped = line.strip()
-
-            if skipping_target:
-                if self.is_rule_boundary(stripped):
-                    output.append(line)
-                    skipping_target = False
-
-                continue
-
-            if self.line_has_rule_id(stripped, target_rule_id):
-                output.extend(
-                    self.ensure_rule_id(line, proposed_rule).splitlines()
-                )
-                skipping_target = True
-                replaced = True
-                continue
-
-            output.append(line)
-
-        return "\n".join(output) if replaced else sleec_text
+    def replace_rule_by_id(self, sleec_text, rule_id, proposed_rule):
+        return apply_rule_patch(sleec_text, {"operation": "edit", "target_rule_id": rule_id, "proposed_rule": proposed_rule})
 
     def delete_rules_by_id(self, sleec_text, rule_ids):
-        lines = sleec_text.splitlines()
-        output = []
-        skipping_target = False
-
-        for line in lines:
-            stripped = line.strip()
-
-            if skipping_target:
-                if self.is_rule_boundary(stripped):
-                    output.append(line)
-                    skipping_target = False
-
-                continue
-
-            if any(self.line_has_rule_id(stripped, rid) for rid in rule_ids):
-                skipping_target = True
-                continue
-
-            output.append(line)
-
-        return "\n".join(output)
+        for rule_id in rule_ids:
+            sleec_text = apply_rule_patch(sleec_text, {"operation": "rule_removal", "target_rule_id": rule_id})
+        return sleec_text
 
     def line_has_rule_id(self, stripped_line, rule_id):
         if not rule_id:
@@ -899,38 +603,22 @@ class SLEECPatchWorkbenchEngine:
             flags=re.IGNORECASE
         ) is not None
 
-    def target_issue_fixed(
-        self,
-        issue_type,
-        selected_issue_value,
-        original_structured,
-        new_structured
-    ):
-        selected_fingerprint = self.issue_fingerprint(issue_type, selected_issue_value)
-        after_records = self.issue_records(new_structured)
-
-        if selected_fingerprint in after_records:
-            return False
-
-        selected_rule_ids = set(self.extract_issue_rule_ids(selected_issue_value))
-
-        if selected_rule_ids:
-            for issue in new_structured.get(issue_type, []):
-                after_rule_ids = set(self.extract_issue_rule_ids(issue))
-
-                if selected_rule_ids.issubset(after_rule_ids):
-                    return False
-
+    def target_issue_fixed(self, issue_type, selected_issue_value, original_structured, new_structured):
         before = original_structured.get(issue_type, [])
-        after = new_structured.get(issue_type, [])
-
-        if len(after) < len(before):
-            return True
-
-        selected_text = str(selected_issue_value).strip()
-        after_text = "\n".join(str(x) for x in after)
-
-        return selected_text not in after_text
+        if selected_issue_value not in before:
+            return False
+        matching = [record for record in self.issue_records(original_structured).values()
+                    if record["issue_type"] == issue_type and record["value"] == selected_issue_value]
+        after = list(self.issue_records(new_structured).values())
+        for selected in matching:
+            for remaining in after:
+                if remaining["issue_type"] != issue_type:
+                    continue
+                if selected.get("source_id") and selected["source_id"] == remaining.get("source_id"):
+                    return False
+                if selected["fingerprint"] == remaining["fingerprint"]:
+                    return False
+        return bool(matching)
 
     def issue_types(self):
         return [
@@ -948,9 +636,9 @@ class SLEECPatchWorkbenchEngine:
         text = re.sub(r"\s+", " ", text)
         return text.strip().lower()
 
-    def issue_fingerprint(self, issue_type, issue):
-        normalized = self.normalize_issue_text(issue)
-        digest = hashlib.sha1(normalized.encode("utf-8")).hexdigest()[:16]
+    def issue_fingerprint(self, issue_type, issue, diagnosis=None):
+        identity = finding_identity(issue_type, issue, diagnosis)
+        digest = hashlib.sha1(repr(identity).encode("utf-8")).hexdigest()[:16]
         return f"{issue_type}:{digest}"
 
     def extract_issue_rule_ids(self, issue):
@@ -969,17 +657,16 @@ class SLEECPatchWorkbenchEngine:
 
     def issue_records(self, structured):
         records = {}
-
         for issue_type in self.issue_types():
-            for issue in structured.get(issue_type, []):
-                fingerprint = self.issue_fingerprint(issue_type, issue)
+            for index, issue in enumerate(structured.get(issue_type, []), start=1):
+                diagnosis = diagnosis_for_issue(structured, issue_type, issue, f"{issue_type}_{index}")
+                fingerprint = self.issue_fingerprint(issue_type, issue, diagnosis)
                 records[fingerprint] = {
-                    "fingerprint": fingerprint,
-                    "issue_type": issue_type,
+                    "fingerprint": fingerprint, "issue_type": issue_type,
+                    "source_id": diagnosis.get("source_id"), "value": issue,
                     "summary": self.issue_summary(issue),
-                    "rule_ids": self.extract_issue_rule_ids(issue)
+                    "rule_ids": diagnosis.get("affected_rule_ids", self.extract_issue_rule_ids(issue))
                 }
-
         return records
 
     def issue_counts_by_type(self, records):
@@ -1134,6 +821,9 @@ class SLEECPatchWorkbenchEngine:
     ):
         final_sleec = original_sleec
         selected_patches = []
+        verified_patches = [patch for patch in verified_patches if formally_verified(patch)]
+        if not verified_patches:
+            return {"path": "", "cumulative_verification": {"passed": False, "failure_reason": "No formally verified repair is available."}}
 
         if verified_patches:
             selected_patches = [sorted(
@@ -1214,6 +904,20 @@ class SLEECPatchWorkbenchEngine:
             }
 
         original_analysis = self.run_detector_cached(original_sleec)
+        failures = self.detector_failures(original_analysis)
+        if failures:
+            patch["verified"] = False
+            patch["regression_passed"] = False
+            patch["failure_reason"] = f"Original SLEEC analysis failed: {failures}"
+            return {
+                "patched_sleec": patched_sleec,
+                "target_fixed": False,
+                "related_issue": None,
+                "regression_report": {},
+                "verified": False,
+                "new_analysis": validation_gate["analysis"],
+                "failure_reason": patch["failure_reason"],
+            }
         original_structured = original_analysis.get("structured", {})
         new_analysis = validation_gate["analysis"]
         new_structured = new_analysis.get("structured", {})
@@ -1258,10 +962,16 @@ class SLEECPatchWorkbenchEngine:
     patch
 ):
         current_patch = patch
+        diagnosis = copy.deepcopy(patch.get("diagnosis", {}))
         syntax_attempts = 0
 
         while True:
-            patched_sleec = self.apply_patch_to_text(original_sleec, current_patch)
+            try:
+                patched_sleec = self.apply_patch_to_text(original_sleec, current_patch)
+            except (ValueError, TypeError) as exc:
+                current_patch.update(verified=False, failure_reason=str(exc))
+                update_candidate_status(current_patch)
+                return None
             validation_gate = self.validate_patched_sleec(patched_sleec)
 
             if validation_gate["valid"]:
@@ -1273,6 +983,16 @@ class SLEECPatchWorkbenchEngine:
             current_patch["regression_passed"] = False
             current_patch["failure_reason"] = validation_gate["failure_reason"]
             current_patch["syntax_validation"] = validation_gate.get("syntax", {})
+            current_patch["verification_inconclusive"] = bool(validation_gate.get("syntax", {}).get("valid"))
+            update_candidate_status(current_patch)
+
+            if validation_gate.get("syntax", {}).get("valid"):
+                # Solver/infrastructure failures are not syntax errors for an
+                # LLM to repair. Stop before any retry or acceptance.
+                return None
+
+            if current_patch.get("change") is not None:
+                return None
 
             if syntax_attempts >= 2:
                 return None
@@ -1284,6 +1004,7 @@ class SLEECPatchWorkbenchEngine:
                     original_sleec=original_sleec,
                     patched_sleec=patched_sleec
                 )
+                current_patch["diagnosis"] = copy.deepcopy(diagnosis)
                 current_patch = self.normalize_patch(current_patch, original_sleec)
                 syntax_attempts += 1
             except Exception as exc:
@@ -1331,6 +1052,7 @@ class SLEECPatchWorkbenchEngine:
             return None
 
         patch["verified"] = True
+        update_candidate_status(patch)
         return patch
 
 
@@ -1344,7 +1066,12 @@ class SLEECPatchWorkbenchEngine:
         depth=0,
         max_depth=3
     ):
-        patched_sleec = self.apply_patch_to_text(original_sleec, patch)
+        try:
+            patched_sleec = self.apply_patch_to_text(original_sleec, patch)
+        except (ValueError, TypeError) as exc:
+            patch.update(verified=False, failure_reason=str(exc))
+            update_candidate_status(patch)
+            return None
 
         validation_gate = self.validate_patched_sleec(patched_sleec)
         if not validation_gate["valid"]:
@@ -1368,6 +1095,8 @@ class SLEECPatchWorkbenchEngine:
             patch["regression_passed"] = False
             patch["verified"] = False
             patch["failure_reason"] = validation_gate["failure_reason"]
+            patch["verification_inconclusive"] = bool(validation_gate.get("syntax", {}).get("valid"))
+            update_candidate_status(patch)
             return None
 
         new_analysis = validation_gate["analysis"]
@@ -1399,17 +1128,25 @@ class SLEECPatchWorkbenchEngine:
 
         if target_fixed and related_issue is None and regression_report["regression_passed"]:
             patch["verified"] = True
+            update_candidate_status(patch)
             return patch
 
         if depth >= max_depth:
             patch["verified"] = False
-            patch["failure_reason"] = "Maximum deterministic augmentation depth reached"
+            patch["failure_reason"] = (
+                "Selected issue remains after repair" if not target_fixed
+                else "Introduced new findings during regression check"
+            )
+            patch["augmentation_limit_reached"] = True
+            update_candidate_status(patch)
             return None
 
         if target_fixed and related_issue:
             followup_patches = self.deterministic_engine.generate(
                 issue_type=related_issue["issue_type"],
                 selected_issue=related_issue["issue"],
+                diagnosis=related_issue.get("diagnosis", {}),
+                sleec_text=patched_sleec,
                 rules=self.sleec_text_to_rules_json(patched_sleec),
                 operators=self.operator_selector.select(
                     issue_type=related_issue["issue_type"],
@@ -1492,22 +1229,23 @@ class SLEECPatchWorkbenchEngine:
         if not edited_rules:
             return None
 
-        for issue_type, issues in new_structured.items():
-            if not isinstance(issues, list):
-                continue
+        for issue_type in self.issue_types():
+            issues = new_structured.get(issue_type, [])
 
-            for issue in issues:
-                fingerprint = self.issue_fingerprint(issue_type, issue)
+            for index, issue in enumerate(issues, start=1):
+                diagnosis = diagnosis_for_issue(new_structured, issue_type, issue, f"{issue_type}_{index}")
+                fingerprint = self.issue_fingerprint(issue_type, issue, diagnosis)
                 if fingerprint in original_fingerprints:
                     continue
 
                 issue_text = str(issue)
 
                 for rule_id in edited_rules:
-                    if rule_id and rule_id in issue_text:
+                    if rule_id and (rule_id in diagnosis.get("affected_rule_ids", []) or re.search(rf"(?<!\w){re.escape(rule_id)}(?!\w)", issue_text)):
                         return {
                             "issue_type": issue_type,
                             "issue": issue,
+                            "diagnosis": diagnosis_for_issue(new_structured, issue_type, issue, f"{issue_type}_{index}"),
                             "related_rule": rule_id
                         }
 
@@ -1549,6 +1287,9 @@ class SLEECPatchWorkbenchEngine:
         run_id = uuid.uuid4().hex
 
         original_analysis = self.run_detector_cached(sleec_text)
+        failures = self.detector_failures(original_analysis)
+        if failures:
+            raise RuntimeError(f"Cannot generate verified patches: original analysis failed: {failures}")
         original_structured = original_analysis.get("structured", {})
 
         issue_type = issue.get("issue_type", "")
@@ -1567,6 +1308,12 @@ class SLEECPatchWorkbenchEngine:
 
         selected_issue_value = issue.get("value", "")
         selected_issue_value = str(selected_issue_value)
+        # Use evidence from the current server-side analysis, including when a
+        # client only sends the legacy finding value. Do not trust posted traces.
+        diagnosis = copy.deepcopy(diagnosis_for_issue(
+            original_structured, issue_key, selected_issue_value, issue.get("id")
+        ))
+        issue = {**issue, "diagnosis": diagnosis}
 
         if issue_key == "redundancies":
             selected_issue_value = self.extract_rule_from_issue_text(selected_issue_value)
@@ -1583,9 +1330,12 @@ class SLEECPatchWorkbenchEngine:
         attempts = 0
 
         rules_json = self.sleec_text_to_rules_json(sleec_text)
+        resolution = target_resolution(sleec_text, issue_key, diagnosis)
+        addition_scope = resolution.get("addition_scope")
+        resolved_rules = [rule for rule in rules_json if rule["id"] in resolution["rule_ids"]]
         operator_plan = self.operator_selector.select(
             issue_type=issue_key,
-            rules=rules_json,
+            rules=resolved_rules,
             selected_issue=selected_issue_value,
             existing_events=self.extract_defined_events(sleec_text),
             existing_measures=self.extract_defined_measures(sleec_text),
@@ -1602,23 +1352,7 @@ class SLEECPatchWorkbenchEngine:
         # Resolve the diagnosed rule(s) before GPT generation so semantic
         # candidates are grounded in the selected issue rather than an
         # unrelated rule from the specification.
-        gpt_target_rules = []
-        if issue_key in ("conflicts", "situational_conflicts"):
-            try:
-                gpt_target_rules = self.deterministic_engine.find_conflicting_rules(
-                    selected_issue_value, rules_json
-                ) or []
-            except Exception:
-                gpt_target_rules = []
-        else:
-            try:
-                target_rule = self.deterministic_engine.find_best_related_rule(
-                    selected_issue_value, rules_json
-                )
-            except Exception:
-                target_rule = None
-            if target_rule:
-                gpt_target_rules = [target_rule]
+        gpt_target_rules = resolved_rules
 
         target_rule_texts = [
             self.deterministic_engine.rule_to_text(rule)
@@ -1632,15 +1366,23 @@ class SLEECPatchWorkbenchEngine:
         ]
 
         finding_context = [selected_issue_value]
+        if diagnosis:
+            finding_context.append({"diagnosis": diagnosis})
         if target_rule_texts:
             finding_context.append(
                 "AFFECTED TARGET RULE(S) — generate the semantic repair only "
                 "for these rule(s):\n" + "\n".join(target_rule_texts)
             )
-        finding_context.append(
-            "Do not select or modify an unrelated rule. The original_rule and "
-            "target_rule_id fields must refer to the affected target rule above."
-        )
+        if addition_scope:
+            finding_context.append({"addition_scope": addition_scope})
+            finding_context.append(
+                "For new_rule_generation, use source_requirement_id from addition_scope, "
+                "and target_rule_id=null. Synthesize and justify one new rule using the "
+                "diagnosis and domain context. Preserve existing rules. You may explicitly "
+                "select deadline={kind: source} to retain the concern's time window."
+            )
+        else:
+            finding_context.append("Edit only a rule marked repair_target; do not select an unrelated rule.")
 
         selected_findings = {
             issue_key: finding_context
@@ -1662,6 +1404,11 @@ class SLEECPatchWorkbenchEngine:
                 gpt_rules_json.append(enriched)
 
         semantic_ops = operator_plan.get("llm", [])
+        if not resolved_rules:
+            semantic_ops = [op for op in semantic_ops if addition_scope and op == "new_rule_generation"]
+            operator_plan["llm"] = semantic_ops
+            operator_plan["deterministic"] = []
+        operator_plan["target_resolution"] = resolution
         llm_patches = []
         gpt_warning = None
 
@@ -1683,7 +1430,9 @@ class SLEECPatchWorkbenchEngine:
                 issue_type=issue_key,
                 selected_issue=selected_issue_value,
                 rules=rules_json,
-                operators=operator_plan.get("deterministic", [])
+                operators=operator_plan.get("deterministic", []),
+                diagnosis=diagnosis,
+                sleec_text=sleec_text
             )
 
             generation_time += time.time() - start_generation
@@ -1878,7 +1627,26 @@ class SLEECPatchWorkbenchEngine:
                 gpt_warning = f"GPT semantic repair generation failed: {gpt_error}"
                 print(">>> GPT GENERATION FAILED:", repr(gpt_error))
 
+            materialized = []
+            for i, proposal in enumerate(llm_patches, start=1):
+                try:
+                    candidate = materialize_semantic_edit(sleec_text, proposal, target_rule_ids, addition_scope)
+                    candidate["target_resolution"] = copy.deepcopy(resolution)
+                    materialized.append(candidate)
+                except (ValueError, TypeError, KeyError, AttributeError) as exc:
+                    rejected = dict(proposal) if isinstance(proposal, dict) else {"raw_proposal": proposal}
+                    rejected.update(patch_id=f"g_rejected_{i}", source="llm", verified=False,
+                                    candidate_status="rejected", failure_reason=f"Invalid structured edit: {exc}",
+                                    diagnosis=copy.deepcopy(diagnosis))
+                    llm_candidates.append(rejected)
+                    failed_patches.append(rejected)
+                    failed_patch_count += 1
+                    self.store.save_patch_candidate({"run_id": run_id, "use_case": use_case,
+                        "issue_id": issue.get("id", ""), "issue_type": issue_key, "attempt": attempts,
+                        "candidate_signature": f"rejected_{i}", "candidate_status": "rejected", "patch": rejected})
+            llm_patches = materialized
             for i, p in enumerate(llm_patches, start=1):
+                p["diagnosis"] = copy.deepcopy(diagnosis)
                 p["patch_id"] = f"g{i}"
                 p["id"] = f"g{i}"
                 p["source"] = p.get("source", "llm")
@@ -1886,7 +1654,7 @@ class SLEECPatchWorkbenchEngine:
                 # Ground missing metadata in the diagnosed target rule. Do not
                 # silently retarget a generated rule; retain a warning when GPT
                 # names a different rule so verification/review remains honest.
-                if len(gpt_target_rules) == 1:
+                if len(gpt_target_rules) == 1 and not p.get("source_requirement_id"):
                     target_rule = gpt_target_rules[0]
                     expected_id = str(target_rule.get("id", "")).strip()
                     expected_text = self.deterministic_engine.rule_to_text(target_rule)
@@ -1905,7 +1673,7 @@ class SLEECPatchWorkbenchEngine:
                     p["diagnosed_target_rule_id"] = expected_id
                     p["diagnosed_target_rule"] = expected_text
 
-                elif len(gpt_target_rules) > 1:
+                elif len(gpt_target_rules) > 1 and not p.get("source_requirement_id"):
                     p["diagnosed_target_rule_ids"] = target_rule_ids
                     p["diagnosed_target_rules"] = target_rule_texts
 
@@ -1973,16 +1741,19 @@ class SLEECPatchWorkbenchEngine:
                 normalized_patch["semantic_validation_passed"] = bool(
                     semantic_validation.get("valid")
                 )
-                normalized_patch["semantic_review_status"] = (
-                    "pass" if semantic_validation.get("valid")
-                    else "pass_with_review"
-                )
+                normalized_patch["semantic_review_status"] = "pending"
                 normalized_patch["semantic_warnings"] = (
                     semantic_validation.get("errors", [])
                     + semantic_validation.get("warnings", [])
                 )
                 normalized_patch["requires_social_scientist_review"] = True
                 normalized_patch["requires_philosopher_review"] = True
+
+                if not semantic_validation.get("valid"):
+                    normalized_patch.update(verified=False, failure_reason="Structured semantic edit validation failed: " + "; ".join(semantic_validation.get("errors", [])))
+                    failed_patches.append(normalized_patch)
+                    failed_patch_count += 1
+                    continue
 
                 verified = self.verify_llm_patch_once(
                     original_sleec=sleec_text,
@@ -2005,28 +1776,43 @@ class SLEECPatchWorkbenchEngine:
                     seen_failed_signatures.add(patch_signature)
 
         total_time = time.time() - start_total
+        outcomes = {}
+        for candidate in failed_patches + verified_patches:
+            update_candidate_status(candidate)
+            outcomes[candidate.get("patch_id")] = candidate
+        for candidate in deterministic_candidates + llm_candidates:
+            outcome = outcomes.get(candidate.get("patch_id"))
+            if outcome:
+                for key in ("candidate_status", "syntax_valid", "formally_verified", "semantic_review_status", "failure_reason", "requires_social_scientist_review"):
+                    if key in outcome:
+                        candidate[key] = outcome[key]
+            else:
+                update_candidate_status(candidate)
 
         # Section C: rank only patches that already passed formal verification.
         # Structural/logical metrics are deterministic.
         # Semantic clarity/interpretability receive the WFI and declared vocabulary.
-        affected_rule_ids = self.extract_issue_rule_ids(selected_issue_value)
+        affected_rule_ids = diagnosis.get("affected_rule_ids", self.extract_issue_rule_ids(selected_issue_value))
         affected_rules = [
             rule for rule in rules_json
             if str(rule.get("id", "")).lower()
             in {rid.lower() for rid in affected_rule_ids}
         ]
 
-        self._ranking_context = {
+        ranking_context = {
             "use_case": use_case,
             "issue_type": issue_key,
             "selected_issue": selected_issue_value,
-            "diagnosis_context": selected_issue_value,
+            "diagnosis_context": diagnosis or selected_issue_value,
             "affected_rules": affected_rules,
             "system_description": get_use_case_description(use_case),
             "existing_events": self.extract_defined_events(sleec_text),
             "existing_measures": self.extract_defined_measures(sleec_text),
             "existing_responses": self.extract_rule_actions(rules_json)
         }
+        self._ranking_context = ranking_context
+        for candidate in verified_patches:
+            candidate["ranking_context"] = copy.deepcopy(ranking_context)
 
         verified_patches = self.patch_ranker.rank(verified_patches)
 
@@ -2053,9 +1839,12 @@ class SLEECPatchWorkbenchEngine:
             "total_time_seconds": round(total_time, 3),
             "successful": len(verified_patches) > 0
         }
+        log["repair_notice"] = (resolution["reason"] if not resolution["rule_ids"] and not addition_scope else
+            "No supported repair was generated for this requirement structure." if not deterministic_candidates and not llm_candidates else "")
 
         self.store.save_pipeline_run({
             **log,
+            "input_sha256": hashlib.sha256(sleec_text.encode("utf-8")).hexdigest(),
             "selected_issue": selected_issue_value,
             "repair_operators": operator_plan,
             "original_issue_count": self.count_issues(original_structured),
@@ -2064,6 +1853,7 @@ class SLEECPatchWorkbenchEngine:
         })
 
         for patch in failed_patches + verified_patches:
+            self.store.update_patch_candidate({"run_id": run_id, "patch": patch})
             self.store.save_patch_verification({
                 "run_id": run_id,
                 "use_case": use_case,
@@ -2119,7 +1909,7 @@ class SLEECPatchWorkbenchEngine:
                 "expert_similarity": 0,
                 "expert_match": False,
                 "requires_social_scientist_review": (
-                    str(patch.get("source", "")).lower() == "llm"
+                    bool(patch.get("requires_social_scientist_review", True))
                 )
             })
 
@@ -2164,9 +1954,10 @@ class SLEECPatchWorkbenchEngine:
     def build_rank1_sleecpatch(self, use_case, original_sleec, all_wfi_results):
         final_sleec = original_sleec
         selected_patches = []
+        selected_issues = []
 
         for result in all_wfi_results:
-            verified = result.get("verified_patches", [])
+            verified = [patch for patch in result.get("verified_patches", []) if formally_verified(patch)]
 
             if not verified:
                 continue
@@ -2178,6 +1969,7 @@ class SLEECPatchWorkbenchEngine:
 
             best_patch = ranked[0]
             selected_patches.append(best_patch)
+            selected_issues.append(result.get("selected_issue", {}))
 
             final_sleec = self.apply_patch_to_text(
                 final_sleec,
@@ -2194,6 +1986,13 @@ class SLEECPatchWorkbenchEngine:
             "new_issue_count": validation_gate.get("new_issue_count", 0),
             "introduced_issues": validation_gate.get("introduced_issues", [])
         }
+
+        if cumulative["passed"]:
+            before = self.run_detector_cached(original_sleec)["structured"]
+            after = validation_gate["analysis"]["structured"]
+            if not selected_patches or any(not isinstance(issue, dict) or not self.target_issue_fixed(
+                    issue.get("issue_type", ""), issue.get("value", ""), before, after) for issue in selected_issues):
+                cumulative.update(passed=False, failure_reason="The combined export has no verified selection or leaves a selected issue unresolved.")
 
         folder = os.path.join("results", use_case)
         os.makedirs(folder, exist_ok=True)

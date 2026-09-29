@@ -1,4 +1,5 @@
 import re
+from services.candidate_status import formally_verified
 
 
 class PatchRanker:
@@ -12,6 +13,8 @@ class PatchRanker:
         ranked = []
 
         for patch in verified_patches:
+            if not formally_verified(patch):
+                continue
             scores = self.score_patch(patch)
 
             patch["ranking"] = scores
@@ -30,6 +33,8 @@ class PatchRanker:
         return ranked
 
     def score_patch(self, patch):
+        if not formally_verified(patch):
+            raise ValueError("Only formally verified repairs may be scored.")
         original = str(patch.get("original_rule", ""))
         proposed = str(patch.get("proposed_rule", ""))
         explanation = str(

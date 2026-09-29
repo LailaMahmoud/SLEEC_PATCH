@@ -1,0 +1,260 @@
+{
+  "implementation": "/Users/ayobamidele/Documents/PhD/codes/sleec",
+  "cache": "bypassed",
+  "llm_calls": 0,
+  "scope": "Sequential diagnoses only, without a repair-generation stage or report database.",
+  "runs": [
+    {
+      "case": "Daisy.sleec",
+      "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+      "status": "OK",
+      "counts": {
+        "concerns": 5,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 1,
+        "situational_conflicts": 2
+      },
+      "total": 8,
+      "source_lines": {
+        "concerns": [
+          "c1 when UserRequestInfo and ({informationAvailable} and {informationDisclosureNotPermitted}) then ProvideInfo",
+          "c2 when UserEndSession then not RobotStopSession",
+          "c3 when MeetingPatient and ((not {patientComfortable}) or ((not {patientAgeConsidered}) and (not {guardianConsentAvalaible}))) then ExaminingPatient",
+          "c5 when MeetingUser and (not {trainingDataRepresentative})  then not CallSupport",
+          "c6 when ExaminingPatient and {behaviorAggressive} then not RobotStopSession"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [
+          "Rule16 when ExaminingPatient and ({dataRelevantToContext}  and (not {dataUnnecessary}))"
+        ],
+        "situational_conflicts": [
+          "Situational conflict under situation :",
+          "Situational conflict under situation :"
+        ]
+      },
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": true,
+          "count": 5,
+          "message_prefix": "c1 when UserRequestInfo and ({informationAvailable} and {informationDisclosureNotPermitted}) then ProvideInfo\nConcern is raised\nat time 0: UserRequestInfo()\nat time 0: ProvideInfo()\nat time 0: InformUserandandReferToHumanCarer()\nat time 0: Measure(UserAge=7, userPayingAttention=False, userDataInform"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": true,
+          "count": 1,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": true,
+          "count": 2,
+          "message_prefix": "Situational conflict under situation :\nat time 0: MeetingUser()\nat time 0: Measure(UserAge=9, userPayingAttention=False, userDataInformed=False, userSensoryNeedsMet=False, urgentNeed=False, severityOfState=6, stablePsychologicalState=False, timeElapsed=8, informationAvailable=False, informationDiscl"
+        }
+      },
+      "elapsed_seconds": 13.669
+    },
+    {
+      "case": "ALMI.sleec",
+      "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+      "status": "OK",
+      "counts": {
+        "concerns": 2,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 1
+      },
+      "total": 3,
+      "source_lines": {
+        "concerns": [
+          "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices",
+          "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [],
+        "situational_conflicts": [
+          "Situational conflict under situation :"
+        ]
+      },
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": true,
+          "count": 2,
+          "message_prefix": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\nConcern is raised\nat time 0: HumanOnFloor()\nat time 0: Measure(userOccupied=True, timeBetweenMeals=3, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecial"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": true,
+          "count": 1,
+          "message_prefix": "Situational conflict under situation :\nat time 0: SmokeDetectorAlarm()\nat time 0: Measure(userOccupied=False, timeBetweenMeals=8, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, nee"
+        }
+      },
+      "elapsed_seconds": 11.037
+    },
+    {
+      "case": "aspen.sleec",
+      "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+      "status": "OK",
+      "counts": {
+        "concerns": 4,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 1,
+        "situational_conflicts": 3
+      },
+      "total": 8,
+      "source_lines": {
+        "concerns": [
+          "c4 when DeployDrone and ({battery} = low) then not GroundDrone within 5 minutes",
+          "c5 when PreparingDrone and ({flightCondition} = dangerous) then DeployDrone",
+          "c7 when DeletePictures then not InformKeeper within 5 minutes",
+          "c8 when EnsureCompliance then not InformKeeper within 5 minutes"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [
+          "R14 when DeployDrone and {damages} then InformKeeper"
+        ],
+        "situational_conflicts": [
+          "Situational conflict under situation :",
+          "Situational conflict under situation :",
+          "Situational conflict under situation :"
+        ]
+      },
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": true,
+          "count": 4,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": true,
+          "count": 1,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": true,
+          "count": 3,
+          "message_prefix": "Situational conflict under situation :\nat time 0: PreparingDrone()\nat time 0: Measure(sameLanguage=False, humanUnderstands=False, unrelatedActivity=False, environmentDangerous=False, onIndigenousLand=True, landTreatyInPlace=True, relevantLand=False, privateTerritory=False, humanIdentified=False, car"
+        }
+      },
+      "elapsed_seconds": 17.739
+    },
+    {
+      "case": "Daisy.sleec",
+      "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+      "status": "OK",
+      "counts": {
+        "concerns": 5,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 1,
+        "situational_conflicts": 2
+      },
+      "total": 8,
+      "source_lines": {
+        "concerns": [
+          "c1 when UserRequestInfo and ({informationAvailable} and {informationDisclosureNotPermitted}) then ProvideInfo",
+          "c2 when UserEndSession then not RobotStopSession",
+          "c3 when MeetingPatient and ((not {patientComfortable}) or ((not {patientAgeConsidered}) and (not {guardianConsentAvalaible}))) then ExaminingPatient",
+          "c5 when MeetingUser and (not {trainingDataRepresentative})  then not CallSupport",
+          "c6 when ExaminingPatient and {behaviorAggressive} then not RobotStopSession"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [
+          "Rule16 when ExaminingPatient and ({dataRelevantToContext}  and (not {dataUnnecessary}))"
+        ],
+        "situational_conflicts": [
+          "Situational conflict under situation :",
+          "Situational conflict under situation :"
+        ]
+      },
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": true,
+          "count": 5,
+          "message_prefix": "c1 when UserRequestInfo and ({informationAvailable} and {informationDisclosureNotPermitted}) then ProvideInfo\nConcern is raised\nat time 0: UserRequestInfo()\nat time 0: ProvideInfo()\nat time 0: InformUserandandReferToHumanCarer()\nat time 0: Measure(UserAge=6, userPayingAttention=False, userDataInform"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "count": 0,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": true,
+          "count": 1,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": true,
+          "count": 2,
+          "message_prefix": "Situational conflict under situation :\nat time 0: MeetingUser()\nat time 0: Measure(UserAge=6, userPayingAttention=False, userDataInformed=False, userSensoryNeedsMet=False, urgentNeed=False, severityOfState=5, stablePsychologicalState=False, timeElapsed=7, informationAvailable=False, informationDiscl"
+        }
+      },
+      "elapsed_seconds": 16.147
+    }
+  ],
+  "daisy_counts_equal": true,
+  "daisy_source_lines_equal": true
+}

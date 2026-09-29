@@ -1,0 +1,896 @@
+{
+  "baseline_commit": "c75d47e19609a8cfd4b8d99ed5eb311e75750a69",
+  "improvement_branch": "improvement/pipeline-robustness",
+  "llm_mode": "controlled offline responses; no live API calls",
+  "focused_cases": {
+    "timed_boolean_concern": {
+      "baseline": {
+        "candidates": 2,
+        "syntax_valid": 0,
+        "verified": 0,
+        "repairs": [
+          {
+            "operation": "trigger_strengthening",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and ({urgent}) then Act within 2 minutes",
+            "syntax_valid": false,
+            "syntax_error": "None:10:28: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) then Act'",
+            "formally_verified": false
+          },
+          {
+            "operation": "rule_decomposition",
+            "target": "R1",
+            "proposed_rule": "R1_1 when Start and ({urgent}) then Act within 2 minutes\nR1_2 when Start and (not {urgent}) then Act within 5 minutes",
+            "syntax_valid": false,
+            "syntax_error": "None:10:30: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) then Act'",
+            "formally_verified": false
+          }
+        ]
+      },
+      "improved": {
+        "candidates": 1,
+        "syntax_valid": 1,
+        "verified": 1,
+        "repairs": [
+          {
+            "operation": "rule_decomposition",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and {urgent} then Act within 2 minutes\nR1_1 when Start and (not {urgent}) then Act within 5 minutes",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          }
+        ]
+      }
+    },
+    "timed_compound_concern": {
+      "baseline": {
+        "candidates": 2,
+        "syntax_valid": 2,
+        "verified": 2,
+        "repairs": [
+          {
+            "operation": "trigger_strengthening",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and ((not {urgent}) or {ready}) then Act within 2 minutes",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          },
+          {
+            "operation": "rule_decomposition",
+            "target": "R1",
+            "proposed_rule": "R1_1 when Start and ((not {urgent}) or {ready}) then Act within 2 minutes\nR1_2 when Start and ({urgent} and (not {ready})) then Act within 5 minutes",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          }
+        ]
+      },
+      "improved": {
+        "candidates": 1,
+        "syntax_valid": 1,
+        "verified": 1,
+        "repairs": [
+          {
+            "operation": "rule_decomposition",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and ((not {urgent}) or {ready}) then Act within 2 minutes\nR1_1 when Start and (not ((not {urgent}) or {ready})) then Act within 5 minutes",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          }
+        ]
+      }
+    },
+    "defeater_concern": {
+      "baseline": {
+        "candidates": 3,
+        "syntax_valid": 2,
+        "verified": 2,
+        "repairs": [
+          {
+            "operation": "trigger_strengthening",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and ({urgent} and {ready}) then Act",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          },
+          {
+            "operation": "defeater_introduction",
+            "target": "R1",
+            "proposed_rule": "R1 when Start then Act unless ({urgent} and ((not {urgent}) or (not {ready}))) then not Act",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          },
+          {
+            "operation": "rule_decomposition",
+            "target": "R1",
+            "proposed_rule": "R1_1 when Start and ({urgent} and {ready}) then Act\nR1_2 when Start and ((not {urgent}) or (not {ready})) then Act unless ({urgent}) then not Act",
+            "syntax_valid": false,
+            "syntax_error": "None:11:80: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) then not'",
+            "formally_verified": false
+          }
+        ]
+      },
+      "improved": {
+        "candidates": 2,
+        "syntax_valid": 2,
+        "verified": 1,
+        "repairs": [
+          {
+            "operation": "rule_decomposition",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and ({urgent} and {ready}) then Act unless {urgent} then not Act\nR1_1 when Start and (not ({urgent} and {ready})) then Act unless {urgent} then not Act",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": false,
+            "target_fixed": false,
+            "new_issue_count": 0,
+            "remaining_target_findings": [
+              "c1 when Start and ({urgent} and {ready}) then not Act\nConcern is raised"
+            ],
+            "detector_failures": {}
+          },
+          {
+            "operation": "defeater_introduction",
+            "target": "R1",
+            "proposed_rule": "R1 when Start then Act unless ({urgent} and (not ({urgent} and {ready}))) then not Act",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          }
+        ]
+      }
+    },
+    "measure_situational_conflict": {
+      "baseline": {
+        "candidates": 4,
+        "syntax_valid": 0,
+        "verified": 0,
+        "repairs": [
+          {
+            "operation": "defeater_introduction",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and {urgent} then Act unless ({ready})",
+            "syntax_valid": false,
+            "syntax_error": "None:10:52: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => 's ({ready}*) R2 when '",
+            "formally_verified": false
+          },
+          {
+            "operation": "trigger_refinement",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and {urgent} and (not {ready}) then Act",
+            "syntax_valid": false,
+            "syntax_error": "None:10:28: Expected 'then' => ' {urgent} *and (not {'",
+            "formally_verified": false
+          },
+          {
+            "operation": "defeater_introduction",
+            "target": "R2",
+            "proposed_rule": "R2 when Start and {ready} then not Act unless ({urgent})",
+            "syntax_valid": false,
+            "syntax_error": "None:11:56: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) rule_end'",
+            "formally_verified": false
+          },
+          {
+            "operation": "trigger_refinement",
+            "target": "R2",
+            "proposed_rule": "R2 when Start and {ready} and (not {urgent}) then not Act",
+            "syntax_valid": false,
+            "syntax_error": "None:11:27: Expected 'then' => 'd {ready} *and (not {'",
+            "formally_verified": false
+          }
+        ]
+      },
+      "improved": {
+        "candidates": 2,
+        "syntax_valid": 2,
+        "verified": 2,
+        "repairs": [
+          {
+            "operation": "trigger_refinement",
+            "target": "R1",
+            "proposed_rule": "R1 when Start and ({urgent} and (not {ready})) then Act",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          },
+          {
+            "operation": "trigger_refinement",
+            "target": "R2",
+            "proposed_rule": "R2 when Start and ({ready} and (not {urgent})) then not Act",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          }
+        ]
+      }
+    },
+    "opposing_defeater_situation": {
+      "baseline": {
+        "candidates": 2,
+        "syntax_valid": 1,
+        "verified": 0,
+        "repairs": [
+          {
+            "operation": "defeater_introduction",
+            "target": "R1",
+            "proposed_rule": "R1 when Start then Act unless ((not {urgent}) and ({ready} and (not {urgent}))) then not Act",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": false,
+            "target_fixed": false,
+            "new_issue_count": 1,
+            "remaining_target_findings": [
+              ":\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\n\nFor rule:\nR1 when Start then Act unless ((not {urgent}) and ({ready} and (not {urgent}))) then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Other then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup\n----------------------------------------------------------------------------------------------------\n\nwhen Start then ( (((not urgent) and (ready and (not urgent))) => not_Act within 0 seconds) )\nwhen Start then ( ((not ((not urgent) and (ready and (not urgent)))) => Act within 0 seconds) )\nwhen Other then ( ((ready and (not urgent)) => Backup within 0 seconds) )\nwhen Other then ( ((not (ready and (not urgent))) => Act within 300 seconds) )\nchecking when Start then ( (((not urgent) and (ready and (not urgent))) => not_Act within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\nfind trace\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\nvol: 6\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 10\nunsat\ndetect conflict, and start backward checking\n['F1', 'F32', 'F33', 'F0', 'F12', 'F21', 'F150', 'F239', 'F169', 'F196', 'F173', 'F20', 'F22', 'F170', 'F168', 'F19', 'F26', 'F13', 'F15', 'F109', 'F146', 'F139', 'F138', 'F114', 'F136', 'F133', 'F113', 'F116', 'F53', 'F74', 'F180', 'F111', 'F62', 'F175', 'F177', 'F135', 'F105', 'F61', 'F54', 'F176', 'F35', 'F108', 'F181', 'F60', 'F115', 'F2', 'F208', 'F106', 'F110', 'F183', 'F162', 'F207', 'F185', 'F186', 'F137', 'F184', 'F112', 'F149', 'F117', 'F171', 'F107', 'F188', 'F68', 'F147', 'F11', 'F16', 'F195', 'F14', 'F238', 'F9', 'F167', 'F10', 'F148', 'F166', 'F164', 'F194', 'F179', 'F182']\nConflict detected, start backward checking\nUNSAT CORE\nSituational conflict under situation :\nat time 0: Other()\nat time 0: Measure(urgent=False, ready=False)\nat time 300: Start()\nat time 300: Measure(urgent=False, ready=True)\nat time 300: blocked_not_Act(end=300)\nat time 301: Act()\n\nFor rule:\nR1 when Start then Act unless ((not {urgent}) and ({ready} and (not {urgent}))) then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Other then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup\n----------------------------------------------------------------------------------------------------\n\nTO BE HIGHLIGHTED\nStart : [248, 253]\n{urgent} : [276, 284]\n{ready} : [291, 298]\nOther : [681, 686]\n{ready} : [721, 728]\nAct : [692, 695]\n5 minutes : [703, 712]\nAct : [329, 332]\nchecking when Start then ( ((not ((not urgent) and (ready and (not urgent)))) => Act within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 5\nunsat\nchecking when Other then ( ((ready and (not urgent)) => Backup within 0 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 3\nunsat\nchecking when Other then ( ((not (ready and (not urgent))) => Act within 300 seconds) )\nsolving under config: restart False, bcr False, ub False, min False\ndomain size 4\nunsat"
+            ],
+            "detector_failures": {}
+          },
+          {
+            "operation": "trigger_refinement",
+            "target": "R2",
+            "proposed_rule": "R2 when Other and ({urgent}) then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup",
+            "syntax_valid": false,
+            "syntax_error": "None:11:28: Expected 'and' or 'or' or '<=' or '>=' or '<>' or '<' or '>' or '=' => ' ({urgent}*) then Act'",
+            "formally_verified": false
+          }
+        ]
+      },
+      "improved": {
+        "candidates": 1,
+        "syntax_valid": 1,
+        "verified": 0,
+        "repairs": [
+          {
+            "operation": "defeater_introduction",
+            "target": "R1",
+            "proposed_rule": "R1 when Start then Act unless ((not {urgent}) and ({ready} and (not {urgent}))) then not Act",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": false,
+            "target_fixed": false,
+            "new_issue_count": 0,
+            "remaining_target_findings": [
+              "Situational conflict under situation :\n\nFor rule:\nR1 when Start then Act unless ((not {urgent}) and ({ready} and (not {urgent}))) then not Act\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR2 when Other then Act within 5 minutes unless ({ready} and (not {urgent})) then Backup\n----------------------------------------------------------------------------------------------------"
+            ],
+            "detector_failures": {}
+          }
+        ]
+      }
+    },
+    "redundant_rule": {
+      "baseline": {
+        "candidates": 1,
+        "syntax_valid": 1,
+        "verified": 1,
+        "repairs": [
+          {
+            "operation": "rule_removal",
+            "target": "R1",
+            "proposed_rule": "",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          }
+        ]
+      },
+      "improved": {
+        "candidates": 1,
+        "syntax_valid": 1,
+        "verified": 1,
+        "repairs": [
+          {
+            "operation": "rule_removal",
+            "target": "R1",
+            "proposed_rule": "",
+            "syntax_valid": true,
+            "syntax_error": "",
+            "formally_verified": true,
+            "target_fixed": true,
+            "new_issue_count": 0,
+            "remaining_target_findings": [],
+            "detector_failures": {}
+          }
+        ]
+      }
+    }
+  },
+  "real_project_baseline": [
+    {
+      "case": "BSN.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 29
+      },
+      "detector_failures": {},
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\nwhen PatientAsleep then ( (((((patientDiscomfort = 0) or (patientDiscomfort = 1)) or (patientDiscomfort = 2)) and (canDeactivate and (patientDiscomfort > 0))) => CaregiverCanDeactivate within 0 seconds) )\nwhen PatientAsleep then ( (((not (canDeactivate and "
+        }
+      },
+      "issue_counts": {
+        "concerns": 0,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 29,
+      "verbatim_roundtrip": false
+    },
+    {
+      "case": "BSN-corrected.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 32
+      },
+      "detector_failures": {},
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\nwhen PatientAsleep then ( (((((patientDiscomfort = 0) or (patientDiscomfort = 1)) or (patientDiscomfort = 2)) and (canPatientDeactivate and (patientDiscomfort > 0))) => CaregiverCanDeactivate within 0 seconds) )\nwhen PatientAsleep then ( (((not (canPatientD"
+        }
+      },
+      "issue_counts": {
+        "concerns": 0,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 30,
+      "verbatim_roundtrip": false
+    },
+    {
+      "case": "DRESSASSIST.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 31
+      },
+      "detector_failures": {},
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\nwhen CurtainOpenRqt then ( ((userDistressed > 1) => CurtainsOpened within 0 seconds) )\nwhen CurtainOpenRqt then ( (((not (userDistressed > 1)) and userUnderDressed) => RefuseRequest within 0 seconds) )\nwhen CurtainOpenRqt then ( (((not userUnderDressed) and"
+        }
+      },
+      "issue_counts": {
+        "concerns": 0,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 31,
+      "verbatim_roundtrip": false
+    },
+    {
+      "case": "DRESSASSIST-corrected.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 31
+      },
+      "detector_failures": {},
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\nwhen CurtainOpenRqt then ( ((userDistressed > 1) => CurtainsOpened within 0 seconds) )\nwhen CurtainOpenRqt then ( (((not (userDistressed > 1)) and userUnderDressed) => RefuseRequest within 0 seconds) )\nwhen CurtainOpenRqt then ( (((not userUnderDressed) and"
+        }
+      },
+      "issue_counts": {
+        "concerns": 0,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 31,
+      "verbatim_roundtrip": false
+    },
+    {
+      "case": "ALMI.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 33
+      },
+      "detector_failures": {},
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\nwhen MonitorMealTime then ( (userOccupied => RemindLater within 0 seconds) )\nwhen MonitorMealTime then ( ((not userOccupied) => InformUser within 600 seconds) )\nwhen AgentDeployed then ( TrackTime within 0 seconds )\nwhen TrackTime then ( ((timeBetweenMeals "
+        }
+      },
+      "issue_counts": {
+        "concerns": 0,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 33,
+      "verbatim_roundtrip": false
+    },
+    {
+      "case": "ALMI-corrected.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 36
+      },
+      "detector_failures": {},
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\n"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "cannot unpack non-iterable function object\nwhen MonitorMealTime then ( (userOccupied => RemindLater within 0 seconds) )\nwhen MonitorMealTime then ( ((not userOccupied) => InformUser within 600 seconds) )\nwhen AgentDeployed then ( TrackTime within 0 seconds )\nwhen TrackTime then ( ((timeBetweenMeals "
+        }
+      },
+      "issue_counts": {
+        "concerns": 0,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 32,
+      "verbatim_roundtrip": false
+    }
+  ],
+  "real_project_improved": [
+    {
+      "case": "BSN.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 29
+      },
+      "detector_failures": {},
+      "issue_counts": {
+        "concerns": 3,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 29,
+      "verbatim_roundtrip": true
+    },
+    {
+      "case": "BSN-corrected.sleec",
+      "outcome": "completed",
+      "repairs": [
+        {
+          "kind": "concerns",
+          "operation": "rule_decomposition",
+          "target": "Rule13_1",
+          "syntax_valid": true,
+          "verified": false,
+          "failure_reason": "Maximum deterministic augmentation depth reached"
+        }
+      ],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 32
+      },
+      "detector_failures": {},
+      "issue_counts": {
+        "concerns": 1,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 32,
+      "verbatim_roundtrip": true
+    },
+    {
+      "case": "DRESSASSIST.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": false,
+        "error": "Rule IDs must be unique."
+      }
+    },
+    {
+      "case": "DRESSASSIST-corrected.sleec",
+      "outcome": "completed",
+      "repairs": [],
+      "syntax": {
+        "valid": false,
+        "error": "Rule IDs must be unique."
+      }
+    },
+    {
+      "case": "ALMI.sleec",
+      "outcome": "completed",
+      "repairs": [
+        {
+          "kind": "concerns",
+          "operation": "rule_decomposition",
+          "target": "R3",
+          "syntax_valid": true,
+          "verified": false,
+          "failure_reason": "Maximum deterministic augmentation depth reached"
+        },
+        {
+          "kind": "concerns",
+          "operation": "defeater_introduction",
+          "target": "R3",
+          "syntax_valid": true,
+          "verified": true,
+          "failure_reason": ""
+        },
+        {
+          "kind": "situational_conflicts",
+          "operation": "defeater_introduction",
+          "target": "R3",
+          "syntax_valid": true,
+          "verified": false,
+          "failure_reason": "Maximum deterministic augmentation depth reached"
+        }
+      ],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 33
+      },
+      "detector_failures": {},
+      "issue_counts": {
+        "concerns": 2,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 0,
+        "situational_conflicts": 1
+      },
+      "rules_parsed": 33,
+      "verbatim_roundtrip": true
+    },
+    {
+      "case": "ALMI-corrected.sleec",
+      "outcome": "completed",
+      "repairs": [
+        {
+          "kind": "redundancies",
+          "operation": "rule_removal",
+          "target": "R21",
+          "syntax_valid": true,
+          "verified": true,
+          "failure_reason": ""
+        }
+      ],
+      "syntax": {
+        "valid": true,
+        "error": "",
+        "rule_count": 36
+      },
+      "detector_failures": {},
+      "detector_outcomes": {
+        "concern": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "purpose": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "redundancy": {
+          "success": true,
+          "detected": true,
+          "message_prefix": "****************************************************************************************************\n****************************************************************************************************\n**************************************************************************************************"
+        },
+        "situational_conflict": {
+          "success": true,
+          "detected": false,
+          "message_prefix": "\nwhen MonitorMealTime then ( (userOccupied => RemindLater within 0 seconds) )\nwhen MonitorMealTime then ( ((not userOccupied) => InformUser within 600 seconds) )\nwhen AgentDeployed then ( TrackTime within 0 seconds )\nwhen TrackTime then ( ((timeBetweenMeals > 28800) => InformCaregiver within 0 secon"
+        }
+      },
+      "issue_counts": {
+        "concerns": 0,
+        "conflicts": 0,
+        "purpose_blocking": 0,
+        "redundancies": 1,
+        "situational_conflicts": 0
+      },
+      "rules_parsed": 36,
+      "verbatim_roundtrip": true
+    }
+  ],
+  "source_checks": [
+    {
+      "case": "ALMI-corrected.sleec",
+      "rules": 36,
+      "source_preserved": true
+    },
+    {
+      "case": "ALMI.sleec",
+      "rules": 33,
+      "source_preserved": true
+    },
+    {
+      "case": "Autocar-corrected.sleec",
+      "rules": 46,
+      "source_preserved": true
+    },
+    {
+      "case": "Autocar.sleec",
+      "rules": 27,
+      "source_preserved": true
+    },
+    {
+      "case": "BSN-corrected.sleec",
+      "rules": 32,
+      "source_preserved": true
+    },
+    {
+      "case": "BSN.sleec",
+      "rules": 29,
+      "source_preserved": true
+    },
+    {
+      "case": "CSI-corrected.sleec",
+      "rules": 26,
+      "source_preserved": true
+    },
+    {
+      "case": "CSI.sleec",
+      "rules": 20,
+      "source_preserved": true
+    },
+    {
+      "case": "Casper-corrected.sleec",
+      "error": "None:1:1: Expected Comment or 'def_start' => '*.'"
+    },
+    {
+      "case": "Casper.sleec",
+      "error": "None:1:1: Expected Comment or 'def_start' => '*.'"
+    },
+    {
+      "case": "DPA-corrected.sleec",
+      "rules": 25,
+      "source_preserved": true
+    },
+    {
+      "case": "DPA.sleec",
+      "rules": 22,
+      "source_preserved": true
+    },
+    {
+      "case": "DRESSASSIST-corrected.sleec",
+      "error": "Rule IDs must be unique."
+    },
+    {
+      "case": "DRESSASSIST.sleec",
+      "error": "Rule IDs must be unique."
+    },
+    {
+      "case": "Daisy-corrected.sleec",
+      "rules": 32,
+      "source_preserved": true
+    },
+    {
+      "case": "Daisy.sleec",
+      "rules": 26,
+      "source_preserved": true
+    },
+    {
+      "case": "Tabiat-corrected.sleec",
+      "error": "None:1:1: Expected Comment or 'def_start' => '*.'"
+    },
+    {
+      "case": "aspen-corrected.sleec",
+      "rules": 25,
+      "source_preserved": true
+    },
+    {
+      "case": "aspen.sleec",
+      "rules": 23,
+      "source_preserved": true
+    },
+    {
+      "case": "safescade-corrected.sleec",
+      "error": "Rule IDs must be unique."
+    },
+    {
+      "case": "safescade.sleec",
+      "rules": 28,
+      "source_preserved": true
+    }
+  ]
+}

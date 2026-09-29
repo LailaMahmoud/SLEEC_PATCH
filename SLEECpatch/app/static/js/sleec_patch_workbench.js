@@ -715,7 +715,7 @@ function renderIssues() {
 
                 <div class="issue-section">
                     <strong>Diagnosis Trace</strong>
-                    ${formatDiagnosisTrace(shortIssueText(issue.value), {
+                    ${formatDiagnosisTrace(shortIssueText(issue.diagnosis?.raw_report || issue.value), {
                         maxBlocks: 3,
                         maxChars: 650
                     })}
@@ -748,7 +748,7 @@ function selectIssue(index) {
             </div>
 
             <p><strong>Selected WFI diagnosis trace</strong></p>
-            ${formatDiagnosisTrace(sleecPatchState.selectedIssue.value)}
+            ${formatDiagnosisTrace(sleecPatchState.selectedIssue.diagnosis?.raw_report || sleecPatchState.selectedIssue.value)}
         </div>
     `;
 
@@ -874,10 +874,14 @@ function renderCandidatePatches(containerId, patches, title) {
             <p><b>Operation:</b> ${escapeHtml(p.operation)}</p>
 
             <p><b>Source:</b> ${escapeHtml(p.source)}</p>
+            ${p.source_requirement_id ? `<p><b>Source concern:</b> ${escapeHtml(p.source_requirement_id)} — adds a rule.</p>` : ""}
+            <p><b>Check result:</b> ${escapeHtml((p.candidate_status || "generated").replaceAll("_", " "))}</p>
+            <p><b>Meaning review:</b> ${escapeHtml((p.semantic_review_status || "pending").replaceAll("_", " "))}</p>
+            ${p.failure_reason ? `<p>${escapeHtml(p.failure_reason)}</p>` : ""}
 
             <p><b>Original Rule</b></p>
 
-            <pre>${escapeHtml(p.original_rule || "")}</pre>
+            <pre>${escapeHtml(p.original_rule || (p.source_requirement_id ? "Existing rules are preserved." : ""))}</pre>
 
             <p><b>Proposed Patch</b></p>
 
@@ -899,6 +903,7 @@ function renderVerifiedPatches() {
             <div class="patch-card">
                 <span class="badge bad">No verified patch found</span>
                 <p>The system could not generate a formally verified patch within the attempt limit.</p>
+                ${sleecPatchState.log?.repair_notice ? `<p>${escapeHtml(sleecPatchState.log.repair_notice)}</p>` : ""}
             </div>
         `;
         renderStakeholderDecision();
@@ -926,7 +931,7 @@ sleecPatchState.verifiedPatches.forEach((p, index) => {
                 </div>
 
                 <span class="badge ${isLLM ? "neutral" : "good"}">
-                    ${isLLM ? "Persisted for philosopher" : "Deterministic"}
+                    Formally verified · ${p.semantic_review_status === "not_required" ? "Meaning review not required" : "Awaiting meaning review"}
                 </span>
             </div>
 
@@ -963,7 +968,7 @@ sleecPatchState.verifiedPatches.forEach((p, index) => {
             <p><strong>Verified by SLEEC</strong></p>
 
             <h4>Original Rule</h4>
-            <pre>${escapeHtml(p.original_rule || "")}</pre>
+            <pre>${escapeHtml(p.original_rule || (p.source_requirement_id ? "Existing rules are preserved." : ""))}</pre>
 
             <h4>Proposed Patch</h4>
             <pre>${escapeHtml(p.proposed_rule || "")}</pre>

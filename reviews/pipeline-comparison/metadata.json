@@ -1,0 +1,8 @@
+{
+  "revisions": {
+    "main": "c75d47e19609a8cfd4b8d99ed5eb311e75750a69",
+    "development": "aee947a8d412afea413b8c8180c89ebee1cf0501"
+  },
+  "python": "3.11.15 (main, Mar  3 2026, 00:52:57) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "live_llm_calls": 0
+}

@@ -1,0 +1,2 @@
+# Preserve the exact bytes and hashes of excluded historical source snapshots.
+reviews/pipeline-comparison/excluded-nonpaper/generated/*.sleec -whitespace

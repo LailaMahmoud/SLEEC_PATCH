@@ -1,4 +1,5 @@
 from .Analyzer import derivation_rule
+from .analysis_runtime import AnalysisError, isolated_analysis, serialized, require_conclusive_result
 
 from .Analyzer.analyzer import check_property_refining, clear_all
 from .Analyzer.logic_operator import *
@@ -340,18 +341,20 @@ class Event:
 
 
 class TimeWindow:
-    def __init__(self, start, end):
+    def __init__(self, start, end, unbounded=False):
         self.start = start
         self.end = end
+        self.unbounded = unbounded
 
-    # TODO: currently only support end-point
+    # Both interval bounds are relative to the triggering measure timestamp.
     def encode(self, event_obj, measure):
         start_time = self.start.encode(measure)
         end_time = self.end.encode(measure)
-        return measure.time + start_time <= event_obj.time <= measure.time + end_time
+        lower = measure.time + start_time <= event_obj.time
+        return lower if self.is_inf() else AND(lower, event_obj.time <= measure.time + end_time)
 
     def encode_limited_pos(self, event_obj, measure, last_time):
-        return AND(measure.time + self.end.encode(measure) > last_time, NOT(self.encode(event_obj, measure)))
+        return NOT(self.encode(event_obj, measure))
 
     def encode_limited_neg(self, event_obj, measure, last_time):
         return And(event_obj.time <= last_time
@@ -375,10 +378,11 @@ class TimeWindow:
             return self_end_poke >= other_end_poke
 
     def is_inf(self):
-        return self.start == ZERO() and self.end == INF()
+        return self.unbounded
 
     def is_inst(self):
-        return (self.start == ZERO() or not self.start) and (self.end == ZERO() or not self.end)
+        return (not self.unbounded and isinstance(self.start, Constant)
+                and isinstance(self.end, Constant) and self.start.val == self.end.val == 0)
 
     def __str__(self):
         if self.is_inf():
@@ -463,9 +467,17 @@ class Obligation:
                          lambda r, trigger_measure=trigger_measure, current_measure=current_measure:
                          self.deadline.encode_limited_neg(r, trigger_measure, current_measure.time))
         else:
-            return forall(A_Mapping[self.head.expr],
-                          lambda r, trigger_measure=trigger_measure, current_measure=current_measure:
-                          self.deadline.encode_limited_pos(r, trigger_measure, current_measure.time))
+            # A situation fixes absence only strictly before current_measure
+            # (see model_based_inst). Responses at the current timestamp may
+            # still occur, including obligations due exactly now.
+            # Keep the time check outside forall: with no response events,
+            # forall is true even while the obligation is still pending.
+            if self.deadline.is_inf():
+                return FALSE()
+            return AND(trigger_measure.time + self.deadline.end.encode(trigger_measure) < current_measure.time,
+                       forall(A_Mapping[self.head.expr],
+                              lambda r, trigger_measure=trigger_measure, current_measure=current_measure:
+                              self.deadline.encode_limited_pos(r, trigger_measure, current_measure.time)))
 
     def violated(self, trigger_measure, current_measure, A_Mapping):
         if self.head.neg:
@@ -736,23 +748,15 @@ class NormalizedRule:
         return self.oc.obligations
 
     def encode_limited(self, cur_measure, A_Mapping, exception=None):
-        if exception:
-            return forall(A_Mapping[self.triggering_event.expr],
-                          lambda trigger, cur_measure=cur_measure, exception=exception:
-                          Implication(trigger.time <= cur_measure.time,
-                                      exist(A_Mapping["Measure"],
-                                            lambda t_measure, cur_measure=cur_measure, exception=exception: Implication(
-                                                NEQ(exception, t_measure),
-                                                self.oc.encode_limited(t_measure,
-                                                                       cur_measure,
-                                                                       A_Mapping)))))
-        else:
-            return forall(A_Mapping[self.triggering_event.expr],
-                          lambda trigger: Implication(trigger.time <= cur_measure.time,
-                                                      exist(A_Mapping["Measure"],
-                                                            lambda t_measure: self.oc.encode_limited(t_measure,
-                                                                                                     cur_measure,
-                                                                                                     A_Mapping))))
+        def at_trigger(trigger):
+            def at_measure(t_measure):
+                obligation = self.oc.encode_limited(t_measure, cur_measure, A_Mapping)
+                if exception is not None:
+                    obligation = Implication(NEQ(exception.time, t_measure.time), obligation)
+                return AND(EQ(t_measure.time, trigger.time), obligation)
+            return Implication(trigger.time <= cur_measure.time, exist(A_Mapping["Measure"], at_measure))
+
+        return forall(A_Mapping[self.triggering_event.expr], at_trigger)
 
 
 def certasin_product(prs1: [Conditional_Obligation], prs2: [Conditional_Obligation]):
@@ -770,6 +774,7 @@ def parse_rules_norm(rb):
     return rules
 
 
+@serialized
 def parse_sleec_norm(model_file, read_file=True):
     if read_file:
         model_str = read_model_file(model_file)
@@ -891,7 +896,7 @@ def norm_parse_occ(node, cond):
         else:
             start = end = Constant(0)
     event = event if not negation else -event
-    return Obligation(event, TimeWindow(start, end))
+    return Obligation(event, TimeWindow(start, end, unbounded=bool(node.inf) and not node.limit))
 
 
 def norm_parse_response(node, cond):
@@ -1156,6 +1161,7 @@ def process_conflict(relations):
             nr.register_obligations()
 
 
+@isolated_analysis
 def check_situational_conflict(model_str, multi_entry=False):
     output = ""
     result = False
@@ -1197,6 +1203,7 @@ def check_situational_conflict(model_str, multi_entry=False):
                                       final_min_solution=True, restart=False, boundary_case=False,
                                       universal_blocking=False, vol_bound=10, ret_model=True, scalar_mask=scalar_mask
                                       )
+        require_conclusive_result(res, with_model=True)
         if isinstance(res, tuple):
             trace, sat_model = res
             inst_actions = model_based_inst(sat_model, Actions, completeness=True, time=c_measure.time, measure_class=Measure)
@@ -1219,6 +1226,7 @@ def check_situational_conflict(model_str, multi_entry=False):
                                           final_min_solution=True, restart=False, boundary_case=False,
                                           universal_blocking=False,
                                           record_proof=True)
+            require_conclusive_result(res)
             if res == 0:
                 output += "Situational conflict under situation :\n{}\n".format(trace)
                 try:
@@ -1290,13 +1298,8 @@ def check_situational_conflict(model_str, multi_entry=False):
 
                     if multi_entry:
                         multi_output.append((output, adj_hl))
-                except:
-                    rule_model = model.ruleBlock.rules[rule_number]
-                    start, end = rule_model._tx_position, rule_model._tx_position_end
-                    output += "For rule:\n"
-                    output += "{}\n".format(model_str[start: end])
-                    output += ("-" * 100 + '\n')
-                    continue
+                except Exception as exc:
+                    raise AnalysisError("Situational-conflict proof could not be extracted.") from exc
             else:
                 # print(res)
                 rule_model = model.ruleBlock.rules[rule_number]

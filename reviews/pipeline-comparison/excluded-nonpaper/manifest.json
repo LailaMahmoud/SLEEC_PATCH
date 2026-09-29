@@ -1,0 +1,31 @@
+{
+  "evaluation_status": "excluded_from_paper_method_results",
+  "reason": "Deterministic concern_completion deviated from Section III.B. The user requires the paper methodology. The operator has been removed.",
+  "live_request_status": "obsolete_do_not_send; it contains a precomputed case-specific example from the withdrawn implementation",
+  "artifacts": [
+    {
+      "path": "bsn-repair-results.json",
+      "sha256": "4ddc9426a4cbce24bd5c7a578d358e01a91673c0bd99ae4b35a91172e3e44790"
+    },
+    {
+      "path": "bsn-operator-ablation.json",
+      "sha256": "ab364f800327b371691dfc137cdd8debb2ee24763b15a287cec3b7658fc4fd2b"
+    },
+    {
+      "path": "bsn-tests.txt",
+      "sha256": "ca7d4bb6f92fc40c0444b6910bad5066b3c234b676695f457c6f0a6d1038177d"
+    },
+    {
+      "path": "bsn-live-request.json",
+      "sha256": "85feeb461b0e4d171a50eebbdea4c61b036c14eb5e77bdf79103da327312c456"
+    },
+    {
+      "path": "generated/BSN-repaired.sleec",
+      "sha256": "0033e83024923085b6541cd267ff44a99b4823fcf52b05fd03a70b52066536b0"
+    },
+    {
+      "path": "generated/BSN-corrected-repaired.sleec",
+      "sha256": "8a14e43fcb53b882cfa1814db7beb7715c6181bc1f322f128da854927cdceb6e"
+    }
+  ]
+}

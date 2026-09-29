@@ -5,7 +5,7 @@ from .logic_operator import to_string, C_NOT, invert, C_AND, Operator, C_OR, tex
 
 
 def reset():
-    Rule.ids = 0
+    Rule.ids = {}
 
 
 def find_text_ref(expr):

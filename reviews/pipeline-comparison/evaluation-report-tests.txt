@@ -1,0 +1,12 @@
+test_average_time_counts_each_run_once_including_no_patch_run (test_evaluation_reporting.EvaluationReportingTests.test_average_time_counts_each_run_once_including_no_patch_run) ... ok
+test_diagnosis_count_survives_other_cases_and_repeated_repairs (test_evaluation_reporting.EvaluationReportingTests.test_diagnosis_count_survives_other_cases_and_repeated_repairs) ... ok
+test_legacy_database_migration_preserves_records_and_unknown_fingerprint (test_evaluation_reporting.EvaluationReportingTests.test_legacy_database_migration_preserves_records_and_unknown_fingerprint) ... ok
+test_older_or_inconsistent_diagnoses_are_not_reported_as_zero (test_evaluation_reporting.EvaluationReportingTests.test_older_or_inconsistent_diagnoses_are_not_reported_as_zero) ... ok
+test_report_route_filters_response_and_disables_http_caching (test_evaluation_reporting.EvaluationReportingTests.test_report_route_filters_response_and_disables_http_caching) ... ok
+test_unsuccessful_case_remains_visible_without_saved_patches (test_evaluation_reporting.EvaluationReportingTests.test_unsuccessful_case_remains_visible_without_saved_patches) ... ok
+test_use_case_filter_applies_to_reviews_logs_and_summaries (test_evaluation_reporting.EvaluationReportingTests.test_use_case_filter_applies_to_reviews_logs_and_summaries) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.094s
+
+OK

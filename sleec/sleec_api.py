@@ -13,6 +13,7 @@ from .sleecParser import (
 from .SleecNorm import check_situational_conflict
 
 from .Analyzer.analyzer import *
+from .analysis_runtime import AnalysisError
 
 
 # ---------- WRAPPERS WITH ERROR HANDLING ----------
@@ -24,7 +25,7 @@ def check_concern(text):
         msg = str(e)
         if "Expected" in msg:
             msg = "Syntax  concern error in concern: " + msg
-        return False, msg, []
+        raise AnalysisError(f"Concern analysis failed: {msg}") from e
 
 
 def check_conflict(text):
@@ -36,7 +37,7 @@ def check_conflict(text):
         # cleaner message
         if "Expected" in msg:
             msg = "Syntax conflict error in conflict: " + msg
-        return False, msg, []
+        raise AnalysisError(f"Conflict analysis failed: {msg}") from e
 
    
 
@@ -51,7 +52,7 @@ def check_redundancy(text):
         if "Expected" in msg:
             msg = "Syntax error  red in redundancy: " + msg
 
-        return False, msg, []
+        raise AnalysisError(f"Redundancy analysis failed: {msg}") from e
 
     
 
@@ -65,7 +66,7 @@ def check_situational(text):
         if "Expected" in msg:
             msg = "Syntax error in situational : " + msg
 
-        return False, msg, []
+        raise AnalysisError(f"Situational-conflict analysis failed: {msg}") from e
 
 
 def check_purpose(text):
@@ -78,6 +79,6 @@ def check_purpose(text):
         if "Expected" in msg:
             msg = "Syntax error in purpose: " + msg
 
-        return False, msg, []
+        raise AnalysisError(f"Purpose analysis failed: {msg}") from e
 
         

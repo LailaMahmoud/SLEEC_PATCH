@@ -579,7 +579,7 @@ class RepairOperatorSelector:
 
     def parse_when_condition(self, text: object) -> str:
         match = re.search(
-            r"\bwhen\s+(.+?)\s+then\b",
+            r"\b(?:when|exists)\s+(.+?)\s+(?:then|while)\b",
             str(text or ""),
             flags=re.IGNORECASE | re.DOTALL,
         )
@@ -587,7 +587,7 @@ class RepairOperatorSelector:
 
     def parse_then_action(self, text: object) -> str:
         match = re.search(
-            r"\bthen\s+(.+?)(?:\s+within\b|\s+unless\b|$)",
+            r"\b(?:then|while)\s+(.+?)(?:\s+within\b|\s+unless\b|$)",
             str(text or ""),
             flags=re.IGNORECASE | re.DOTALL,
         )
