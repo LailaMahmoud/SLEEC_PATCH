@@ -188,14 +188,22 @@ def sleec_patch_workbench():
         if x.strip()
     ]
 
+    # Load the SLEEC specification for the selected use case
+    selected_use_case = (
+        selected_use_cases[0]
+        if selected_use_cases
+        else "DAISY"
+    )
+
+    sleec_text = load_sleec_text(selected_use_case)
+
     return render_template(
         "SLEECPatchWorkbench.html",
         use_cases=list(SLEEC_FILES.keys()),
         use_case_descriptions=USE_CASE_DESCRIPTIONS,
         selected_use_cases=selected_use_cases,
-        sleec_text=""
+        sleec_text=sleec_text
     )
-
 
 @app.route("/philosopher-review")
 def philosopher_review():
