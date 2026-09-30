@@ -1840,43 +1840,69 @@ IMPORTANT CONSTRAINTS:
 SLEEC SYNTAX CONTRACT:
 Every proposed merged rule MUST be syntactically valid SLEEC.
 
-- Do NOT combine alternative trigger events using "or".
+CRITICAL EVENT-TRIGGER RESTRICTION:
+
+- A SLEEC rule has a single triggering event.
+- Do NOT combine two independent bare events using "and".
+  INVALID:
+      when EventA and EventB then Response
+
+- Do NOT combine two independent bare events using "or".
   INVALID:
       when EventA or EventB then Response
 
-- Event triggers may be combined only using structures already supported
-  by the supplied SLEEC specification.
+- In particular, if the diagnosed conflicting rules have different
+  triggering events, NEVER construct a merged trigger by concatenating
+  those event names.
 
-- Boolean "or" may be used only inside supported measure expressions,
-  for example:
-      ({{measureA}} or {{measureB}})
-  when that syntax is already supported by the specification.
+  INVALID EXAMPLE:
+      r1 when HumanOnFloor then ResponseA
+      r2 when SmokeDetectorAlarm then ResponseB
 
-- Do NOT invent new SLEEC syntax, operators, keywords, or rule forms.
+  DO NOT GENERATE:
+      when HumanOnFloor and SmokeDetectorAlarm then ...
+      when HumanOnFloor or SmokeDetectorAlarm then ...
+
+- After the triggering event, additional conditions may be introduced
+  only as valid measure predicates already supported by the SLEEC
+  grammar and grounded in CURRENT USE-CASE INPUT.
+
+  VALID SHAPE:
+      when EventA and {{declaredMeasure}} then Response
+
+- Do NOT convert another event into a fabricated measure such as:
+      {{EventBTriggered}}
+      {{EventBOccurred}}
+      {{isEventB}}
+  unless that measure is explicitly declared and grounded in the
+  current specification.
+
+- Boolean expressions such as "and", "or", and "not" may be used only
+  where permitted by the supplied SLEEC grammar, especially inside
+  supported measure expressions.
 
 - Use only events, measures, responses, constants, and temporal units
   grounded in CURRENT USE-CASE INPUT.
 
-- A semantic merge must reconcile the diagnosed rules; merely placing
-  their trigger events on opposite sides of "or" is NOT a semantic merge.
+- Do NOT invent new SLEEC syntax, operators, keywords, or rule forms.
 
-- Preserve the distinct semantics of the diagnosed rules. If the rules
-  have different defeaters, alternative responses, or temporal bounds,
-  explicitly reason about those differences when constructing the
-  candidate.
+- Preserve relevant temporal constraints. Do NOT arbitrarily transfer
+  a temporal constraint from one diagnosed rule to behaviour originating
+  from another rule.
 
-- If a temporal constraint from a diagnosed rule remains relevant to the
-  behaviour represented by the merged candidate, preserve it on the
-  corresponding response. Do NOT arbitrarily transfer that temporal
-  constraint to behaviour originating from another rule.
+- Preserve relevant defeater behaviour unless the semantic merge
+  explicitly and validly represents that behaviour.
 
 - The proposed_rule MUST be directly parseable as a SLEEC rule without
   requiring a later syntax-repair step.
 
-- If no meaningful merged rule can be expressed using the existing SLEEC
-  grammar and grounded vocabulary, return no candidate instead of
-  inventing syntax.
-DETERMINISTIC FALLBACK RELATION:
+- If the diagnosed rules have different triggering events and no
+  grounded measure/context exists that permits a valid semantic merge,
+  RETURN NO CANDIDATE.
+
+- Returning no candidate is preferable to generating a syntactically
+  invalid or semantically unsupported patch.
+  
 This operator is intended for diagnosed situational conflicts for which
 deterministic rule_merging is not structurally applicable.
 
