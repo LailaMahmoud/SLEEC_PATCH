@@ -1,0 +1,157 @@
+{
+  "source_branch": "origin/sleec-patch-empowered",
+  "source_commit": "7780b5eea2a3f5b92e5a5412fa275bff537c8488",
+  "requested_backend_files": {
+    "SLEECpatch/app/app.py": "7ce0ddd14940ec6219458b127b70fe430c8caa78403dc70ffeb98953b01d4cfe",
+    "SLEECpatch/app/services/deterministic_repair_engine.py": "8d7d2ff2b67aa25e08ccab63def713713011f443c1024fdf68598f2e87ff316b",
+    "SLEECpatch/app/services/gpt_patch_engine.py": "c64ec502a9706854d18940da846c756418882428dc6aacd973131e027476a8fc",
+    "SLEECpatch/app/services/prompts.py": "6701e1881bb41df3eccb58d4b85ffbaf440e4746156f5a504ccc836072def1f3",
+    "SLEECpatch/app/services/repair_operator_selector.py": "3868fd36f93fda71b9f35fa415cb0268d98e1c8fe445f3c8334643edf9e2eb98",
+    "SLEECpatch/app/services/semantic_patch_validator.py": "ced5994a11837407abd8a7516626eed47799c837f652c82b05389f49156eb6ed",
+    "SLEECpatch/app/services/sleec_detection_engine.py": "8750c7b30af207e0dac57b0888769449b26909555d5d7b72656b8ce5cab3a43c",
+    "SLEECpatch/app/services/sleec_patch_evaluation_store.py": "dcc61cd1379a0c128d5e4f75d44a9ba436a7242e253f2a75dbac82f7481a5964",
+    "SLEECpatch/app/services/sleec_patch_workbench_engine.py": "442e6e0f446b698c500098f69f16f2bab96da7496604209499a4afe0fbfe7013",
+    "SLEECpatch/app/services/use_case_descriptions.py": "bdd4fb14d46e75b1a0ace4d4b385602577f1a1d35c37ac2d0892ddb15b5ef037",
+    "SLEECpatch/app/services/manual_similarity_evaluator.py": "2a20bcf39806deb25098f4ffa6cc974dd0e1673074c06ea7fb64cf507fb42a30"
+  },
+  "required_dependencies": {
+    "SLEECpatch/app/services/patch_ranker.py": "37b6383bd7b354fd02f2a927809b47053252364a439486cd8a2a43abe73231ad",
+    "SLEECpatch/app/scripts/export_overleaf_tables.py": "a54e9153bd162acfe0598d049938d5082cd5dc45b60e5a822c32717e18971137"
+  },
+  "frontend_sha256": {
+    "SLEECpatch/app/static/css/loader.css": "6eca3623b2b7c0e792efa9244068e8921fb9348fe740d71111515e281cad2307",
+    "SLEECpatch/app/static/css/philosopher_review.css": "8cc9efae932c5a889e163afb3e32d5051fe2abb00e0d0ef797699349e0b5f5d2",
+    "SLEECpatch/app/static/css/sleec_detection.css": "29dddb6ff5d0b92fc15299a749eb935518caebb929d1bbacdd85579b9a299023",
+    "SLEECpatch/app/static/css/sleec_pages.css": "fad691265f54c710d9649ed5bddebc9e4731ceba16d64c14f936b11aedee203c",
+    "SLEECpatch/app/static/css/sleec_patch_report.css": "b29b22d0b88bbd8af64c4b16515c3fa3fff270193c6ddbacc0fe972ffddea319",
+    "SLEECpatch/app/static/css/sleec_patch_workbench.css": "262ef8bab939b3942246f26489215ce15624c915da9fe5f30539c2646cefcc23",
+    "SLEECpatch/app/static/css/sleec_shell.css": "ceaa815842c014bb628ebc5c6321e234a67ff6274486091bbcb9412ded47c4dd",
+    "SLEECpatch/app/static/css/sleec_workbench.css": "8cbc7b4671a73812a704a33dd1224db3af7c61fa7571c67ca76f03717e1b7230",
+    "SLEECpatch/app/static/css/style.css": "5e55f07a04ef842f8d0d5215faa6837e9806b03668d6b9af5985778aa8077754",
+    "SLEECpatch/app/static/css/tailwind.css": "8d47f5417aaa84b67822144508d189952b1e997cc4c330eff68fb4fb8618ad70",
+    "SLEECpatch/app/static/css/tailwind_input.css": "daa46d8bfb566d87d92c10dc3289c1695c251bba2e2cd9bfee81718ad41ca740",
+    "SLEECpatch/app/static/css/uscllm.css": "26c5741ee8d2234ea4c7faee840a97a2e032571308e8aafd2cc79995bc0c6c75",
+    "SLEECpatch/app/static/images/sleec_patch_architecture.jpeg": "154ec8d61a9dfd1546508bfa1ec668d33a2ce839a4ecd23ef6f4badd9abe21b0",
+    "SLEECpatch/app/static/images/sleec_patch_architecture.png": "969e0217e4d239cf9439d8f89c531d61f87a3e5b8ef75af2690bed1cca04eb61",
+    "SLEECpatch/app/static/js/loader.js": "d4140a62a6aec2d0f7f1b305af6982613f7925c7752678dcfbaf2705e7f7e3c3",
+    "SLEECpatch/app/static/js/philosopher_review.js": "afcf35d279ad7b4b6d886c11fb80f749d7e3fbc0c3f56b28d7a6d159bbcae3e1",
+    "SLEECpatch/app/static/js/sleec_detection.js": "1246538bb40e1721e9938dd8b9ccee573da2e709482db74db07a62bd8c8f6a9f",
+    "SLEECpatch/app/static/js/sleec_multi_workbench.js": "ec354ffc0d0f593dc4a9390e4fcf8f1917117e6601f9f4366faabc92f21e06dd",
+    "SLEECpatch/app/static/js/sleec_patch_report.js": "06b726e70c3dbd45aeb77756f70ef8912091abdebfb67fe0606e846adfcfb693",
+    "SLEECpatch/app/static/js/sleec_patch_workbench.js": "8e4b1850b2b061c1bfa8140735cafc28370d52f712696941b1e074a070eaae51",
+    "SLEECpatch/app/static/js/sleec_resolution_pipeline.js": "8c436f9eeee5155606d9193e38807a7eecad6ff0bcf6e5c420ec0eccff0cf13d",
+    "SLEECpatch/app/static/js/sleec_workbench.js": "46adc120b1f8560c72b1280ee552513e1f8ee239d65bf956488ff267f1d85672",
+    "SLEECpatch/app/static/js/uscllm.css": "8963c23ff5c78a2fedb97c6c90f94a62f7ab20e7c4d276f64bf5fbae58ab32bc",
+    "SLEECpatch/app/static/js/uscllm.js": "df0f0f4e0b91f238ce6bcfa0cd282eaca33126a4b8f1d4e4e2b4e8d57cfdf849",
+    "SLEECpatch/app/static/js/uscllm0.js": "b7d4dc39d3613958802dfeb2efa534bcd55f7135507ae24022a017f5cfbf0d3e",
+    "SLEECpatch/app/static/js/wizard.js": "02f0f847d5a8dac4b997f8069cb6e54320b941ac1678d0ebac0ba868dce21b15",
+    "SLEECpatch/app/static/style.css": "b7839a6c7e88dc4c8d2d62dd1f74f5cb4dfaa2b80a0e953f76aa7e1803fac78a",
+    "SLEECpatch/app/templates/SLEECPatchReport.html": "e56089a29d68cdc465b5e6a0489260138071f1b1236fbe57d3f86c63334c9904",
+    "SLEECpatch/app/templates/SLEECPatchWorkbench.html": "aeb996359e98a9cc70ef6240874ff32b8860b967961c63ed8abcf0331134f01b",
+    "SLEECpatch/app/templates/about.html": "615e1705e0767475831e4cf3cbb27219ac8ac1bdea005361b615baa4f7c3a24f",
+    "SLEECpatch/app/templates/contact.html": "f2457563389a27eb4d8afcb65b13133dd6239a5b55ddb5ef67aeceed15b4f365",
+    "SLEECpatch/app/templates/index.html": "43e93e772b4b5a0aaedfe6afa2c090e55232ae05eb6a3b2aaaf9a6aab588335c",
+    "SLEECpatch/app/templates/partials/app_navbar.html": "23e79f0271884456a46650483d81b1367fbc596df8a684608461c549e766ae35",
+    "SLEECpatch/app/templates/philosopher_review.html": "2f8fba94f0e82ceedd05eae157526e2104d143fa8dba5ac31d7230d868c465b3",
+    "SLEECpatch/app/templates/step6.html": "5d1b4d62d977786e809f306feea47decf169ecf93ec2c209edc8b24b5cbe05fc"
+  },
+  "live_assets": [
+    {
+      "url": "/static/css/loader.css",
+      "sha256": "6eca3623b2b7c0e792efa9244068e8921fb9348fe740d71111515e281cad2307",
+      "matches_local": true
+    },
+    {
+      "url": "/static/css/philosopher_review.css",
+      "sha256": "8cc9efae932c5a889e163afb3e32d5051fe2abb00e0d0ef797699349e0b5f5d2",
+      "matches_local": true
+    },
+    {
+      "url": "/static/css/sleec_pages.css",
+      "sha256": "fad691265f54c710d9649ed5bddebc9e4731ceba16d64c14f936b11aedee203c",
+      "matches_local": true
+    },
+    {
+      "url": "/static/css/sleec_patch_report.css",
+      "sha256": "b29b22d0b88bbd8af64c4b16515c3fa3fff270193c6ddbacc0fe972ffddea319",
+      "matches_local": true
+    },
+    {
+      "url": "/static/css/sleec_patch_workbench.css",
+      "sha256": "262ef8bab939b3942246f26489215ce15624c915da9fe5f30539c2646cefcc23",
+      "matches_local": true
+    },
+    {
+      "url": "/static/css/sleec_shell.css",
+      "sha256": "ceaa815842c014bb628ebc5c6321e234a67ff6274486091bbcb9412ded47c4dd",
+      "matches_local": true
+    },
+    {
+      "url": "/static/css/tailwind.css",
+      "sha256": "8d47f5417aaa84b67822144508d189952b1e997cc4c330eff68fb4fb8618ad70",
+      "matches_local": true
+    },
+    {
+      "url": "/static/js/loader.js",
+      "sha256": "d4140a62a6aec2d0f7f1b305af6982613f7925c7752678dcfbaf2705e7f7e3c3",
+      "matches_local": true
+    },
+    {
+      "url": "/static/js/philosopher_review.js",
+      "sha256": "afcf35d279ad7b4b6d886c11fb80f749d7e3fbc0c3f56b28d7a6d159bbcae3e1",
+      "matches_local": true
+    },
+    {
+      "url": "/static/js/sleec_patch_report.js",
+      "sha256": "06b726e70c3dbd45aeb77756f70ef8912091abdebfb67fe0606e846adfcfb693",
+      "matches_local": true
+    },
+    {
+      "url": "/static/js/sleec_patch_workbench.js",
+      "sha256": "8e4b1850b2b061c1bfa8140735cafc28370d52f712696941b1e074a070eaae51",
+      "matches_local": true
+    },
+    {
+      "url": "/static/js/wizard.js",
+      "sha256": "02f0f847d5a8dac4b997f8069cb6e54320b941ac1678d0ebac0ba868dce21b15",
+      "matches_local": true
+    }
+  ],
+  "excluded_backup_files": [
+    "SLEECpatch/app/services/deterministic_repair_engine00.py",
+    "SLEECpatch/app/services/deterministic_repair_engine111.py",
+    "SLEECpatch/app/services/deterministic_repair_engineP.py",
+    "SLEECpatch/app/services/deterministic_repair_engine_backup_20260730.py",
+    "SLEECpatch/app/services/deterministic_repair_engine_before_concern_fix.py",
+    "SLEECpatch/app/services/deterministic_repair_engine_fixed.py",
+    "SLEECpatch/app/services/deterministic_repair_enginee.py",
+    "SLEECpatch/app/services/gpt_patch_engine0.py",
+    "SLEECpatch/app/services/patch_operation_engine000.py",
+    "SLEECpatch/app/services/prompts0.py",
+    "SLEECpatch/app/services/promptsP.py",
+    "SLEECpatch/app/services/promptss.py",
+    "SLEECpatch/app/services/promptss_icse.py",
+    "SLEECpatch/app/services/semantic_patch_validator0.py",
+    "SLEECpatch/app/services/semantic_patch_validator00.py",
+    "SLEECpatch/app/services/sleec_parser0.py",
+    "SLEECpatch/app/services/sleec_patch_workbench_engine0.py",
+    "SLEECpatch/app/services/sleec_patch_workbench_engine01.py",
+    "SLEECpatch/app/services/sleec_patch_workbench_engine11.py",
+    "SLEECpatch/app/services/sleec_patch_workbench_engine1111.py",
+    "SLEECpatch/app/services/sleec_patch_workbench_engine7.py",
+    "SLEECpatch/app/services/sleec_patch_workbench_engineP.py",
+    "SLEECpatch/app/services/sleec_patch_workbench_enginee00.py",
+    "SLEECpatch/app/scripts/export_overleaf_tables0.py"
+  ],
+  "integration": {
+    "entrypoint": "deployment_app:app",
+    "adapter": "SLEECpatch/app/services/deployment_frontend_compat.py",
+    "validation": {
+      "offline_integration_tests_passed": 15,
+      "browser_workflow_passed": true,
+      "container_build_and_offline_startup_passed": true,
+      "live_llm_calls": 0,
+      "production_database_tested": false
+    }
+  }
+}

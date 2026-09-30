@@ -25,3 +25,27 @@ simplified.txt
 # Cloudflare/build artifacts
 .wrangler
 dist
+
+# Keep inactive numbered/backup backend variants out of this deployment.
+SLEECpatch/app/services/deterministic_repair_engine*.py
+!SLEECpatch/app/services/deterministic_repair_engine.py
+SLEECpatch/app/services/sleec_patch_workbench_engine*.py
+!SLEECpatch/app/services/sleec_patch_workbench_engine.py
+SLEECpatch/app/services/gpt_patch_engine*.py
+!SLEECpatch/app/services/gpt_patch_engine.py
+SLEECpatch/app/services/prompts*.py
+!SLEECpatch/app/services/prompts.py
+SLEECpatch/app/services/semantic_patch_validator*.py
+!SLEECpatch/app/services/semantic_patch_validator.py
+SLEECpatch/app/services/patch_operation_engine*.py
+!SLEECpatch/app/services/patch_operation_engine.py
+SLEECpatch/app/services/sleec_parser*.py
+!SLEECpatch/app/services/sleec_parser.py
+SLEECpatch/app/scripts/export_overleaf_tables*.py
+!SLEECpatch/app/scripts/export_overleaf_tables.py
+
+# Local credentials and research exports are never runtime inputs.
+**/.env
+**/.env.*
+**/*.log
+SLEECpatch/app/overleaf_generated

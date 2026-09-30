@@ -32,32 +32,38 @@ class RepairOperatorSelector:
             "rule_decomposition",
         ],
         "purpose_blocking": [
-            "purpose_defeater",
+         "defeater_introduction",
         ],
     }
 
     BASE_LLM_OPERATORS = {
-        "conflicts": [
-            "event_specialization",
-            "measure_specialization",
-        ],
-        "situational_conflicts": [
-            "event_specialization",
-            "measure_specialization",
-        ],
-        "redundancies": [
-            "event_specialization",
-            "measure_specialization",
-            "capability_refinement",
-        ],
-        "concerns": [
-            "new_rule_generation",
-        ],
-        "purpose_blocking": [
-            "capability_refinement",
-        ],
-    }
+    "conflicts": [
+        "conflict_event_specialization",
+        "conflict_measure_specialization",
+        "semantic_rule_merging",
 
+    ],
+
+    "situational_conflicts": [
+        "conflict_event_specialization",
+        "conflict_measure_specialization",
+        "semantic_rule_merging",
+
+    ],
+
+    "redundancies": [
+        "redundancy_event_specialization",
+        "redundancy_measure_specialization",
+    ],
+
+    "concerns": [
+        "concern_new_rule_generation",
+    ],
+
+    "purpose_blocking": [
+        "purpose_capability_refinement",
+    ],
+   }
     ISSUE_ALIASES = {
         "conflict": "conflicts",
         "situational_conflict": "situational_conflicts",
@@ -68,6 +74,15 @@ class RepairOperatorSelector:
         "insufficiency": "concerns",
     }
 
+    # Temporal Refinement is not a WFI category. It is a deterministic
+    # cross-cutting repair operator that may apply to existing WFIs when the
+    # diagnosis provides a different explicit numeric temporal bound.
+    TEMPORAL_REFINEMENT_WFIS = {
+        "concerns",
+        "conflicts",
+        "situational_conflicts",
+    }
+
     def select(
         self,
         issue_type: str,
@@ -76,12 +91,14 @@ class RepairOperatorSelector:
         existing_events: Optional[Sequence[str]] = None,
         existing_measures: Optional[Sequence[str]] = None,
         existing_responses: Optional[Sequence[str]] = None,
+        system_description: str = "",
     ) -> Dict[str, object]:
         issue_type = self.ISSUE_ALIASES.get(issue_type, issue_type)
         rules = list(rules or [])
         existing_events = list(existing_events or [])
         existing_measures = list(existing_measures or [])
         existing_responses = list(existing_responses or [])
+        system_description = str(system_description or "")
 
         deterministic: List[str] = []
         llm: List[str] = []
@@ -98,6 +115,8 @@ class RepairOperatorSelector:
                 selected_issue,
                 existing_events,
                 existing_measures,
+                system_description,
+
             )
         elif issue_type == "redundancies":
             self._select_redundancy_operators(
@@ -108,6 +127,7 @@ class RepairOperatorSelector:
                 selected_issue,
                 existing_events,
                 existing_measures,
+                system_description,
             )
         elif issue_type == "concerns":
             self._select_concern_operators(
@@ -132,6 +152,18 @@ class RepairOperatorSelector:
             )
             llm.extend(self.BASE_LLM_OPERATORS.get(issue_type, []))
 
+        # Cross-WFI diagnosis-driven applicability. Temporal Refinement is
+        # considered only for concern/conflict/situational-conflict diagnoses
+        # and only when the diagnosis supplies a different explicit numeric
+        # temporal bound for the same response as an affected rule.
+        if issue_type in self.TEMPORAL_REFINEMENT_WFIS:
+            self._select_temporal_refinement(
+                deterministic=deterministic,
+                applicability=applicability,
+                issue_rules=issue_rules,
+                selected_issue=selected_issue,
+            )
+
         return {
             "deterministic": deterministic,
             "llm": llm,
@@ -147,73 +179,99 @@ class RepairOperatorSelector:
         selected_issue,
         existing_events,
         existing_measures,
+        system_description="",
+
     ):
         if len(issue_rules) < 2:
+            # Do not claim deterministic applicability when the diagnosis does
+            # not identify both conflicting obligations. Candidate generation
+            # must remain diagnosis-grounded rather than guessing a rule pair.
             self._add(
-                deterministic,
-                applicability,
-                "trigger_refinement",
-                True,
-                "Conflict diagnosis is available; witness/context predicates can refine a trigger.",
+                deterministic, applicability, "trigger_refinement", False,
+                "Two diagnosed conflicting rules are required to derive a diagnosis-grounded trigger refinement.",
             )
             self._add(
-                deterministic,
-                applicability,
-                "defeater_introduction",
-                True,
-                "The diagnosed conflict can be resolved by explicitly prioritising one obligation.",
+                deterministic, applicability, "defeater_introduction", False,
+                "Two diagnosed conflicting rules are required to derive a diagnosis-grounded prioritisation exception.",
             )
             self._add(
-                deterministic,
-                applicability,
-                "rule_merging",
-                False,
-                "Two diagnosed rules are required to establish merge compatibility.",
+                deterministic, applicability, "rule_merging", False,
+                "Two diagnosed conflicting rules are required to establish merge compatibility.",
             )
             self._add(
-                llm,
-                applicability,
-                "event_specialization",
-                True,
-                "A finer-grained event may distinguish partially conflicting behaviours.",
+                llm, applicability, "conflict_event_specialization", False,
+                "A diagnosed conflicting rule pair is required before semantic event specialization is attempted.",
             )
             self._add(
-                llm,
-                applicability,
-                "measure_specialization",
-                False,
-                "A shared declared measure could not be established.",
+                llm, applicability, "conflict_measure_specialization", False,
+                "Two diagnosed conflicting rules are required to establish a shared environmental measure.",
+            )
+            self._add(
+                llm, applicability, "semantic_rule_merging", False,
+                "Two diagnosed conflicting rules are required before Semantic Rule Merging can be attempted.",
             )
             return
 
         r1, r2 = issue_rules[:2]
 
         has_context = (
-            self.has_contextual_predicate(r1, existing_events)
-            or self.has_contextual_predicate(r2, existing_events)
-            or self.issue_mentions_measure(selected_issue, existing_measures)
+            self.has_conflict_measure_context(
+                r1,
+                existing_events,
+                existing_measures,
+            )
+            or
+            self.has_conflict_measure_context(
+                r2,
+                existing_events,
+                existing_measures,
+            )
         )
+
         self._add(
             deterministic,
             applicability,
             "trigger_refinement",
             has_context,
             (
-                "The diagnosed conflict contains contextual predicates that can be propagated into a trigger."
+                "At least one diagnosed conflicting rule contains a declared "
+                "contextual measure predicate whose complement can be "
+                "propagated into the other rule's trigger."
                 if has_context
-                else "No contextual predicate was identified for trigger refinement."
+                else
+                "Trigger refinement requires a declared contextual measure "
+                "predicate in one of the diagnosed conflicting rules; "
+                "event co-occurrence alone is insufficient."
             ),
+        )
+
+        same_event = self.same_trigger_event(r1, r2, existing_events)
+
+        defeater_applicable = (
+            same_event
+            and (
+                self.has_contextual_predicate(r1, existing_events)
+                or self.has_contextual_predicate(r2, existing_events)
+            )
         )
 
         self._add(
             deterministic,
             applicability,
             "defeater_introduction",
-            True,
-            "Two diagnosed conflicting obligations are available for explicit prioritisation.",
+            defeater_applicable,
+            (
+                "The conflicting rules share the same triggering event and "
+                "provide a contextual predicate that can be expressed as a "
+                "SLEEC defeater."
+                if defeater_applicable
+                else
+                "Defeater introduction requires an expressible measure-based "
+                "priority condition. Cross-event 'unless another rule triggered' "
+                "is deferred until SLEEC provides suitable language support."
+            ),
         )
 
-        same_event = self.same_trigger_event(r1, r2, existing_events)
         merge_compatible = same_event and self.contextually_specialized_pair(
             r1, r2, existing_events
         )
@@ -229,19 +287,29 @@ class RepairOperatorSelector:
             ),
         )
 
-        event_applicable = bool(
-            self.trigger_event(r1, existing_events)
-            or self.trigger_event(r2, existing_events)
+        event_context = self.find_event_specialization_context(
+            issue_rules=[r1, r2],
+            selected_issue=selected_issue,
+            existing_events=existing_events,
+            system_description=system_description,
+
         )
+
+        event_applicable = event_context is not None
+
         self._add(
             llm,
             applicability,
-            "event_specialization",
+            "conflict_event_specialization",
             event_applicable,
             (
-                "At least one diagnosed rule has a triggering event that can be semantically specialized."
+                "The diagnosis provides independent semantic evidence for a "
+                "finer-grained or intermediary event distinction."
                 if event_applicable
-                else "No triggering event was identified for event specialization."
+                else
+                "No independently grounded event-specialization relationship "
+                "was identified. Distinct events that merely co-occur in the "
+                "conflict are insufficient."
             ),
         )
 
@@ -251,13 +319,34 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "measure_specialization",
+            "conflict_measure_specialization",
             bool(shared_measures),
             (
                 "The conflicting rules share declared measure(s): "
                 + ", ".join(sorted(shared_measures))
                 if shared_measures
                 else "The conflicting rules do not share a declared environmental measure."
+            ),
+        )
+        semantic_merge_applicable = (
+            len(issue_rules) >= 2
+            and not merge_compatible
+        )
+
+        self._add(
+            llm,
+            applicability,
+            "semantic_rule_merging",
+            semantic_merge_applicable,
+            (
+                "LEGOS-SLEEC identified the conflicting rules, but the pair "
+                "does not satisfy the structural contract for deterministic "
+                "rule_merging. Semantic Rule Merging may therefore propose "
+                "alternative merged-rule candidates for formal verification."
+                if semantic_merge_applicable
+                else
+                "Semantic Rule Merging is reserved for diagnosed conflict "
+                "pairs for which deterministic rule_merging is not applicable."
             ),
         )
 
@@ -270,68 +359,97 @@ class RepairOperatorSelector:
         selected_issue,
         existing_events,
         existing_measures,
+        system_description,
     ):
-        target = issue_rules[0] if issue_rules else None
+        # LEGOS redundancy diagnosis should contain TWO rules.
+        if len(issue_rules) >= 2:
+            redundant_rule = issue_rules[0]
+            because_rule = issue_rules[1]
+        else:
+            redundant_rule = issue_rules[0] if issue_rules else None
+            because_rule = None
+
+        # -----------------------------
+        # Deterministic
+        # -----------------------------
 
         self._add(
             deterministic,
             applicability,
             "rule_removal",
-            target is not None or bool(self.extract_rule_ids(selected_issue)),
-            "The diagnosed redundant rule can be removed.",
+            redundant_rule is not None and because_rule is not None,
+            (
+                "The diagnosis identifies both the redundant rule and the rule that subsumes it."
+                if redundant_rule and because_rule
+                else "Rule removal requires two diagnosed redundant rules."
+            ),
         )
 
-        has_defeater = bool(target and str(target.get("defeater", "")).strip())
+        has_defeater = bool(
+            redundant_rule and str(redundant_rule.get("defeater", "")).strip()
+        )
+
         self._add(
             deterministic,
             applicability,
             "defeater_propagation",
             has_defeater,
             (
-                "The redundant rule contains a defeater that can be propagated into its trigger."
+                "The redundant rule contains a defeater that can be propagated."
                 if has_defeater
                 else "Defeater propagation requires an existing defeater."
             ),
         )
 
-        event_applicable = bool(
-            target and self.trigger_event(target, existing_events)
+        # -----------------------------
+        # LLM
+        # -----------------------------
+
+        event_context = self.find_event_specialization_context(
+            issue_rules=[redundant_rule] if redundant_rule else [],
+            selected_issue=selected_issue,
+            existing_events=existing_events,
+            system_description=system_description,
+
         )
+
+        event_applicable = event_context is not None
+
         self._add(
             llm,
             applicability,
-            "event_specialization",
+            "redundancy_event_specialization",
             event_applicable,
-            "The redundant rule has a trigger event that can be semantically specialized.",
+            (
+                "The diagnosed redundancy contains a trigger event and a distinct "
+                "grounded event in the declared vocabulary that can represent the "
+                "required semantic distinction."
+                if event_applicable
+                else
+                "Event specialization requires a diagnosed trigger event and a "
+                "distinct grounded event supported by the supplied vocabulary "
+                "and diagnosis."
+            ),
         )
 
         target_measures = (
-            self.declared_measures_in_rule(target, existing_measures)
-            if target
+            self.declared_measures_in_rule(redundant_rule, existing_measures)
+            if redundant_rule
             else set()
         )
+
         self._add(
             llm,
             applicability,
-            "measure_specialization",
+            "redundancy_measure_specialization",
             bool(target_measures),
             (
                 "The redundant rule uses declared measure(s): "
                 + ", ".join(sorted(target_measures))
                 if target_measures
-                else "Measure specialization requires an environmental measure in the redundant rule."
+                else "Measure specialization requires an environmental measure."
             ),
         )
-
-        has_action = bool(target and str(target.get("action", "")).strip())
-        self._add(
-            llm,
-            applicability,
-            "capability_refinement",
-            has_action,
-            "The redundant rule has a response that can be replaced by a more distinguishable capability.",
-        )
-
     def _select_concern_operators(
         self,
         deterministic,
@@ -341,14 +459,29 @@ class RepairOperatorSelector:
         selected_issue,
     ):
         concern_condition = self.parse_when_condition(selected_issue)
+        concern_action = self.parse_then_action(selected_issue)
         has_context = bool(concern_condition)
+
+        # Whole-rule transformations are applicable only when the diagnosed
+        # concern capability corresponds to a main rule response.  Ignore
+        # polarity and temporal syntax for this capability-level comparison.
+        wanted = self.normalize_response_for_temporal_match(concern_action)
+        main_branch_target = bool(wanted) and any(
+            self.normalize_response_for_temporal_match(rule.get("action", "")) == wanted
+            for rule in issue_rules
+            if isinstance(rule, dict)
+        )
 
         self._add(
             deterministic,
             applicability,
             "trigger_strengthening",
-            has_context and bool(issue_rules),
-            "The witness concern provides contextual conditions that can strengthen a related rule.",
+            has_context and main_branch_target,
+            (
+                "The witness concern provides contextual conditions that can strengthen the diagnosed main obligation."
+                if has_context and main_branch_target
+                else "Trigger strengthening requires a diagnosed main-response rule and witness context."
+            ),
         )
         self._add(
             deterministic,
@@ -361,16 +494,131 @@ class RepairOperatorSelector:
             deterministic,
             applicability,
             "rule_decomposition",
-            has_context and bool(issue_rules),
-            "A related rule can be split into context-specific branches using the witness concern.",
+            has_context and main_branch_target,
+            (
+                "The diagnosed main obligation can be split into context-specific branches using the witness concern."
+                if has_context and main_branch_target
+                else "Rule decomposition requires a diagnosed main-response rule and witness context."
+            ),
         )
         self._add(
             llm,
             applicability,
-            "new_rule_generation",
+            "concern_new_rule_generation",
             True,
             "An insufficiency represents missing normative behaviour; a new rule is a candidate semantic repair.",
         )
+
+
+    def _select_temporal_refinement(
+        self,
+        deterministic,
+        applicability,
+        issue_rules,
+        selected_issue,
+    ):
+        """Select Temporal Refinement from diagnosis evidence, not WFI type.
+
+        Applicability requires:
+        1. an affected rule with an explicit numeric ``within`` bound;
+        2. a diagnosis with a different explicit numeric ``within`` bound;
+        3. the diagnosed response and target-rule response to match after
+           ignoring polarity and temporal syntax.
+
+        This method never invents a deadline.
+        """
+        context = self.find_temporal_refinement_context(
+            issue_rules=issue_rules,
+            selected_issue=selected_issue,
+        )
+        applicable = context is not None
+
+        if applicable:
+            old = context["existing_temporal"]
+            new = context["diagnosed_temporal"]
+            subtype = (
+                "temporal_restriction"
+                if self.temporal_to_seconds(new["value"], new["unit"])
+                < self.temporal_to_seconds(old["value"], old["unit"])
+                else "temporal_relaxation"
+            )
+            reason = (
+                f"The diagnosis supplies {new['text']} for the same response "
+                f"whose affected rule uses {old['text']}; {subtype.replace('_', ' ')} "
+                "is applicable."
+            )
+        else:
+            reason = (
+                "Temporal refinement requires an affected rule and diagnosis "
+                "with different explicit numeric temporal bounds for the same response."
+            )
+
+        self._add(
+            deterministic,
+            applicability,
+            "temporal_refinement",
+            applicable,
+            reason,
+        )
+
+    def find_temporal_refinement_context(self, issue_rules, selected_issue):
+        """Return target rule + diagnosed bound for a valid temporal mismatch."""
+        diagnosis_text = str(selected_issue or "")
+        requirements = self.extract_temporal_requirements(diagnosis_text)
+
+        # Fallback for concern-like diagnostics where parse_then_action provides
+        # a clean response but the generic multi-match pattern finds nothing.
+        if not requirements:
+            bound = self.extract_temporal_bound(diagnosis_text)
+            action = self.parse_then_action(diagnosis_text)
+            if bound and action:
+                requirements = [{
+                    "response": self.normalize_response_for_temporal_match(action),
+                    "temporal": bound,
+                }]
+
+        for rule in issue_rules:
+            if not isinstance(rule, dict):
+                continue
+            action = str(rule.get("action", ""))
+            existing = self.extract_temporal_bound(action)
+            if not existing:
+                continue
+
+            target_response = self.normalize_response_for_temporal_match(action)
+            for req in requirements:
+                if req["response"] != target_response:
+                    continue
+                diagnosed = req["temporal"]
+                if self.same_temporal_bound(existing, diagnosed):
+                    continue
+                return {
+                    "target_rule": rule,
+                    "existing_temporal": existing,
+                    "diagnosed_temporal": diagnosed,
+                    "diagnosed_response": req["response"],
+                }
+        return None
+
+    def extract_temporal_requirements(self, text: object) -> List[dict]:
+        """Extract all diagnosed ``then RESPONSE within N UNIT`` requirements."""
+        value = str(text or "")
+        pattern = re.compile(
+            r"\bthen\s+(.+?)\s+"
+            r"(within\s+\d+(?:\.\d+)?\s+"
+            r"(?:seconds?|minutes?|hours?|days?))\b",
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        results = []
+        for match in pattern.finditer(value):
+            response = self.normalize_response_for_temporal_match(match.group(1))
+            temporal = self.extract_temporal_bound(match.group(2))
+            if response and temporal:
+                results.append({
+                    "response": response,
+                    "temporal": temporal,
+                })
+        return results
 
     def _select_purpose_operators(
         self,
@@ -384,19 +632,48 @@ class RepairOperatorSelector:
         purpose_condition = self.parse_when_condition(selected_issue)
         purpose_action = self.parse_then_action(selected_issue)
 
+        # ---------------------------------------------------------
+        # Deterministic: Defeater Introduction
+        # ---------------------------------------------------------
+        defeater_applicable = (
+            bool(issue_rules)
+            and bool(purpose_condition)
+        )
+
         self._add(
             deterministic,
             applicability,
-            "purpose_defeater",
-            bool(issue_rules) and bool(purpose_condition),
-            "The intended purpose supplies a context that can be introduced as an exception to the blocking rule.",
+            "defeater_introduction",
+            defeater_applicable,
+            (
+                "The intended purpose provides a diagnosed context "
+                "that can be introduced as an exception to the "
+                "blocking rule."
+                if defeater_applicable
+                else
+                "Defeater introduction requires a blocking rule and "
+                "a diagnosed purpose context."
+            ),
         )
+
+        # ---------------------------------------------------------
+        # LLM: Capability Refinement
+        # ---------------------------------------------------------
+        capability_applicable = bool(purpose_action)
+
         self._add(
             llm,
             applicability,
-            "capability_refinement",
-            bool(purpose_action or existing_responses),
-            "The intended behaviour contains a response that can be refined into a more distinguishable capability.",
+            "purpose_capability_refinement",
+            bool(purpose_action),
+            (
+                "The intended purpose contains a response that can be "
+                "semantically refined into a more distinguishable capability."
+                if purpose_action
+                else
+                "Capability refinement requires a response in the "
+                "diagnosed purpose."
+            ),
         )
 
     def _add(self, destination, applicability, operator, applicable, reason):
@@ -413,7 +690,7 @@ class RepairOperatorSelector:
     def extract_rule_ids(self, text: object) -> List[str]:
         ids = []
         for match in re.finditer(
-            r"\b(?:Rule|R|r)\d+(?:_\d+)?\b",
+            r"\b(?:Rule|R|r|C|c)\d+[A-Za-z]*(?:_\d+)*\b",
             str(text or ""),
             flags=re.IGNORECASE,
         ):
@@ -455,6 +732,77 @@ class RepairOperatorSelector:
                 found.append(rule)
 
         return found[:2]
+    def find_event_specialization_context(
+        self,
+        issue_rules,
+        selected_issue,
+        existing_events,
+        system_description="",
+    ):
+        """
+        Determine whether event_specialization has sufficient grounded
+        event-level evidence to be attempted.
+
+        Event specialization is selected only when the diagnosed rules expose
+        at least two distinct declared trigger events.
+
+        Events appearing only as responses/actions do not count as candidate
+        trigger specializations.
+
+        Measures, Boolean states, defeaters, and diagnosis phrases are not
+        converted into events.
+
+        This method selects an operator only.
+        It does not generate or formally verify a patch.
+        """
+
+        if not issue_rules:
+            return None
+
+        existing_events = [
+            str(event).strip()
+            for event in (existing_events or [])
+            if str(event).strip()
+        ]
+
+        # Collect only events that actually occur in the CONDITION/TRIGGER
+        # of the diagnosed rules.
+        diagnosed_trigger_events = []
+
+        for rule in issue_rules:
+
+            if not isinstance(rule, dict):
+                continue
+
+            condition = str(rule.get("condition", "") or "")
+
+            for event in existing_events:
+
+                if re.search(
+                    rf"(?<![A-Za-z0-9_])"
+                    rf"{re.escape(event)}"
+                    rf"(?![A-Za-z0-9_])",
+                    condition,
+                    flags=re.IGNORECASE,
+                ):
+                    if event not in diagnosed_trigger_events:
+                        diagnosed_trigger_events.append(event)
+
+        # Event specialization needs an event-level distinction.
+        # One trigger event alone is insufficient.
+        # Multiple distinct trigger events in the same diagnosis establish
+        # co-occurrence/conflict only. They do NOT establish that one event
+        # specializes, refines, or is a subtype/component of another.
+        #conflict_event_specialization
+        # Therefore, do not select semantic event specialization solely from
+        # distinct diagnosed trigger events.
+        if len(diagnosed_trigger_events) < 2:
+            return None
+
+        return None
+
+
+
 
     def trigger_event(self, rule: Optional[dict], existing_events: Sequence[str]) -> str:
         if not rule:
@@ -506,7 +854,77 @@ class RepairOperatorSelector:
             or c2.issubset(c1)
             or bool(c1.intersection(c2))
         )
+    def has_conflict_measure_context(
+        self,
+        rule,
+        existing_events,
+        existing_measures,
+    ) -> bool:
+        """
+        Return True only when the rule trigger contains a declared
+        contextual measure in addition to its leading trigger event.
 
+        This mirrors the applicability requirement used by deterministic
+        conflict trigger refinement: event co-occurrence alone is not
+        sufficient.
+        """
+        if not rule:
+            return False
+
+        event = self.trigger_event(rule, existing_events)
+
+        measures = self.declared_measures_in_rule(
+            rule,
+            existing_measures,
+        )
+
+        if not measures:
+            return False
+
+        # A measure is contextual only when it occurs in the trigger
+        # condition in addition to the leading event.
+        condition = str(rule.get("condition", "") or "").strip()
+
+        if not condition:
+            return False
+
+        if event:
+            event_pattern = (
+                rf"^\s*{re.escape(str(event))}"
+                rf"(?=\s+and\b|\s*$)"
+            )
+
+            remainder = re.sub(
+                event_pattern,
+                "",
+                condition,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+
+            remainder = re.sub(
+                r"^and\b",
+                "",
+                remainder,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+        else:
+            remainder = condition
+
+        if not remainder:
+            return False
+
+        return any(
+            re.search(
+                rf"(?<![A-Za-z0-9_])"
+                rf"{re.escape(str(measure))}"
+                rf"(?![A-Za-z0-9_])",
+                remainder,
+                flags=re.IGNORECASE,
+            )
+            for measure in measures
+        )
     def has_contextual_predicate(self, rule, existing_events) -> bool:
         event = self.trigger_event(rule, existing_events)
         terms = self.condition_terms(rule.get("condition", ""))
@@ -577,9 +995,65 @@ class RepairOperatorSelector:
             for measure in existing_measures
         )
 
+    def extract_temporal_bound(self, text: object) -> Optional[dict]:
+        """Return a numeric ``within`` bound from a rule/diagnosis, if present."""
+        match = re.search(
+            r"\bwithin\s+(\d+(?:\.\d+)?)\s+"
+            r"(seconds?|minutes?|hours?|days?)\b",
+            str(text or ""),
+            flags=re.IGNORECASE,
+        )
+        if not match:
+            return None
+        return {
+            "value": float(match.group(1)),
+            "unit": match.group(2).lower(),
+            "text": match.group(0),
+        }
+
+
+    def temporal_to_seconds(self, value: float, unit: str) -> float:
+        unit = str(unit or "").lower()
+        if unit.startswith("second"):
+            return float(value)
+        if unit.startswith("minute"):
+            return float(value) * 60.0
+        if unit.startswith("hour"):
+            return float(value) * 3600.0
+        if unit.startswith("day"):
+            return float(value) * 86400.0
+        raise ValueError(f"Unsupported temporal unit: {unit}")
+
+    def same_temporal_bound(self, left: dict, right: dict) -> bool:
+        if not left or not right:
+            return False
+        return abs(
+            self.temporal_to_seconds(left["value"], left["unit"])
+            - self.temporal_to_seconds(right["value"], right["unit"])
+        ) < 1e-9
+
+    def normalize_response_for_temporal_match(self, text: object) -> str:
+        response = str(text or "").strip()
+        response = re.sub(r"^not\s+", "", response, flags=re.IGNORECASE)
+        response = re.sub(
+            r"\s+within\s+\d+(?:\.\d+)?\s+(?:seconds?|minutes?|hours?|days?)\b.*$",
+            "", response, flags=re.IGNORECASE
+        )
+        return re.sub(r"\s+", " ", response).strip().lower()
+
+    def find_temporal_target_rule(self, issue_rules, diagnosed_action):
+        wanted = self.normalize_response_for_temporal_match(diagnosed_action)
+        for rule in issue_rules:
+            action = str(rule.get("action", ""))
+            if not self.extract_temporal_bound(action):
+                continue
+            if self.normalize_response_for_temporal_match(action) == wanted:
+                return rule
+        return None
+
     def parse_when_condition(self, text: object) -> str:
         match = re.search(
-            r"\b(?:when|exists)\s+(.+?)\s+(?:then|while)\b",
+            r"\bwhen\s+(.+?)\s+then\b",
             str(text or ""),
             flags=re.IGNORECASE | re.DOTALL,
         )
@@ -587,7 +1061,7 @@ class RepairOperatorSelector:
 
     def parse_then_action(self, text: object) -> str:
         match = re.search(
-            r"\b(?:then|while)\s+(.+?)(?:\s+within\b|\s+unless\b|$)",
+            r"\bthen\s+(.+?)(?:\s+within\b|\s+unless\b|$)",
             str(text or ""),
             flags=re.IGNORECASE | re.DOTALL,
         )

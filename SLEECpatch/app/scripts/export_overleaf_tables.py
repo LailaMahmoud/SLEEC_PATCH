@@ -7,7 +7,7 @@ import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
-
+from services.manual_similarity_evaluator import ManualSimilarityEvaluator
 APP_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = APP_DIR.parents[1]
 
@@ -278,6 +278,7 @@ def load_verified_patch_rows(db_path: Path) -> List[dict]:
             operation,
             source,
             target_rule_id,
+            proposed_rule,
             rules_modified,
             rules_added,
             rules_deleted,
@@ -331,6 +332,138 @@ def latest_rows_per_patch(rows: Sequence[dict]) -> List[dict]:
         if previous is None or str(row["timestamp"]) >= str(previous["timestamp"]):
             latest[key] = row
     return sorted(latest.values(), key=lambda r: (str(r["use_case"]), str(r["issue_id"]), str(r["patch_id"])))
+def compute_manual_similarity(rows: Sequence[dict]) -> List[dict]:
+    """
+    Compute patch-level M-Sim for verified patches using the same
+    ManualSimilarityEvaluator used by evaluate_manual_similarity_legacy.py.
+
+    This is read-only: it does not modify the evaluation database.
+    """
+
+    evaluator = ManualSimilarityEvaluator()
+    case_files = discover_case_files()
+
+    # Explicit aliases between DB use-case labels and SLEEC filenames.
+    case_aliases = {
+        "CSICobot": "CSI",
+        "SafeSCAD": "safescade",
+    }
+
+    text_cache: Dict[str, Tuple[str, str]] = {}
+    evaluated_rows: List[dict] = []
+
+    for source_row in rows:
+        row = dict(source_row)
+
+        use_case = str(row.get("use_case") or "").strip()
+
+        # ----------------------------------------------------
+        # Find original/corrected SLEEC files
+        # ----------------------------------------------------
+        if use_case not in text_cache:
+
+            file_pair = case_files.get(use_case)
+
+            if file_pair is None:
+                alias = case_aliases.get(use_case, use_case)
+
+                # Case-insensitive fallback
+                for discovered_case, pair in case_files.items():
+                    if discovered_case.lower() == alias.lower():
+                        file_pair = pair
+                        break
+
+            if not file_pair:
+                print(
+                    f"WARNING: no SLEEC files found for {use_case}; "
+                    "M-Sim set to 0."
+                )
+                row["expert_similarity"] = 0.0
+                evaluated_rows.append(row)
+                continue
+
+            original_name, corrected_name = file_pair
+
+            original_path = SLEEC_DIR / original_name
+            corrected_path = SLEEC_DIR / corrected_name
+
+            if not original_path.exists() or not corrected_path.exists():
+                print(
+                    f"WARNING: original/corrected SLEEC missing for "
+                    f"{use_case}; M-Sim set to 0."
+                )
+                row["expert_similarity"] = 0.0
+                evaluated_rows.append(row)
+                continue
+
+            text_cache[use_case] = (
+                original_path.read_text(encoding="utf-8"),
+                corrected_path.read_text(encoding="utf-8"),
+            )
+
+        original_text, corrected_text = text_cache[use_case]
+
+        # ----------------------------------------------------
+        # Calculate M-Sim
+        # ----------------------------------------------------
+        result = evaluator.evaluate(
+            operation=str(row.get("operation") or ""),
+            target_rule_id=str(row.get("target_rule_id") or ""),
+            proposed_rule=str(row.get("proposed_rule") or ""),
+            original_text=original_text,
+            corrected_text=corrected_text,
+        )
+
+        row["expert_similarity"] = float(
+                result.get("m_sim", 0.0)
+            )
+
+        # ----------------------------------------------------
+        # Store detailed M-Sim components for Overleaf export
+        # ----------------------------------------------------
+        components = result.get("components") or {}
+
+        row["msim_target"] = components.get("target")
+        row["msim_trigger"] = components.get("trigger")
+        row["msim_response"] = components.get("response")
+        row["msim_polarity"] = components.get("polarity")
+        row["msim_defeater"] = components.get("defeater")
+        row["msim_temporal"] = components.get("temporal")
+
+        # Matched expert-authored rule
+        expert = result.get("matched_expert_rule")
+
+        if expert is not None:
+            row["msim_expert_rule"] = (
+                expert.raw
+                if hasattr(expert, "raw")
+                else str(expert)
+            )
+        else:
+            row["msim_expert_rule"] = ""
+
+        # IMPORTANT: append every verified patch
+        evaluated_rows.append(row)
+
+    return evaluated_rows
+
+def filter_rows_by_use_case(
+    rows: Sequence[dict],
+    use_case: str = "",
+) -> List[dict]:
+    if not use_case:
+        return list(rows)
+    return [
+        row for row in rows
+        if str(row.get("use_case") or "") == use_case
+    ]
+
+
+def export_suffix(use_case: str = "") -> str:
+    if not use_case:
+        return "all"
+    suffix = re.sub(r"[^A-Za-z0-9._-]+", "-", use_case.strip()).strip("-")
+    return suffix.lower() or "all"
 
 
 def generate_patch_results_table(rows: Sequence[dict]) -> str:
@@ -486,12 +619,56 @@ def atomic_constraint_count(expression: str) -> int:
     return sum(1 for part in parts if part.strip(" (){}"))
 
 
+def extract_declared_capabilities(text: str) -> set[str]:
+    """
+    Return unique declared SLEEC events and measures.
+
+    For the evaluation table:
+    #C = number of unique declared events + measures.
+    """
+    events: set[str] = set()
+    measures: set[str] = set()
+    inside_defs = False
+
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        low = line.lower()
+
+        if low == "def_start":
+            inside_defs = True
+            continue
+
+        if low == "def_end":
+            break
+
+        if not inside_defs or not line or line.startswith("//"):
+            continue
+
+        event_match = re.match(
+            r"^event\s+([A-Za-z_][A-Za-z0-9_]*)\b",
+            line,
+            re.IGNORECASE,
+        )
+        if event_match:
+            events.add(event_match.group(1))
+            continue
+
+        measure_match = re.match(
+            r"^measure\s+([A-Za-z_][A-Za-z0-9_]*)\b",
+            line,
+            re.IGNORECASE,
+        )
+        if measure_match:
+            measures.add(measure_match.group(1))
+
+    return events | measures
 def parse_spec(path: Path) -> ParsedSpec:
     if not path.exists():
         return ParsedSpec({}, set(), 0, 0)
     text = path.read_text(encoding="utf-8", errors="replace")
     rules = parse_rule_blocks(text)
-    capabilities = {action_from_rule(rule) for rule in rules.values() if action_from_rule(rule)}
+    #capabilities = {action_from_rule(rule) for rule in rules.values() if action_from_rule(rule)}
+    capabilities = extract_declared_capabilities(text)
     defeater_count = sum(1 for rule in rules.values() if defeater_from_rule(rule))
     constraint_count = sum(
         atomic_constraint_count(condition_from_rule(rule)) + atomic_constraint_count(defeater_from_rule(rule))
@@ -526,7 +703,9 @@ def spec_summary(spec: ParsedSpec) -> str:
     return f"{len(spec.rules)} ({len(spec.capabilities)}, {spec.defeater_count}, {spec.constraint_count})"
 
 
-def generate_spec_comparison_table() -> str:
+def generate_spec_comparison_table(
+    use_cases: Sequence[str] | None = None,
+) -> str:
     """
     TABLE TWO only.
 
@@ -543,7 +722,11 @@ def generate_spec_comparison_table() -> str:
         r"\cmidrule(lr){3-6}\cmidrule(lr){7-10}",
         r"& & Spec. & ID-MR & ID-MD & ID-RA & Spec. & ID-MR & ID-MD & ID-RA \\", r"\midrule",
     ]
+    selected_use_cases = set(use_cases or [])
+
     for use_case, (original_name, corrected_name) in discover_case_files().items():
+        if selected_use_cases and use_case not in selected_use_cases:
+            continue
         original_path = SLEEC_DIR / original_name
         if not original_path.exists():
             continue
@@ -569,6 +752,163 @@ def generate_spec_comparison_table() -> str:
     lines += [r"\bottomrule", r"\end{tabular}%", r"}", r"\end{table*}", ""]
     return "\n".join(lines)
 
+def generate_manual_similarity_details_table(
+    rows: Sequence[dict],
+) -> str:
+    """
+    Detailed component-level Manual Similarity (M-Sim) table.
+
+    Uses the M-Sim values already computed by
+    compute_manual_similarity(). No similarity is recomputed here.
+    """
+
+    def score(value):
+        if value is None:
+            return "--"
+        try:
+            return f"{float(value):.2f}"
+        except (TypeError, ValueError):
+            return "--"
+
+    def expert_rule_id(value):
+        """
+        Keep only the expert rule identifier in the table.
+        Example:
+            'R3b when HumanOnFloor then AskCallHelp'
+        becomes:
+            'R3b'
+        """
+        text = str(value or "").strip()
+
+        if not text:
+            return "--"
+
+        return text.split()[0]
+
+    lines = [
+        r"\begin{table*}[t]",
+        (
+            r"\caption{Component-level manual similarity (M-Sim) "
+            r"for formally verified SLEEC-PATCH repairs. "
+            r"Trig., Resp., Pol., Def., and Temp. denote trigger, "
+            r"response, polarity, defeater, and temporal similarity, "
+            r"respectively. A dash indicates that a component is not "
+            r"applicable to the repair comparison.}"
+        ),
+        r"\label{tab:manual-similarity-details}",
+        r"\centering",
+        r"\scriptsize",
+        r"\setlength{\tabcolsep}{2.5pt}",
+        r"\resizebox{\textwidth}{!}{%",
+        r"\begin{tabular}{lllllllrrrrrr}",
+        r"\toprule",
+        (
+            r"Case & IID & PID & Op. & Source & Target & Expert "
+            r"& Trig. & Resp. & Pol. & Def. & Temp. & M-Sim \\"
+        ),
+        r"\midrule",
+    ]
+
+    if not rows:
+        lines.append(
+            r"\multicolumn{13}{c}{No verified patches were found.}\\"
+        )
+    else:
+        previous_case = None
+
+        for row in rows:
+            case = str(row.get("use_case") or "")
+
+            if previous_case is not None and case != previous_case:
+                lines.append(r"\midrule")
+
+            values = [
+                latex_escape(case),
+                latex_escape(row.get("issue_id")),
+                latex_escape(row.get("patch_id")),
+                latex_escape(row.get("operation")),
+                latex_escape(row.get("source") or "--"),
+                latex_escape(row.get("target_rule_id") or "--"),
+                latex_escape(
+                    expert_rule_id(
+                        row.get("msim_expert_rule")
+                    )
+                ),
+                score(row.get("msim_trigger")),
+                score(row.get("msim_response")),
+                score(row.get("msim_polarity")),
+                score(row.get("msim_defeater")),
+                score(row.get("msim_temporal")),
+                score(row.get("expert_similarity")),
+            ]
+
+            lines.append(
+                " & ".join(values) + r" \\"
+            )
+
+            previous_case = case
+
+    lines += [
+        r"\bottomrule",
+        r"\end{tabular}%",
+        r"}",
+        r"\end{table*}",
+        "",
+    ]
+
+    return "\n".join(lines)
+def build_overleaf_exports(
+    db_path: Path = DB_PATH,
+    use_case: str = "",
+) -> Dict[str, str]:
+    rows = latest_rows_per_patch(
+    filter_rows_by_use_case(
+        load_verified_patch_rows(db_path),
+        use_case=use_case,
+    )
+)
+
+    # Compute fresh patch-level M-Sim using the expert-corrected SLEEC.
+    # This updates only the in-memory rows; the database remains unchanged.
+    rows = compute_manual_similarity(rows)
+
+    selected_cases = [use_case] if use_case else None
+    patch_results = generate_patch_results_table(rows)
+
+    manual_similarity_details = (
+        generate_manual_similarity_details_table(rows)
+    )
+
+    spec_comparison = generate_spec_comparison_table(
+        selected_cases
+    )
+
+    bundle_lines = [
+    "% Auto-generated by SLEEC-PATCH.",
+    "% Import this file or copy the tables below into Overleaf.",
+    "",
+    patch_results.strip(),
+    "",
+    manual_similarity_details.strip(),
+    "",
+    spec_comparison.strip(),
+    "",
+]
+    suffix = export_suffix(use_case)
+
+    return {
+    f"sleec_patch_report_{suffix}.tex": "\n".join(bundle_lines),
+
+    f"table_patch_results_{suffix}.tex":
+        patch_results,
+
+    f"table_manual_similarity_details_{suffix}.tex":
+        manual_similarity_details,
+
+    f"table_spec_comparison_{suffix}.tex":
+        spec_comparison,
+}
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Generate Overleaf LaTeX tables from SLEEC-PATCH runs.")
@@ -581,14 +921,34 @@ def main() -> None:
     print(f"SLEEC files: {SLEEC_DIR}")
     print(f"Generated results: {RESULTS_DIR}")
 
-    rows = latest_rows_per_patch(
-        load_verified_patch_rows(args.db)
+    exports = build_overleaf_exports(args.db)
+    patch_results = exports["table_patch_results_all.tex"]
+    manual_similarity_details = exports[
+        "table_manual_similarity_details_all.tex"
+    ]
+    spec_comparison = exports["table_spec_comparison_all.tex"]
+
+    (args.output_dir / "table_patch_results.tex").write_text(
+        patch_results,
+        encoding="utf-8"
     )
-    (args.output_dir / "table_patch_results.tex").write_text(generate_patch_results_table(rows), encoding="utf-8")
-    (args.output_dir / "table_spec_comparison.tex").write_text(generate_spec_comparison_table(), encoding="utf-8")
-    print(f"Verified patch rows: {len(rows)}")
+    (args.output_dir / "table_spec_comparison.tex").write_text(
+        spec_comparison,
+        encoding="utf-8"
+    )
+    (args.output_dir / "table_manual_similarity_details.tex").write_text(
+        manual_similarity_details,
+        encoding="utf-8"
+    )
+    print(
+        "Verified patch rows: "
+        f"{len(latest_rows_per_patch(load_verified_patch_rows(args.db)))}"
+    )
     print(f"Wrote: {args.output_dir / 'table_patch_results.tex'}")
     print(f"Wrote: {args.output_dir / 'table_spec_comparison.tex'}")
+    print(
+    f"Wrote: {args.output_dir / 'table_manual_similarity_details.tex'}"
+    )
 
 
 if __name__ == "__main__":

@@ -232,7 +232,6 @@ class SLEECPatchEvaluationStore:
             validation_time_seconds REAL,
             total_time_seconds REAL,
             repair_operators_json TEXT,
-            input_sha256 TEXT,
             original_issue_count INTEGER,
             original_structured_json TEXT,
             generated_file_path TEXT,
@@ -311,10 +310,81 @@ class SLEECPatchEvaluationStore:
         conn.close()
         return columns
 
+    def _table_exists_with_cursor(self, cur, table_name):
+        if self.using_postgres():
+            row = cur.execute("""
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_name = %s
+                LIMIT 1
+            """, (table_name,)).fetchone()
+            return bool(row)
+
+        row = cur.execute("""
+            SELECT 1
+            FROM sqlite_master
+            WHERE type = 'table'
+            AND name = ?
+            LIMIT 1
+        """, (table_name,)).fetchone()
+        return bool(row)
+
+    def clear_persisted_data(self):
+        tables = [
+            "sleec_patch_results",
+            "sleec_patch_pipeline_runs",
+            "sleec_patch_candidates",
+            "sleec_patch_verifications",
+            "philosopher_patch_reviews"
+        ]
+
+        conn = self.connect()
+        cur = conn.cursor()
+        existing_tables = [
+            table for table in tables
+            if self._table_exists_with_cursor(cur, table)
+        ]
+        deleted_rows = {}
+
+        try:
+            for table in existing_tables:
+                count_row = self.execute(
+                    cur,
+                    f"SELECT COUNT(*) AS count FROM {table}"
+                ).fetchone()
+                deleted_rows[table] = count_row["count"] if count_row else 0
+
+            if self.using_postgres():
+                if existing_tables:
+                    cur.execute(
+                        "TRUNCATE TABLE "
+                        + ", ".join(existing_tables)
+                        + " RESTART IDENTITY CASCADE"
+                    )
+            else:
+                for table in existing_tables:
+                    cur.execute(f"DELETE FROM {table}")
+
+                if self._table_exists_with_cursor(cur, "sqlite_sequence"):
+                    placeholders = ", ".join("?" for _ in existing_tables)
+                    cur.execute(
+                        f"DELETE FROM sqlite_sequence WHERE name IN ({placeholders})",
+                        tuple(existing_tables)
+                    )
+
+            conn.commit()
+        finally:
+            conn.close()
+
+        return {
+            "backend": "postgres" if self.using_postgres() else "sqlite",
+            "cleared_tables": deleted_rows,
+            "total_rows_deleted": sum(deleted_rows.values())
+        }
+
     def ensure_columns(self):
         result_columns = self.table_columns("sleec_patch_results")
         candidate_columns = self.table_columns("sleec_patch_candidates")
-        run_columns = self.table_columns("sleec_patch_pipeline_runs")
 
         result_required_columns = {
             "source": "TEXT",
@@ -335,10 +405,6 @@ class SLEECPatchEvaluationStore:
 
         conn = self.connect()
         cur = conn.cursor()
-
-        if "input_sha256" not in run_columns:
-            guard = "IF NOT EXISTS " if self.using_postgres() else ""
-            cur.execute(f"ALTER TABLE sleec_patch_pipeline_runs ADD COLUMN {guard}input_sha256 TEXT")
 
         for col, col_type in result_required_columns.items():
             if col not in result_columns:
@@ -531,13 +597,12 @@ class SLEECPatchEvaluationStore:
                 validation_time_seconds,
                 total_time_seconds,
                 repair_operators_json,
-                input_sha256,
                 original_issue_count,
                 original_structured_json,
                 generated_file_path,
                 timestamp
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (run_id) DO UPDATE SET
                 use_case = EXCLUDED.use_case,
                 issue_id = EXCLUDED.issue_id,
@@ -552,7 +617,6 @@ class SLEECPatchEvaluationStore:
                 validation_time_seconds = EXCLUDED.validation_time_seconds,
                 total_time_seconds = EXCLUDED.total_time_seconds,
                 repair_operators_json = EXCLUDED.repair_operators_json,
-                input_sha256 = EXCLUDED.input_sha256,
                 original_issue_count = EXCLUDED.original_issue_count,
                 original_structured_json = EXCLUDED.original_structured_json,
                 generated_file_path = EXCLUDED.generated_file_path,
@@ -575,13 +639,12 @@ class SLEECPatchEvaluationStore:
                 validation_time_seconds,
                 total_time_seconds,
                 repair_operators_json,
-                input_sha256,
                 original_issue_count,
                 original_structured_json,
                 generated_file_path,
                 timestamp
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
 
         self.execute(cur, query, (
@@ -599,7 +662,6 @@ class SLEECPatchEvaluationStore:
             row.get("validation_time_seconds", 0),
             row.get("total_time_seconds", 0),
             self.to_json(row.get("repair_operators", {})),
-            row.get("input_sha256", ""),
             row.get("original_issue_count", 0),
             self.to_json(row.get("original_structured", {})),
             row.get("generated_file_path", ""),
@@ -655,20 +717,6 @@ class SLEECPatchEvaluationStore:
             datetime.now().isoformat()
         ))
 
-        conn.commit()
-        conn.close()
-
-    def update_patch_candidate(self, row):
-        """Persist the final outcome without counting the candidate twice."""
-        conn = self.connect()
-        cur = conn.cursor()
-        patch = row["patch"]
-        self.execute(cur, """
-        UPDATE sleec_patch_candidates
-        SET candidate_status = ?, failure_reason = ?, patch_json = ?
-        WHERE run_id = ? AND patch_id = ?
-        """, (patch.get("candidate_status", "generated"), patch.get("failure_reason", ""),
-              self.to_json(patch), row["run_id"], patch.get("patch_id", patch.get("id", ""))))
         conn.commit()
         conn.close()
 
@@ -766,8 +814,6 @@ class SLEECPatchEvaluationStore:
             "issue_type",
             "attempts",
             "total_time_seconds",
-            "generation_time_seconds",
-            "validation_time_seconds",
             "patch_id",
             "operation",
             "source",

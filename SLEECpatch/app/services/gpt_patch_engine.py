@@ -28,6 +28,55 @@ class GPTPatchEngine:
         text = re.sub(r"```", "", text)
         return text.strip()
 
+    def normalize_patch_schema(self, patch, issue_type, repair_operator):
+        required_defaults = {
+            "patch_id": "p_unknown",
+            "issue_type": issue_type,
+            "operation": repair_operator,
+            "target_rule_id": "",
+            "original_rule": "",
+            "missing_element": "",
+            "proposed_rule": "",
+            "natural_language_explanation": "",
+            "modification_cost": 0,
+            "new_events_added": 0,
+            "new_measures_added": 0,
+            "new_capabilities_added": 0,
+            "new_rules_added": 0,
+            "defeaters_added": 0,
+        }
+
+        normalized = dict(required_defaults)
+
+        if isinstance(patch, dict):
+            normalized.update(patch)
+
+        normalized["source"] = "llm"
+        normalized["issue_type"] = issue_type
+        normalized["operation"] = repair_operator
+
+        if not str(normalized.get("natural_language_explanation", "")).strip():
+            normalized["natural_language_explanation"] = (
+                "No explanation supplied by the LLM; review required."
+            )
+
+        for key in [
+            "modification_cost",
+            "new_events_added",
+            "new_measures_added",
+            "new_capabilities_added",
+            "new_rules_added",
+            "defeaters_added",
+        ]:
+            try:
+                normalized[key] = int(normalized.get(key, 0) or 0)
+            except (TypeError, ValueError):
+                normalized[key] = 0
+
+
+
+        return normalized
+
     def call_gpt(
         self,
         issue_type,
@@ -66,9 +115,27 @@ class GPTPatchEngine:
 You are an expert in normative requirements, SLEEC reasoning,
 semantic repair, and stakeholder-centered resolution.
 
+The repair operator has already been selected by SLEEC-PATCH.
+
 Only instantiate the selected LLM-assisted semantic repair operator.
+Generate only the missing semantic/syntactic element required by that operator.
+
+Do not select another repair operator.
+Do not decide whether the selected operator is applicable.
+Do not claim that the generated candidate is formally correct or verified.
+Do not claim that the targeted well-formedness issue has been eliminated.
+
+Preserve the original stakeholder intent.
+Do not modify unrelated parts of the specification.
+Do not invent unsupported domain vocabulary.
+Never invent SLEEC syntax or SLEEC keywords.
+
 Always return valid raw JSON.
 Never return markdown.
+
+The generated output is a candidate repair.
+Formal correctness is determined later by SLEEC-PATCH through
+LEGOS-SLEEC re-analysis.
 """
                 },
                 {
@@ -86,12 +153,14 @@ Never return markdown.
             if isinstance(parsed, dict):
                 parsed = [parsed]
 
-            for patch in parsed:
-                if patch.get("operation") != repair_operator:
-                    raise ValueError("The proposal changed the selected repair operator.")
-                patch["source"] = "llm"
-
-            return parsed
+            return [
+                self.normalize_patch_schema(
+                    patch,
+                    issue_type=issue_type,
+                    repair_operator=repair_operator
+                )
+                for patch in parsed
+            ]
 
         except Exception:
             return [{

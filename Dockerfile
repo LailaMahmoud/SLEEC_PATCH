@@ -30,4 +30,4 @@ EXPOSE 8080
 
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "2", \
-     "--timeout", "300", "app:app"]
+     "--timeout", "300", "deployment_app:app"]
