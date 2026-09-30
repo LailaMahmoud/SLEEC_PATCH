@@ -1,10 +1,9 @@
 # SLEEC-PATCH
 **A repository for:** *SLEEC PATCH*
 
-SLEEC PATCH is utomated Support for Resolving Normative Requirements Well-Formedness Issues
 
 ## Supplementary Material for:
-# SLEEC-PATCH: Automated Diagnosis and Repair of Normative Requirements
+# SLEEC-PATCH: Automated Support for Resolving Normative Requirements Well-Formedness Issues
 
 SLEEC-PATCH is a framework for diagnosing and repairing Well-Formedness Issues (WFIs) in SLEEC normative requirements.
 
