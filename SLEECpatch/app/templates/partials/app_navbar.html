@@ -1,0 +1,29 @@
+{# Shared top navbar. Include with `active` set to "workbench", "review" or "results". #}
+<header class="app-navbar" aria-label="SLEEC-PATCH navigation">
+    {% if active == "workbench" %}
+    <button type="button" class="brand-mark" onclick="goToPatchStep(1)" aria-label="Return to start">
+    {% else %}
+    <a class="brand-mark" href="{{ url_for('sleec_patch_workbench') }}" aria-label="Back to the workbench">
+    {% endif %}
+        <span class="brand-orb">SP</span>
+        <span>
+            <strong>SLEEC-PATCH</strong>
+            <small>Requirement repair</small>
+        </span>
+    {% if active == "workbench" %}</button>{% else %}</a>{% endif %}
+
+    <nav class="workflow-nav" aria-label="Pages">
+        {% if active != "workbench" %}
+        <a class="nav-button nav-button-quiet" href="{{ url_for('sleec_patch_workbench') }}">Workbench</a>
+        {% endif %}
+        <a class="nav-button{% if active == 'review' %} is-active{% endif %}"
+           href="{{ url_for('philosopher_review') }}"
+           {% if active == 'review' %}aria-current="page"{% endif %}>SLEEC Expert Review</a>
+        <a class="nav-button{% if active == 'results' %} is-active{% endif %}"
+           href="{{ url_for('sleec_patch_report') }}"
+           {% if active == 'results' %}aria-current="page"{% endif %}>Evaluation Results</a>
+        {% if active == "workbench" %}
+        <button type="button" class="nav-button nav-button-quiet" data-wizard-restart>Reset</button>
+        {% endif %}
+    </nav>
+</header>

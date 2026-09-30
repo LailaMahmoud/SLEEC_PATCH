@@ -430,30 +430,93 @@ function goToPatchStep(step) {
     updateWorkflowHeader(step);
 }
 
+const WIZARD_STEP_LABELS = [
+    "Profession",
+    "Instructions",
+    "Use case",
+    "Diagnosis",
+    "Resolution",
+    "Candidates",
+    "Patches",
+    "Edit patch",
+    "Verify and next",
+    "Evaluation"
+];
+
 function updateWorkflowHeader(step) {
-    const useCasePill = document.getElementById("headerUseCase");
-    const issuePill = document.getElementById("headerIssueProgress");
-    const useCase = document.getElementById("useCase")?.value || "";
     const activeStep = step || patchWizard?.getCurrentStep?.() || 1;
+    const total = WIZARD_STEP_LABELS.length;
+    const profession = (document.getElementById("userProfession")?.value || "").trim();
+    const useCase = document.getElementById("useCase")?.value || "";
+    const hasIssue = Boolean(sleecPatchState.selectedIssue);
 
-    if (useCasePill) {
-        useCasePill.textContent = useCase || "No use case selected";
-        useCasePill.classList.toggle("is-live", Boolean(useCase));
-        useCasePill.classList.toggle("muted", !useCase);
+    const stepCount = document.getElementById("trailStepCount");
+    const stepLabel = document.getElementById("trailStepLabel");
+    const meterFill = document.getElementById("trailMeterFill");
+    if (stepCount) stepCount.textContent = `Step ${activeStep} of ${total}`;
+    if (stepLabel) stepLabel.textContent = WIZARD_STEP_LABELS[activeStep - 1] || "";
+    if (meterFill) meterFill.style.width = `${(activeStep / total) * 100}%`;
+
+    const context = document.getElementById("trailContext");
+    if (!context) return;
+
+    // Only show what the user has actually provided; each item jumps back to the step that set it.
+    const items = [
+        { key: "Profession", value: profession, step: 1 },
+        { key: "Use case", value: useCase, step: 3 },
+        { key: "Issue", value: hasIssue ? issueProgressText().replace(/^Issue /, "") : "", step: 4 }
+    ].filter(item => item.value);
+
+    context.replaceChildren();
+
+    if (!items.length) {
+        const hint = document.createElement("li");
+        hint.className = "trail-hint";
+        hint.textContent = "Your selections will appear here as you go.";
+        context.append(hint);
+        return;
     }
 
-    if (issuePill) {
-        const hasIssue = Boolean(sleecPatchState.selectedIssue);
-        issuePill.textContent = hasIssue ? issueProgressText() : "No issue run";
-        issuePill.classList.toggle("is-live", hasIssue && activeStep >= 4);
-        issuePill.classList.toggle("muted", !hasIssue || activeStep < 4);
-    }
+    items.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "trail-item";
+        const isCurrent = item.step === activeStep;
+        const node = document.createElement(isCurrent ? "span" : "button");
+        node.className = `trail-chip${isCurrent ? " is-current" : ""}`;
+        node.title = isCurrent ? item.value : `${item.value} (click to change)`;
+        if (!isCurrent) {
+            node.type = "button";
+            node.addEventListener("click", () => goToPatchStep(item.step));
+        }
+
+        const key = document.createElement("span");
+        key.className = "trail-key";
+        key.textContent = item.key;
+        const value = document.createElement("span");
+        value.className = "trail-value";
+        value.textContent = item.value;
+
+        node.append(key, value);
+        li.append(node);
+        context.append(li);
+    });
 }
 
 function saveUserProfession() {
     const input = document.getElementById("userProfession");
     sleecPatchState.userProfession = (input?.value || "").trim();
+    storeProfession(sleecPatchState.userProfession);
     refreshPatchWizard();
+}
+
+// Shared with the SLEEC Expert Review page, which shows it next to its heading.
+function storeProfession(value) {
+    try {
+        if (value) sessionStorage.setItem("sleecPatchProfession", value);
+        else sessionStorage.removeItem("sleecPatchProfession");
+    } catch (error) {
+        // Storage can be unavailable (private mode); the workbench works without it.
+    }
 }
 
 function continueFromProfession() {
@@ -809,6 +872,7 @@ function resetPatchWorkbench(keepProfession = false) {
     if (issueRunOutput) issueRunOutput.innerHTML = "No issue run loaded.";
     const professionInput = document.getElementById("userProfession");
     if (professionInput) professionInput.value = profession;
+    storeProfession(profession);
     document.getElementById("summaryOutput").innerHTML = "No evaluation summary loaded.";
     document.getElementById("patchDetailOutput").innerHTML = `
         Click an operation in the evaluation tables to view the
@@ -2201,7 +2265,7 @@ async function submitPhilosopherReviewByIndex(index, decision) {
 
     await postJSON("/api/sleec-patch/philosopher-review", {
         ...patch,
-        reviewer: "Philosopher",
+        reviewer: "SLEEC Expert",
         decision: decision,
         comment: comment || ""
     });
@@ -2226,7 +2290,7 @@ async function submitPhilosopherReview(patch, decision) {
 
     await postJSON("/api/sleec-patch/philosopher-review", {
         ...patch,
-        reviewer: "Philosopher",
+        reviewer: "SLEEC Expert",
         decision: decision,
         comment: comment || ""
     });
@@ -2235,6 +2299,18 @@ async function submitPhilosopherReview(patch, decision) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const professionInput = document.getElementById("userProfession");
+    let storedProfession = "";
+    try {
+        storedProfession = sessionStorage.getItem("sleecPatchProfession") || "";
+    } catch (error) {
+        storedProfession = "";
+    }
+    if (professionInput && storedProfession && !professionInput.value.trim()) {
+        professionInput.value = storedProfession;
+        sleecPatchState.userProfession = storedProfession;
+    }
+
     const customText = sessionStorage.getItem("sleecPatchCustomText");
     const customUseCase = sessionStorage.getItem("sleecPatchCustomUseCase");
     const useCaseSelect = document.getElementById("useCase");
@@ -2267,18 +2343,7 @@ document.addEventListener("DOMContentLoaded", () => {
     patchWizard = window.SleecWizard.init({
         root: document,
         total: 10,
-        labels: [
-            "Profession",
-            "Instructions",
-            "Use case",
-            "Diagnosis",
-            "Resolution",
-            "Candidates",
-            "Patches",
-            "Edit patch",
-            "Verify and next",
-            "Evaluation"
-        ],
+        labels: WIZARD_STEP_LABELS,
         canAdvance: canAdvancePatchWizard,
         onStepChange: updateWorkflowHeader,
         onRestart: () => resetPatchWorkbench()

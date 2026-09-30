@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SLEEC-PATCH</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/loader.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_shell.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_patch_workbench.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
 </head>
@@ -12,26 +13,17 @@
 <body class="bg-sleec-paper font-sans text-sleec-ink antialiased">
 <div class="page mx-auto min-h-screen max-w-[1600px] px-6 py-8 sm:px-12 lg:px-20">
 
-<header class="app-navbar" aria-label="SLEEC-PATCH workflow">
-    <button type="button" class="brand-mark" onclick="goToPatchStep(1)" aria-label="Return to start">
-        <span class="brand-orb">SP</span>
-        <span>
-            <strong>SLEEC-PATCH</strong>
-            <small>Requirement repair</small>
-        </span>
-    </button>
+{% set active = "workbench" %}
+{% include "partials/app_navbar.html" %}
 
-    <div class="workflow-nav">
-        <span class="workflow-pill" data-wizard-counter data-counter-mode="label">Profession</span>
-        <span class="workflow-pill muted" id="headerUseCase">No use case selected</span>
-        <span class="workflow-pill muted" id="headerIssueProgress">No issue run</span>
-        <a class="nav-link report-link" href="{{ url_for('sleec_patch_report') }}">
-            Report Data
-        </a>
-        <a class="nav-link" href="{{ url_for('philosopher_review') }}">Philosopher Review</a>
-        <button type="button" class="nav-reset" data-wizard-restart>Reset</button>
+<nav class="progress-trail" id="progressTrail" aria-label="Your progress">
+    <ol class="trail-context" id="trailContext"></ol>
+    <div class="trail-step" aria-live="polite">
+        <span class="trail-step-count" id="trailStepCount">Step 1 of 10</span>
+        <strong class="trail-step-label" id="trailStepLabel">Profession</strong>
+        <span class="trail-meter" aria-hidden="true"><span id="trailMeterFill"></span></span>
     </div>
-</header>
+</nav>
 
 <section class="panel wizard-step is-active profession-step px-0 py-12 sm:py-20" data-step="1">
     <div class="intro-copy mx-auto max-w-4xl text-center">

@@ -11,12 +11,15 @@ document.addEventListener("DOMContentLoaded", () => {
         "reviewUseCase",
         "includeReviewed",
         "loadQueueButton",
-        "refreshMetricsButton",
-        "metricTotal",
         "metricPending",
         "metricAccepted",
         "metricRejected",
         "metricRate",
+        "meterAccepted",
+        "meterRejected",
+        "progressHeadline",
+        "progressSub",
+        "decisionHint",
         "queueCount",
         "queueList",
         "detailEmpty",
@@ -38,12 +41,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     els.loadQueueButton.addEventListener("click", loadReviewQueue);
-    els.refreshMetricsButton.addEventListener("click", refreshMetrics);
+    els.reviewUseCase.addEventListener("change", loadReviewQueue);
+    els.includeReviewed.addEventListener("change", loadReviewQueue);
     els.acceptButton.addEventListener("click", () => submitDecision("Accepted"));
     els.rejectButton.addEventListener("click", () => submitDecision("Rejected"));
 
+    showReviewerProfession();
     loadReviewQueue();
 });
+
+// The profession typed on the workbench's first step, kept for this browser tab.
+function showReviewerProfession() {
+    const target = document.getElementById("reviewerProfession");
+    let profession = "";
+    try {
+        profession = (sessionStorage.getItem("sleecPatchProfession") || "").trim();
+    } catch (error) {
+        profession = "";
+    }
+    if (!target || !profession) return;
+    target.textContent = profession;
+    target.title = profession;
+    target.hidden = false;
+}
 
 async function postJSON(url, payload = {}) {
     const response = await fetch(url, {
@@ -100,7 +120,6 @@ async function loadReviewQueue() {
         renderMetrics(data.metrics);
         renderQueue();
         renderSelectedPatch();
-        showToast(`Loaded ${reviewState.patches.length} patch${reviewState.patches.length === 1 ? "" : "es"}.`);
     } catch (error) {
         showToast(error.message);
     } finally {
@@ -108,24 +127,31 @@ async function loadReviewQueue() {
     }
 }
 
-async function refreshMetrics() {
-    try {
-        const data = await postJSON("/api/sleec-patch/philosopher-review-metrics");
-        renderMetrics(data.metrics);
-        showToast("Metrics refreshed.");
-    } catch (error) {
-        showToast(error.message);
-    }
-}
-
 function renderMetrics(metrics = {}) {
     const overall = metrics.overall || {};
+    const total = Number(overall.total || 0);
+    const pending = Number(overall.pending || 0);
+    const accepted = Number(overall.accepted || 0);
+    const rejected = Number(overall.rejected || 0);
+    const reviewed = accepted + rejected;
 
-    els.metricTotal.textContent = overall.total || 0;
-    els.metricPending.textContent = overall.pending || 0;
-    els.metricAccepted.textContent = overall.accepted || 0;
-    els.metricRejected.textContent = overall.rejected || 0;
-    els.metricRate.textContent = formatRate(overall.acceptance_rate);
+    els.metricPending.textContent = pending;
+    els.metricAccepted.textContent = accepted;
+    els.metricRejected.textContent = rejected;
+    els.metricRate.textContent = reviewed ? formatRate(overall.acceptance_rate) : "–";
+    els.meterAccepted.style.width = total ? `${(accepted / total) * 100}%` : "0%";
+    els.meterRejected.style.width = total ? `${(rejected / total) * 100}%` : "0%";
+
+    if (!total) {
+        els.progressHeadline.textContent = "No patches waiting for review";
+        els.progressSub.textContent = "Patches appear here after the workbench verifies an AI-generated repair.";
+    } else if (!pending) {
+        els.progressHeadline.textContent = "All caught up";
+        els.progressSub.textContent = `You have reviewed all ${total} patch${total === 1 ? "" : "es"}.`;
+    } else {
+        els.progressHeadline.textContent = `${pending} patch${pending === 1 ? "" : "es"} left to review`;
+        els.progressSub.textContent = `${reviewed} of ${total} reviewed so far.`;
+    }
 
     renderBreakdown(els.useCaseBreakdown, metrics.by_use_case || {});
     renderBreakdown(els.operationBreakdown, metrics.by_operation || {});
@@ -135,51 +161,69 @@ function renderBreakdown(container, rows) {
     const entries = Object.entries(rows).sort(([a], [b]) => a.localeCompare(b));
 
     if (!entries.length) {
-        container.innerHTML = `<div class="empty-state">No data.</div>`;
+        container.innerHTML = `<div class="empty-state">No data yet.</div>`;
         return;
     }
 
-    container.innerHTML = entries.map(([name, row]) => `
-        <div class="breakdown-row">
-            <strong>${escapeHTML(name)}</strong>
-            <span>Total ${escapeHTML(row.total || 0)}</span>
-            <span>Pending ${escapeHTML(row.pending || 0)}</span>
-            <span>Accept ${escapeHTML(row.accepted || 0)}</span>
-            <span>${escapeHTML(formatRate(row.acceptance_rate))}</span>
+    container.innerHTML = `
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead><tr><th>Name</th><th class="num">Total</th><th class="num">To review</th><th class="num">Accepted</th><th class="num">Rejected</th><th class="num">Acceptance</th></tr></thead>
+                <tbody>
+                    ${entries.map(([name, row]) => `
+                        <tr>
+                            <td>${escapeHTML(humanize(name))}</td>
+                            <td class="num">${escapeHTML(row.total || 0)}</td>
+                            <td class="num">${escapeHTML(row.pending || 0)}</td>
+                            <td class="num">${escapeHTML(row.accepted || 0)}</td>
+                            <td class="num">${escapeHTML(row.rejected || 0)}</td>
+                            <td class="num">${(row.accepted || 0) + (row.rejected || 0) ? escapeHTML(formatRate(row.acceptance_rate)) : "–"}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
         </div>
-    `).join("");
+    `;
+}
+
+function humanize(value) {
+    const text = String(value || "").replace(/_/g, " ").trim();
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : "Unknown";
+}
+
+function decisionClass(decision) {
+    const normalized = decision.toLowerCase();
+    return ["accepted", "rejected"].includes(normalized) ? normalized : "pending";
 }
 
 function renderQueue() {
     const count = reviewState.patches.length;
-    els.queueCount.textContent = `${count} patch${count === 1 ? "" : "es"}`;
+    els.queueCount.textContent = count;
 
     if (!count) {
-        els.queueList.className = "queue-list empty-state";
-        els.queueList.textContent = "No saved semantic patches match this queue.";
+        els.queueList.innerHTML = `<div class="empty-state">${
+            els.includeReviewed.checked
+                ? "No saved AI patches match this filter."
+                : "Nothing left to review here. Tick \u201cAlso show patches I've already reviewed\u201d to revisit past decisions."
+        }</div>`;
         return;
     }
 
-    els.queueList.className = "queue-list";
     els.queueList.innerHTML = reviewState.patches.map((patch, index) => {
-        const title = [
-            patch.use_case || "Unknown",
-            patch.issue_id || "issue",
-            patch.patch_id || `row-${patch.id}`
-        ].join(" · ");
-
-        const subline = [
-            patch.operation || "operation",
-            Number(patch.verified) ? "Verified" : "Pending verification",
-            formatDecision(patch.philosopher_decision)
-        ].join(" · ");
+        const decision = formatDecision(patch.philosopher_decision);
+        const title = humanize(patch.operation);
+        const sub = [patch.use_case || "Unknown use case", patch.issue_id, patch.patch_id].filter(Boolean).join(" · ");
 
         return `
             <button type="button"
                     class="queue-item ${index === reviewState.selectedIndex ? "is-active" : ""}"
-                    data-index="${index}">
-                <strong>${escapeHTML(title)}</strong>
-                <span>${escapeHTML(subline)}</span>
+                    data-index="${index}"
+                    aria-pressed="${index === reviewState.selectedIndex}">
+                <span class="queue-item-top">
+                    <span class="queue-item-title">${escapeHTML(title || `Patch ${patch.id}`)}</span>
+                    <span class="badge ${decisionClass(decision)}">${escapeHTML(decision === "Pending" ? "To review" : decision)}</span>
+                </span>
+                <span class="queue-item-sub">${escapeHTML(sub)}</span>
             </button>
         `;
     }).join("");
@@ -203,24 +247,27 @@ function renderSelectedPatch() {
     }
 
     const decision = formatDecision(patch.philosopher_decision);
-    const normalized = decision.toLowerCase();
+    const alreadyDecided = Boolean(patch.philosopher_decision);
 
     els.detailEmpty.hidden = true;
     els.patchDetail.hidden = false;
     els.detailMeta.textContent = [
         patch.use_case || "Unknown use case",
         patch.issue_id || "Unknown issue",
-        patch.operation || "Unknown operation",
-        Number(patch.verified) ? "Verified" : "Pending verification"
+        patch.patch_id || `Patch ${patch.id}`,
+        Number(patch.verified) ? "Verified by the checker" : "Not yet verified"
     ].join(" · ");
-    els.detailTitle.textContent = patch.patch_id || `Patch result ${patch.id}`;
-    els.decisionBadge.textContent = decision;
-    els.decisionBadge.className = `decision-badge ${normalized}`;
+    els.detailTitle.textContent = humanize(patch.operation);
+    els.decisionBadge.textContent = decision === "Pending" ? "To review" : decision;
+    els.decisionBadge.className = `badge ${decisionClass(decision)}`;
+    els.decisionHint.textContent = alreadyDecided
+        ? `You ${decision.toLowerCase()} this patch${patch.review_timestamp ? ` on ${String(patch.review_timestamp).slice(0, 10)}` : ""}.`
+        : "Does the proposed rule keep the intended meaning?";
     els.originalRule.textContent = patch.original_rule || "No original rule stored.";
     els.proposedRule.textContent = patch.proposed_rule || "No proposed rule stored.";
     els.patchExplanation.textContent = patch.natural_language_explanation || "No explanation stored.";
     els.reviewComments.value = patch.philosopher_comments || "";
-    setDecisionButtonsDisabled(Boolean(patch.philosopher_decision));
+    setDecisionButtonsDisabled(alreadyDecided);
 }
 
 async function submitDecision(decision) {
@@ -274,7 +321,7 @@ async function submitDecision(decision) {
 
 function setLoading(isLoading) {
     els.loadQueueButton.disabled = isLoading;
-    els.loadQueueButton.textContent = isLoading ? "Loading..." : "Load Queue";
+    els.loadQueueButton.textContent = isLoading ? "Loading…" : "Reload";
 }
 
 function setDecisionButtonsDisabled(disabled) {

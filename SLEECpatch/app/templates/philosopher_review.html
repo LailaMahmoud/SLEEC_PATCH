@@ -3,26 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SLEEC-PATCH Social Scientist Review</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/social_scientist_review.css') }}">
+<title>SLEEC Expert Review · SLEEC-PATCH</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_shell.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_pages.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/philosopher_review.css') }}">
 </head>
 
 <body>
-<main class="review-page">
-    <header class="review-header">
-        <div>
-            <p class="eyebrow">SLEEC-PATCH</p>
-            <h1>Social Scientist Review</h1>
-        </div>
-        <nav class="header-actions" aria-label="Review navigation">
-            <a class="header-link" href="{{ url_for('sleec_patch_workbench') }}">Workbench</a>
-            <a class="header-link" href="{{ url_for('sleec_patch_report') }}">Report Data</a>
-        </nav>
-    </header>
+<div class="page-shell">
 
-    <section class="review-controls" aria-label="Review controls">
-        <label>
-            <span>Use Case</span>
+{% set active = "review" %}
+{% include "partials/app_navbar.html" %}
+
+<section class="page-intro">
+    <span class="kicker">Expert review<span id="reviewerProfession" class="kicker-profession" hidden></span></span>
+    <h1>SLEEC Expert Review</h1>
+    <p class="lead">
+        Read each verified patch the AI proposed and decide whether it keeps the rule's intended meaning.
+        Your decision and comments are saved as soon as you click Accept or Reject.
+    </p>
+</section>
+
+<main class="page-main">
+
+    <section class="card toolbar" aria-label="Filter the review queue">
+        <label class="field">
+            <span class="field-label">Use case</span>
             <select id="reviewUseCase">
                 <option value="">All use cases</option>
                 {% for uc in use_cases %}
@@ -31,104 +37,128 @@
             </select>
         </label>
 
-        <label class="checkbox-label">
+        <label class="toggle">
             <input id="includeReviewed" type="checkbox">
-            <span>Include reviewed</span>
+            <span>Also show patches I've already reviewed</span>
         </label>
 
-        <button id="loadQueueButton" type="button" class="primary">Load Queue</button>
-        <button id="refreshMetricsButton" type="button" class="secondary">Refresh Metrics</button>
+        <span class="toolbar-spacer"></span>
+
+        <button id="loadQueueButton" type="button" class="btn btn-secondary">Reload</button>
     </section>
 
-    <section class="metrics-strip" id="metricsStrip" aria-label="Review metrics">
-        <div class="metric">
-            <span>Total</span>
-            <strong id="metricTotal">0</strong>
+    <section class="card review-progress" aria-label="Review progress">
+        <div class="progress-copy">
+            <strong id="progressHeadline">No patches waiting for review</strong>
+            <span id="progressSub" class="muted">Patches appear here after the workbench verifies an AI-generated repair.</span>
         </div>
-        <div class="metric">
-            <span>Pending</span>
-            <strong id="metricPending">0</strong>
+        <div class="progress-figures">
+            <div><span class="stat-label">To review</span><strong id="metricPending">0</strong></div>
+            <div><span class="stat-label">Accepted</span><strong id="metricAccepted">0</strong></div>
+            <div><span class="stat-label">Rejected</span><strong id="metricRejected">0</strong></div>
+            <div><span class="stat-label">Acceptance rate</span><strong id="metricRate">–</strong></div>
         </div>
-        <div class="metric">
-            <span>Accepted</span>
-            <strong id="metricAccepted">0</strong>
-        </div>
-        <div class="metric">
-            <span>Rejected</span>
-            <strong id="metricRejected">0</strong>
-        </div>
-        <div class="metric">
-            <span>Rate</span>
-            <strong id="metricRate">0%</strong>
-        </div>
-    </section>
-
-    <section class="review-workspace">
-        <aside class="queue-panel" aria-label="Patch queue">
-            <div class="queue-heading">
-                <h2>Queue</h2>
-                <span id="queueCount">0 patches</span>
+        <div class="progress-bar-wrap">
+            <div class="meter" aria-hidden="true">
+                <span id="meterAccepted" class="is-accepted" style="width:0%"></span>
+                <span id="meterRejected" class="is-rejected" style="width:0%"></span>
             </div>
-            <div id="queueList" class="queue-list empty-state">No patches loaded.</div>
+            <div class="legend">
+                <span><i style="background:var(--success)"></i>Accepted</span>
+                <span><i style="background:var(--danger)"></i>Rejected</span>
+                <span><i style="background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--border)"></i>Still to review</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="review-layout">
+        <aside class="card queue-panel" aria-label="Patches to review">
+            <div class="section-head">
+                <div>
+                    <h2>Patches</h2>
+                    <p>Pick one to review.</p>
+                </div>
+                <span id="queueCount" class="section-count">0</span>
+            </div>
+            <div id="queueList" class="queue-list">
+                <div class="empty-state">No patches loaded.</div>
+            </div>
         </aside>
 
-        <section class="detail-panel" aria-label="Patch detail">
-            <div id="detailEmpty" class="detail-empty">
-                Select a saved semantic patch.
+        <section class="card detail-panel" aria-label="Patch detail">
+            <div id="detailEmpty" class="empty-state detail-empty">
+                <strong>Nothing selected</strong>
+                <span>Choose a patch from the list to compare the original and proposed rule.</span>
             </div>
 
             <article id="patchDetail" class="patch-detail" hidden>
-                <div class="detail-topline">
+                <header class="detail-head">
                     <div>
                         <p id="detailMeta" class="detail-meta"></p>
                         <h2 id="detailTitle"></h2>
                     </div>
-                    <span id="decisionBadge" class="decision-badge">Pending</span>
-                </div>
+                    <span id="decisionBadge" class="badge pending">Pending</span>
+                </header>
 
-                <div class="rule-grid">
+                <div class="rule-compare">
                     <section>
-                        <h3>Original Rule</h3>
+                        <h3><span class="rule-tag before">Before</span> Original rule</h3>
                         <pre id="originalRule"></pre>
                     </section>
                     <section>
-                        <h3>Proposed Rule</h3>
+                        <h3><span class="rule-tag after">After</span> Proposed rule</h3>
                         <pre id="proposedRule"></pre>
                     </section>
                 </div>
 
-                <section class="explanation-block">
-                    <h3>Explanation</h3>
+                <section class="explanation">
+                    <h3>Why this change was proposed</h3>
                     <p id="patchExplanation"></p>
                 </section>
 
-                <section class="comments-block">
-                    <label for="reviewComments">Comments</label>
-                    <textarea id="reviewComments" rows="5"></textarea>
-                </section>
+                <section class="decision-box">
+                    <label for="reviewComments" class="form-label">Your comments (optional)</label>
+                    <textarea id="reviewComments" rows="4"
+                              placeholder="E.g. the new condition narrows the obligation more than intended…"></textarea>
 
-                <div class="decision-actions">
-                    <button id="acceptButton" type="button" class="accept">Accept</button>
-                    <button id="rejectButton" type="button" class="reject">Reject</button>
-                </div>
+                    <div class="decision-actions">
+                        <p id="decisionHint" class="muted">Does the proposed rule keep the intended meaning?</p>
+                        <div class="decision-buttons">
+                            <button id="rejectButton" type="button" class="btn btn-reject">Reject</button>
+                            <button id="acceptButton" type="button" class="btn btn-accept">Accept</button>
+                        </div>
+                    </div>
+                </section>
             </article>
         </section>
     </section>
 
-    <section class="breakdown-panel" aria-label="Metric breakdown">
-        <div>
-            <h2>Use Cases</h2>
-            <div id="useCaseBreakdown" class="breakdown-list"></div>
+    <details class="card">
+        <summary>
+            <div class="section-head" style="margin:0">
+                <div>
+                    <h2>Progress by use case and operation</h2>
+                    <p>How the review decisions split across use cases and repair types.</p>
+                </div>
+            </div>
+        </summary>
+        <div class="breakdown-grid">
+            <section>
+                <h3>By use case</h3>
+                <div id="useCaseBreakdown"></div>
+            </section>
+            <section>
+                <h3>By operation</h3>
+                <div id="operationBreakdown"></div>
+            </section>
         </div>
-        <div>
-            <h2>Operations</h2>
-            <div id="operationBreakdown" class="breakdown-list"></div>
-        </div>
-    </section>
-
-    <div id="reviewToast" class="review-toast" role="status" aria-live="polite"></div>
+    </details>
 </main>
 
-<script src="{{ url_for('static', filename='js/social_scientist_review.js') }}"></script>
+</div>
+
+<div id="reviewToast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="{{ url_for('static', filename='js/philosopher_review.js') }}"></script>
 </body>
 </html>

@@ -3,27 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SLEEC-PATCH Report Data</title>
+<title>Evaluation Results · SLEEC-PATCH</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_shell.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_pages.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sleec_patch_report.css') }}">
 </head>
 
 <body>
-<main class="report-page">
-    <header class="report-header">
-        <div>
-            <p class="eyebrow">SLEEC-PATCH</p>
-            <h1>Report Data</h1>
-        </div>
-        <nav class="header-actions" aria-label="Report navigation">
-            <a class="header-link" href="{{ url_for('sleec_patch_workbench') }}">Workbench</a>
-            <a class="header-link" href="{{ url_for('philosopher_review') }}">Philosopher Review</a>
-            <a id="jsonLink" class="header-link primary-link" href="/api/sleec-patch/report-data" target="_blank" rel="noopener">Open JSON</a>
-        </nav>
-    </header>
+<div class="page-shell">
 
-    <section class="report-controls" aria-label="Report controls">
-        <label>
-            <span>Use Case</span>
+{% set active = "results" %}
+{% include "partials/app_navbar.html" %}
+
+<section class="page-intro">
+    <span class="kicker">Evaluation</span>
+    <h1>Evaluation Results</h1>
+    <p class="lead">
+        Everything SLEEC-PATCH has saved from repair runs: how many patches were proposed,
+        how many passed verification, and what SLEEC experts decided about them.
+    </p>
+</section>
+
+<main class="page-main">
+
+    <section class="card toolbar" aria-label="Filter results">
+        <label class="field">
+            <span class="field-label">Use case</span>
             <select id="reportUseCase">
                 <option value="">All use cases</option>
                 {% for uc in use_cases %}
@@ -32,103 +37,160 @@
             </select>
         </label>
 
-        <label class="checkbox-label">
+        <label class="toggle">
             <input id="includePatchedSleec" type="checkbox">
-            <span>Include patched SLEEC text</span>
+            <span>Show the full patched specification in patch details</span>
         </label>
 
-        <button id="loadReportButton" type="button" class="primary">Load Report Data</button>
+        <span class="toolbar-spacer"></span>
+
+        <button id="loadReportButton" type="button" class="btn btn-secondary">Reload</button>
+        <a id="jsonLink" class="btn btn-secondary" href="/api/sleec-patch/report-data" target="_blank" rel="noopener">Export JSON</a>
     </section>
 
-    <p id="reportScope" role="status" aria-live="polite">Loading saved report data…</p>
+    <p id="reportScope" class="scope-line" role="status" aria-live="polite">Loading saved results…</p>
 
-    <section class="metrics-strip" aria-label="Top-level report metrics">
-        <div class="metric">
-            <span>Saved Patches</span>
-            <strong id="metricTotalRows">0</strong>
-        </div>
-        <div class="metric">
-            <span>Verified Patches</span>
-            <strong id="metricVerifiedRows">0</strong>
-        </div>
-        <div class="metric">
-            <span>LLM Patches</span>
-            <strong id="metricLlmRows">0</strong>
-        </div>
-        <div class="metric">
-            <span>Deterministic Patches</span>
-            <strong id="metricDetRows">0</strong>
-        </div>
-        <div class="metric">
-            <span>Avg Time / Repair Run</span>
-            <strong id="metricAvgTime">0s</strong>
-        </div>
-    </section>
-
-    <section class="grid-two">
-        <article class="panel">
-            <div class="panel-heading">
-                <h2>Evaluation Summary</h2>
-                <span id="summaryCount">0 use cases</span>
+    <!-- 1. Headline numbers -->
+    <section aria-labelledby="glanceTitle">
+        <h2 id="glanceTitle" class="visually-hidden">At a glance</h2>
+        <div class="stat-grid">
+            <div class="card stat">
+                <span class="stat-label">Patches proposed</span>
+                <strong class="stat-value" id="statPatches">0</strong>
+                <span class="stat-sub" id="statPatchesSub">&nbsp;</span>
             </div>
-            <div id="summaryOutput" class="table-wrap empty-state">No summary loaded.</div>
+            <div class="card stat is-highlight">
+                <span class="stat-label">Passed verification</span>
+                <strong class="stat-value" id="statVerified">0</strong>
+                <span class="stat-sub" id="statVerifiedSub">&nbsp;</span>
+            </div>
+            <div class="card stat">
+                <span class="stat-label">Repair runs</span>
+                <strong class="stat-value" id="statRuns">0</strong>
+                <span class="stat-sub" id="statRunsSub">&nbsp;</span>
+            </div>
+            <div class="card stat">
+                <span class="stat-label">Average time per run</span>
+                <strong class="stat-value" id="statTime">–</strong>
+                <span class="stat-sub">From diagnosis to verified patch</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Where patches came from + expert verdicts -->
+    <section class="split-grid">
+        <article class="card">
+            <div class="section-head">
+                <div>
+                    <h2>Where the patches came from</h2>
+                    <p>Rule-based (deterministic) repairs versus AI-generated (LLM) repairs.</p>
+                </div>
+            </div>
+            <div id="sourceOutput"></div>
         </article>
 
-        <article class="panel">
-            <div class="panel-heading">
-                <h2>Patch Breakdowns</h2>
+        <article class="card">
+            <div class="section-head">
+                <div>
+                    <h2>SLEEC expert verdicts</h2>
+                    <p>Verified AI-generated patches are sent to a SLEEC expert for a meaning check.</p>
+                </div>
+                <a class="text-link" href="{{ url_for('philosopher_review') }}">Open review →</a>
             </div>
-            <div id="breakdownOutput" class="breakdown-grid empty-state">No breakdown loaded.</div>
-        </article>
-    </section>
-
-    <section class="panel diagnosis-panel">
-        <div class="panel-heading">
-            <h2>Diagnosis Recorded for Each Repair Run</h2>
-            <span id="diagnosisCount">0 repair runs</span>
-        </div>
-        <p>Each count is the number of issues in the input before repairing the selected issue.
-           Multiple patches or repeated repair runs do not increase that diagnosis count.
-           Matching input fingerprints identify the same specification. Older runs may have no fingerprint.
-           Diagnoses without a saved repair run are not included.</p>
-        <div id="diagnosisOutput" class="table-wrap empty-state">No recorded diagnoses loaded.</div>
-    </section>
-
-    <section class="grid-two detail-grid">
-        <article class="panel table-panel">
-            <div class="panel-heading">
-                <h2>Saved Patch Rows</h2>
-                <span id="detailCount">0 rows</span>
-            </div>
-            <div id="detailsOutput" class="table-wrap empty-state">No patch details loaded.</div>
-        </article>
-
-        <article class="panel">
-            <div class="panel-heading">
-                <h2>Selected Patch</h2>
-            </div>
-            <div id="patchDetailOutput" class="empty-state">Click a patch row to inspect the original rule, proposed rule, explanation, source, and patched SLEEC text when loaded.</div>
+            <div id="expertOutput"></div>
         </article>
     </section>
 
-    <section class="grid-two">
-        <article class="panel">
-            <div class="panel-heading">
-                <h2>Philosopher Review</h2>
+    <!-- 3. Per use case -->
+    <section class="card">
+        <div class="section-head">
+            <div>
+                <h2>Results by use case</h2>
+                <p>One row per use case. “Rules changed” counts what the saved patches did to the specification.</p>
             </div>
-            <div id="philosopherOutput" class="empty-state">No philosopher review data loaded.</div>
-        </article>
+            <span id="summaryCount" class="section-count">0 use cases</span>
+        </div>
+        <div id="summaryOutput"><div class="empty-state">No results loaded.</div></div>
+    </section>
 
-        <article class="panel">
-            <div class="panel-heading">
-                <h2>Experiment Logs</h2>
+    <!-- 4. Breakdowns -->
+    <section class="split-grid">
+        <article class="card">
+            <div class="section-head">
+                <div>
+                    <h2>Patches by issue type</h2>
+                    <p>Which kind of problem each patch was fixing.</p>
+                </div>
             </div>
-            <div id="logsOutput" class="empty-state">No experiment logs loaded.</div>
+            <div id="issueTypeOutput"></div>
+        </article>
+        <article class="card">
+            <div class="section-head">
+                <div>
+                    <h2>Patches by repair operation</h2>
+                    <p>How each patch changed the rules.</p>
+                </div>
+            </div>
+            <div id="operationOutput"></div>
         </article>
     </section>
 
-    <div id="reportToast" class="report-toast" role="status" aria-live="polite"></div>
+    <!-- 5. Explorer -->
+    <section class="card">
+        <div class="section-head">
+            <div>
+                <h2>Patch explorer</h2>
+                <p>Click any row to see the original and proposed rule side by side.</p>
+            </div>
+            <span id="detailCount" class="section-count">0 patches</span>
+        </div>
+        <div class="explorer">
+            <div id="detailsOutput" class="explorer-table"><div class="empty-state">No patches loaded.</div></div>
+            <aside id="patchDetailOutput" class="explorer-detail">
+                <div class="empty-state">Select a patch to inspect it.</div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- 6. Technical records -->
+    <details class="card">
+        <summary>
+            <div class="section-head" style="margin:0">
+                <div>
+                    <h2>Technical records</h2>
+                    <p>Diagnosis snapshot for each repair run, plus storage and logging counts.</p>
+                </div>
+            </div>
+        </summary>
+
+        <div class="tech-grid">
+            <section>
+                <div class="section-head">
+                    <div>
+                        <h3>Diagnosis recorded for each repair run</h3>
+                        <p>Number of issues found in the input just before the selected issue was repaired.
+                           Runs with the same input fingerprint started from the same specification.</p>
+                    </div>
+                    <span id="diagnosisCount" class="section-count">0 runs</span>
+                </div>
+                <div id="diagnosisOutput"><div class="empty-state">No diagnoses loaded.</div></div>
+            </section>
+
+            <section>
+                <div class="section-head">
+                    <div>
+                        <h3>Storage and logs</h3>
+                    </div>
+                </div>
+                <div id="logsOutput"></div>
+            </section>
+        </div>
+    </details>
 </main>
+
+</div>
+
+<div id="reportToast" class="toast" role="status" aria-live="polite"></div>
 
 <script src="{{ url_for('static', filename='js/sleec_patch_report.js') }}"></script>
 </body>
