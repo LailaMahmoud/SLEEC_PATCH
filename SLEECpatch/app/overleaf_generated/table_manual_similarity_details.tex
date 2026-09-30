@@ -1,0 +1,71 @@
+\begin{table*}[t]
+\caption{Component-level manual similarity (M-Sim) for formally verified SLEEC-PATCH repairs. Trig., Resp., Pol., Def., and Temp. denote trigger, response, polarity, defeater, and temporal similarity, respectively. A dash indicates that a component is not applicable to the repair comparison.}
+\label{tab:manual-similarity-details}
+\centering
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllllllrrrrrr}
+\toprule
+Case & IID & PID & Op. & Source & Target & Expert & Trig. & Resp. & Pol. & Def. & Temp. & M-Sim \\
+\midrule
+ALMI & concerns\_1 & d\_concern\_defeater\_R3 & defeater\_introduction & deterministic & R3 & R3b & 1.00 & 0.00 & 1.00 & 0.00 & -- & 0.50 \\
+ALMI & concerns\_1 & g1 & concern\_new\_rule\_generation & llm & -- & R3bb & 0.11 & 1.00 & 1.00 & -- & -- & 0.70 \\
+ALMI & concerns\_2 & d\_temporal\_R21 & temporal\_refinement & deterministic & R21 & R21b & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+\midrule
+ASPEN & concerns\_1 & g1 & concern\_new\_rule\_generation & llm & -- & R14\_1 & 0.71 & 1.00 & 1.00 & -- & 0.00 & 0.68 \\
+ASPEN & concerns\_2 & g1 & concern\_new\_rule\_generation & llm & -- & R14\_1 & 0.20 & 0.00 & 0.00 & -- & 0.00 & 0.05 \\
+ASPEN & concerns\_3 & g1 & concern\_new\_rule\_generation & llm & -- & R9b1 & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+ASPEN & concerns\_4 & g2 & concern\_new\_rule\_generation & llm & -- & R10b & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+ASPEN & redundancies\_1 & d\_remove\_R14 & rule\_removal & deterministic & R14 & R14 & -- & -- & -- & -- & -- & 1.00 \\
+\midrule
+AutoCAR & concerns\_2 & g1 & concern\_new\_rule\_generation & llm & -- & R24 & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+AutoCAR & concerns\_3 & g1 & concern\_new\_rule\_generation & llm & -- & R17b & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+AutoCAR & concerns\_3 & g2 & concern\_new\_rule\_generation & llm & -- & R17b & 0.57 & 1.00 & 1.00 & -- & -- & 0.86 \\
+AutoCAR & concerns\_3 & g3 & concern\_new\_rule\_generation & llm & -- & R17b & 0.57 & 1.00 & 1.00 & -- & -- & 0.86 \\
+AutoCAR & concerns\_5 & g2 & concern\_new\_rule\_generation & llm & -- & R25 & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+AutoCAR & concerns\_7 & g1 & concern\_new\_rule\_generation & llm & -- & R27VIII & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+AutoCAR & redundancies\_1 & d\_remove\_R23 & rule\_removal & deterministic & R23 & R23 & -- & -- & -- & -- & -- & 1.00 \\
+AutoCAR & redundancies\_2 & d\_remove\_R22 & rule\_removal & deterministic & R22 & -- & -- & -- & -- & -- & -- & 0.00 \\
+\midrule
+BSN & concerns\_1 & g1 & concern\_new\_rule\_generation & llm & -- & Rule19 & 0.12 & 1.00 & 1.00 & -- & -- & 0.71 \\
+\midrule
+CSICobot & concerns\_2 & g1 & concern\_new\_rule\_generation & llm & -- & R1b & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+CSICobot & concerns\_3 & g1 & concern\_new\_rule\_generation & llm & -- & R1b & 0.88 & 0.00 & 1.00 & -- & -- & 0.62 \\
+CSICobot & concerns\_4 & g1 & concern\_new\_rule\_generation & llm & -- & R17 & 0.20 & 1.00 & 1.00 & -- & -- & 0.73 \\
+CSICobot & concerns\_6 & g1 & concern\_new\_rule\_generation & llm & -- & R20 & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+CSICobot & concerns\_7 & g1 & concern\_new\_rule\_generation & llm & -- & R21 & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+CSICobot & redundancies\_1 & d\_remove\_R4b & rule\_removal & deterministic & R4b & R4b & -- & -- & -- & -- & -- & 1.00 \\
+CSICobot & redundancies\_2 & d\_remove\_R4 & rule\_removal & deterministic & R4 & -- & -- & -- & -- & -- & -- & 0.00 \\
+CSICobot & redundancies\_3 & d\_remove\_R14 & rule\_removal & deterministic & R14 & R14 & -- & -- & -- & -- & -- & 1.00 \\
+\midrule
+DAISY & concerns\_2 & g1 & concern\_new\_rule\_generation & llm & c2 & c2 & 1.00 & 1.00 & 0.00 & -- & -- & 0.67 \\
+DAISY & concerns\_4 & g1 & concern\_new\_rule\_generation & llm & -- & Rule25 & 1.00 & 1.00 & 1.00 & -- & -- & 1.00 \\
+DAISY & situational\_conflicts\_1 & d\_conflict\_exception\_1 & defeater\_introduction & deterministic & Rule18 & Rule23 & 0.33 & 1.00 & 0.00 & 0.00 & -- & 0.33 \\
+DAISY & situational\_conflicts\_1 & d\_conflict\_exception\_2 & defeater\_introduction & deterministic & Rule19 & Rule23 & 0.17 & 1.00 & 1.00 & 0.00 & -- & 0.54 \\
+DAISY & situational\_conflicts\_1 & d\_conflict\_trigger\_1 & trigger\_refinement & deterministic & Rule18 & Rule23 & 0.43 & 1.00 & 0.00 & -- & -- & 0.48 \\
+DAISY & situational\_conflicts\_1 & d\_conflict\_trigger\_2 & trigger\_refinement & deterministic & Rule19 & Rule23 & 0.43 & 1.00 & 1.00 & 0.00 & -- & 0.61 \\
+DAISY & situational\_conflicts\_2 & d\_conflict\_exception\_1 & defeater\_introduction & deterministic & Rule19 & Rule23 & 0.17 & 1.00 & 1.00 & 0.00 & -- & 0.54 \\
+DAISY & situational\_conflicts\_2 & d\_conflict\_exception\_2 & defeater\_introduction & deterministic & Rule18 & Rule23 & 0.33 & 1.00 & 0.00 & 0.00 & -- & 0.33 \\
+DAISY & situational\_conflicts\_2 & d\_conflict\_trigger\_1 & trigger\_refinement & deterministic & Rule19 & Rule23 & 0.43 & 1.00 & 1.00 & 0.00 & -- & 0.61 \\
+DAISY & situational\_conflicts\_2 & d\_conflict\_trigger\_2 & trigger\_refinement & deterministic & Rule18 & Rule23 & 0.43 & 1.00 & 0.00 & -- & -- & 0.48 \\
+DAISY & situational\_conflicts\_2 & g1 & semantic\_rule\_merging & llm & Rule19 & Rule23 & 0.25 & 1.00 & 0.00 & 0.00 & -- & 0.31 \\
+DAISY & situational\_conflicts\_2 & g3 & semantic\_rule\_merging & llm & Rule10 & Rule10 & 1.00 & 0.25 & 1.00 & 0.00 & -- & 0.56 \\
+DAISY & situational\_conflicts\_3 & d\_conflict\_exception\_1 & defeater\_introduction & deterministic & Rule19 & Rule23 & 0.17 & 1.00 & 1.00 & 0.00 & -- & 0.54 \\
+DAISY & situational\_conflicts\_3 & d\_conflict\_exception\_2 & defeater\_introduction & deterministic & Rule18 & Rule23 & 0.33 & 1.00 & 0.00 & 0.00 & -- & 0.33 \\
+DAISY & situational\_conflicts\_3 & d\_conflict\_trigger\_1 & trigger\_refinement & deterministic & Rule19 & Rule23 & 0.43 & 1.00 & 1.00 & 0.00 & -- & 0.61 \\
+DAISY & situational\_conflicts\_3 & d\_conflict\_trigger\_2 & trigger\_refinement & deterministic & Rule18 & Rule23 & 0.43 & 1.00 & 0.00 & -- & -- & 0.48 \\
+DAISY & situational\_conflicts\_3 & g1 & semantic\_rule\_merging & llm & Rule19 & Rule23 & 0.25 & 1.00 & 0.00 & 0.00 & -- & 0.31 \\
+DAISY & situational\_conflicts\_3 & g2 & semantic\_rule\_merging & llm & Rule18 & Rule23 & 0.33 & 1.00 & 0.00 & 0.00 & -- & 0.33 \\
+\midrule
+DPA & concerns\_2 & g1 & concern\_new\_rule\_generation & llm & -- & R8\_0 & 0.00 & 1.00 & 1.00 & -- & -- & 0.67 \\
+\midrule
+DressAssist & concerns\_1 & g1 & concern\_new\_rule\_generation & llm & -- & Rule7\_1 & 0.00 & 0.00 & 1.00 & -- & -- & 0.33 \\
+DressAssist & concerns\_1 & g3 & concern\_new\_rule\_generation & llm & R\_new3 & Rule7\_1 & 0.00 & 0.00 & 1.00 & -- & -- & 0.33 \\
+\midrule
+SafeSCAD & situational\_conflicts\_10 & g3 & semantic\_rule\_merging & llm & -- & R11\_1 & 0.11 & 1.00 & 1.00 & 0.00 & -- & 0.53 \\
+SafeSCAD & situational\_conflicts\_11 & g2 & semantic\_rule\_merging & llm & -- & R10 & 0.20 & 1.00 & 1.00 & 0.00 & -- & 0.55 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

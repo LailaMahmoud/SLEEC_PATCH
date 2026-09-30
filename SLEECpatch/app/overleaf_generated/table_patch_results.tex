@@ -9,82 +9,62 @@
 \toprule
 Case & IID & WFI & \#Patch & Total & Gen. & Val. & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & M-Sim. & Source & E-Review \\
 \midrule
-ALMI &  & Concern & 1 & 48.71 & 4.67 & 44.02 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- & concerns\_1 & Concern & 3 & 181.13 & 11.68 & 169.38 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g3 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & concerns\_2 & Concern & 3 & 12.20 & 2.28 & 9.88 & d\_strengthen\_R21 & trigger\_strengthening & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_temporal\_R21 & temporal\_refinement & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & new\_rule\_generation & 0 & 1 & 0 & 0 & 0 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_1 & Sit. conflict & 2 & 54.13 & 8.43 & 45.66 & g1 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 2 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g2 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+ALMI & concerns\_1 & Concern & 2 & 192.92 & 7.86 & 185.03 & d\_concern\_defeater\_R3 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.50 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.70 & llm & Yes \\
+ & concerns\_2 & Concern & 1 & 148.34 & 7.33 & 140.96 & d\_temporal\_R21 & temporal\_refinement & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & deterministic & No \\
 \midrule
-ASPEN & concerns\_2 & Concern & 2 & 183.96 & 7.62 & 176.31 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g2 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 2 & 0.00 & llm & Yes \\
- & concerns\_3 & Concern & 1 & 107.90 & 7.97 & 99.93 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
- & concerns\_4 & Concern & 1 & 116.32 & 7.96 & 108.36 & g2 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
- & redundancies\_1 & Redundancy & 1 & 166.27 & 9.24 & 156.98 & d\_remove\_R14 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
+ASPEN & concerns\_1 & Concern & 1 & 115.11 & 7.98 & 107.13 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.68 & llm & Yes \\
+ & concerns\_2 & Concern & 1 & 127.61 & 7.70 & 119.89 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.05 & llm & Yes \\
+ & concerns\_3 & Concern & 1 & 89.78 & 6.83 & 82.94 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & concerns\_4 & Concern & 1 & 215.44 & 8.38 & 207.05 & g2 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & redundancies\_1 & Redundancy & 1 & 118.52 & 8.21 & 110.26 & d\_remove\_R14 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 1.00 & deterministic & No \\
 \midrule
-AutoCAR & concerns\_3 & Concern & 3 & 131.19 & 11.58 & 119.61 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 3 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g2 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 2 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g3 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
- & concerns\_5 & Concern & 3 & 118.66 & 9.82 & 108.83 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 3 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g2 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g3 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 2 & 0.00 & llm & Yes \\
- & concerns\_7 & Concern & 1 & 212.66 & 10.25 & 202.40 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+AutoCAR & concerns\_2 & Concern & 1 & 221.46 & 9.49 & 211.97 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & concerns\_3 & Concern & 3 & 143.83 & 8.18 & 135.66 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 3 & 1.00 & llm & Yes \\
+ &  &  &  &  &  &  & g2 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 2 & 0.86 & llm & Yes \\
+ &  &  &  &  &  &  & g3 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.86 & llm & Yes \\
+ & concerns\_5 & Concern & 1 & 288.63 & 9.78 & 278.86 & g2 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & concerns\_7 & Concern & 1 & 295.28 & 7.74 & 287.53 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & redundancies\_1 & Redundancy & 1 & 47.24 & 0.00 & 47.17 & d\_remove\_R23 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 1.00 & deterministic & No \\
+ & redundancies\_2 & Redundancy & 1 & 51.37 & 0.00 & 51.33 & d\_remove\_R22 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
 \midrule
-DAISY &  & Sit. conflict & 4 & 147.03 & 5.50 & 141.00 & d\_conflict\_exception\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
- & concerns\_2 & Concern & 1 & 280.62 & 7.66 & 272.96 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
- & concerns\_4 & Concern & 1 & 196.46 & 7.94 & 188.51 & g2 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
- & situational\_conflicts\_1 & Sit. conflict & 7 & 465.48 & 8.43 & 456.97 & d\_conflict\_exception\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 6 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 3 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g2 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 7 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g3 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 5 & 0.00 & llm & Yes \\
- & situational\_conflicts\_2 & Sit. conflict & 4 & 106.73 & 9.93 & 96.72 & d\_conflict\_exception\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- & situational\_conflicts\_3 & Sit. conflict & 6 & 62.24 & 5.54 & 56.63 & d\_conflict\_exception\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 6 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 5 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 2 & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g2 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 4 & 0.00 & llm & Yes \\
+BSN & concerns\_1 & Concern & 1 & 309.94 & 10.69 & 299.24 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.71 & llm & Yes \\
 \midrule
-DressAssist & concerns\_1 & Concern & 1 & 187.56 & 10.69 & 176.86 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & llm & Yes \\
+CSICobot & concerns\_2 & Concern & 1 & 130.67 & 8.58 & 122.08 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & concerns\_3 & Concern & 1 & 243.24 & 10.21 & 233.02 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.62 & llm & Yes \\
+ & concerns\_4 & Concern & 1 & 141.80 & 9.16 & 132.64 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.73 & llm & Yes \\
+ & concerns\_6 & Concern & 1 & 148.32 & 8.73 & 139.59 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & concerns\_7 & Concern & 1 & 138.48 & 8.05 & 130.43 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & redundancies\_1 & Redundancy & 1 & 39.01 & 0.00 & 38.96 & d\_remove\_R4b & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 1.00 & deterministic & No \\
+ & redundancies\_2 & Redundancy & 1 & 41.38 & 0.00 & 41.35 & d\_remove\_R4 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
+ & redundancies\_3 & Redundancy & 1 & 129.63 & 8.08 & 121.53 & d\_remove\_R14 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & 1 & 1.00 & deterministic & No \\
 \midrule
-SafeSCAD & purpose\_blocking\_1 & Purpose & 2 & 7.40 & 4.49 & 2.87 & d\_defeater\_introduction\_R12 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & -- & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & -- & 0.00 & llm & Yes \\
- & purpose\_blocking\_2 & Purpose & 2 & 4.12 & 2.12 & 1.97 & d\_defeater\_introduction\_R9\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & -- & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & capability\_refinement & 1 & 0 & 0 & 0 & 0 & 1 & 1 & -- & 0.00 & llm & Yes \\
- & redundancies\_1 & Redundancy & 2 & 4.48 & 2.61 & 1.82 & d\_remove\_R2\_1 & rule\_removal & 0 & 0 & 1 & 0 & 0 & 0 & 0 & -- & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & redundancies\_2 & Redundancy & 2 & 62.79 & 26.90 & 35.89 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & redundancies\_3 & Redundancy & 1 & 22.21 & 21.09 & 1.10 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_1 & Sit. conflict & 1 & 32.54 & 30.75 & 1.79 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_10 & Sit. conflict & 3 & 8.04 & 2.54 & 5.47 & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_2 & Sit. conflict & 3 & 10.26 & 5.83 & 4.39 & d\_conflict\_merge\_R3\_R3\_1 & rule\_merging & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- &  &  &  &  &  &  & g2 & measure\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_3 & Sit. conflict & 1 & 86.53 & 27.31 & 59.17 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_4 & Sit. conflict & 2 & 4.54 & 2.71 & 1.80 & d\_conflict\_merge\_R4\_R1 & rule\_merging & 1 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_5 & Sit. conflict & 1 & 63.76 & 18.53 & 45.17 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_6 & Sit. conflict & 1 & 54.84 & 6.34 & 48.45 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_7 & Sit. conflict & 3 & 5.51 & 2.63 & 2.84 & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & deterministic & No \\
- &  &  &  &  &  &  & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_8 & Sit. conflict & 1 & 77.53 & 7.84 & 69.63 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
- & situational\_conflicts\_9 & Sit. conflict & 1 & 66.50 & 23.17 & 43.28 & g1 & event\_specialization & 1 & 0 & 0 & 0 & 1 & 0 & 0 & -- & 0.00 & llm & Yes \\
+DAISY & concerns\_2 & Concern & 1 & 174.88 & 8.42 & 166.45 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.67 & llm & Yes \\
+ & concerns\_4 & Concern & 1 & 159.84 & 9.99 & 149.85 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 1.00 & llm & Yes \\
+ & situational\_conflicts\_1 & Sit. conflict & 4 & 251.12 & 12.18 & 238.76 & d\_conflict\_exception\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.33 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.54 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_trigger\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 3 & 0.48 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.61 & deterministic & No \\
+ & situational\_conflicts\_2 & Sit. conflict & 6 & 97.89 & 15.27 & 82.52 & d\_conflict\_exception\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 4 & 0.54 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 3 & 0.33 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_trigger\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 6 & 0.61 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 1 & 0.48 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 5 & 0.31 & llm & Yes \\
+ &  &  &  &  &  &  & g3 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 2 & 0.56 & llm & Yes \\
+ & situational\_conflicts\_3 & Sit. conflict & 6 & 63.19 & 8.05 & 55.05 & d\_conflict\_exception\_1 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 2 & 0.54 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_exception\_2 & defeater\_introduction & 1 & 0 & 0 & 1 & 0 & 0 & 0 & 1 & 0.33 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_trigger\_1 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 6 & 0.61 & deterministic & No \\
+ &  &  &  &  &  &  & d\_conflict\_trigger\_2 & trigger\_refinement & 1 & 0 & 0 & 0 & 1 & 0 & 0 & 4 & 0.48 & deterministic & No \\
+ &  &  &  &  &  &  & g1 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 5 & 0.31 & llm & Yes \\
+ &  &  &  &  &  &  & g2 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 3 & 0.33 & llm & Yes \\
+\midrule
+DPA & concerns\_2 & Concern & 1 & 109.53 & 7.79 & 101.73 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.67 & llm & Yes \\
+\midrule
+DressAssist & concerns\_1 & Concern & 2 & 169.66 & 10.06 & 159.59 & g1 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.33 & llm & Yes \\
+ &  &  &  &  &  &  & g3 & concern\_new\_rule\_generation & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 2 & 0.33 & llm & Yes \\
+\midrule
+SafeSCAD & situational\_conflicts\_10 & Sit. conflict & 1 & 199.03 & 10.58 & 188.42 & g3 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & -- & 0.53 & llm & Yes \\
+ & situational\_conflicts\_11 & Sit. conflict & 1 & 268.12 & 10.70 & 257.37 & g2 & semantic\_rule\_merging & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1 & 0.55 & llm & Yes \\
 \bottomrule
 \end{tabular}%
 }
