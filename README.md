@@ -46,13 +46,24 @@ Candidate generation does not by itself establish that a repair is valid. Genera
 ## WFI Categories
 
 SLEEC-PATCH currently considers:
-
+- Conflicts
 - Situational conflicts
 - Concerns / insufficiencies
 - Redundancies
 - Purpose blocking / restrictiveness
 
 ## Repair Operators
+### Conflicts
+Deterministic:
+- Trigger Refinement
+- Defeater Introduction
+- Rule Merging
+
+LLM-assisted:
+- Event Specialization
+- Measure Specialization
+- Semantic Rule Merging
+- Response Refinement
 
 ### Situational Conflicts
 Deterministic:
@@ -64,16 +75,20 @@ LLM-assisted:
 - Event Specialization
 - Measure Specialization
 - Semantic Rule Merging
+- Response Refinement
+
 
 ### Concerns / Insufficiencies
 Deterministic:
 - Trigger Strengthening
-- Defeater Introduction
+- Defeater Refinement
 - Rule Decomposition
-- Temporal Refinement
+- Deadline Refinement
 
 LLM-assisted:
 - New Rule Generation
+- Response Refinement
+
 
 ### Redundancies
 Deterministic:
@@ -83,13 +98,15 @@ Deterministic:
 LLM-assisted:
 - Event Specialization
 - Measure Specialization
+-  Response Refinement
+
 
 ### Purpose Blocking / Restrictiveness
 Deterministic:
 - Purpose-specific Defeater
 
 LLM-assisted:
-- Capability Refinement
+- Response Refinement
 
 ## Prerequisites
 
