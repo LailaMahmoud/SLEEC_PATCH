@@ -821,10 +821,34 @@ class DeterministicRepairEngine:
                 return
             seen.add(key)
             patches.append(patch)
-
         # 1. Defeater introduction
+        #
+        # Explicitly prioritize one conflicting rule by using the
+        # triggering context of that rule as a defeater of the other.
+        #
+        # Example:
+        #
+        #   r1: when SmokeDetectorAlarm
+        #       then CallEmergencyServices within 5 minutes
+        #
+        #   r2: when HumanOnFloor and not {humanAssents}
+        #       then not CallEmergencyServices within 500 seconds
+        #
+        # Prioritizing r2 gives:
+        #
+        #   r1E: when SmokeDetectorAlarm
+        #        then CallEmergencyServices within 5 minutes
+        #        unless {isHumanOnFloor} and not {humanAssents}
+        #
+        # Bare event predicates cannot occur directly in a defeater.
+        # Therefore, an event E is represented by the observable
+        # Boolean measure {isE}.
+
         if "defeater_introduction" in operators:
-            for target, other, suffix in ((r1, r2, "1"), (r2, r1, "2")):
+            for target, other, suffix in (
+                (r1, r2, "1"),
+                (r2, r1, "2")
+            ):
                 context = self.specific_context(
                     other.get("condition", ""),
                     target.get("condition", "")
@@ -835,12 +859,32 @@ class DeterministicRepairEngine:
                 if not context:
                     continue
 
-                # A defeater must contain only valid measure predicates.
-                # Events cannot be inserted into an `unless` condition.
-                if not self.is_measure_only_expression(context):
+                # Convert bare event predicates in the competing
+                # rule's triggering context into observable measures.
+                #
+                # HumanOnFloor and not {humanAssents}
+                # ->
+                # {isHumanOnFloor} and not {humanAssents}
+                defeater_context = (
+                    self.conflict_trigger_to_defeater_context(context)
+                )
+
+                defeater_context = self.normalize_boolean_expression(
+                    defeater_context
+                )
+
+                if not defeater_context:
                     continue
 
-                proposed = self.add_defeater(target, context)
+                # The transformed defeater must now contain only
+                # valid measure predicates and Boolean operators.
+                if not self.is_measure_only_expression(defeater_context):
+                    continue
+
+                proposed = self.add_defeater(
+                    target,
+                    defeater_context
+                )
 
                 if proposed and proposed != self.rule_to_text(target):
                     append_patch({
@@ -850,11 +894,16 @@ class DeterministicRepairEngine:
                         "issue_type": issue_type,
                         "operation": "defeater_introduction",
                         "target_rule_id": target["id"],
+                        "priority_rule_id": other["id"],
                         "original_rule": self.rule_to_text(target),
                         "proposed_rule": proposed,
+                        "defeater_context": defeater_context,
                         "natural_language_explanation": (
-                            "Add a diagnosis-grounded exception to prevent the "
-                            "conflicting obligations from applying simultaneously."
+                            f"Explicitly prioritize rule {other['id']} "
+                            f"over rule {target['id']} by propagating "
+                            f"the triggering context of {other['id']} "
+                            f"as the defeater "
+                            f"'{defeater_context}' of {target['id']}."
                         )
                     })
 
@@ -3241,7 +3290,95 @@ class DeterministicRepairEngine:
     def is_bare_event_expression(self, expr):
         expr = str(expr or "").strip().strip("() ")
         return bool(re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", expr))
+    def conflict_trigger_to_defeater_context(self, expression):
+        """
+        Convert bare event predicates in a situational-conflict trigger
+        into observable Boolean measures suitable for a defeater.
 
+        Example:
+            HumanOnFloor and not {humanAssents}
+
+        becomes:
+            {isHumanOnFloor} and not {humanAssents}
+
+        Existing SLEEC measure predicates inside {...} are preserved.
+        """
+
+        expression = self.clean_condition(expression)
+
+        if not expression:
+            return ""
+
+        # Temporarily protect existing measure predicates so that
+        # identifiers inside {...} are never converted.
+        protected_measures = {}
+
+        def protect_measure(match):
+            key = f"__MEASURE_{len(protected_measures)}__"
+            protected_measures[key] = match.group(0)
+            return key
+
+        working = re.sub(
+            r"\{[A-Za-z_][A-Za-z0-9_]*\}",
+            protect_measure,
+            expression
+        )
+
+        # Convert remaining bare identifiers into observable measures.
+        #
+        # Example:
+        #   HumanOnFloor
+        #       ->
+        #   {isHumanOnFloor}
+        #
+        # Boolean operators are not predicates and must be preserved.
+        boolean_words = {
+            "and",
+            "or",
+            "not",
+            "true",
+            "false",
+        }
+
+        def convert_bare_identifier(match):
+            token = match.group(0)
+
+            # Protected measure placeholder.
+            if token.startswith("__MEASURE_"):
+                return token
+
+            # Boolean operators.
+            if token.lower() in boolean_words:
+                return token
+
+            # Values appearing after comparison operators, such as
+            # "high" in {riskLevel} = high, must not become measures.
+            prefix = working[:match.start()]
+
+            if re.search(r"(?:<=|>=|<>|=|<|>)\s*$", prefix):
+                return token
+
+            # Bare trigger symbol -> observable Boolean measure.
+            #
+            # HumanOnFloor -> {isHumanOnFloor}
+            if token.startswith("is") and len(token) > 2:
+                observable = token
+            else:
+                observable = f"is{token}"
+
+            return "{" + observable + "}"
+
+        working = re.sub(
+            r"\b[A-Za-z_][A-Za-z0-9_]*\b",
+            convert_bare_identifier,
+            working
+        )
+
+        # Restore the original measure predicates.
+        for key, measure in protected_measures.items():
+            working = working.replace(key, measure)
+
+        return self.normalize_boolean_expression(working)
     def is_measure_only_expression(self, expression):
         """
         Return True only when the expression is composed entirely of
