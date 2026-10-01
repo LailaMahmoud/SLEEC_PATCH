@@ -1,0 +1,3355 @@
+{
+  "_metadata": {
+    "model": "gpt-4o-mini",
+    "generated_at_utc": "2026-09-28T16:24:36.700578+00:00",
+    "definition": "A system capability is a behavior, service, operation, or function that the system/agent itself can perform or provide.",
+    "review_required": true
+  },
+  "ALMI": {
+    "original": {
+      "file": "ALMI.sleec",
+      "capabilities": [
+        "AllowUserToCook",
+        "AskForDetailLevelOfInstructions",
+        "AskForEmergencyContact",
+        "AskUserIfOK",
+        "CalibrateSpeech",
+        "CallEmergencyServices",
+        "CheckTemperature",
+        "CollectandRecordInformation",
+        "ConsiderUserPractices",
+        "FireSafetyMeasures",
+        "GiveSuggestion",
+        "GivingCookingInstructions",
+        "InformCaregiver",
+        "InformUser",
+        "InterfereSafely",
+        "OpenWindows",
+        "ProvideDataSummaries",
+        "RecalculateApproach",
+        "RemindUserOfLimitations",
+        "TrackTime",
+        "UpdateInformation",
+        "UpdateMap"
+      ],
+      "count": 22,
+      "declared_events": 40,
+      "declared_measures": 15,
+      "excluded": [
+        {
+          "symbol": "HumanOnFloor",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "userOccupied",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "hazardDetected",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "timeBetweenMeals",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "dataNeedsChecking",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userAsksForAppropriateTasks",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userNeedsSpecialAccomodations",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userDisablesAlarm",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "alarmRestarts",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "personAuthorized",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "kitchenSafe",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "needLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "UserUnpredictable",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "UserHasLimitation",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "UserWantsToCook",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "AgentDeployed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "PreparingDeployment",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "SmokeDetectorAlarm",
+          "reason": "environmental condition/event"
+        }
+      ],
+      "notes": "Some symbols are excluded as they represent user actions or contextual measures rather than capabilities of the system."
+    },
+    "corrected": {
+      "file": "ALMI-corrected.sleec",
+      "capabilities": [
+        "AllowUserToCook",
+        "AskCallHelp",
+        "AskForDetailLevelOfInstructions",
+        "AskForEmergencyContact",
+        "CalibrateSpeech",
+        "CallEmergencyServices",
+        "CheckTemperature",
+        "CollectandRecordInformation",
+        "ConsiderUserPractices",
+        "FireSafetyMeasures",
+        "FoodPreparation",
+        "GiveSuggestion",
+        "GivingCookingInstructions",
+        "InformCaregiver",
+        "InformUser",
+        "InterfereSafely",
+        "MonitorMealTime",
+        "OpenWindows",
+        "ProvideDataSummaries",
+        "RecalculateApproach",
+        "RemindLater",
+        "RemindUserOfLimitations",
+        "ShowDataHistory",
+        "TrackTime",
+        "UpdateInformation",
+        "UpdateMap",
+        "UseFirstPersonPluralLanguage"
+      ],
+      "count": 27,
+      "declared_events": 41,
+      "declared_measures": 15,
+      "excluded": [
+        {
+          "symbol": "HumanOnFloor",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "userDisablesAlarm",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "timeBetweenMeals",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "hazardDetected",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userOccupied",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "dataNeedsChecking",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "personAuthorized",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userAsksForAppropriateTasks",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userNeedsSpecialAccomodations",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "needLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "alarmOn",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "alarmRestarts",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "kitchenSafe",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "safePathFound",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanAssents",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "UserUnpredictable",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "PreparingDeployment",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "AgentDeployed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "AgentHasAppropriateAppearance",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Some symbols are excluded as they represent user actions or contextual measures rather than system capabilities."
+    },
+    "sleecpatch": {
+      "file": "ALMI_SLEECPATCH.sleec",
+      "capabilities": [
+        "AllowUserToCook",
+        "AskForDetailLevelOfInstructions",
+        "AskForEmergencyContact",
+        "AskUserIfOK",
+        "CalibrateSpeech",
+        "CallEmergencyServices",
+        "CheckTemperature",
+        "CollectandRecordInformation",
+        "FireSafetyMeasures",
+        "GiveSuggestion",
+        "GivingCookingInstructions",
+        "InformCaregiver",
+        "InformUser",
+        "InterfereSafely",
+        "OpenWindows",
+        "ProvideDataSummaries",
+        "RecalculateApproach",
+        "RemindUserOfLimitations",
+        "ShowDataHistory",
+        "TrackTime",
+        "UpdateInformation",
+        "UpdateMap"
+      ],
+      "count": 22,
+      "declared_events": 40,
+      "declared_measures": 15,
+      "excluded": [
+        {
+          "symbol": "HumanOnFloor",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "userDisablesAlarm",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userOccupied",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "hazardDetected",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "timeBetweenMeals",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "dataNeedsChecking",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "personAuthorized",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "needLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userNeedsSpecialAccomodations",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userAsksForAppropriateTasks",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "UserChangeMind",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "UserChangeItemLocation",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "UserUnpredictable",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "alarmOn",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "alarmRestarts",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "kitchenSafe",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "safePathFound",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Some symbols are excluded as they represent user actions or contextual measures rather than capabilities of the system."
+    }
+  },
+  "ASPEN": {
+    "original": {
+      "file": "aspen.sleec",
+      "capabilities": [
+        "AnonymizeHuman",
+        "AvoidInterference",
+        "BackUp",
+        "CollectSample",
+        "DeletePictures",
+        "DeployDrone",
+        "ExitArea",
+        "GroundDrone",
+        "IdentifyActivity",
+        "InformHuman",
+        "InformKeeper",
+        "MonitorCarbon",
+        "MonitorLand",
+        "ReturnHome",
+        "StoreData",
+        "UpdateTerritories"
+      ],
+      "count": 16,
+      "declared_events": 23,
+      "declared_measures": 18,
+      "excluded": [
+        {
+          "symbol": "HumanNearby",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "EncounterHuman",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "EncounterWildlife",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "PreparingDrone",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "ImplementASPEN",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "TakePictures",
+          "reason": "user action"
+        },
+        {
+          "symbol": "flightCondition",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "carbonFootprint",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "benefits",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "damages",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "environmentDangerous",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanIdentified",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanUnderstands",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "landTreatyInPlace",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "onIndigenousLand",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "privateTerritory",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "relevantLand",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "sameLanguage",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unKnownObject",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unrelatedActivity",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "wildlifeDisturbed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "wildlifeInteractswithDrone",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Some symbols are excluded as they represent environmental conditions or contextual measures rather than capabilities the system can perform."
+    },
+    "corrected": {
+      "file": "aspen-corrected.sleec",
+      "capabilities": [
+        "AnonymizeHuman",
+        "AvoidInterference",
+        "BackUp",
+        "CollectSample",
+        "DeletePictures",
+        "DeployDrone",
+        "EnsureCompliance",
+        "ExitArea",
+        "GroundDrone",
+        "IdentifyActivity",
+        "InformHuman",
+        "InformKeeper",
+        "LogDroneAction",
+        "MonitorCarbon",
+        "MonitorLand",
+        "ReturnHome",
+        "StoreData",
+        "TakePictures",
+        "UpdateTerritories"
+      ],
+      "count": 19,
+      "declared_events": 24,
+      "declared_measures": 18,
+      "excluded": [
+        {
+          "symbol": "EncounterHuman",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "EncounterWildlife",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "HumanNearby",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "humanIdentified",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanUnderstands",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "environmentDangerous",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "onIndigenousLand",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "landTreatyInPlace",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "privateTerritory",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "relevantLand",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "sameLanguage",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "store",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unKnownObject",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unrelatedActivity",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "wildlifeDisturbed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "wildlifeInteractswithDrone",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "battery",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "benefits",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "carbonFootprint",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "damages",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "flightCondition",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Environmental occurrences and contextual measures are excluded as they do not represent capabilities of the system."
+    },
+    "sleecpatch": {
+      "file": "ASPEN_SLEECPATCH.sleec",
+      "capabilities": [
+        "AnonymizeHuman",
+        "AvoidInterference",
+        "BackUp",
+        "CollectSample",
+        "DeletePictures",
+        "DeployDrone",
+        "ExitArea",
+        "GroundDrone",
+        "IdentifyActivity",
+        "InformHuman",
+        "InformKeeper",
+        "MonitorCarbon",
+        "MonitorLand",
+        "ReturnHome",
+        "StoreData",
+        "UpdateTerritories"
+      ],
+      "count": 16,
+      "declared_events": 23,
+      "declared_measures": 18,
+      "excluded": [
+        {
+          "symbol": "EncounterHuman",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "EncounterWildlife",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "HumanNearby",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "PreparingDrone",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "humanIdentified",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanUnderstands",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "environmentDangerous",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "onIndigenousLand",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "landTreatyInPlace",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "privateTerritory",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "relevantLand",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "sameLanguage",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "carbonFootprint",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "benefits",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "damages",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "flightCondition",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "store",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unKnownObject",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unrelatedActivity",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "wildlifeDisturbed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "wildlifeInteractswithDrone",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Some symbols represent conditions or measures rather than capabilities, which is why they are excluded."
+    }
+  },
+  "AutoCAR": {
+    "original": {
+      "file": "Autocar.sleec",
+      "capabilities": [
+        "AskForClarification",
+        "AskIfUserReadyToDrive",
+        "CalculateShortestPath",
+        "ChangeCurrentDriving",
+        "ChangeLanes",
+        "ChangeSpeed",
+        "CheckSystemComponents",
+        "DisplayAlert",
+        "DisplayCarInformation",
+        "DisplayError",
+        "DisplayRoute",
+        "GetReadyToDrive",
+        "MaintainEqualDistance",
+        "MakeSpace",
+        "ParkVehicle",
+        "ReadyToDrive",
+        "SlowDown",
+        "StayCenteredinLane",
+        "TakeNewInput",
+        "TakeShortestPath",
+        "TemporarilyStopCar",
+        "TurnOnHazardsAndTemporarilyStop",
+        "TurnOnSensors",
+        "UserCancelPath",
+        "UserChangeRoute",
+        "UserRequestSpeedChange",
+        "UserTurnOffSystem",
+        "UserTurnOnSystem"
+      ],
+      "count": 28,
+      "declared_events": 36,
+      "declared_measures": 26,
+      "excluded": [
+        {
+          "symbol": "CarDriving",
+          "reason": "describes a state rather than a capability"
+        },
+        {
+          "symbol": "PriorityVehicleNearby",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "RecordPeople",
+          "reason": "describes an action contingent on consent"
+        },
+        {
+          "symbol": "SeeTrafficLight",
+          "reason": "describes an observation rather than a capability"
+        },
+        {
+          "symbol": "SystemReady",
+          "reason": "describes a state rather than a capability"
+        },
+        {
+          "symbol": "WaitUntilChanges",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "TurnOffSensors",
+          "reason": "describes a state change contingent on user action"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "actionIsLegal",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "destinationExists",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "doorClosed",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "environmentClear",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "greenLight",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "laneExists",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "multipleLanes",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "objectInPath",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "pathExists",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "peopleConsentObtained",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "previousLight",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "recognizeInput",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "redLight",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "seatBeltOn",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "userRequestedLaneChange",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "userSaysYes",
+          "reason": "describes a user action rather than a capability"
+        },
+        {
+          "symbol": "withinLane",
+          "reason": "describes a contextual measure"
+        },
+        {
+          "symbol": "yellowLight",
+          "reason": "describes a contextual measure"
+        }
+      ],
+      "notes": "Some symbols describe states or conditions rather than actions the system can perform, which is why they are excluded."
+    },
+    "corrected": {
+      "file": "Autocar-corrected.sleec",
+      "capabilities": [
+        "AskForClarification",
+        "AskIfUserReadyToDrive",
+        "CalculateShortestPath",
+        "ChangeCurrentDriving",
+        "ChangeLanes",
+        "ChangeSpeed",
+        "CheckSystemComponents",
+        "DisplayAlert",
+        "DisplayCarInformation",
+        "DisplayError",
+        "DisplayRoute",
+        "GetReadyToDrive",
+        "MaintainEqualDistance",
+        "MakeSpace",
+        "ParkVehicle",
+        "ReadyToDrive",
+        "RecordPeople",
+        "SlowDown",
+        "StayCenteredinLane",
+        "StopAutonomousAssistance",
+        "TakeNewInput",
+        "TakeShortestPath",
+        "TemporarilyStopCar",
+        "TurnOnHazardsAndTemporarilyStop",
+        "TurnOnSensors",
+        "UserCancelPath",
+        "UserChangeRoute",
+        "UserRequestSpeedChange",
+        "UserTurnOffSystem",
+        "UserTurnOnSystem",
+        "WaitUntilChanges"
+      ],
+      "count": 31,
+      "declared_events": 37,
+      "declared_measures": 26,
+      "excluded": [
+        {
+          "symbol": "CarDriving",
+          "reason": "describes a state rather than a capability"
+        },
+        {
+          "symbol": "PriorityVehicleNearby",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "SeeTrafficLight",
+          "reason": "describes an observation rather than a capability"
+        },
+        {
+          "symbol": "actionIsLegal",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "ambulanceBehindCar",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "ambulanceNextToCar",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "ambulanceOnOppositeSide",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "carsBehind",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "carsInFront",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "commandClear",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "destinationExists",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "doorClosed",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "environmentClear",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "greenLight",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "laneExists",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "multipleLanes",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "objectInPath",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "pathExists",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "peopleConsentObtained",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "previousLight",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "recognizeInput",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "redLight",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "seatBeltOn",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "userRequestedLaneChange",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "userSaysYes",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "userTurnedOffSystem",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "withinLane",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "yellowLight",
+          "reason": "environmental condition"
+        }
+      ],
+      "notes": "Some symbols describe states or conditions rather than actions the system can perform, which is why they are excluded."
+    },
+    "sleecpatch": {
+      "file": "AutoCAR_SLEECPATCH.sleec",
+      "capabilities": [
+        "AskForClarification",
+        "AskIfUserReadyToDrive",
+        "CalculateShortestPath",
+        "ChangeCurrentDriving",
+        "ChangeLanes",
+        "ChangeSpeed",
+        "CheckSystemComponents",
+        "DisplayAlert",
+        "DisplayCarInformation",
+        "DisplayError",
+        "DisplayRoute",
+        "GetReadyToDrive",
+        "MaintainEqualDistance",
+        "MakeSpace",
+        "ParkVehicle",
+        "ReadyToDrive",
+        "SlowDown",
+        "StayCenteredinLane",
+        "TakeNewInput",
+        "TakeShortestPath",
+        "TemporarilyStopCar",
+        "TurnOnHazardsAndTemporarilyStop",
+        "TurnOnSensors",
+        "UserCancelPath",
+        "UserChangeRoute",
+        "UserRequestSpeedChange",
+        "UserTurnOffSystem",
+        "UserTurnOnSystem"
+      ],
+      "count": 28,
+      "declared_events": 36,
+      "declared_measures": 26,
+      "excluded": [
+        {
+          "symbol": "CarDriving",
+          "reason": "describes a state rather than a capability"
+        },
+        {
+          "symbol": "PriorityVehicleNearby",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "SeeTrafficLight",
+          "reason": "describes an observation rather than a capability"
+        },
+        {
+          "symbol": "SystemReady",
+          "reason": "describes a state rather than a capability"
+        },
+        {
+          "symbol": "RecordPeople",
+          "reason": "describes an action contingent on consent"
+        },
+        {
+          "symbol": "actionIsLegal",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "ambulanceBehindCar",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "ambulanceNextToCar",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "ambulanceOnOppositeSide",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "carsBehind",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "carsInFront",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "commandClear",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "destinationExists",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "doorClosed",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "environmentClear",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "greenLight",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "laneExists",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "multipleLanes",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "objectInPath",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "pathExists",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "peopleConsentObtained",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "previousLight",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "recognizeInput",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "redLight",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "seatBeltOn",
+          "reason": "describes an environmental condition"
+        },
+        {
+          "symbol": "userRequestedLaneChange",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "userSaysYes",
+          "reason": "describes a user action rather than a capability"
+        },
+        {
+          "symbol": "userTurnedOffSystem",
+          "reason": "describes a user action rather than a capability"
+        },
+        {
+          "symbol": "withinLane",
+          "reason": "describes a condition rather than a capability"
+        },
+        {
+          "symbol": "yellowLight",
+          "reason": "describes an environmental condition"
+        }
+      ],
+      "notes": "Some symbols describe states or conditions rather than actions the system can perform, which is why they are excluded."
+    }
+  },
+  "BSN": {
+    "original": {
+      "file": "BSN.sleec",
+      "capabilities": [
+        "AdjustSamplingRate",
+        "AdjustServiceTimerate",
+        "AnonymizeData",
+        "CalibrateBSN",
+        "CallAmbulance",
+        "CallCaregiver",
+        "ConfirmSensorPlacement",
+        "ConfirmUsersActivities",
+        "DeleteData",
+        "EmergencyConfirmed",
+        "EnsureEasyStopping",
+        "EnsureHardwareCompliance",
+        "HideGeographicLocation",
+        "InformBSNPurposeAndResponseProtocol",
+        "InformUser",
+        "ObtainEmergencyContact",
+        "ObtainUserConsentForData",
+        "ObtainUserConsentForSensors",
+        "RemoveSensors",
+        "SystemShutDown",
+        "TrackVitals",
+        "UserCanCallEmergency"
+      ],
+      "count": 22,
+      "declared_events": 33,
+      "declared_measures": 31,
+      "excluded": [
+        {
+          "symbol": "CaregiverCanDeactivate",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "DataCollected",
+          "reason": "event/measure, not a capability"
+        },
+        {
+          "symbol": "PatientAsleep",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "PatientBathing",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "PatientDoingChores",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "PatientOutdoors",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "UserWantsTimeout",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "UserWantsToRemoveSensors",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userResponds",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "caregiverResponds",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "anomalyDetected",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "signsDetached",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "signsImpaired",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "patientDiscomfort",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "patientIsHome",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "messageOnTime",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numSampleKnown",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numUsersKnown",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "emergencyDetected",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "authorizedParties",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "batteryConsumption",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "timeToFailureKnown",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "allowsBathroomTracking",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "isWaterproof",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "seeDemographics",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "seeHealthHistory",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "seeLocation",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "sensorMalfunction",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "sensorMisplacement",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unusualActivity",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Some symbols were excluded as they represent user actions or contextual measures rather than capabilities of the system."
+    },
+    "corrected": {
+      "file": "BSN-corrected.sleec",
+      "capabilities": [
+        "AdjustSamplingRate",
+        "AdjustSensors",
+        "AdjustServiceTimerate",
+        "AnonymizeData",
+        "CalibrateBSN",
+        "CallAmbulance",
+        "CallCaregiver",
+        "CaregiverCanDeactivate",
+        "ConfirmSensorPlacement",
+        "ConfirmUsersActivities",
+        "DeleteData",
+        "EmergencyConfirmed",
+        "EnsureEasyStopping",
+        "EnsureHardwareCompliance",
+        "HideGeographicLocation",
+        "InformBSNPurposeAndResponseProtocol",
+        "InformUser",
+        "ObtainEmergencyContact",
+        "ObtainRiskLevel",
+        "ObtainUserConsentForData",
+        "ObtainUserConsentForSensors",
+        "RemoveSensors",
+        "SystemShutDown",
+        "TrackVitals",
+        "UserCanCallEmergency"
+      ],
+      "count": 25,
+      "declared_events": 34,
+      "declared_measures": 32,
+      "excluded": [
+        {
+          "symbol": "DataCollected",
+          "reason": "describes a state rather than a capability"
+        },
+        {
+          "symbol": "PatientAsleep",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "PatientBathing",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "PatientDoingChores",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "PatientOutdoors",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "UserRequestRemoveSensor",
+          "reason": "user action, not a system capability"
+        },
+        {
+          "symbol": "UserWantsTimeout",
+          "reason": "user action, not a system capability"
+        },
+        {
+          "symbol": "UserWantsToRemoveSensors",
+          "reason": "user action, not a system capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "patientDiscomfort",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "patientIsHome",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "signsDetached",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "signsImpaired",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "anomalyDetected",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "emergencyDetected",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "messageOnTime",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numSampleKnown",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numUsersKnown",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "batteryConsumption",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "timeToFailureKnown",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "allowsBathroomTracking",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "hasFallAlertPendant",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "isWaterproof",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "caregiverConsent",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "caregiverResponds",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "dataNeededForTraining",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unusualActivity",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userResponds",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Some symbols represent user actions or contextual measures rather than capabilities the system can perform."
+    }
+  },
+  "Casper": {
+    "original": {
+      "file": "Casper.sleec",
+      "capabilities": [],
+      "count": 0,
+      "declared_events": 0,
+      "declared_measures": 0,
+      "excluded": [],
+      "notes": "No declared events or measures were provided to evaluate for capabilities."
+    },
+    "corrected": {
+      "file": "Casper-corrected.sleec",
+      "capabilities": [],
+      "count": 0,
+      "declared_events": 0,
+      "declared_measures": 0,
+      "excluded": [],
+      "notes": "No declared events or measures were provided to evaluate for capabilities."
+    }
+  },
+  "CSICobot": {
+    "original": {
+      "file": "CSI.sleec",
+      "capabilities": [
+        "AccountHumanRandomness",
+        "AdjustRoute",
+        "AssignLiability",
+        "AvoidBumping",
+        "ConsiderAppearance",
+        "IncreaseSpeed",
+        "InformHuman",
+        "MinimizeCobotCollaboration",
+        "MoveAtSafeSpeed",
+        "PrioritizeHumans",
+        "ReportIncident",
+        "RobotContinueTask",
+        "RobotStopAction",
+        "TrackHumanLocation"
+      ],
+      "count": 14,
+      "declared_events": 23,
+      "declared_measures": 13,
+      "excluded": [
+        {
+          "symbol": "bumpHuman",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanConsents",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanInRange",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanInRoute",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanReEnables",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanTooClose",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humansPresent",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "isHumanTask",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "obstaclePresent",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "risk",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "routeAvailable",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "accident",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "efficiency",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "All capabilities are derived from declared events that the system can perform. Contextual measures and conditions are excluded."
+    },
+    "corrected": {
+      "file": "CSI-corrected.sleec",
+      "capabilities": [
+        "AccountHumanRandomness",
+        "AdjustRoute",
+        "AskPermission",
+        "AssignLiability",
+        "AvoidBumping",
+        "Communicate",
+        "IncreaseSpeed",
+        "InformHuman",
+        "MinimizeCobotCollaboration",
+        "MoveAtSafeSpeed",
+        "MoveAwayFromHuman",
+        "PrioritizeHumans",
+        "ReportIncident",
+        "RobotContinueTask",
+        "RobotStopAction",
+        "TrackHumanLocation"
+      ],
+      "count": 16,
+      "declared_events": 24,
+      "declared_measures": 13,
+      "excluded": [
+        {
+          "symbol": "HumanSaysStop",
+          "reason": "user action"
+        },
+        {
+          "symbol": "RobotMoving",
+          "reason": "system state"
+        },
+        {
+          "symbol": "PreparingRobot",
+          "reason": "system state"
+        },
+        {
+          "symbol": "RobotWorking",
+          "reason": "system state"
+        },
+        {
+          "symbol": "bumpHuman",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "humanInRange",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "humanTooClose",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "routeAvailable",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "accident",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "obstaclePresent",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "humansPresent",
+          "reason": "environmental condition"
+        },
+        {
+          "symbol": "isHumanTask",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "efficiency",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "risk",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanConsents",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "humanReEnables",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Some symbols represent states or conditions rather than capabilities the system can perform."
+    }
+  },
+  "DAISY": {
+    "original": {
+      "file": "Daisy.sleec",
+      "capabilities": [
+        "AddressSirOrMadam",
+        "AddressUserName",
+        "ApproachPatient",
+        "AskRepresentativeForConsent",
+        "CallSupport",
+        "CanCallHuman",
+        "CanEndSession",
+        "CheckUnderstanding",
+        "CollectPatientData",
+        "ConfirmConsent",
+        "EnsureLegalPresence",
+        "EnsurePrivateSpace",
+        "ExaminationContinuable",
+        "ExamineState",
+        "IdentifyDAISYTrust",
+        "InformUserandandReferToHumanCarer",
+        "ObtainConsent",
+        "PreparingExamination",
+        "PreparingTasks",
+        "PresentingReport",
+        "ProvideConfidenceLevel",
+        "ProvideInfo",
+        "ReferToHumanExaminer",
+        "RepeatInstruction",
+        "RequestHumanAgent",
+        "RobotStopSession",
+        "Speaking",
+        "TrainDaisy",
+        "UseChoicenLanguage",
+        "UseDefaultasEnglish",
+        "UsePreferredName",
+        "UserEndSession",
+        "UserRequestInfo",
+        "UserUnderstands",
+        "determineThreshold",
+        "informDaisyAbilities",
+        "selectDAISYProtocol"
+      ],
+      "count": 37,
+      "declared_events": 45,
+      "declared_measures": 31,
+      "excluded": [
+        {
+          "symbol": "UserUnableToConsent",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "behaviorAggressive",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "bodyPartInvolvedInExam",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "culturalIndicatorA",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "dataNoiseConsidered",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "dataRelevantToContext",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "dataUnnecessary",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "directlyToUser",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "guardianConsentAvalaible",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "instructionRepeat",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "languagePreferenceAvailable",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "patientAgeConsidered",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "patientComfortable",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "patientXReligion",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "severityOfState",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "stablePhysicalState",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "stablePsychologicalState",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "timeElapsed",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "trainingDataRepresentative",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "urgentNeed",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "userConsentAvalaible",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "userDataInformed",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "userDirectsOtherwise",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "userNameUnknown",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "userPayingAttention",
+          "reason": "contextual measure, not a capability"
+        },
+        {
+          "symbol": "userSensoryNeedsMet",
+          "reason": "contextual measure, not a capability"
+        }
+      ],
+      "notes": "All excluded symbols are contextual measures or conditions that do not represent actions or functions the system can perform."
+    },
+    "corrected": {
+      "file": "Daisy-corrected.sleec",
+      "capabilities": [
+        "AddressSirOrMadam",
+        "AddressUserName",
+        "ApproachPatient",
+        "AskRepresentativeForConsent",
+        "CallSupport",
+        "CanCallHuman",
+        "CanEndSession",
+        "CheckUnderstanding",
+        "CollectPatientData",
+        "ConfirmConsent",
+        "EnsureLegalPresence",
+        "EnsurePrivateSpace",
+        "ExaminationContinuable",
+        "ExamineState",
+        "ExaminingPatient",
+        "IdentifyDAISYTrust",
+        "InformUserandandReferToHumanCarer",
+        "ObtainConsent",
+        "PreparingExamination",
+        "PreparingTasks",
+        "PresentingReport",
+        "ProvideConfidenceLevel",
+        "ProvideInfo",
+        "ReferToHumanExaminer",
+        "RepeatInstruction",
+        "RequestHumanAgent",
+        "RobotStopSession",
+        "Speaking",
+        "TrainDaisy",
+        "UseChoicenLanguage",
+        "UseDefaultasEnglish",
+        "UsePreferredName",
+        "UserEndSession",
+        "UserRequestInfo",
+        "UserUnderstands",
+        "determineThreshold",
+        "informDaisyAbilities",
+        "selectDAISYProtocol"
+      ],
+      "count": 38,
+      "declared_events": 45,
+      "declared_measures": 31,
+      "excluded": [
+        {
+          "symbol": "UserUnableToConsent",
+          "reason": "not a capability; it is a user/context condition."
+        },
+        {
+          "symbol": "behaviorAggressive",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "bodyPartInvolvedInExam",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "culturalIndicatorA",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "dataNoiseConsidered",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "dataRelevantToContext",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "dataUnnecessary",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "directlyToUser",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "guardianConsentAvalaible",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "instructionRepeat",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "languagePreferenceAvailable",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "patientAgeConsidered",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "patientComfortable",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "patientXReligion",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "severityOfState",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "stablePhysicalState",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "stablePsychologicalState",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "timeElapsed",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "trainingDataRepresentative",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "urgentNeed",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "userConsentAvalaible",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "userDataInformed",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "userDirectsOtherwise",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "userNameUnknown",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "userPayingAttention",
+          "reason": "not a capability; it is a contextual measure."
+        },
+        {
+          "symbol": "userSensoryNeedsMet",
+          "reason": "not a capability; it is a contextual measure."
+        }
+      ],
+      "notes": "All declared events are classified as capabilities, while measures and contextual conditions are excluded."
+    },
+    "sleecpatch": {
+      "file": "DAISY_SLEECPATCH.sleec",
+      "capabilities": [
+        "AddressSirOrMadam",
+        "AddressUserName",
+        "ApproachPatient",
+        "AskRepresentativeForConsent",
+        "CallSupport",
+        "CanCallHuman",
+        "CanEndSession",
+        "CheckUnderstanding",
+        "CollectPatientData",
+        "ConfirmConsent",
+        "EnsureLegalPresence",
+        "EnsurePrivateSpace",
+        "ExaminationContinuable",
+        "ExamineState",
+        "IdentifyDAISYTrust",
+        "InformUserandandReferToHumanCarer",
+        "ObtainConsent",
+        "PreparingExamination",
+        "PreparingTasks",
+        "PresentingReport",
+        "ProvideConfidenceLevel",
+        "ProvideInfo",
+        "ReferToHumanExaminer",
+        "RepeatInstruction",
+        "RequestHumanAgent",
+        "RobotStopSession",
+        "Speaking",
+        "TrainDaisy",
+        "UseChoicenLanguage",
+        "UseDefaultasEnglish",
+        "UsePreferredName",
+        "UserEndSession",
+        "UserRequestInfo",
+        "UserUnderstands",
+        "determineThreshold",
+        "informDaisyAbilities",
+        "selectDAISYProtocol"
+      ],
+      "count": 37,
+      "declared_events": 45,
+      "declared_measures": 31,
+      "excluded": [
+        {
+          "symbol": "EventX",
+          "reason": "not a capability; it is an event without a defined action"
+        },
+        {
+          "symbol": "InstructionFail",
+          "reason": "not a capability; it describes a failure condition"
+        },
+        {
+          "symbol": "ExaminingPatient",
+          "reason": "not a capability; it describes a state rather than an action"
+        },
+        {
+          "symbol": "CollectingTrainingData",
+          "reason": "not a capability; it describes a process rather than an action"
+        },
+        {
+          "symbol": "MeetingPatient",
+          "reason": "not a capability; it describes a state rather than an action"
+        },
+        {
+          "symbol": "MeetingUser",
+          "reason": "not a capability; it describes a state rather than an action"
+        },
+        {
+          "symbol": "UserUnableToConsent",
+          "reason": "not a capability; it is a user condition"
+        },
+        {
+          "symbol": "UserAge",
+          "reason": "not a capability; it is a measure"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "instructionRepeat",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "timeElapsed",
+          "reason": "not a capability; it is a measure"
+        },
+        {
+          "symbol": "patientComfortable",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "patientAgeConsidered",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "patientXReligion",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "behaviorAggressive",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "dataNoiseConsidered",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "dataRelevantToContext",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "dataUnnecessary",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "trainingDataRepresentative",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "urgentNeed",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "userDataInformed",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "userNameUnknown",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "userPayingAttention",
+          "reason": "not a capability; it is a contextual measure"
+        },
+        {
+          "symbol": "userSensoryNeedsMet",
+          "reason": "not a capability; it is a contextual measure"
+        }
+      ],
+      "notes": "Some symbols describe states or conditions rather than actions the system can perform, which is why they are excluded."
+    }
+  },
+  "DPA": {
+    "original": {
+      "file": "DPA.sleec",
+      "capabilities": [
+        "AllowAudits",
+        "AssistController",
+        "DPAComplete",
+        "DPAIncomplete",
+        "DPAMade",
+        "DPAUpdate",
+        "EngageSubProcessor",
+        "HelpAuditors",
+        "ImposeObligationsOnSubProcessor",
+        "InformController",
+        "InformSubject",
+        "InformSupervisor",
+        "ObtainControllerConsent",
+        "PassSecurity",
+        "ProcessPersonalData",
+        "RemovePersonalData",
+        "RespondToRequest",
+        "StartDPAProcess",
+        "TakeLiabilityForSubProcessor"
+      ],
+      "count": 19,
+      "declared_events": 28,
+      "declared_measures": 25,
+      "excluded": [
+        {
+          "symbol": "AuditsOccur",
+          "reason": "event, not a capability"
+        },
+        {
+          "symbol": "DataBreach",
+          "reason": "event, not a capability"
+        },
+        {
+          "symbol": "EvaluateDPAProcess",
+          "reason": "event, not a capability"
+        },
+        {
+          "symbol": "EvaluateSecurity",
+          "reason": "event, not a capability"
+        },
+        {
+          "symbol": "RightsRequested",
+          "reason": "event, not a capability"
+        },
+        {
+          "symbol": "dpaActive",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaCategories",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaLength",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaNature",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaPurpose",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInstructions",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "lawRequires",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "measureTaken",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "personalData",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "rulesConform",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "securityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "specificControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "typesOfRisk",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditorType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "confidentialityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "art28Compliance",
+          "reason": "measure, not a capability"
+        }
+      ],
+      "notes": "Events and measures are excluded as they do not represent actions or functions the system can perform."
+    },
+    "corrected": {
+      "file": "DPA-corrected.sleec",
+      "capabilities": [
+        "AllowAudits",
+        "AssistController",
+        "DPAComplete",
+        "DPAIncomplete",
+        "DPAMade",
+        "DPATerminate",
+        "DPAUpdate",
+        "EngageSubProcessor",
+        "EvaluateDPAProcess",
+        "EvaluateSecurity",
+        "HelpAuditors",
+        "ImposeObligationsOnSubProcessor",
+        "InformController",
+        "InformSubject",
+        "InformSupervisor",
+        "ObtainControllerConsent",
+        "ProcessPersonalData",
+        "RemovePersonalData",
+        "RespondToRequest",
+        "StartDPAProcess",
+        "TakeLiabilityForSubProcessor"
+      ],
+      "count": 21,
+      "declared_events": 28,
+      "declared_measures": 25,
+      "excluded": [
+        {
+          "symbol": "AuditsOccur",
+          "reason": "event, not a capability"
+        },
+        {
+          "symbol": "DataBreach",
+          "reason": "event, not a capability"
+        },
+        {
+          "symbol": "RightsRequested",
+          "reason": "event, not a capability"
+        },
+        {
+          "symbol": "art28Compliance",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditorType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "confidentialityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInstructions",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dataCompliance",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaActive",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaCategories",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaLength",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaNature",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaPurpose",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "genControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "informingAllowed",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "lawRequires",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "measureTaken",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "personalData",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "rulesConform",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "securityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "specificControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "typesOfRisk",
+          "reason": "measure, not a capability"
+        }
+      ],
+      "notes": "All capabilities are derived from declared events that represent actions the system can perform, while measures and environmental conditions are excluded."
+    }
+  },
+  "DressAssist": {
+    "original": {
+      "file": "DRESSASSIST.sleec",
+      "capabilities": [
+        "AdmininisteringMedication",
+        "AskToFinishFirst",
+        "CautionWhereOrWhenTouching",
+        "ChangeSubject",
+        "CheckForandObtainProxy",
+        "CloseCurtains",
+        "CloseDoor",
+        "CollectionStarted",
+        "CurtainOpenRqt",
+        "CurtainsOpened",
+        "DeployingAgent",
+        "DesigningAgent",
+        "DetectUrgentHealthIssue",
+        "DetermineSensitivityLevel",
+        "DiscardInformation",
+        "DressingStarted",
+        "DressinginClotingX",
+        "EmotionRecognitionDetected",
+        "EnsureDesiredLanguageAvailable",
+        "EnsureHumanCarerPresent",
+        "FirstMeetingUser",
+        "InformCarer",
+        "InformEmergencyContactAndHealthOrgs",
+        "InformUser",
+        "InformUserOfLimitations",
+        "InformUserPrivateInformation",
+        "InformUserThisIsAgentnotHuman",
+        "InformUserandandReferToHumanCarer",
+        "InteractingWithNonPatients",
+        "InteractionStarted",
+        "KeepLogOfFrequentActivities",
+        "LogMedication",
+        "ObtainAssent",
+        "ObtainEmergencyContact",
+        "OfferHelp",
+        "PersonAsksforData",
+        "ProvideInfo",
+        "RecommendOtherwise",
+        "RecordFashionBasedOnOccasion",
+        "RefuseRequest",
+        "ReviewInteraction",
+        "RobotStop",
+        "ShowEmpathy",
+        "StopActivity",
+        "StoreMinInfo",
+        "SuggestPerformingActions",
+        "UserDiscussingPrivateInfo",
+        "UserExpressDiscomfort",
+        "UserHasDifferentCulture",
+        "UserInStress",
+        "UserRequestInfo",
+        "UserSaysStop",
+        "UserSelfMedicates",
+        "sharePersonalDataAndInformWhy"
+      ],
+      "count": 54,
+      "declared_events": 54,
+      "declared_measures": 42,
+      "excluded": [
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userUnderDressed",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userDistressed",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "buildingFloor",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "roomDark",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "sensitiveInformationX",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userCompetenceIndicator",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userConfused",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userAdamant",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userWantsHumanSubsequently",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userWantsNoHuman",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "withholdingActivityPhysicalHarm",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "medicationRisk",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "medicationAdverseEffects",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numDaysDeployed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numHoursDeployed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numTotalInteractions",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unauthorizedPersonInRoom",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "irrelevant",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "theUserHasBeenInformed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "anthropomorphicAppearance",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "anthropomorphicNecessary",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "clothingChoiceInappropriate",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "clothingItemNotFound",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "competentIndicatorRequired",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "competentToGrantConsent",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "consentGranted",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "consentGrantedwithinXmonths",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "consentIndicatorRequired",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "consentIndicatorisRevoked",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "consentIndicatorisWithdrawn",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "dressPreferenceTypeA",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userRequiresAdaptiveClothing",
+          "reason": "user/context condition"
+        }
+      ],
+      "notes": "Excluded symbols primarily represent contextual measures or user conditions rather than system capabilities."
+    },
+    "corrected": {
+      "file": "DRESSASSIST-corrected.sleec",
+      "capabilities": [
+        "AdmininisteringMedication",
+        "AskToFinishFirst",
+        "CautionWhereOrWhenTouching",
+        "ChangeSubject",
+        "CheckForandObtainProxy",
+        "CloseCurtains",
+        "CloseDoor",
+        "CollectionStarted",
+        "CurtainOpenRqt",
+        "CurtainsOpened",
+        "DeployingAgent",
+        "DesigningAgent",
+        "DetectUrgentHealthIssue",
+        "DetermineSensitivityLevel",
+        "DiscardInformation",
+        "DressingStarted",
+        "DressinginClotingX",
+        "EmotionRecognitionDetected",
+        "EnsureDesiredLanguageAvailable",
+        "EnsureHumanCarerPresent",
+        "FirstMeetingUser",
+        "InformCarer",
+        "InformEmergencyContactAndHealthOrgs",
+        "InformUser",
+        "InformUserOfLimitations",
+        "InformUserPrivateInformation",
+        "InformUserThisIsAgentnotHuman",
+        "InformUserandandReferToHumanCarer",
+        "InteractingWithNonPatients",
+        "InteractionStarted",
+        "KeepLogOfFrequentActivities",
+        "LogMedication",
+        "ObtainAssent",
+        "ObtainConsent",
+        "ObtainEmergencyContact",
+        "OfferHelp",
+        "PersonAsksforData",
+        "ProvideInfo",
+        "RecommendOtherwise",
+        "RecordFashionBasedOnOccasion",
+        "RefuseRequest",
+        "ReviewInteraction",
+        "RobotStop",
+        "ShowEmpathy",
+        "StopActivity",
+        "StoreMinInfo",
+        "SuggestPerformingActions",
+        "UserDiscussingPrivateInfo",
+        "UserExpressDiscomfort",
+        "UserInStress",
+        "UserRequestInfo",
+        "UserSaysStop",
+        "UserSelfMedicates",
+        "sharePersonalDataAndInformWhy"
+      ],
+      "count": 54,
+      "declared_events": 55,
+      "declared_measures": 42,
+      "excluded": [
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userUnderDressed",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userDistressed",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "buildingFloor",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "roomDark",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "sensitiveInformationX",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userCompetenceIndicator",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userConfused",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userAdvices",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userRequiresAdaptiveClothing",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userAdamant",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userWantsHumanSubsequently",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "userWantsNoHuman",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "numDaysDeployed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numHoursDeployed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numTotalInteractions",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "anthropomorphicNecessary",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "anthropomorphicAppearance",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "irrelevant",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "medicationRisk",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "medicationAdverseEffects",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "withholdingActivityPhysicalHarm",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "theUserHasBeenInformed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "unauthorizedPersonInRoom",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "Excluded symbols primarily represent contextual measures or user conditions rather than system capabilities."
+    },
+    "sleecpatch": {
+      "file": "DressAssist_SLEECPATCH.sleec",
+      "capabilities": [
+        "AdmininisteringMedication",
+        "AskToFinishFirst",
+        "CautionWhereOrWhenTouching",
+        "ChangeSubject",
+        "CheckForandObtainProxy",
+        "CloseCurtains",
+        "CloseDoor",
+        "CollectionStarted",
+        "CurtainOpenRqt",
+        "CurtainsOpened",
+        "DeployingAgent",
+        "DesigningAgent",
+        "DetectUrgentHealthIssue",
+        "DetermineSensitivityLevel",
+        "DiscardInformation",
+        "DressingStarted",
+        "DressinginClotingX",
+        "EmotionRecognitionDetected",
+        "EnsureDesiredLanguageAvailable",
+        "EnsureHumanCarerPresent",
+        "FirstMeetingUser",
+        "InformCarer",
+        "InformEmergencyContactAndHealthOrgs",
+        "InformUser",
+        "InformUserOfLimitations",
+        "InformUserPrivateInformation",
+        "InformUserThisIsAgentnotHuman",
+        "InformUserandandReferToHumanCarer",
+        "InteractingWithNonPatients",
+        "InteractionStarted",
+        "KeepLogOfFrequentActivities",
+        "LogMedication",
+        "ObtainAssent",
+        "ObtainEmergencyContact",
+        "OfferHelp",
+        "PersonAsksforData",
+        "ProvideInfo",
+        "RecommendOtherwise",
+        "RecordFashionBasedOnOccasion",
+        "RefuseRequest",
+        "ReviewInteraction",
+        "RobotStop",
+        "ShowEmpathy",
+        "StopActivity",
+        "StoreMinInfo",
+        "SuggestPerformingActions",
+        "UserDiscussingPrivateInfo",
+        "UserExpressDiscomfort",
+        "UserInStress",
+        "UserRequestInfo",
+        "UserSaysStop",
+        "UserSelfMedicates",
+        "sharePersonalDataAndInformWhy"
+      ],
+      "count": 53,
+      "declared_events": 54,
+      "declared_measures": 42,
+      "excluded": [
+        {
+          "symbol": "userUnderDressed",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userDistressed",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "buildingFloor",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "roomDark",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userAssent",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "consentGrantedwithinXmonths",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "competentIndicatorRequired",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "competentToGrantConsent",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "sensitiveInformationX",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userCompetenceIndicator",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userConfused",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userDistressed",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userRequiresAdaptiveClothing",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userAdvices",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userAdamant",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userWantsHumanSubsequently",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "userWantsNoHuman",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "medicationRisk",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "medicationAdverseEffects",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "numDaysDeployed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numHoursDeployed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "numTotalInteractions",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "irrelevant",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "unauthorizedPersonInRoom",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "withholdingActivityPhysicalHarm",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "anthropomorphicNecessary",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "anthropomorphicAppearance",
+          "reason": "contextual condition"
+        },
+        {
+          "symbol": "minimumFrequency",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "All excluded symbols are contextual conditions or measures that do not represent actions or functions the system can perform."
+    }
+  },
+  "SafeSCAD": {
+    "original": {
+      "file": "safescade.sleec",
+      "capabilities": [
+        "ConfirmWithUser",
+        "CreateConsentForm",
+        "DetermineImportance",
+        "EnsureAccessibility",
+        "EnsureAlertIndependence",
+        "EnsureAlertness",
+        "FindInformation",
+        "InformUser",
+        "ObtainConsentForUserDrive",
+        "RemindUser",
+        "ShowConsentForm",
+        "TakeControlForSafety",
+        "TrackMetrics",
+        "TrackVisionField",
+        "UserCanTurnOffMonitoring",
+        "UserCanTurnOffSystem",
+        "UserDriving"
+      ],
+      "count": 17,
+      "declared_events": 24,
+      "declared_measures": 21,
+      "excluded": [
+        {
+          "symbol": "BaselineDiffers",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "SensorsConnect",
+          "reason": "environmental condition/event"
+        },
+        {
+          "symbol": "PreparingSystem",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "UserEnters",
+          "reason": "user action"
+        },
+        {
+          "symbol": "UserWantsControl",
+          "reason": "user action"
+        },
+        {
+          "symbol": "SystemDriving",
+          "reason": "system state"
+        },
+        {
+          "symbol": "SystemOn",
+          "reason": "system state"
+        },
+        {
+          "symbol": "warningSignalOff",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "userGivesControl",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "userNotice",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "userUnderstands",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "informationImportant",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "rulesFollowed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "sameCity",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "commonLanguage",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "health",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "hasLicense",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "substanceUse",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "objectNearby",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "blindSpot",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "fullAttentionNeeded",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "eyeMovements",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "hearRateVariability",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "needsAccomodation",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "properlyPlaced",
+          "reason": "contextual fact"
+        }
+      ],
+      "notes": "User actions and environmental conditions are excluded as they do not represent capabilities of the system."
+    },
+    "corrected": {
+      "file": "safescade-corrected.sleec",
+      "capabilities": [
+        "Alert",
+        "ConfirmWithUser",
+        "CreateConsentForm",
+        "DetermineImportance",
+        "EnsureAccessibility",
+        "EnsureAlertIndependence",
+        "EnsureAlertness",
+        "InformUser",
+        "ObtainConsentForUserDrive",
+        "RemindUser",
+        "ShowConsentForm",
+        "StopAutonomousComponent",
+        "StopUnfunctioningSensorAssistance",
+        "SytemTakesOver",
+        "TakeControlForSafety",
+        "TrackMetrics",
+        "TrackVisionField",
+        "UserDriving"
+      ],
+      "count": 18,
+      "declared_events": 29,
+      "declared_measures": 23,
+      "excluded": [
+        {
+          "symbol": "UserCanTurnOffMonitoring",
+          "reason": "user action/context condition"
+        },
+        {
+          "symbol": "UserCanTurnOffSystem",
+          "reason": "user action/context condition"
+        },
+        {
+          "symbol": "SensorsConnect",
+          "reason": "environmental occurrence"
+        },
+        {
+          "symbol": "PreparingSystem",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "FirstInteractionUser",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "UserEnters",
+          "reason": "user action/context condition"
+        },
+        {
+          "symbol": "UserWantsControl",
+          "reason": "user action/context condition"
+        },
+        {
+          "symbol": "SystemOn",
+          "reason": "system state"
+        },
+        {
+          "symbol": "SystemDriving",
+          "reason": "system state"
+        },
+        {
+          "symbol": "BaselineDiffers",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "health",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "hasLicense",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "substanceUse",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userImpaired",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userNotice",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userUnderstands",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "commonLanguage",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "informationImportant",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "rulesFollowed",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "blindSpot",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "objectNearby",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "relevantObjectNearby",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "decisionPoint",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "removeFeatureConsent",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "warningSignalOff",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "userGivesControl",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "fullAttentionNeeded",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "eyeMovements",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "hearRateVariability",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "needsAccomodation",
+          "reason": "contextual measure"
+        },
+        {
+          "symbol": "sameCity",
+          "reason": "contextual measure"
+        }
+      ],
+      "notes": "User actions and contextual measures are excluded as they do not represent capabilities of the system."
+    },
+    "sleecpatch": {
+      "file": "SafeSCAD_SLEECPATCH.sleec",
+      "capabilities": [
+        "ConfirmWithUser",
+        "CreateConsentForm",
+        "DetermineImportance",
+        "EnsureAccessibility",
+        "EnsureAlertIndependence",
+        "EnsureAlertness",
+        "InformUser",
+        "ObtainConsentForUserDrive",
+        "RemindUser",
+        "ShowConsentForm",
+        "TakeControlForSafety",
+        "TrackMetrics",
+        "TrackVisionField",
+        "UserCanTurnOffMonitoring",
+        "UserCanTurnOffSystem"
+      ],
+      "count": 15,
+      "declared_events": 24,
+      "declared_measures": 21,
+      "excluded": [
+        {
+          "symbol": "UserDriving",
+          "reason": "user/context condition"
+        },
+        {
+          "symbol": "SensorsConnect",
+          "reason": "environmental occurrence"
+        },
+        {
+          "symbol": "PreparingSystem",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "UserEnters",
+          "reason": "user action"
+        },
+        {
+          "symbol": "UserWantsControl",
+          "reason": "user action"
+        },
+        {
+          "symbol": "SystemDriving",
+          "reason": "system state"
+        },
+        {
+          "symbol": "SystemOn",
+          "reason": "system state"
+        }
+      ],
+      "notes": "UserDriving and other user actions or environmental occurrences are excluded as they do not represent capabilities of the system."
+    }
+  },
+  "Tabiat": {
+    "original": {
+      "file": "Tabiat.sleec",
+      "capabilities": [],
+      "count": 0,
+      "declared_events": 0,
+      "declared_measures": 0,
+      "excluded": [],
+      "notes": "No declared events or measures were provided, so there are no capabilities to classify."
+    },
+    "corrected": {
+      "file": "Tabiat-corrected.sleec",
+      "capabilities": [],
+      "count": 0,
+      "declared_events": 0,
+      "declared_measures": 0,
+      "excluded": [],
+      "notes": "No declared events or measures were provided to classify as capabilities."
+    }
+  }
+}

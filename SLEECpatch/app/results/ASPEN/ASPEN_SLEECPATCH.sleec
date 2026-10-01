@@ -99,9 +99,12 @@ rule_start
     R13 when PreparingDrone and ((({battery} = low) or ({store} = low)) or {damages})
     then not DeployDrone
 
-    R14 when DeployDrone and {damages} then InformKeeper
 
-R14_1 when DeployDrone and {damages} then GroundDrone unless ({battery} = low)
+    R14_1 when DeployDrone and {damages} then GroundDrone
+R_new_1 when EnsureCompliance then InformKeeper
+R_new when DeletePictures then InformKeeper
+R_new when PreparingDrone and ({flightCondition} = dangerous) then not DeployDrone
+R_new when DeployDrone and ({battery} = low) then GroundDrone
 rule_end
 
 concern_start

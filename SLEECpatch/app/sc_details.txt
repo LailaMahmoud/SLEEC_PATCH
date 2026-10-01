@@ -1,0 +1,554 @@
+27:SC #1
+28-----------------------------------------------------------------------
+29-at time 0: SmokeDetectorAlarm()
+30-at time 0: Measure(userOccupied=False, timeBetweenMeals=9, personAuthorized=True, dataNeedsChecking=True, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nmedium, humanAssents=False, safePathFound=True, hazardDetected=False, kitchenSafe=False, riskLevel=medium, alarmOn=False)
+31-at time 300: HumanOnFloor()
+32-at time 300: Measure(userOccupied=True, timeBetweenMeals=6, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=True, userNeedsSpecialAccomodations=True, userDisablesAlarm=True, alarmRestarts=True, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=True, kitchenSafe=True, riskLevel=low, alarmOn=True)
+33-at time 300: blocked_not_CallEmergencyServices(end=300)
+34-at time 301: CallEmergencyServices()
+35-
+36-For rule:
+37-R3 when HumanOnFloor then CallEmergencyServices
+38-	   unless (not {humanAssents}) then not CallEmergencyServices
+39-----------------------------------------------------------------------------------------------------
+40-----------------------------------------------------------------------------------------------------
+41-Because of the following SLEEC rule:
+42-----------------------------------------------------------------------------------------------------
+43-R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes
+44-	    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures
+45-----------------------------------------------------------------------------------------------------
+46-
+47-when MonitorMealTime then ( (userOccupied => RemindLater within 0 seconds) )
+48-when MonitorMealTime then ( ((not userOccupied) => InformUser within 600 seconds) )
+49-when AgentDeployed then ( TrackTime within 0 seconds )
+50-when TrackTime then ( ((timeBetweenMeals > 28800) => InformCaregiver within 0 seconds) )
+51-when TrackTime then ( ((timeBetweenMeals > 28800) => GiveSuggestion within 0 seconds) )
+52-when HumanOnFloor then ( ((not humanAssents) => not_CallEmergencyServices within 0 seconds) )
+53-when HumanOnFloor then ( ((not (not humanAssents)) => CallEmergencyServices within 0 seconds) )
+54-when InterfereSafely then ( (((not userOccupied) and (not safePathFound)) => InformUser within 0 seconds) )
+55-when UserWantsToCook then ( AllowUserToCook within 0 seconds )
+56-when AllowUserToCook then ( ((hazardDetected or (riskLevel = 2)) => InterfereSafely within 0 seconds) )
+57-when UserHasLimitation then ( InformUser within 0 seconds )
+58-when
+59-
+60-DETERMINISTIC:
+61-[]
+62-LLM:
+--
+104:SC #1
+105-----------------------------------------------------------------------
+106-at time 0: PreparingDrone()
+107-at time 0: UpdateTerritories()
+108-at time 0: Measure(sameLanguage=False, humanUnderstands=False, unrelatedActivity=False, environmentDangerous=False, onIndigenousLand=True, landTreatyInPlace=True, relevantLand=False, privateTerritory=True, humanIdentified=False, carbonFootprint=low, benefits=low1, flightCondition=unsafe, wildlifeDisturbed=False, wildlifeInteractswithDrone=False, unKnownObject=False, damages=False, battery=medium2, store=medium3)
+109-at time 0: blocked_DeployDrone(end=0)
+110-at time 1: DeployDrone()
+111-
+112-For rule:
+113-R4 when PreparingDrone and {onIndigenousLand} then not DeployDrone
+114-    unless {landTreatyInPlace} then DeployDrone
+115-----------------------------------------------------------------------------------------------------
+116-
+117-DETERMINISTIC:
+118-[]
+119-LLM:
+120-[]
+121-
+122-APPLICABILITY:
+123-  trigger_refinement                     False
+124-      Two diagnosed conflicting rules are required to derive a diagnosis-grounded trigger refinement.
+125-  defeater_introduction                  False
+126-      Two diagnosed conflicting rules are required to derive a diagnosis-grounded prioritisation exception.
+127-  rule_merging                           False
+128-      Two diagnosed conflicting rules are required to establish merge compatibility.
+129-  conflict_event_specialization          False
+130-      A diagnosed conflicting rule pair is required before semantic event specialization is attempted.
+131-  conflict_measure_specialization        False
+132-      Two diagnosed conflicting rules are required to establish a shared environmental measure.
+133-  temporal_refinement                    False
+134-      Temporal refinement requires an affected rule and diagnosis with different explicit numeric temporal bounds for the same response.
+135-
+136-==============================================================================
+137-USE CASE: AutoCAR
+138-FILE: sleec_usecases\Autocar.sleec
+139-==============================================================================
+--
+230:SC #1
+231-----------------------------------------------------------------------
+232-at time 0: MeetingUser()
+233-at time 0: informDaisyAbilities()
+234-at time 0: Measure(UserAge=7, userPayingAttention=False, userDataInformed=False, userSensoryNeedsMet=False, urgentNeed=False, severityOfState=0, stablePsychologicalState=False, timeElapsed=8, informationAvailable=False, informationDisclosureNotPermitted=False, languagePreferenceAvailable=False, directlyToUser=False, userConsentAvalaible=False, guardianConsentAvalaible=False, medicalEmergency=False, culturalIndicatorA=False, genderTypeB=False, userNameUnknown=False, userDirectsOtherwise=False, instructionRepeat=6, bodyPartInvolvedInExam=False, behaviorAggressive=False, dataNoiseConsidered=False, dataRelevantToContext=False, dataUnnecessary=False, trainingDataRepresentative=False, patientComfortable=True, patientAgeConsidered=True, patientXReligion=True, stablePhysicalState=False, UserUnableToConsent=False)
+235-at time 0: blocked_ExaminingPatient(end=0)
+236-at time 1: ExamineState()
+237-at time 1: ExaminingPatient()
+238-at time 1: IdentifyDAISYTrust()
+239-
+240-For rule:
+241-Rule18 when MeetingUser and ({patientComfortable} and {patientAgeConsidered}) then ExaminingPatient
+242-----------------------------------------------------------------------------------------------------
+243-----------------------------------------------------------------------------------------------------
+244-Because of the following SLEEC rule:
+245-----------------------------------------------------------------------------------------------------
+246-Rule19 when MeetingUser and {patientXReligion} then not ExaminingPatient
+247-		 unless {userDirectsOtherwise}
+248-		 unless {medicalEmergency}
+249-----------------------------------------------------------------------------------------------------
+250-
+251-DETERMINISTIC:
+252-['defeater_introduction']
+253-LLM:
+254-[]
+255-
+256-APPLICABILITY:
+257-  trigger_refinement                     False
+258-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+259-  defeater_introduction                  True
+260-      The conflicting rules share the same triggering event and provide a contextual predicate that can be expressed as a SLEEC defeater.
+261-  rule_merging                           False
+262-      Rule merging requires the same triggering event and compatible default/specialized contexts.
+263-  conflict_event_specialization          False
+264-      No independently grounded event-specialization relationship was identified. Distinct events that merely co-occur in the conflict are insufficient.
+265-  conflict_measure_specialization        False
+--
+271:SC #2
+272-----------------------------------------------------------------------
+273-at time 0: MeetingUser()
+274-at time 0: informDaisyAbilities()
+275-at time 0: Measure(UserAge=8, userPayingAttention=False, userDataInformed=False, userSensoryNeedsMet=False, urgentNeed=False, severityOfState=0, stablePsychologicalState=False, timeElapsed=7, informationAvailable=False, informationDisclosureNotPermitted=False, languagePreferenceAvailable=False, directlyToUser=False, userConsentAvalaible=False, guardianConsentAvalaible=False, medicalEmergency=False, culturalIndicatorA=False, genderTypeB=False, userNameUnknown=False, userDirectsOtherwise=False, instructionRepeat=6, bodyPartInvolvedInExam=False, behaviorAggressive=False, dataNoiseConsidered=False, dataRelevantToContext=False, dataUnnecessary=False, trainingDataRepresentative=False, patientComfortable=True, patientAgeConsidered=True, patientXReligion=True, stablePhysicalState=False, UserUnableToConsent=False)
+276-at time 0: blocked_not_ExaminingPatient(end=0)
+277-at time 1: ExamineState()
+278-at time 1: ExaminingPatient()
+279-at time 1: IdentifyDAISYTrust()
+280-
+281-For rule:
+282-Rule19 when MeetingUser and {patientXReligion} then not ExaminingPatient
+283-		 unless {userDirectsOtherwise}
+284-		 unless {medicalEmergency}
+285-----------------------------------------------------------------------------------------------------
+286-----------------------------------------------------------------------------------------------------
+287-Because of the following SLEEC rule:
+288-----------------------------------------------------------------------------------------------------
+289-Rule18 when MeetingUser and ({patientComfortable} and {patientAgeConsidered}) then ExaminingPatient
+290-----------------------------------------------------------------------------------------------------
+291-
+292-when AddressUserName then ( (((not userDirectsOtherwise) and userNameUnknown) => AddressSirOrMadam within 0 seconds) )
+293-when AddressUserName then ( (((not userNameUnknown) and (not userDirectsOtherwise)) => UsePreferredName within 0 seconds) )
+294-when ProvideInfo then ( (((not directlyToUser) and ((not userConsentAvalaible) and (not medicalEmergency))) => NotDisclosePersonalInformation within 0 seconds) )
+295-when EventX then ( (((not userDirectsOtherwise) and ((not medicalEmergency) and (culturalIndicatorA and genderTypeB))) => RequestHumanAgent within 0 seconds) )
+296-when Speaking then ( (((not userDirectsOtherwise) and (not languagePreferenceAvailable)) => UseDefaultasEnglish within 0 seconds) )
+297-when Speaking then ( (((not (not languagePreferenceAvailable)) and (not userDirectsOtherwise)) => UseCho
+298-
+299-DETERMINISTIC:
+300-['defeater_introduction']
+301-LLM:
+302-[]
+303-
+304-APPLICABILITY:
+305-  trigger_refinement                     False
+306-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+--
+319:SC #3
+320-----------------------------------------------------------------------
+321-at time 0: MeetingUser()
+322-at time 0: informDaisyAbilities()
+323-at time 0: Measure(UserAge=8, userPayingAttention=False, userDataInformed=False, userSensoryNeedsMet=False, urgentNeed=False, severityOfState=0, stablePsychologicalState=False, timeElapsed=7, informationAvailable=False, informationDisclosureNotPermitted=False, languagePreferenceAvailable=False, directlyToUser=False, userConsentAvalaible=False, guardianConsentAvalaible=False, medicalEmergency=False, culturalIndicatorA=False, genderTypeB=False, userNameUnknown=False, userDirectsOtherwise=False, instructionRepeat=6, bodyPartInvolvedInExam=False, behaviorAggressive=False, dataNoiseConsidered=False, dataRelevantToContext=False, dataUnnecessary=False, trainingDataRepresentative=False, patientComfortable=True, patientAgeConsidered=True, patientXReligion=True, stablePhysicalState=False, UserUnableToConsent=False)
+324-at time 0: blocked_not_ExaminingPatient(end=0)
+325-at time 1: ExamineState()
+326-at time 1: ExaminingPatient()
+327-at time 1: IdentifyDAISYTrust()
+328-
+329-For rule:
+330-Rule19 when MeetingUser and {patientXReligion} then not ExaminingPatient
+331-		 unless {userDirectsOtherwise}
+332-		 unless {medicalEmergency}
+333-----------------------------------------------------------------------------------------------------
+334-----------------------------------------------------------------------------------------------------
+335-Because of the following SLEEC rule:
+336-----------------------------------------------------------------------------------------------------
+337-Rule18 when MeetingUser and ({patientComfortable} and {patientAgeConsidered}) then ExaminingPatient
+338-----------------------------------------------------------------------------------------------------
+339-
+340-DETERMINISTIC:
+341-['defeater_introduction']
+342-LLM:
+343-[]
+344-
+345-APPLICABILITY:
+346-  trigger_refinement                     False
+347-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+348-  defeater_introduction                  True
+349-      The conflicting rules share the same triggering event and provide a contextual predicate that can be expressed as a SLEEC defeater.
+350-  rule_merging                           False
+351-      Rule merging requires the same triggering event and compatible default/specialized contexts.
+352-  conflict_event_specialization          False
+353-      No independently grounded event-specialization relationship was identified. Distinct events that merely co-occur in the conflict are insufficient.
+354-  conflict_measure_specialization        False
+--
+430:SC #1
+431-----------------------------------------------------------------------
+432-at time 0: UserDriving()
+433-at time 0: TrackMetrics()
+434-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=True, properlyPlaced=True, informationImportant=False, health=True, hasLicense=True, substanceUse=True, commonLanguage=True, userUnderstands=True, sameCity=True, rulesFollowed=True, objectNearby=True, userNotice=True, blindSpot=False, obtainConsent=True, needsAccomodation=True, userImpaired=True, warningSignalOff=True, userGivesControl=True, decisionPoint=True)
+435-at time 0: blocked_InformUser(end=0)
+436-at time 1: InformUser()
+437-at time 1: EnsureAlertness()
+438-at time 1: TrackVisionField()
+439-
+440-For rule:
+441-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
+442-----------------------------------------------------------------------------------------------------
+443-----------------------------------------------------------------------------------------------------
+444-Because of the following SLEEC rule:
+445-----------------------------------------------------------------------------------------------------
+446-R4 when UserDriving then not InformUser
+447-		unless {informationImportant}
+448-----------------------------------------------------------------------------------------------------
+449-
+450-DETERMINISTIC:
+451-[]
+452-LLM:
+453-[]
+454-
+455-APPLICABILITY:
+456-  trigger_refinement                     False
+457-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+458-  defeater_introduction                  False
+459-      Defeater introduction requires an expressible measure-based priority condition. Cross-event 'unless another rule triggered' is deferred until SLEEC provides suitable language support.
+460-  rule_merging                           False
+461-      Rule merging requires the same triggering event and compatible default/specialized contexts.
+462-  conflict_event_specialization          False
+463-      No independently grounded event-specialization relationship was identified. Distinct events that merely co-occur in the conflict are insufficient.
+464-  conflict_measure_specialization        False
+465-      The conflicting rules do not share a declared environmental measure.
+--
+470:SC #2
+471-----------------------------------------------------------------------
+472-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=True, properlyPlaced=True, informationImportant=True, health=True, hasLicense=True, substanceUse=True, commonLanguage=True, userUnderstands=True, sameCity=True, rulesFollowed=True, objectNearby=True, userNotice=True, blindSpot=False, obtainConsent=True, needsAccomodation=True, userImpaired=True, warningSignalOff=True, userGivesControl=True, decisionPoint=True)
+473-at time 1: UserDriving()
+474-at time 1: SensorsConnect()
+475-at time 1: Measure(hearRateVariability=medium, eyeMovements=medium1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=False, hasLicense=False, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=False, userNotice=False, blindSpot=True, obtainConsent=False, needsAccomodation=False, userImpaired=False, warningSignalOff=False, userGivesControl=False, decisionPoint=False)
+476-at time 1: blocked_InformUser(end=1)
+477-at time 2: InformUser()
+478-at time 2: EnsureAlertness()
+479-at time 2: TrackVisionField()
+480-
+481-For rule:
+482-R3 when SensorsConnect and (not {properlyPlaced}) then InformUser
+483-----------------------------------------------------------------------------------------------------
+484-----------------------------------------------------------------------------------------------------
+485-Because of the following SLEEC rule:
+486-----------------------------------------------------------------------------------------------------
+487-R3_1 when SensorsConnect and (not {properlyPlaced}) then not UserDriving
+488-----------------------------------------------------------------------------------------------------
+489-
+490-DETERMINISTIC:
+491-['defeater_introduction', 'rule_merging']
+492-LLM:
+493-[]
+494-
+495-APPLICABILITY:
+496-  trigger_refinement                     False
+497-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+498-  defeater_introduction                  True
+499-      The conflicting rules share the same triggering event and provide a contextual predicate that can be expressed as a SLEEC defeater.
+500-  rule_merging                           True
+501-      The rules share the same triggering event and one trigger is a contextual specialization of the other.
+502-  conflict_event_specialization          False
+503-      No independently grounded event-specialization relationship was identified. Distinct events that merely co-occur in the conflict are insufficient.
+504-  conflict_measure_specialization        False
+505-      The conflicting rules do not share a declared environmental measure.
+--
+510:SC #3
+511-----------------------------------------------------------------------
+512-at time 0: Measure(hearRateVariability=low, eyeMovements=medium1, fullAttentionNeeded=True, properlyPlaced=True, informationImportant=True, health=False, hasLicense=False, substanceUse=True, commonLanguage=True, userUnderstands=True, sameCity=True, rulesFollowed=True, objectNearby=True, userNotice=True, blindSpot=True, obtainConsent=True, needsAccomodation=True, userImpaired=True, warningSignalOff=True, userGivesControl=True, decisionPoint=True)
+513-at time 1: UserWantsControl()
+514-at time 1: SensorsConnect()
+515-at time 1: Measure(hearRateVariability=medium, eyeMovements=low1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=True, hasLicense=True, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=False, userNotice=False, blindSpot=False, obtainConsent=False, needsAccomodation=False, userImpaired=False, warningSignalOff=False, userGivesControl=False, decisionPoint=False)
+516-at time 1: blocked_not_UserDriving(end=1)
+517-at time 2: UserDriving()
+518-
+519-For rule:
+520-R3_1 when SensorsConnect and (not {properlyPlaced}) then not UserDriving
+521-----------------------------------------------------------------------------------------------------
+522-----------------------------------------------------------------------------------------------------
+523-Because of the following SLEEC rule:
+524-----------------------------------------------------------------------------------------------------
+525-R7 when UserWantsControl and (({health} and {hasLicense}) and (not {substanceUse})) then UserDriving
+526-----------------------------------------------------------------------------------------------------
+527-
+528-DETERMINISTIC:
+529-[]
+530-LLM:
+531-[]
+532-
+533-APPLICABILITY:
+534-  trigger_refinement                     False
+535-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+536-  defeater_introduction                  False
+537-      Defeater introduction requires an expressible measure-based priority condition. Cross-event 'unless another rule triggered' is deferred until SLEEC provides suitable language support.
+538-  rule_merging                           False
+539-      Rule merging requires the same triggering event and compatible default/specialized contexts.
+540-  conflict_event_specialization          False
+541-      No independently grounded event-specialization relationship was identified. Distinct events that merely co-occur in the conflict are insufficient.
+542-  conflict_measure_specialization        False
+543-      The conflicting rules do not share a declared environmental measure.
+544-  temporal_refinement                    False
+545-      Temporal refinement requires an affected rule and diagnosis with different explicit numeric temporal bounds for the same response.
+--
+548:SC #4
+549-----------------------------------------------------------------------
+550-at time 0: UserDriving()
+551-at time 0: TrackVisionField()
+552-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=False, hasLicense=False, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=True, userNotice=False, blindSpot=True, obtainConsent=False, needsAccomodation=False, userImpaired=True, warningSignalOff=True, userGivesControl=False, decisionPoint=False)
+553-at time 0: blocked_not_InformUser(end=0)
+554-at time 1: InformUser()
+555-at time 1: EnsureAlertness()
+556-
+557-For rule:
+558-R4 when UserDriving then not InformUser
+559-		unless {informationImportant}
+560-----------------------------------------------------------------------------------------------------
+561-----------------------------------------------------------------------------------------------------
+562-Because of the following SLEEC rule:
+563-----------------------------------------------------------------------------------------------------
+564-R1_1 when EnsureAlertness then TrackMetrics
+565-----------------------------------------------------------------------------------------------------
+566-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
+567-----------------------------------------------------------------------------------------------------
+568-R1 when UserDriving then EnsureAlertness
+569-----------------------------------------------------------------------------------------------------
+570-
+571-DETERMINISTIC:
+572-[]
+573-LLM:
+574-[]
+575-
+576-APPLICABILITY:
+577-  trigger_refinement                     False
+578-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+579-  defeater_introduction                  False
+580-      Defeater introduction requires an expressible measure-based priority condition. Cross-event 'unless another rule triggered' is deferred until SLEEC provides suitable language support.
+581-  rule_merging                           False
+582-      Rule merging requires the same triggering event and compatible default/specialized contexts.
+583-  conflict_event_specialization          False
+--
+591:SC #5
+592-----------------------------------------------------------------------
+593-at time 0: UserDriving()
+594-at time 0: UserEnters()
+595-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=False, hasLicense=False, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=False, userNotice=False, blindSpot=True, obtainConsent=False, needsAccomodation=False, userImpaired=False, warningSignalOff=False, userGivesControl=False, decisionPoint=False)
+596-at time 0: blocked_InformUser(end=0)
+597-at time 1: InformUser()
+598-at time 1: EnsureAlertness()
+599-at time 1: TrackVisionField()
+600-at time 1: ShowConsentForm()
+601-
+602-For rule:
+603-R9 when UserEnters and (not {sameCity}) then InformUser
+604-----------------------------------------------------------------------------------------------------
+605-----------------------------------------------------------------------------------------------------
+606-Because of the following SLEEC rule:
+607-----------------------------------------------------------------------------------------------------
+608-R1 when UserDriving then EnsureAlertness
+609-----------------------------------------------------------------------------------------------------
+610-R1_1 when EnsureAlertness then TrackMetrics
+611-----------------------------------------------------------------------------------------------------
+612-R4 when UserDriving then not InformUser
+613-		unless {informationImportant}
+614-----------------------------------------------------------------------------------------------------
+615-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
+616-----------------------------------------------------------------------------------------------------
+617-
+618-DETERMINISTIC:
+619-[]
+620-LLM:
+621-[]
+622-
+623-APPLICABILITY:
+624-  trigger_refinement                     False
+625-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+626-  defeater_introduction                  False
+--
+638:SC #6
+639-----------------------------------------------------------------------
+640-at time 0: UserDriving()
+641-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=False, hasLicense=False, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=True, userNotice=False, blindSpot=True, obtainConsent=False, needsAccomodation=False, userImpaired=False, warningSignalOff=False, userGivesControl=False, decisionPoint=False)
+642-at time 0: blocked_InformUser(end=0)
+643-at time 1: InformUser()
+644-at time 1: EnsureAlertness()
+645-at time 1: TrackVisionField()
+646-
+647-For rule:
+648-R10 when UserDriving and ({objectNearby} and (not {userNotice})) then InformUser
+649-----------------------------------------------------------------------------------------------------
+650-----------------------------------------------------------------------------------------------------
+651-Because of the following SLEEC rule:
+652-----------------------------------------------------------------------------------------------------
+653-R1 when UserDriving then EnsureAlertness
+654-----------------------------------------------------------------------------------------------------
+655-R4 when UserDriving then not InformUser
+656-		unless {informationImportant}
+657-----------------------------------------------------------------------------------------------------
+658-R1_1 when EnsureAlertness then TrackMetrics
+659-----------------------------------------------------------------------------------------------------
+660-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
+661-----------------------------------------------------------------------------------------------------
+662-
+663-DETERMINISTIC:
+664-['defeater_introduction', 'rule_merging']
+665-LLM:
+666-[]
+667-
+668-APPLICABILITY:
+669-  trigger_refinement                     False
+670-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+671-  defeater_introduction                  True
+672-      The conflicting rules share the same triggering event and provide a contextual predicate that can be expressed as a SLEEC defeater.
+673-  rule_merging                           True
+--
+683:SC #7
+684-----------------------------------------------------------------------
+685-at time 0: UserDriving()
+686-at time 0: TrackVisionField()
+687-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=False, hasLicense=False, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=False, userNotice=False, blindSpot=True, obtainConsent=False, needsAccomodation=False, userImpaired=False, warningSignalOff=False, userGivesControl=False, decisionPoint=False)
+688-at time 0: blocked_InformUser(end=0)
+689-at time 1: InformUser()
+690-at time 1: EnsureAlertness()
+691-
+692-For rule:
+693-R11_1 when TrackVisionField and {blindSpot} then InformUser
+694-----------------------------------------------------------------------------------------------------
+695-----------------------------------------------------------------------------------------------------
+696-Because of the following SLEEC rule:
+697-----------------------------------------------------------------------------------------------------
+698-R1_1 when EnsureAlertness then TrackMetrics
+699-----------------------------------------------------------------------------------------------------
+700-R1 when UserDriving then EnsureAlertness
+701-----------------------------------------------------------------------------------------------------
+702-R4 when UserDriving then not InformUser
+703-		unless {informationImportant}
+704-----------------------------------------------------------------------------------------------------
+705-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
+706-----------------------------------------------------------------------------------------------------
+707-
+708-DETERMINISTIC:
+709-[]
+710-LLM:
+711-[]
+712-
+713-APPLICABILITY:
+714-  trigger_refinement                     False
+715-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+716-  defeater_introduction                  False
+717-      Defeater introduction requires an expressible measure-based priority condition. Cross-event 'unless another rule triggered' is deferred until SLEEC provides suitable language support.
+718-  rule_merging                           False
+--
+728:SC #8
+729-----------------------------------------------------------------------
+730-at time 0: SystemDriving()
+731-at time 0: ShowConsentForm()
+732-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=False, hasLicense=False, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=False, userNotice=False, blindSpot=False, obtainConsent=False, needsAccomodation=False, userImpaired=False, warningSignalOff=False, userGivesControl=False, decisionPoint=True)
+733-at time 0: blocked_not_UserDriving(end=0)
+734-at time 1: UserDriving()
+735-
+736-For rule:
+737-R12_1 when ShowConsentForm and (not {obtainConsent}) then not UserDriving
+738-----------------------------------------------------------------------------------------------------
+739-----------------------------------------------------------------------------------------------------
+740-Because of the following SLEEC rule:
+741-----------------------------------------------------------------------------------------------------
+742-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
+743-----------------------------------------------------------------------------------------------------
+744-R17 when SystemDriving and {decisionPoint} then UserDriving
+745-		unless {userGivesControl}
+746-----------------------------------------------------------------------------------------------------
+747-R4 when UserDriving then not InformUser
+748-		unless {informationImportant}
+749-----------------------------------------------------------------------------------------------------
+750-R1_1 when EnsureAlertness then TrackMetrics
+751-----------------------------------------------------------------------------------------------------
+752-R1 when UserDriving then EnsureAlertness
+753-----------------------------------------------------------------------------------------------------
+754-
+755-DETERMINISTIC:
+756-[]
+757-LLM:
+758-[]
+759-
+760-APPLICABILITY:
+761-  trigger_refinement                     False
+762-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+763-  defeater_introduction                  False
+--
+775:SC #9
+776-----------------------------------------------------------------------
+777-at time 0: UserDriving()
+778-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=False, hasLicense=False, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=False, userNotice=False, blindSpot=True, obtainConsent=False, needsAccomodation=False, userImpaired=True, warningSignalOff=True, userGivesControl=False, decisionPoint=False)
+779-at time 0: blocked_InformUser(end=0)
+780-at time 1: InformUser()
+781-at time 1: EnsureAlertness()
+782-at time 1: TrackVisionField()
+783-
+784-For rule:
+785-R16 when UserDriving and {userImpaired} then InformUser
+786-----------------------------------------------------------------------------------------------------
+787-----------------------------------------------------------------------------------------------------
+788-Because of the following SLEEC rule:
+789-----------------------------------------------------------------------------------------------------
+790-R1_1 when EnsureAlertness then TrackMetrics
+791-----------------------------------------------------------------------------------------------------
+792-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
+793-----------------------------------------------------------------------------------------------------
+794-R4 when UserDriving then not InformUser
+795-		unless {informationImportant}
+796-----------------------------------------------------------------------------------------------------
+797-R1 when UserDriving then EnsureAlertness
+798-----------------------------------------------------------------------------------------------------
+799-
+800-DETERMINISTIC:
+801-[]
+802-LLM:
+803-[]
+804-
+805-APPLICABILITY:
+806-  trigger_refinement                     False
+807-      Trigger refinement requires a declared contextual measure predicate in one of the diagnosed conflicting rules; event co-occurrence alone is insufficient.
+808-  defeater_introduction                  False
+809-      Defeater introduction requires an expressible measure-based priority condition. Cross-event 'unless another rule triggered' is deferred until SLEEC provides suitable language support.
+810-  rule_merging                           False
+--
+820:SC #10
+821-----------------------------------------------------------------------
+822-at time 0: SystemDriving()
+823-at time 0: ShowConsentForm()
+824-at time 0: Measure(hearRateVariability=low, eyeMovements=low1, fullAttentionNeeded=False, properlyPlaced=False, informationImportant=False, health=False, hasLicense=False, substanceUse=False, commonLanguage=False, userUnderstands=False, sameCity=False, rulesFollowed=False, objectNearby=False, userNotice=False, blindSpot=False, obtainConsent=False, needsAccomodation=False, userImpaired=False, warningSignalOff=False, userGivesControl=False, decisionPoint=True)
+825-at time 0: blocked_UserDriving(end=0)
+826-at time 1: UserDriving()
+827-
+828-For rule:
+829-R17 when SystemDriving and {decisionPoint} then UserDriving
+830-		unless {userGivesControl}
+831-----------------------------------------------------------------------------------------------------
+832-----------------------------------------------------------------------------------------------------
+833-Because of the following SLEEC rule:
+834-----------------------------------------------------------------------------------------------------
+835-R1_1 when EnsureAlertness then TrackMetrics
+836-----------------------------------------------------------------------------------------------------
+837-R1 when UserDriving then EnsureAlertness
+838-----------------------------------------------------------------------------------------------------
+839-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
+840-----------------------------------------------------------------------------------------------------
+841-R4 when UserDriving then not InformUser
+842-		unless {informationImportant}
+843-----------------------------------------------------------------------------------------------------
+844-
+845-when UserDriving then ( EnsureAlertness within 0 seconds )
+846-when EnsureAlertness then ( TrackMetrics within 0 seconds )
+847-when TrackMetrics then ( (((hearRateVariability = 0) and (eyeMovements = 0)) => InformUser within 0 seconds) )
+848-when UserDriving then ( (fullAttentionNeeded => EnsureAlertness within 0 seconds) )
+849-when EnsureAlertness then ( TrackMetrics within 0 seconds )
+850-when SensorsConnect then ( ((not properlyPlaced) => InformUser within 0 seconds) )
+851-when SensorsConnect then ( ((not properlyPlaced) => not_UserDriving within 0 seconds) )
+852-when UserDriving then ( ((not informationImportant) => not_InformUser within 0 seconds) )
+853-when FindInformation then ( DetermineImportance within 0 seconds )
+854-when BaselineDiffers then ( ConfirmWithUser within 0 seconds )
+855-when UserWantsControl then ( (((health and hasLice

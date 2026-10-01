@@ -73,8 +73,7 @@ rule_start
 	R2 when AgentDeployed then TrackTime
 	R2_1 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then InformCaregiver
 	R2_2 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then GiveSuggestion
-	R3 when HumanOnFloor then CallEmergencyServices
-	   unless (not {humanAssents}) then not CallEmergencyServices
+R3_merged when HumanOnFloor and (not {humanAssents}) then CallEmergencyServices unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures
 
 	R4 when InterfereSafely and (not {safePathFound}) then InformUser
 	   unless {userOccupied}
@@ -106,7 +105,6 @@ rule_start
 	    unless ({riskLevel} = high)
 	R20 when UserChangeItemLocation then UpdateMap
 	    unless ({riskLevel} = high) then InterfereSafely
-R21 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then CallEmergencyServices within 5 minutes unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures
 	R21_1 when FireSafetyMeasures then OpenWindows
 	R21_2 when FireSafetyMeasures then AskUserIfOK
 	R21_3 when FireSafetyMeasures then InformCaregiver

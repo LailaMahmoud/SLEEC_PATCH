@@ -1,0 +1,5488 @@
+{
+  "_metadata": {
+    "model": "gpt-4o-mini",
+    "generated_at_utc": "2026-09-28T20:02:55.300209+00:00",
+    "method": "canonical_use_case_level_classification",
+    "definition": "A system capability is a behavior, service, operation, or function that the system/agent itself can perform or provide.",
+    "classification_scope": "Each unique declared symbol is classified once per use case using all available specification versions.",
+    "review_required": true
+  },
+  "ALMI": {
+    "canonical": {
+      "capabilities": [
+        "AllowUserToCook",
+        "AskCallHelp",
+        "AskForDetailLevelOfInstructions",
+        "AskForEmergencyContact",
+        "AskUserIfOK",
+        "CalibrateSpeech",
+        "CallEmergencyServices",
+        "CheckTemperature",
+        "CollectandRecordInformation",
+        "ConsiderUserPractices",
+        "FireSafetyMeasures",
+        "FoodPreparation",
+        "GiveSuggestion",
+        "GiveUserDangerousObjects",
+        "GivingCookingInstructions",
+        "InformCaregiver",
+        "InformUser",
+        "InterfereSafely",
+        "MeetingUser",
+        "MonitorMealTime",
+        "OpenWindows",
+        "PreparingDeployment",
+        "ProvideDataSummaries",
+        "RecalculateApproach",
+        "RemindLater",
+        "RemindUserOfLimitations",
+        "ShowDataHistory",
+        "SmokeDetectorAlarm",
+        "TrackTime",
+        "UpdateInformation",
+        "UpdateMap",
+        "UseFirstPersonPluralLanguage"
+      ],
+      "count": 32,
+      "excluded": [
+        {
+          "symbol": "AgentDeployed",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "AgentHasAppropriateAppearance",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "BeforeCookingBegins",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "HumanOnFloor",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "UserChangeItemLocation",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "UserChangeMind",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "UserHasLimitation",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "UserUnpredictable",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "UserWantsToCook",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "alarmOn",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "alarmRestarts",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "dataNeedsChecking",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "hazardDetected",
+          "reason": "not a capability, represents a condition"
+        },
+        {
+          "symbol": "humanAssents",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "kitchenSafe",
+          "reason": "not a capability, represents a state or condition"
+        },
+        {
+          "symbol": "needLevel",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "personAuthorized",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "safePathFound",
+          "reason": "not a capability, represents a condition"
+        },
+        {
+          "symbol": "timeBetweenMeals",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "userAsksForAppropriateTasks",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "userDisablesAlarm",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "userNeedsSpecialAccomodations",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "userOccupied",
+          "reason": "not a capability, represents a user state"
+        }
+      ],
+      "notes": "Symbols representing user states, actions, or system states are excluded as they do not represent capabilities of the system itself."
+    },
+    "original": {
+      "file": "ALMI.sleec",
+      "capabilities": [
+        "AllowUserToCook",
+        "AskForDetailLevelOfInstructions",
+        "AskForEmergencyContact",
+        "AskUserIfOK",
+        "CalibrateSpeech",
+        "CallEmergencyServices",
+        "CheckTemperature",
+        "CollectandRecordInformation",
+        "ConsiderUserPractices",
+        "FireSafetyMeasures",
+        "FoodPreparation",
+        "GiveSuggestion",
+        "GiveUserDangerousObjects",
+        "GivingCookingInstructions",
+        "InformCaregiver",
+        "InformUser",
+        "InterfereSafely",
+        "MeetingUser",
+        "MonitorMealTime",
+        "OpenWindows",
+        "PreparingDeployment",
+        "ProvideDataSummaries",
+        "RecalculateApproach",
+        "RemindLater",
+        "RemindUserOfLimitations",
+        "ShowDataHistory",
+        "SmokeDetectorAlarm",
+        "TrackTime",
+        "UpdateInformation",
+        "UpdateMap",
+        "UseFirstPersonPluralLanguage"
+      ],
+      "count": 31,
+      "declared_events": 40,
+      "declared_measures": 15,
+      "excluded": [
+        {
+          "symbol": "AgentDeployed",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "AgentHasAppropriateAppearance",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "BeforeCookingBegins",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "HumanOnFloor",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "UserChangeItemLocation",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "UserChangeMind",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "UserHasLimitation",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "UserUnpredictable",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "UserWantsToCook",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "alarmOn",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "alarmRestarts",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "dataNeedsChecking",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "hazardDetected",
+          "reason": "not a capability, represents a condition"
+        },
+        {
+          "symbol": "humanAssents",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "kitchenSafe",
+          "reason": "not a capability, represents a state or condition"
+        },
+        {
+          "symbol": "needLevel",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "personAuthorized",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "safePathFound",
+          "reason": "not a capability, represents a condition"
+        },
+        {
+          "symbol": "timeBetweenMeals",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "userAsksForAppropriateTasks",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "userDisablesAlarm",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "userNeedsSpecialAccomodations",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "userOccupied",
+          "reason": "not a capability, represents a user state"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "ALMI-corrected.sleec",
+      "capabilities": [
+        "AllowUserToCook",
+        "AskCallHelp",
+        "AskForDetailLevelOfInstructions",
+        "AskForEmergencyContact",
+        "AskUserIfOK",
+        "CalibrateSpeech",
+        "CallEmergencyServices",
+        "CheckTemperature",
+        "CollectandRecordInformation",
+        "ConsiderUserPractices",
+        "FireSafetyMeasures",
+        "FoodPreparation",
+        "GiveSuggestion",
+        "GiveUserDangerousObjects",
+        "GivingCookingInstructions",
+        "InformCaregiver",
+        "InformUser",
+        "InterfereSafely",
+        "MeetingUser",
+        "MonitorMealTime",
+        "OpenWindows",
+        "PreparingDeployment",
+        "ProvideDataSummaries",
+        "RecalculateApproach",
+        "RemindLater",
+        "RemindUserOfLimitations",
+        "ShowDataHistory",
+        "SmokeDetectorAlarm",
+        "TrackTime",
+        "UpdateInformation",
+        "UpdateMap",
+        "UseFirstPersonPluralLanguage"
+      ],
+      "count": 32,
+      "declared_events": 41,
+      "declared_measures": 15,
+      "excluded": [
+        {
+          "symbol": "AgentDeployed",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "AgentHasAppropriateAppearance",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "BeforeCookingBegins",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "HumanOnFloor",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "UserChangeItemLocation",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "UserChangeMind",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "UserHasLimitation",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "UserUnpredictable",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "UserWantsToCook",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "alarmOn",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "alarmRestarts",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "dataNeedsChecking",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "hazardDetected",
+          "reason": "not a capability, represents a condition"
+        },
+        {
+          "symbol": "humanAssents",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "kitchenSafe",
+          "reason": "not a capability, represents a state or condition"
+        },
+        {
+          "symbol": "needLevel",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "personAuthorized",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "safePathFound",
+          "reason": "not a capability, represents a condition"
+        },
+        {
+          "symbol": "timeBetweenMeals",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "userAsksForAppropriateTasks",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "userDisablesAlarm",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "userNeedsSpecialAccomodations",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "userOccupied",
+          "reason": "not a capability, represents a user state"
+        }
+      ],
+      "added_vs_original": [
+        "AskCallHelp"
+      ],
+      "removed_vs_original": []
+    },
+    "sleecpatch": {
+      "file": "ALMI_SLEECPATCH.sleec",
+      "capabilities": [
+        "AllowUserToCook",
+        "AskForDetailLevelOfInstructions",
+        "AskForEmergencyContact",
+        "AskUserIfOK",
+        "CalibrateSpeech",
+        "CallEmergencyServices",
+        "CheckTemperature",
+        "CollectandRecordInformation",
+        "ConsiderUserPractices",
+        "FireSafetyMeasures",
+        "FoodPreparation",
+        "GiveSuggestion",
+        "GiveUserDangerousObjects",
+        "GivingCookingInstructions",
+        "InformCaregiver",
+        "InformUser",
+        "InterfereSafely",
+        "MeetingUser",
+        "MonitorMealTime",
+        "OpenWindows",
+        "PreparingDeployment",
+        "ProvideDataSummaries",
+        "RecalculateApproach",
+        "RemindLater",
+        "RemindUserOfLimitations",
+        "ShowDataHistory",
+        "SmokeDetectorAlarm",
+        "TrackTime",
+        "UpdateInformation",
+        "UpdateMap",
+        "UseFirstPersonPluralLanguage"
+      ],
+      "count": 31,
+      "declared_events": 40,
+      "declared_measures": 15,
+      "excluded": [
+        {
+          "symbol": "AgentDeployed",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "AgentHasAppropriateAppearance",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "BeforeCookingBegins",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "HumanOnFloor",
+          "reason": "not a capability, represents a state or event"
+        },
+        {
+          "symbol": "UserChangeItemLocation",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "UserChangeMind",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "UserHasLimitation",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "UserUnpredictable",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "UserWantsToCook",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "alarmOn",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "alarmRestarts",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "dataNeedsChecking",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "hazardDetected",
+          "reason": "not a capability, represents a condition"
+        },
+        {
+          "symbol": "humanAssents",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "kitchenSafe",
+          "reason": "not a capability, represents a state or condition"
+        },
+        {
+          "symbol": "needLevel",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "personAuthorized",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "safePathFound",
+          "reason": "not a capability, represents a condition"
+        },
+        {
+          "symbol": "timeBetweenMeals",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "userAsksForAppropriateTasks",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "userDisablesAlarm",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "userNeedsSpecialAccomodations",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "userOccupied",
+          "reason": "not a capability, represents a user state"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    }
+  },
+  "ASPEN": {
+    "canonical": {
+      "capabilities": [
+        "AnonymizeHuman",
+        "AvoidInterference",
+        "BackUp",
+        "CollectSample",
+        "DeletePictures",
+        "DeployDrone",
+        "EnsureCompliance",
+        "ExitArea",
+        "GroundDrone",
+        "IdentifyActivity",
+        "ImplementASPEN",
+        "InformHuman",
+        "InformKeeper",
+        "MonitorCarbon",
+        "MonitorLand",
+        "PreparingDrone",
+        "ReturnHome",
+        "StoreData",
+        "TakePictures",
+        "UpdateTerritories"
+      ],
+      "count": 20,
+      "excluded": [
+        {
+          "symbol": "EncounterHuman",
+          "reason": "user action"
+        },
+        {
+          "symbol": "EncounterWildlife",
+          "reason": "user action"
+        },
+        {
+          "symbol": "HumanNearby",
+          "reason": "user state"
+        },
+        {
+          "symbol": "LogDroneAction",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "battery",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "benefits",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "carbonFootprint",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "damages",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "environmentDangerous",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "flightCondition",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "humanIdentified",
+          "reason": "user state"
+        },
+        {
+          "symbol": "humanUnderstands",
+          "reason": "user state"
+        },
+        {
+          "symbol": "landTreatyInPlace",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "onIndigenousLand",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "privateTerritory",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "relevantLand",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "sameLanguage",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "store",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "unKnownObject",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "unrelatedActivity",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "wildlifeDisturbed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "wildlifeInteractswithDrone",
+          "reason": "contextual fact"
+        }
+      ],
+      "notes": "All symbols classified as capabilities are actions or functions the system can perform. User actions and states, as well as contextual facts and measurements, are excluded."
+    },
+    "original": {
+      "file": "aspen.sleec",
+      "capabilities": [
+        "AnonymizeHuman",
+        "AvoidInterference",
+        "BackUp",
+        "CollectSample",
+        "DeletePictures",
+        "DeployDrone",
+        "EnsureCompliance",
+        "ExitArea",
+        "GroundDrone",
+        "IdentifyActivity",
+        "ImplementASPEN",
+        "InformHuman",
+        "InformKeeper",
+        "MonitorCarbon",
+        "MonitorLand",
+        "PreparingDrone",
+        "ReturnHome",
+        "StoreData",
+        "TakePictures",
+        "UpdateTerritories"
+      ],
+      "count": 20,
+      "declared_events": 23,
+      "declared_measures": 18,
+      "excluded": [
+        {
+          "symbol": "EncounterHuman",
+          "reason": "user action"
+        },
+        {
+          "symbol": "EncounterWildlife",
+          "reason": "user action"
+        },
+        {
+          "symbol": "HumanNearby",
+          "reason": "user state"
+        },
+        {
+          "symbol": "battery",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "benefits",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "carbonFootprint",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "damages",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "environmentDangerous",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "flightCondition",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "humanIdentified",
+          "reason": "user state"
+        },
+        {
+          "symbol": "humanUnderstands",
+          "reason": "user state"
+        },
+        {
+          "symbol": "landTreatyInPlace",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "onIndigenousLand",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "privateTerritory",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "relevantLand",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "sameLanguage",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "store",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "unKnownObject",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "unrelatedActivity",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "wildlifeDisturbed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "wildlifeInteractswithDrone",
+          "reason": "contextual fact"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "aspen-corrected.sleec",
+      "capabilities": [
+        "AnonymizeHuman",
+        "AvoidInterference",
+        "BackUp",
+        "CollectSample",
+        "DeletePictures",
+        "DeployDrone",
+        "EnsureCompliance",
+        "ExitArea",
+        "GroundDrone",
+        "IdentifyActivity",
+        "ImplementASPEN",
+        "InformHuman",
+        "InformKeeper",
+        "MonitorCarbon",
+        "MonitorLand",
+        "PreparingDrone",
+        "ReturnHome",
+        "StoreData",
+        "TakePictures",
+        "UpdateTerritories"
+      ],
+      "count": 20,
+      "declared_events": 24,
+      "declared_measures": 18,
+      "excluded": [
+        {
+          "symbol": "EncounterHuman",
+          "reason": "user action"
+        },
+        {
+          "symbol": "EncounterWildlife",
+          "reason": "user action"
+        },
+        {
+          "symbol": "HumanNearby",
+          "reason": "user state"
+        },
+        {
+          "symbol": "LogDroneAction",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "battery",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "benefits",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "carbonFootprint",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "damages",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "environmentDangerous",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "flightCondition",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "humanIdentified",
+          "reason": "user state"
+        },
+        {
+          "symbol": "humanUnderstands",
+          "reason": "user state"
+        },
+        {
+          "symbol": "landTreatyInPlace",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "onIndigenousLand",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "privateTerritory",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "relevantLand",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "sameLanguage",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "store",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "unKnownObject",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "unrelatedActivity",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "wildlifeDisturbed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "wildlifeInteractswithDrone",
+          "reason": "contextual fact"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    },
+    "sleecpatch": {
+      "file": "ASPEN_SLEECPATCH.sleec",
+      "capabilities": [
+        "AnonymizeHuman",
+        "AvoidInterference",
+        "BackUp",
+        "CollectSample",
+        "DeletePictures",
+        "DeployDrone",
+        "EnsureCompliance",
+        "ExitArea",
+        "GroundDrone",
+        "IdentifyActivity",
+        "ImplementASPEN",
+        "InformHuman",
+        "InformKeeper",
+        "MonitorCarbon",
+        "MonitorLand",
+        "PreparingDrone",
+        "ReturnHome",
+        "StoreData",
+        "TakePictures",
+        "UpdateTerritories"
+      ],
+      "count": 20,
+      "declared_events": 23,
+      "declared_measures": 18,
+      "excluded": [
+        {
+          "symbol": "EncounterHuman",
+          "reason": "user action"
+        },
+        {
+          "symbol": "EncounterWildlife",
+          "reason": "user action"
+        },
+        {
+          "symbol": "HumanNearby",
+          "reason": "user state"
+        },
+        {
+          "symbol": "battery",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "benefits",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "carbonFootprint",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "damages",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "environmentDangerous",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "flightCondition",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "humanIdentified",
+          "reason": "user state"
+        },
+        {
+          "symbol": "humanUnderstands",
+          "reason": "user state"
+        },
+        {
+          "symbol": "landTreatyInPlace",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "onIndigenousLand",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "privateTerritory",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "relevantLand",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "sameLanguage",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "store",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "unKnownObject",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "unrelatedActivity",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "wildlifeDisturbed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "wildlifeInteractswithDrone",
+          "reason": "contextual fact"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    }
+  },
+  "AutoCAR": {
+    "canonical": {
+      "capabilities": [
+        "AskForClarification",
+        "CalculateShortestPath",
+        "ChangeCurrentDriving",
+        "ChangeLanes",
+        "ChangeSpeed",
+        "CheckSystemComponents",
+        "DisplayAlert",
+        "DisplayCarInformation",
+        "DisplayError",
+        "DisplayRoute",
+        "GetReadyToDrive",
+        "MaintainEqualDistance",
+        "MakeSpace",
+        "ParkVehicle",
+        "SlowDown",
+        "StayCenteredinLane",
+        "StopAutonomousAssistance",
+        "TakeShortestPath",
+        "TakeUserInput",
+        "TemporarilyStopCar",
+        "TurnOnHazardsAndTemporarilyStop",
+        "TurnOnSensors",
+        "UserCancelPath",
+        "UserChangeRoute",
+        "UserRequestSpeedChange",
+        "UserTurnOffSystem",
+        "UserTurnOnSystem",
+        "WaitUntilChanges"
+      ],
+      "count": 28,
+      "excluded": [
+        {
+          "symbol": "AskIfUserReadyToDrive",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "CarDriving",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "PriorityVehicleNearby",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "ReadyToDrive",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "RecordPeople",
+          "reason": "not a capability as it depends on user consent"
+        },
+        {
+          "symbol": "SeeTrafficLight",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "SystemReady",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "TakeNewInput",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "TurnOffSensors",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "actionIsLegal",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "ambulanceBehindCar",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "ambulanceNextToCar",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "ambulanceOnOppositeSide",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "carsBehind",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "carsInFront",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "commandClear",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "destinationExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "doorClosed",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "environmentClear",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "greenLight",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "laneExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "multipleLanes",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "objectInPath",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "pathExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "peopleConsentObtained",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "previousLight",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "recognizeInput",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "redLight",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "seatBeltOn",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "userRequestedLaneChange",
+          "reason": "represents a user action, not a system capability"
+        },
+        {
+          "symbol": "userSaysYes",
+          "reason": "represents a user action, not a system capability"
+        },
+        {
+          "symbol": "userTurnedOffSystem",
+          "reason": "represents a user state, not a system capability"
+        },
+        {
+          "symbol": "withinLane",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "yellowLight",
+          "reason": "represents a condition, not an action or function"
+        }
+      ],
+      "notes": "Symbols representing user actions, states, or environmental conditions are excluded as they do not represent system capabilities."
+    },
+    "original": {
+      "file": "Autocar.sleec",
+      "capabilities": [
+        "AskForClarification",
+        "CalculateShortestPath",
+        "ChangeCurrentDriving",
+        "ChangeLanes",
+        "ChangeSpeed",
+        "CheckSystemComponents",
+        "DisplayAlert",
+        "DisplayCarInformation",
+        "DisplayError",
+        "DisplayRoute",
+        "GetReadyToDrive",
+        "MaintainEqualDistance",
+        "MakeSpace",
+        "ParkVehicle",
+        "SlowDown",
+        "StayCenteredinLane",
+        "TakeShortestPath",
+        "TakeUserInput",
+        "TemporarilyStopCar",
+        "TurnOnHazardsAndTemporarilyStop",
+        "TurnOnSensors",
+        "UserCancelPath",
+        "UserChangeRoute",
+        "UserRequestSpeedChange",
+        "UserTurnOffSystem",
+        "UserTurnOnSystem",
+        "WaitUntilChanges"
+      ],
+      "count": 27,
+      "declared_events": 36,
+      "declared_measures": 26,
+      "excluded": [
+        {
+          "symbol": "AskIfUserReadyToDrive",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "CarDriving",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "PriorityVehicleNearby",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "ReadyToDrive",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "RecordPeople",
+          "reason": "not a capability as it depends on user consent"
+        },
+        {
+          "symbol": "SeeTrafficLight",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "SystemReady",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "TakeNewInput",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "TurnOffSensors",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "actionIsLegal",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "ambulanceBehindCar",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "ambulanceNextToCar",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "ambulanceOnOppositeSide",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "carsBehind",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "carsInFront",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "commandClear",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "destinationExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "doorClosed",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "environmentClear",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "greenLight",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "laneExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "multipleLanes",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "objectInPath",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "pathExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "peopleConsentObtained",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "previousLight",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "recognizeInput",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "redLight",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "seatBeltOn",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "userRequestedLaneChange",
+          "reason": "represents a user action, not a system capability"
+        },
+        {
+          "symbol": "userSaysYes",
+          "reason": "represents a user action, not a system capability"
+        },
+        {
+          "symbol": "userTurnedOffSystem",
+          "reason": "represents a user state, not a system capability"
+        },
+        {
+          "symbol": "withinLane",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "yellowLight",
+          "reason": "represents a condition, not an action or function"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "Autocar-corrected.sleec",
+      "capabilities": [
+        "AskForClarification",
+        "CalculateShortestPath",
+        "ChangeCurrentDriving",
+        "ChangeLanes",
+        "ChangeSpeed",
+        "CheckSystemComponents",
+        "DisplayAlert",
+        "DisplayCarInformation",
+        "DisplayError",
+        "DisplayRoute",
+        "GetReadyToDrive",
+        "MaintainEqualDistance",
+        "MakeSpace",
+        "ParkVehicle",
+        "SlowDown",
+        "StayCenteredinLane",
+        "StopAutonomousAssistance",
+        "TakeShortestPath",
+        "TakeUserInput",
+        "TemporarilyStopCar",
+        "TurnOnHazardsAndTemporarilyStop",
+        "TurnOnSensors",
+        "UserCancelPath",
+        "UserChangeRoute",
+        "UserRequestSpeedChange",
+        "UserTurnOffSystem",
+        "UserTurnOnSystem",
+        "WaitUntilChanges"
+      ],
+      "count": 28,
+      "declared_events": 37,
+      "declared_measures": 26,
+      "excluded": [
+        {
+          "symbol": "AskIfUserReadyToDrive",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "CarDriving",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "PriorityVehicleNearby",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "ReadyToDrive",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "RecordPeople",
+          "reason": "not a capability as it depends on user consent"
+        },
+        {
+          "symbol": "SeeTrafficLight",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "SystemReady",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "TakeNewInput",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "TurnOffSensors",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "actionIsLegal",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "ambulanceBehindCar",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "ambulanceNextToCar",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "ambulanceOnOppositeSide",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "carsBehind",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "carsInFront",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "commandClear",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "destinationExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "doorClosed",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "environmentClear",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "greenLight",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "laneExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "multipleLanes",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "objectInPath",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "pathExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "peopleConsentObtained",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "previousLight",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "recognizeInput",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "redLight",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "seatBeltOn",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "userRequestedLaneChange",
+          "reason": "represents a user action, not a system capability"
+        },
+        {
+          "symbol": "userSaysYes",
+          "reason": "represents a user action, not a system capability"
+        },
+        {
+          "symbol": "userTurnedOffSystem",
+          "reason": "represents a user state, not a system capability"
+        },
+        {
+          "symbol": "withinLane",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "yellowLight",
+          "reason": "represents a condition, not an action or function"
+        }
+      ],
+      "added_vs_original": [
+        "StopAutonomousAssistance"
+      ],
+      "removed_vs_original": []
+    },
+    "sleecpatch": {
+      "file": "AutoCAR_SLEECPATCH.sleec",
+      "capabilities": [
+        "AskForClarification",
+        "CalculateShortestPath",
+        "ChangeCurrentDriving",
+        "ChangeLanes",
+        "ChangeSpeed",
+        "CheckSystemComponents",
+        "DisplayAlert",
+        "DisplayCarInformation",
+        "DisplayError",
+        "DisplayRoute",
+        "GetReadyToDrive",
+        "MaintainEqualDistance",
+        "MakeSpace",
+        "ParkVehicle",
+        "SlowDown",
+        "StayCenteredinLane",
+        "TakeShortestPath",
+        "TakeUserInput",
+        "TemporarilyStopCar",
+        "TurnOnHazardsAndTemporarilyStop",
+        "TurnOnSensors",
+        "UserCancelPath",
+        "UserChangeRoute",
+        "UserRequestSpeedChange",
+        "UserTurnOffSystem",
+        "UserTurnOnSystem",
+        "WaitUntilChanges"
+      ],
+      "count": 27,
+      "declared_events": 36,
+      "declared_measures": 26,
+      "excluded": [
+        {
+          "symbol": "AskIfUserReadyToDrive",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "CarDriving",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "PriorityVehicleNearby",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "ReadyToDrive",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "RecordPeople",
+          "reason": "not a capability as it depends on user consent"
+        },
+        {
+          "symbol": "SeeTrafficLight",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "SystemReady",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "TakeNewInput",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "TurnOffSensors",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "actionIsLegal",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "ambulanceBehindCar",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "ambulanceNextToCar",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "ambulanceOnOppositeSide",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "carsBehind",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "carsInFront",
+          "reason": "represents an observation, not an action or function"
+        },
+        {
+          "symbol": "commandClear",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "destinationExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "doorClosed",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "environmentClear",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "greenLight",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "laneExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "multipleLanes",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "objectInPath",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "pathExists",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "peopleConsentObtained",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "previousLight",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "recognizeInput",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "redLight",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "represents a condition, not an action or function"
+        },
+        {
+          "symbol": "seatBeltOn",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "userRequestedLaneChange",
+          "reason": "represents a user action, not a system capability"
+        },
+        {
+          "symbol": "userSaysYes",
+          "reason": "represents a user action, not a system capability"
+        },
+        {
+          "symbol": "userTurnedOffSystem",
+          "reason": "represents a user state, not a system capability"
+        },
+        {
+          "symbol": "withinLane",
+          "reason": "represents a state, not an action or function"
+        },
+        {
+          "symbol": "yellowLight",
+          "reason": "represents a condition, not an action or function"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    }
+  },
+  "BSN": {
+    "canonical": {
+      "capabilities": [
+        "AdjustSamplingRate",
+        "AdjustSensors",
+        "AdjustServiceTimerate",
+        "AnonymizeData",
+        "CalibrateBSN",
+        "CallAmbulance",
+        "CallCaregiver",
+        "CaregiverCanDeactivate",
+        "ConfirmSensorPlacement",
+        "ConfirmUsersActivities",
+        "DeleteData",
+        "EmergencyConfirmed",
+        "EnsureEasyStopping",
+        "EnsureHardwareCompliance",
+        "HideGeographicLocation",
+        "InformBSNPurposeAndResponseProtocol",
+        "InformUser",
+        "ObtainEmergencyContact",
+        "ObtainRiskLevel",
+        "ObtainUserConsentForData",
+        "ObtainUserConsentForSensors",
+        "RemoveSensors",
+        "SystemShutDown",
+        "TrackVitals",
+        "UserCanCallEmergency",
+        "UserRequestRemoveSensor",
+        "UserWantsTimeout",
+        "UserWantsToRemoveSensors"
+      ],
+      "count": 28,
+      "excluded": [
+        {
+          "symbol": "DataCollected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "MeetingUser",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "PatientAsleep",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientBathing",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientDoingChores",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientOutdoors",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "accurateHealthComparison",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "allowsBathroomTracking",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "alternateSensorsDeployed",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "anomalyDetected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "authorizedParties",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "batteryConsumption",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "canCaregiverDeactivate",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "canCommunicateRegularly",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "canDeactivate",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "canPatientDeactivate",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "caregiverConsent",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "caregiverResponds",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "dataNeededForTraining",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "emergencyDetected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "hasFallAlertPendant",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "isWaterproof",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "messageOnTime",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "numSampleKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "numUsersKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "patientDiscomfort",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "patientIsHome",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeDemographics",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeHealthHistory",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeLocation",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "sensorMalfunction",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "sensorMisplacement",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "signsDetached",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "signsImpaired",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "timeToFailureKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "unusualActivity",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "userResponds",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "userWantsToStop",
+          "reason": "represents a measure, not a capability"
+        }
+      ],
+      "notes": "Symbols representing user states, measures, or characteristics have been excluded as they do not represent system capabilities."
+    },
+    "original": {
+      "file": "BSN.sleec",
+      "capabilities": [
+        "AdjustSamplingRate",
+        "AdjustSensors",
+        "AdjustServiceTimerate",
+        "AnonymizeData",
+        "CalibrateBSN",
+        "CallAmbulance",
+        "CallCaregiver",
+        "CaregiverCanDeactivate",
+        "ConfirmSensorPlacement",
+        "ConfirmUsersActivities",
+        "DeleteData",
+        "EmergencyConfirmed",
+        "EnsureEasyStopping",
+        "EnsureHardwareCompliance",
+        "HideGeographicLocation",
+        "InformBSNPurposeAndResponseProtocol",
+        "InformUser",
+        "ObtainEmergencyContact",
+        "ObtainRiskLevel",
+        "ObtainUserConsentForData",
+        "ObtainUserConsentForSensors",
+        "RemoveSensors",
+        "SystemShutDown",
+        "TrackVitals",
+        "UserCanCallEmergency",
+        "UserWantsTimeout",
+        "UserWantsToRemoveSensors"
+      ],
+      "count": 27,
+      "declared_events": 33,
+      "declared_measures": 31,
+      "excluded": [
+        {
+          "symbol": "DataCollected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "MeetingUser",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "PatientAsleep",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientBathing",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientDoingChores",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientOutdoors",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "accurateHealthComparison",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "allowsBathroomTracking",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "alternateSensorsDeployed",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "anomalyDetected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "authorizedParties",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "batteryConsumption",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "canCommunicateRegularly",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "canDeactivate",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "caregiverConsent",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "caregiverResponds",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "dataNeededForTraining",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "emergencyDetected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "hasFallAlertPendant",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "isWaterproof",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "messageOnTime",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "numSampleKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "numUsersKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "patientDiscomfort",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "patientIsHome",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeDemographics",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeHealthHistory",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeLocation",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "sensorMalfunction",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "sensorMisplacement",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "signsDetached",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "signsImpaired",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "timeToFailureKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "unusualActivity",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "userResponds",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "userWantsToStop",
+          "reason": "represents a measure, not a capability"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "BSN-corrected.sleec",
+      "capabilities": [
+        "AdjustSamplingRate",
+        "AdjustSensors",
+        "AdjustServiceTimerate",
+        "AnonymizeData",
+        "CalibrateBSN",
+        "CallAmbulance",
+        "CallCaregiver",
+        "CaregiverCanDeactivate",
+        "ConfirmSensorPlacement",
+        "ConfirmUsersActivities",
+        "DeleteData",
+        "EmergencyConfirmed",
+        "EnsureEasyStopping",
+        "EnsureHardwareCompliance",
+        "HideGeographicLocation",
+        "InformBSNPurposeAndResponseProtocol",
+        "InformUser",
+        "ObtainEmergencyContact",
+        "ObtainRiskLevel",
+        "ObtainUserConsentForData",
+        "ObtainUserConsentForSensors",
+        "RemoveSensors",
+        "SystemShutDown",
+        "TrackVitals",
+        "UserCanCallEmergency",
+        "UserRequestRemoveSensor",
+        "UserWantsTimeout",
+        "UserWantsToRemoveSensors"
+      ],
+      "count": 28,
+      "declared_events": 34,
+      "declared_measures": 32,
+      "excluded": [
+        {
+          "symbol": "DataCollected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "MeetingUser",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "PatientAsleep",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientBathing",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientDoingChores",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "PatientOutdoors",
+          "reason": "user state, not a capability"
+        },
+        {
+          "symbol": "accurateHealthComparison",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "allowsBathroomTracking",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "alternateSensorsDeployed",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "anomalyDetected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "authorizedParties",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "batteryConsumption",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "canCaregiverDeactivate",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "canCommunicateRegularly",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "canPatientDeactivate",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "caregiverConsent",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "caregiverResponds",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "dataNeededForTraining",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "emergencyDetected",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "hasFallAlertPendant",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "isWaterproof",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "messageOnTime",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "numSampleKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "numUsersKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "patientDiscomfort",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "patientIsHome",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeDemographics",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeHealthHistory",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "seeLocation",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "sensorMalfunction",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "sensorMisplacement",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "signsDetached",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "signsImpaired",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "timeToFailureKnown",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "unusualActivity",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "userResponds",
+          "reason": "represents a measure, not a capability"
+        },
+        {
+          "symbol": "userWantsToStop",
+          "reason": "represents a measure, not a capability"
+        }
+      ],
+      "added_vs_original": [
+        "UserRequestRemoveSensor"
+      ],
+      "removed_vs_original": []
+    }
+  },
+  "CSICobot": {
+    "canonical": {
+      "capabilities": [
+        "AdjustRoute",
+        "AskPermission",
+        "AssignLiability",
+        "AssignToRobot",
+        "AvoidBumping",
+        "Communicate",
+        "InformHuman",
+        "InquireSafety",
+        "MinimizeCobotCollaboration",
+        "MoveAtSafeSpeed",
+        "MoveAwayFromHuman",
+        "PrioritizeHumans",
+        "ReportIncident",
+        "RobotContinueTask",
+        "RobotStopAction",
+        "TrackHumanLocation"
+      ],
+      "count": 16,
+      "excluded": [
+        {
+          "symbol": "AccountHumanRandomness",
+          "reason": "not a capability, represents a measure of randomness"
+        },
+        {
+          "symbol": "ActionHumanRandom",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "ConsiderAppearance",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "HumanSaysStop",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "IncreaseSpeed",
+          "reason": "not a capability, represents a measure of speed adjustment"
+        },
+        {
+          "symbol": "PreparingRobot",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "RobotMoving",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "RobotWorking",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "accident",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "bumpHuman",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "efficiency",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "humanConsents",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanInRange",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanInRoute",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanReEnables",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanTooClose",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humansPresent",
+          "reason": "not a capability, represents a contextual fact"
+        },
+        {
+          "symbol": "isHumanTask",
+          "reason": "not a capability, represents a contextual fact"
+        },
+        {
+          "symbol": "obstaclePresent",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "risk",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "routeAvailable",
+          "reason": "not a capability, represents a contextual fact"
+        }
+      ],
+      "notes": "Symbols representing user actions, states, or environmental occurrences are excluded as they do not represent system capabilities."
+    },
+    "original": {
+      "file": "CSI.sleec",
+      "capabilities": [
+        "AdjustRoute",
+        "AskPermission",
+        "AssignLiability",
+        "AssignToRobot",
+        "AvoidBumping",
+        "InformHuman",
+        "InquireSafety",
+        "MinimizeCobotCollaboration",
+        "MoveAtSafeSpeed",
+        "MoveAwayFromHuman",
+        "PrioritizeHumans",
+        "ReportIncident",
+        "RobotContinueTask",
+        "RobotStopAction",
+        "TrackHumanLocation"
+      ],
+      "count": 15,
+      "declared_events": 23,
+      "declared_measures": 13,
+      "excluded": [
+        {
+          "symbol": "AccountHumanRandomness",
+          "reason": "not a capability, represents a measure of randomness"
+        },
+        {
+          "symbol": "ActionHumanRandom",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "ConsiderAppearance",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "HumanSaysStop",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "IncreaseSpeed",
+          "reason": "not a capability, represents a measure of speed adjustment"
+        },
+        {
+          "symbol": "PreparingRobot",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "RobotMoving",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "RobotWorking",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "accident",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "bumpHuman",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "efficiency",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "humanConsents",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanInRange",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanInRoute",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanReEnables",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanTooClose",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humansPresent",
+          "reason": "not a capability, represents a contextual fact"
+        },
+        {
+          "symbol": "isHumanTask",
+          "reason": "not a capability, represents a contextual fact"
+        },
+        {
+          "symbol": "obstaclePresent",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "risk",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "routeAvailable",
+          "reason": "not a capability, represents a contextual fact"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "CSI-corrected.sleec",
+      "capabilities": [
+        "AdjustRoute",
+        "AskPermission",
+        "AssignLiability",
+        "AssignToRobot",
+        "AvoidBumping",
+        "Communicate",
+        "InformHuman",
+        "InquireSafety",
+        "MinimizeCobotCollaboration",
+        "MoveAtSafeSpeed",
+        "MoveAwayFromHuman",
+        "PrioritizeHumans",
+        "ReportIncident",
+        "RobotContinueTask",
+        "RobotStopAction",
+        "TrackHumanLocation"
+      ],
+      "count": 16,
+      "declared_events": 24,
+      "declared_measures": 13,
+      "excluded": [
+        {
+          "symbol": "AccountHumanRandomness",
+          "reason": "not a capability, represents a measure of randomness"
+        },
+        {
+          "symbol": "ActionHumanRandom",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "ConsiderAppearance",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "HumanSaysStop",
+          "reason": "not a capability, represents a user action"
+        },
+        {
+          "symbol": "IncreaseSpeed",
+          "reason": "not a capability, represents a measure of speed adjustment"
+        },
+        {
+          "symbol": "PreparingRobot",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "RobotMoving",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "RobotWorking",
+          "reason": "not a capability, represents a system state"
+        },
+        {
+          "symbol": "accident",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "bumpHuman",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "efficiency",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "humanConsents",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanInRange",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanInRoute",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanReEnables",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humanTooClose",
+          "reason": "not a capability, represents a user state"
+        },
+        {
+          "symbol": "humansPresent",
+          "reason": "not a capability, represents a contextual fact"
+        },
+        {
+          "symbol": "isHumanTask",
+          "reason": "not a capability, represents a contextual fact"
+        },
+        {
+          "symbol": "obstaclePresent",
+          "reason": "not a capability, represents an environmental occurrence"
+        },
+        {
+          "symbol": "risk",
+          "reason": "not a capability, represents a measure"
+        },
+        {
+          "symbol": "routeAvailable",
+          "reason": "not a capability, represents a contextual fact"
+        }
+      ],
+      "added_vs_original": [
+        "Communicate"
+      ],
+      "removed_vs_original": []
+    }
+  },
+  "DAISY": {
+    "canonical": {
+      "capabilities": [
+        "AddressSirOrMadam",
+        "AddressUserName",
+        "ApproachPatient",
+        "AskRepresentativeForConsent",
+        "CallSupport",
+        "CanCallHuman",
+        "CanEndSession",
+        "CheckUnderstanding",
+        "CollectPatientData",
+        "ConfirmConsent",
+        "EnsureLegalPresence",
+        "EnsurePrivateSpace",
+        "ExaminationContinuable",
+        "ExamineState",
+        "ExaminingPatient",
+        "IdentifyDAISYTrust",
+        "InformUserandandReferToHumanCarer",
+        "NotDisclosePersonalInformation",
+        "NotTouchUnnecessarily",
+        "ObtainConsent",
+        "PreparingExamination",
+        "PreparingTasks",
+        "PresentingReport",
+        "ProvideConfidenceLevel",
+        "ProvideInfo",
+        "ReferToHumanExaminer",
+        "RepeatInstruction",
+        "RequestHumanAgent",
+        "RobotStopSession",
+        "Speaking",
+        "TrainDaisy",
+        "UseChoicenLanguage",
+        "UseDefaultasEnglish",
+        "UsePreferredName",
+        "UserEndSession",
+        "UserRequestInfo",
+        "UserUnderstands",
+        "determineThreshold",
+        "informDaisyAbilities",
+        "selectDAISYProtocol"
+      ],
+      "count": 40,
+      "excluded": [
+        {
+          "symbol": "CollectingTrainingData",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "EventX",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "InstructionFail",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "MeetingPatient",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "MeetingUser",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "UserAge",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "UserUnableToConsent",
+          "reason": "user state"
+        },
+        {
+          "symbol": "behaviorAggressive",
+          "reason": "user state"
+        },
+        {
+          "symbol": "bodyPartInvolvedInExam",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "culturalIndicatorA",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "dataNoiseConsidered",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "dataRelevantToContext",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "dataUnnecessary",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "directlyToUser",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "guardianConsentAvalaible",
+          "reason": "user state"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "instructionRepeat",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "languagePreferenceAvailable",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "patientAgeConsidered",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "patientComfortable",
+          "reason": "user state"
+        },
+        {
+          "symbol": "patientXReligion",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "severityOfState",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "stablePhysicalState",
+          "reason": "system state"
+        },
+        {
+          "symbol": "stablePsychologicalState",
+          "reason": "system state"
+        },
+        {
+          "symbol": "timeElapsed",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "trainingDataRepresentative",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "urgentNeed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "userConsentAvalaible",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userDataInformed",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userDirectsOtherwise",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userNameUnknown",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userPayingAttention",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userSensoryNeedsMet",
+          "reason": "user state"
+        }
+      ],
+      "notes": "Symbols representing user characteristics, states, or contextual facts are excluded as they do not represent system capabilities."
+    },
+    "original": {
+      "file": "Daisy.sleec",
+      "capabilities": [
+        "AddressSirOrMadam",
+        "AddressUserName",
+        "ApproachPatient",
+        "AskRepresentativeForConsent",
+        "CallSupport",
+        "CanCallHuman",
+        "CanEndSession",
+        "CheckUnderstanding",
+        "CollectPatientData",
+        "ConfirmConsent",
+        "EnsureLegalPresence",
+        "EnsurePrivateSpace",
+        "ExaminationContinuable",
+        "ExamineState",
+        "ExaminingPatient",
+        "IdentifyDAISYTrust",
+        "InformUserandandReferToHumanCarer",
+        "NotDisclosePersonalInformation",
+        "NotTouchUnnecessarily",
+        "ObtainConsent",
+        "PreparingExamination",
+        "PreparingTasks",
+        "PresentingReport",
+        "ProvideConfidenceLevel",
+        "ProvideInfo",
+        "ReferToHumanExaminer",
+        "RepeatInstruction",
+        "RequestHumanAgent",
+        "RobotStopSession",
+        "Speaking",
+        "TrainDaisy",
+        "UseChoicenLanguage",
+        "UseDefaultasEnglish",
+        "UsePreferredName",
+        "UserEndSession",
+        "UserRequestInfo",
+        "UserUnderstands",
+        "determineThreshold",
+        "informDaisyAbilities",
+        "selectDAISYProtocol"
+      ],
+      "count": 40,
+      "declared_events": 45,
+      "declared_measures": 31,
+      "excluded": [
+        {
+          "symbol": "CollectingTrainingData",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "EventX",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "InstructionFail",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "MeetingPatient",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "MeetingUser",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "UserAge",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "UserUnableToConsent",
+          "reason": "user state"
+        },
+        {
+          "symbol": "behaviorAggressive",
+          "reason": "user state"
+        },
+        {
+          "symbol": "bodyPartInvolvedInExam",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "culturalIndicatorA",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "dataNoiseConsidered",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "dataRelevantToContext",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "dataUnnecessary",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "directlyToUser",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "guardianConsentAvalaible",
+          "reason": "user state"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "instructionRepeat",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "languagePreferenceAvailable",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "patientAgeConsidered",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "patientComfortable",
+          "reason": "user state"
+        },
+        {
+          "symbol": "patientXReligion",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "severityOfState",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "stablePhysicalState",
+          "reason": "system state"
+        },
+        {
+          "symbol": "stablePsychologicalState",
+          "reason": "system state"
+        },
+        {
+          "symbol": "timeElapsed",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "trainingDataRepresentative",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "urgentNeed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "userConsentAvalaible",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userDataInformed",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userDirectsOtherwise",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userNameUnknown",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userPayingAttention",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userSensoryNeedsMet",
+          "reason": "user state"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "Daisy-corrected.sleec",
+      "capabilities": [
+        "AddressSirOrMadam",
+        "AddressUserName",
+        "ApproachPatient",
+        "AskRepresentativeForConsent",
+        "CallSupport",
+        "CanCallHuman",
+        "CanEndSession",
+        "CheckUnderstanding",
+        "CollectPatientData",
+        "ConfirmConsent",
+        "EnsureLegalPresence",
+        "EnsurePrivateSpace",
+        "ExaminationContinuable",
+        "ExamineState",
+        "ExaminingPatient",
+        "IdentifyDAISYTrust",
+        "InformUserandandReferToHumanCarer",
+        "NotDisclosePersonalInformation",
+        "NotTouchUnnecessarily",
+        "ObtainConsent",
+        "PreparingExamination",
+        "PreparingTasks",
+        "PresentingReport",
+        "ProvideConfidenceLevel",
+        "ProvideInfo",
+        "ReferToHumanExaminer",
+        "RepeatInstruction",
+        "RequestHumanAgent",
+        "RobotStopSession",
+        "Speaking",
+        "TrainDaisy",
+        "UseChoicenLanguage",
+        "UseDefaultasEnglish",
+        "UsePreferredName",
+        "UserEndSession",
+        "UserRequestInfo",
+        "UserUnderstands",
+        "determineThreshold",
+        "informDaisyAbilities",
+        "selectDAISYProtocol"
+      ],
+      "count": 40,
+      "declared_events": 45,
+      "declared_measures": 31,
+      "excluded": [
+        {
+          "symbol": "CollectingTrainingData",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "EventX",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "InstructionFail",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "MeetingPatient",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "MeetingUser",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "UserAge",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "UserUnableToConsent",
+          "reason": "user state"
+        },
+        {
+          "symbol": "behaviorAggressive",
+          "reason": "user state"
+        },
+        {
+          "symbol": "bodyPartInvolvedInExam",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "culturalIndicatorA",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "dataNoiseConsidered",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "dataRelevantToContext",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "dataUnnecessary",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "directlyToUser",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "guardianConsentAvalaible",
+          "reason": "user state"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "instructionRepeat",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "languagePreferenceAvailable",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "patientAgeConsidered",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "patientComfortable",
+          "reason": "user state"
+        },
+        {
+          "symbol": "patientXReligion",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "severityOfState",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "stablePhysicalState",
+          "reason": "system state"
+        },
+        {
+          "symbol": "stablePsychologicalState",
+          "reason": "system state"
+        },
+        {
+          "symbol": "timeElapsed",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "trainingDataRepresentative",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "urgentNeed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "userConsentAvalaible",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userDataInformed",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userDirectsOtherwise",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userNameUnknown",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userPayingAttention",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userSensoryNeedsMet",
+          "reason": "user state"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    },
+    "sleecpatch": {
+      "file": "DAISY_SLEECPATCH.sleec",
+      "capabilities": [
+        "AddressSirOrMadam",
+        "AddressUserName",
+        "ApproachPatient",
+        "AskRepresentativeForConsent",
+        "CallSupport",
+        "CanCallHuman",
+        "CanEndSession",
+        "CheckUnderstanding",
+        "CollectPatientData",
+        "ConfirmConsent",
+        "EnsureLegalPresence",
+        "EnsurePrivateSpace",
+        "ExaminationContinuable",
+        "ExamineState",
+        "ExaminingPatient",
+        "IdentifyDAISYTrust",
+        "InformUserandandReferToHumanCarer",
+        "NotDisclosePersonalInformation",
+        "NotTouchUnnecessarily",
+        "ObtainConsent",
+        "PreparingExamination",
+        "PreparingTasks",
+        "PresentingReport",
+        "ProvideConfidenceLevel",
+        "ProvideInfo",
+        "ReferToHumanExaminer",
+        "RepeatInstruction",
+        "RequestHumanAgent",
+        "RobotStopSession",
+        "Speaking",
+        "TrainDaisy",
+        "UseChoicenLanguage",
+        "UseDefaultasEnglish",
+        "UsePreferredName",
+        "UserEndSession",
+        "UserRequestInfo",
+        "UserUnderstands",
+        "determineThreshold",
+        "informDaisyAbilities",
+        "selectDAISYProtocol"
+      ],
+      "count": 40,
+      "declared_events": 45,
+      "declared_measures": 31,
+      "excluded": [
+        {
+          "symbol": "CollectingTrainingData",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "EventX",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "InstructionFail",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "MeetingPatient",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "MeetingUser",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "UserAge",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "UserUnableToConsent",
+          "reason": "user state"
+        },
+        {
+          "symbol": "behaviorAggressive",
+          "reason": "user state"
+        },
+        {
+          "symbol": "bodyPartInvolvedInExam",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "culturalIndicatorA",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "dataNoiseConsidered",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "dataRelevantToContext",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "dataUnnecessary",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "directlyToUser",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "guardianConsentAvalaible",
+          "reason": "user state"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "instructionRepeat",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "languagePreferenceAvailable",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "patientAgeConsidered",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "patientComfortable",
+          "reason": "user state"
+        },
+        {
+          "symbol": "patientXReligion",
+          "reason": "user characteristic"
+        },
+        {
+          "symbol": "severityOfState",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "stablePhysicalState",
+          "reason": "system state"
+        },
+        {
+          "symbol": "stablePsychologicalState",
+          "reason": "system state"
+        },
+        {
+          "symbol": "timeElapsed",
+          "reason": "measurement"
+        },
+        {
+          "symbol": "trainingDataRepresentative",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "urgentNeed",
+          "reason": "contextual fact"
+        },
+        {
+          "symbol": "userConsentAvalaible",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userDataInformed",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userDirectsOtherwise",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userNameUnknown",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userPayingAttention",
+          "reason": "user state"
+        },
+        {
+          "symbol": "userSensoryNeedsMet",
+          "reason": "user state"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    }
+  },
+  "DPA": {
+    "canonical": {
+      "capabilities": [
+        "AllowAudits",
+        "AssistController",
+        "ChangeSubProcessor",
+        "DPAComplete",
+        "DPAIncomplete",
+        "DPAMade",
+        "DPATerminate",
+        "DPAUpdate",
+        "EngageSubProcessor",
+        "EvaluateDPAProcess",
+        "EvaluateSecurity",
+        "HelpAuditors",
+        "ImposeObligationsOnSubProcessor",
+        "InformController",
+        "InformSubject",
+        "InformSupervisor",
+        "ObtainControllerConsent",
+        "PassSecurity",
+        "ProcessPersonalData",
+        "ProvideControllerInformation",
+        "RemovePersonalData",
+        "RespondToRequest",
+        "StartDPAProcess",
+        "TakeLiabilityForSubProcessor"
+      ],
+      "count": 24,
+      "excluded": [
+        {
+          "symbol": "AuditsOccur",
+          "reason": "event indicating occurrence, not a capability"
+        },
+        {
+          "symbol": "CanObjectToChange",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "DataBreach",
+          "reason": "event indicating occurrence, not a capability"
+        },
+        {
+          "symbol": "RightsRequested",
+          "reason": "event indicating user action, not a capability"
+        },
+        {
+          "symbol": "art28Compliance",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditorType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "confidentialityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInstructions",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dataCompliance",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaActive",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaCategories",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaLength",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaNature",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaPurpose",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "genControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "informingAllowed",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "lawRequires",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "measureTaken",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "personalData",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "rulesConform",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "securityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "specificControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "typesOfRisk",
+          "reason": "measure, not a capability"
+        }
+      ],
+      "notes": "All capabilities are actions or functions that the system can perform, while excluded symbols are either measures or events that do not represent system capabilities."
+    },
+    "original": {
+      "file": "DPA.sleec",
+      "capabilities": [
+        "AllowAudits",
+        "AssistController",
+        "ChangeSubProcessor",
+        "DPAComplete",
+        "DPAIncomplete",
+        "DPAMade",
+        "DPATerminate",
+        "DPAUpdate",
+        "EngageSubProcessor",
+        "EvaluateDPAProcess",
+        "EvaluateSecurity",
+        "HelpAuditors",
+        "ImposeObligationsOnSubProcessor",
+        "InformController",
+        "InformSubject",
+        "InformSupervisor",
+        "ObtainControllerConsent",
+        "PassSecurity",
+        "ProcessPersonalData",
+        "ProvideControllerInformation",
+        "RemovePersonalData",
+        "RespondToRequest",
+        "StartDPAProcess",
+        "TakeLiabilityForSubProcessor"
+      ],
+      "count": 24,
+      "declared_events": 28,
+      "declared_measures": 25,
+      "excluded": [
+        {
+          "symbol": "AuditsOccur",
+          "reason": "event indicating occurrence, not a capability"
+        },
+        {
+          "symbol": "CanObjectToChange",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "DataBreach",
+          "reason": "event indicating occurrence, not a capability"
+        },
+        {
+          "symbol": "RightsRequested",
+          "reason": "event indicating user action, not a capability"
+        },
+        {
+          "symbol": "art28Compliance",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditorType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "confidentialityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInstructions",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dataCompliance",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaActive",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaCategories",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaLength",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaNature",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaPurpose",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "genControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "informingAllowed",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "lawRequires",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "measureTaken",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "personalData",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "rulesConform",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "securityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "specificControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "typesOfRisk",
+          "reason": "measure, not a capability"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "DPA-corrected.sleec",
+      "capabilities": [
+        "AllowAudits",
+        "AssistController",
+        "ChangeSubProcessor",
+        "DPAComplete",
+        "DPAIncomplete",
+        "DPAMade",
+        "DPATerminate",
+        "DPAUpdate",
+        "EngageSubProcessor",
+        "EvaluateDPAProcess",
+        "EvaluateSecurity",
+        "HelpAuditors",
+        "ImposeObligationsOnSubProcessor",
+        "InformController",
+        "InformSubject",
+        "InformSupervisor",
+        "ObtainControllerConsent",
+        "PassSecurity",
+        "ProcessPersonalData",
+        "ProvideControllerInformation",
+        "RemovePersonalData",
+        "RespondToRequest",
+        "StartDPAProcess",
+        "TakeLiabilityForSubProcessor"
+      ],
+      "count": 24,
+      "declared_events": 28,
+      "declared_measures": 25,
+      "excluded": [
+        {
+          "symbol": "AuditsOccur",
+          "reason": "event indicating occurrence, not a capability"
+        },
+        {
+          "symbol": "CanObjectToChange",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "DataBreach",
+          "reason": "event indicating occurrence, not a capability"
+        },
+        {
+          "symbol": "RightsRequested",
+          "reason": "event indicating user action, not a capability"
+        },
+        {
+          "symbol": "art28Compliance",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "auditorType",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "confidentialityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "controllerInstructions",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dataCompliance",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaActive",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaCategories",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaLength",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaNature",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "dpaPurpose",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "genControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "informingAllowed",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "lawRequires",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "measureTaken",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "personalData",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorID",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "processorInfo",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "rulesConform",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "securityEnsured",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "specificControllerAuth",
+          "reason": "measure, not a capability"
+        },
+        {
+          "symbol": "typesOfRisk",
+          "reason": "measure, not a capability"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    }
+  },
+  "DressAssist": {
+    "canonical": {
+      "capabilities": [
+        "AdmininisteringMedication",
+        "AskToFinishFirst",
+        "CautionWhereOrWhenTouching",
+        "ChangeSubject",
+        "CheckForandObtainProxy",
+        "CloseCurtains",
+        "CloseDoor",
+        "CollectionStarted",
+        "CurtainsOpened",
+        "DeployingAgent",
+        "DesigningAgent",
+        "DetectUrgentHealthIssue",
+        "DetermineSensitivityLevel",
+        "DiscardInformation",
+        "DressingStarted",
+        "DressinginClotingX",
+        "EmotionRecognitionDetected",
+        "EnsureDesiredLanguageAvailable",
+        "EnsureHumanCarerPresent",
+        "FirstMeetingUser",
+        "InformCarer",
+        "InformEmergencyContactAndHealthOrgs",
+        "InformUser",
+        "InformUserOfLimitations",
+        "InformUserPrivateInformation",
+        "InformUserThisIsAgentnotHuman",
+        "InformUserandandReferToHumanCarer",
+        "InteractingWithNonPatients",
+        "InteractionStarted",
+        "KeepLogOfFrequentActivities",
+        "LogMedication",
+        "ObtainAssent",
+        "ObtainConsent",
+        "ObtainEmergencyContact",
+        "OfferHelp",
+        "PersonAsksforData",
+        "ProvideInfo",
+        "RecommendOtherwise",
+        "RecordFashionBasedOnOccasion",
+        "RefuseRequest",
+        "ReviewInteraction",
+        "RobotStop",
+        "ShowEmpathy",
+        "StopActivity",
+        "StoreMinInfo",
+        "SuggestPerformingActions",
+        "UserDiscussingPrivateInfo",
+        "UserExpressDiscomfort",
+        "UserHasDifferentCulture",
+        "UserInStress",
+        "UserRequestInfo",
+        "UserSaysStop",
+        "UserSelfMedicates",
+        "sharePersonalDataAndInformWhy"
+      ],
+      "count": 54,
+      "excluded": [
+        {
+          "symbol": "CurtainOpenRqt",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "anthropomorphicAppearance",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "anthropomorphicNecessary",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "buildingFloor",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "clothingChoiceInappropriate",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "clothingItemNotFound",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "competentIndicatorRequired",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "competentToGrantConsent",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentGranted",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentGrantedwithinXmonths",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorRequired",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorisRevoked",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorisWithdrawn",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "contextuallyObvious",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "dressPreferenceTypeA",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "irrelevant",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicationAdverseEffects",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicationRisk",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "minimumFrequency",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "notVisible",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numDaysDeployed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numHoursDeployed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numTotalInteractions",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "roomDark",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "sensitiveInformationX",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "theUserHasBeenInformed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "unauthorizedPersonInRoom",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAdamant",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAdvices",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAssent",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userCompetenceIndicator",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userConfused",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userDistressed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userRequiresAdaptiveClothing",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userUnderDressed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userWantsHumanSubsequently",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userWantsNoHuman",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "withholdingActivityPhysicalHarm",
+          "reason": "not a system capability"
+        }
+      ],
+      "notes": "All symbols classified as capabilities are actions or functions the system can perform. User states, characteristics, and contextual facts are excluded."
+    },
+    "original": {
+      "file": "DRESSASSIST.sleec",
+      "capabilities": [
+        "AdmininisteringMedication",
+        "AskToFinishFirst",
+        "CautionWhereOrWhenTouching",
+        "ChangeSubject",
+        "CheckForandObtainProxy",
+        "CloseCurtains",
+        "CloseDoor",
+        "CollectionStarted",
+        "CurtainsOpened",
+        "DeployingAgent",
+        "DesigningAgent",
+        "DetectUrgentHealthIssue",
+        "DetermineSensitivityLevel",
+        "DiscardInformation",
+        "DressingStarted",
+        "DressinginClotingX",
+        "EmotionRecognitionDetected",
+        "EnsureDesiredLanguageAvailable",
+        "EnsureHumanCarerPresent",
+        "FirstMeetingUser",
+        "InformCarer",
+        "InformEmergencyContactAndHealthOrgs",
+        "InformUser",
+        "InformUserOfLimitations",
+        "InformUserPrivateInformation",
+        "InformUserThisIsAgentnotHuman",
+        "InformUserandandReferToHumanCarer",
+        "InteractingWithNonPatients",
+        "InteractionStarted",
+        "KeepLogOfFrequentActivities",
+        "LogMedication",
+        "ObtainAssent",
+        "ObtainEmergencyContact",
+        "OfferHelp",
+        "PersonAsksforData",
+        "ProvideInfo",
+        "RecommendOtherwise",
+        "RecordFashionBasedOnOccasion",
+        "RefuseRequest",
+        "ReviewInteraction",
+        "RobotStop",
+        "ShowEmpathy",
+        "StopActivity",
+        "StoreMinInfo",
+        "SuggestPerformingActions",
+        "UserDiscussingPrivateInfo",
+        "UserExpressDiscomfort",
+        "UserHasDifferentCulture",
+        "UserInStress",
+        "UserRequestInfo",
+        "UserSaysStop",
+        "UserSelfMedicates",
+        "sharePersonalDataAndInformWhy"
+      ],
+      "count": 53,
+      "declared_events": 54,
+      "declared_measures": 42,
+      "excluded": [
+        {
+          "symbol": "CurtainOpenRqt",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "anthropomorphicAppearance",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "anthropomorphicNecessary",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "buildingFloor",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "clothingChoiceInappropriate",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "clothingItemNotFound",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "competentIndicatorRequired",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "competentToGrantConsent",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentGranted",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentGrantedwithinXmonths",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorRequired",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorisRevoked",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorisWithdrawn",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "contextuallyObvious",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "dressPreferenceTypeA",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "irrelevant",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicationAdverseEffects",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicationRisk",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "minimumFrequency",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "notVisible",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numDaysDeployed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numHoursDeployed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numTotalInteractions",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "roomDark",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "sensitiveInformationX",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "theUserHasBeenInformed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "unauthorizedPersonInRoom",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAdamant",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAdvices",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAssent",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userCompetenceIndicator",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userConfused",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userDistressed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userRequiresAdaptiveClothing",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userUnderDressed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userWantsHumanSubsequently",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userWantsNoHuman",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "withholdingActivityPhysicalHarm",
+          "reason": "not a system capability"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "DRESSASSIST-corrected.sleec",
+      "capabilities": [
+        "AdmininisteringMedication",
+        "AskToFinishFirst",
+        "CautionWhereOrWhenTouching",
+        "ChangeSubject",
+        "CheckForandObtainProxy",
+        "CloseCurtains",
+        "CloseDoor",
+        "CollectionStarted",
+        "CurtainsOpened",
+        "DeployingAgent",
+        "DesigningAgent",
+        "DetectUrgentHealthIssue",
+        "DetermineSensitivityLevel",
+        "DiscardInformation",
+        "DressingStarted",
+        "DressinginClotingX",
+        "EmotionRecognitionDetected",
+        "EnsureDesiredLanguageAvailable",
+        "EnsureHumanCarerPresent",
+        "FirstMeetingUser",
+        "InformCarer",
+        "InformEmergencyContactAndHealthOrgs",
+        "InformUser",
+        "InformUserOfLimitations",
+        "InformUserPrivateInformation",
+        "InformUserThisIsAgentnotHuman",
+        "InformUserandandReferToHumanCarer",
+        "InteractingWithNonPatients",
+        "InteractionStarted",
+        "KeepLogOfFrequentActivities",
+        "LogMedication",
+        "ObtainAssent",
+        "ObtainConsent",
+        "ObtainEmergencyContact",
+        "OfferHelp",
+        "PersonAsksforData",
+        "ProvideInfo",
+        "RecommendOtherwise",
+        "RecordFashionBasedOnOccasion",
+        "RefuseRequest",
+        "ReviewInteraction",
+        "RobotStop",
+        "ShowEmpathy",
+        "StopActivity",
+        "StoreMinInfo",
+        "SuggestPerformingActions",
+        "UserDiscussingPrivateInfo",
+        "UserExpressDiscomfort",
+        "UserHasDifferentCulture",
+        "UserInStress",
+        "UserRequestInfo",
+        "UserSaysStop",
+        "UserSelfMedicates",
+        "sharePersonalDataAndInformWhy"
+      ],
+      "count": 54,
+      "declared_events": 55,
+      "declared_measures": 42,
+      "excluded": [
+        {
+          "symbol": "CurtainOpenRqt",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "anthropomorphicAppearance",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "anthropomorphicNecessary",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "buildingFloor",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "clothingChoiceInappropriate",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "clothingItemNotFound",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "competentIndicatorRequired",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "competentToGrantConsent",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentGranted",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentGrantedwithinXmonths",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorRequired",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorisRevoked",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorisWithdrawn",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "contextuallyObvious",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "dressPreferenceTypeA",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "irrelevant",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicationAdverseEffects",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicationRisk",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "minimumFrequency",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "notVisible",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numDaysDeployed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numHoursDeployed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numTotalInteractions",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "roomDark",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "sensitiveInformationX",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "theUserHasBeenInformed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "unauthorizedPersonInRoom",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAdamant",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAdvices",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAssent",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userCompetenceIndicator",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userConfused",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userDistressed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userRequiresAdaptiveClothing",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userUnderDressed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userWantsHumanSubsequently",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userWantsNoHuman",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "withholdingActivityPhysicalHarm",
+          "reason": "not a system capability"
+        }
+      ],
+      "added_vs_original": [
+        "ObtainConsent"
+      ],
+      "removed_vs_original": []
+    },
+    "sleecpatch": {
+      "file": "DressAssist_SLEECPATCH.sleec",
+      "capabilities": [
+        "AdmininisteringMedication",
+        "AskToFinishFirst",
+        "CautionWhereOrWhenTouching",
+        "ChangeSubject",
+        "CheckForandObtainProxy",
+        "CloseCurtains",
+        "CloseDoor",
+        "CollectionStarted",
+        "CurtainsOpened",
+        "DeployingAgent",
+        "DesigningAgent",
+        "DetectUrgentHealthIssue",
+        "DetermineSensitivityLevel",
+        "DiscardInformation",
+        "DressingStarted",
+        "DressinginClotingX",
+        "EmotionRecognitionDetected",
+        "EnsureDesiredLanguageAvailable",
+        "EnsureHumanCarerPresent",
+        "FirstMeetingUser",
+        "InformCarer",
+        "InformEmergencyContactAndHealthOrgs",
+        "InformUser",
+        "InformUserOfLimitations",
+        "InformUserPrivateInformation",
+        "InformUserThisIsAgentnotHuman",
+        "InformUserandandReferToHumanCarer",
+        "InteractingWithNonPatients",
+        "InteractionStarted",
+        "KeepLogOfFrequentActivities",
+        "LogMedication",
+        "ObtainAssent",
+        "ObtainEmergencyContact",
+        "OfferHelp",
+        "PersonAsksforData",
+        "ProvideInfo",
+        "RecommendOtherwise",
+        "RecordFashionBasedOnOccasion",
+        "RefuseRequest",
+        "ReviewInteraction",
+        "RobotStop",
+        "ShowEmpathy",
+        "StopActivity",
+        "StoreMinInfo",
+        "SuggestPerformingActions",
+        "UserDiscussingPrivateInfo",
+        "UserExpressDiscomfort",
+        "UserHasDifferentCulture",
+        "UserInStress",
+        "UserRequestInfo",
+        "UserSaysStop",
+        "UserSelfMedicates",
+        "sharePersonalDataAndInformWhy"
+      ],
+      "count": 53,
+      "declared_events": 54,
+      "declared_measures": 42,
+      "excluded": [
+        {
+          "symbol": "CurtainOpenRqt",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "anthropomorphicAppearance",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "anthropomorphicNecessary",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "buildingFloor",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "clothingChoiceInappropriate",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "clothingItemNotFound",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "competentIndicatorRequired",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "competentToGrantConsent",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentGranted",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentGrantedwithinXmonths",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorRequired",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorisRevoked",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "consentIndicatorisWithdrawn",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "contextuallyObvious",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "dressPreferenceTypeA",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "genderTypeB",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "informationAvailable",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "informationDisclosureNotPermitted",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "irrelevant",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicalEmergency",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicationAdverseEffects",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "medicationRisk",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "minimumFrequency",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "notVisible",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numDaysDeployed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numHoursDeployed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "numTotalInteractions",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "riskLevel",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "roomDark",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "sensitiveInformationX",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "theUserHasBeenInformed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "unauthorizedPersonInRoom",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAdamant",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAdvices",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userAssent",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userCompetenceIndicator",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userConfused",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userDistressed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userRequiresAdaptiveClothing",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userUnderDressed",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userWantsHumanSubsequently",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "userWantsNoHuman",
+          "reason": "not a system capability"
+        },
+        {
+          "symbol": "withholdingActivityPhysicalHarm",
+          "reason": "not a system capability"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    }
+  },
+  "SafeSCAD": {
+    "canonical": {
+      "capabilities": [
+        "CreateConsentForm",
+        "DetermineImportance",
+        "EnsureAccessibility",
+        "EnsureAlertIndependence",
+        "EnsureAlertness",
+        "FindInformation",
+        "InformUser",
+        "ObtainConsentForUserDrive",
+        "PreparingSystem",
+        "RemindUser",
+        "ShowConsentForm",
+        "TakeControlForSafety",
+        "TrackMetrics",
+        "TrackVisionField"
+      ],
+      "count": 14,
+      "excluded": [
+        {
+          "symbol": "Alert",
+          "reason": "not a system capability; it represents a notification event"
+        },
+        {
+          "symbol": "BaselineDiffers",
+          "reason": "not a system capability; it indicates a condition"
+        },
+        {
+          "symbol": "ConfirmWithUser",
+          "reason": "not a system capability; it indicates a user interaction"
+        },
+        {
+          "symbol": "FirstInteractionUser",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "SensorsConnect",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "StopAutonomousComponent",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "StopUnfunctioningSensorAssistance",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "SystemDriving",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "SystemOn",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "SytemTakesOver",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "UserCanTurnOffMonitoring",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserCanTurnOffSystem",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserDriving",
+          "reason": "not a system capability; it indicates a user state"
+        },
+        {
+          "symbol": "UserEnters",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserWantsControl",
+          "reason": "not a system capability; it indicates a user state"
+        },
+        {
+          "symbol": "blindSpot",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "commonLanguage",
+          "reason": "not a system capability; it represents a contextual fact"
+        },
+        {
+          "symbol": "decisionPoint",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "eyeMovements",
+          "reason": "not a system capability; it represents a measurement"
+        },
+        {
+          "symbol": "fullAttentionNeeded",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "hasLicense",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "health",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "hearRateVariability",
+          "reason": "not a system capability; it represents a measurement"
+        },
+        {
+          "symbol": "informationImportant",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "needsAccomodation",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "objectNearby",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "obtainConsent",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "properlyPlaced",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "relevantObjectNearby",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "removeFeatureConsent",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "rulesFollowed",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "sameCity",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "substanceUse",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "userGivesControl",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "userImpaired",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "userNotice",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "userUnderstands",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "warningSignalOff",
+          "reason": "not a system capability; it represents a condition"
+        }
+      ],
+      "notes": "Symbols representing user actions, states, or characteristics, as well as environmental conditions, are excluded from capabilities."
+    },
+    "original": {
+      "file": "safescade.sleec",
+      "capabilities": [
+        "CreateConsentForm",
+        "DetermineImportance",
+        "EnsureAccessibility",
+        "EnsureAlertIndependence",
+        "EnsureAlertness",
+        "FindInformation",
+        "InformUser",
+        "ObtainConsentForUserDrive",
+        "PreparingSystem",
+        "RemindUser",
+        "ShowConsentForm",
+        "TakeControlForSafety",
+        "TrackMetrics",
+        "TrackVisionField"
+      ],
+      "count": 14,
+      "declared_events": 24,
+      "declared_measures": 21,
+      "excluded": [
+        {
+          "symbol": "BaselineDiffers",
+          "reason": "not a system capability; it indicates a condition"
+        },
+        {
+          "symbol": "ConfirmWithUser",
+          "reason": "not a system capability; it indicates a user interaction"
+        },
+        {
+          "symbol": "SensorsConnect",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "SystemDriving",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "SystemOn",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "UserCanTurnOffMonitoring",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserCanTurnOffSystem",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserDriving",
+          "reason": "not a system capability; it indicates a user state"
+        },
+        {
+          "symbol": "UserEnters",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserWantsControl",
+          "reason": "not a system capability; it indicates a user state"
+        },
+        {
+          "symbol": "blindSpot",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "commonLanguage",
+          "reason": "not a system capability; it represents a contextual fact"
+        },
+        {
+          "symbol": "decisionPoint",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "eyeMovements",
+          "reason": "not a system capability; it represents a measurement"
+        },
+        {
+          "symbol": "fullAttentionNeeded",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "hasLicense",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "health",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "hearRateVariability",
+          "reason": "not a system capability; it represents a measurement"
+        },
+        {
+          "symbol": "informationImportant",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "needsAccomodation",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "objectNearby",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "obtainConsent",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "properlyPlaced",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "rulesFollowed",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "sameCity",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "substanceUse",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "userGivesControl",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "userImpaired",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "userNotice",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "userUnderstands",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "warningSignalOff",
+          "reason": "not a system capability; it represents a condition"
+        }
+      ]
+    },
+    "corrected": {
+      "file": "safescade-corrected.sleec",
+      "capabilities": [
+        "CreateConsentForm",
+        "DetermineImportance",
+        "EnsureAccessibility",
+        "EnsureAlertIndependence",
+        "EnsureAlertness",
+        "FindInformation",
+        "InformUser",
+        "ObtainConsentForUserDrive",
+        "PreparingSystem",
+        "RemindUser",
+        "ShowConsentForm",
+        "TakeControlForSafety",
+        "TrackMetrics",
+        "TrackVisionField"
+      ],
+      "count": 14,
+      "declared_events": 29,
+      "declared_measures": 23,
+      "excluded": [
+        {
+          "symbol": "Alert",
+          "reason": "not a system capability; it represents a notification event"
+        },
+        {
+          "symbol": "BaselineDiffers",
+          "reason": "not a system capability; it indicates a condition"
+        },
+        {
+          "symbol": "ConfirmWithUser",
+          "reason": "not a system capability; it indicates a user interaction"
+        },
+        {
+          "symbol": "FirstInteractionUser",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "SensorsConnect",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "StopAutonomousComponent",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "StopUnfunctioningSensorAssistance",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "SystemDriving",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "SystemOn",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "SytemTakesOver",
+          "reason": "classified as non-capability"
+        },
+        {
+          "symbol": "UserCanTurnOffMonitoring",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserCanTurnOffSystem",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserDriving",
+          "reason": "not a system capability; it indicates a user state"
+        },
+        {
+          "symbol": "UserEnters",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserWantsControl",
+          "reason": "not a system capability; it indicates a user state"
+        },
+        {
+          "symbol": "blindSpot",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "commonLanguage",
+          "reason": "not a system capability; it represents a contextual fact"
+        },
+        {
+          "symbol": "decisionPoint",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "eyeMovements",
+          "reason": "not a system capability; it represents a measurement"
+        },
+        {
+          "symbol": "fullAttentionNeeded",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "hasLicense",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "health",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "hearRateVariability",
+          "reason": "not a system capability; it represents a measurement"
+        },
+        {
+          "symbol": "informationImportant",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "needsAccomodation",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "objectNearby",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "obtainConsent",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "properlyPlaced",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "relevantObjectNearby",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "removeFeatureConsent",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "rulesFollowed",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "sameCity",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "substanceUse",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "userGivesControl",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "userImpaired",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "userNotice",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "userUnderstands",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "warningSignalOff",
+          "reason": "not a system capability; it represents a condition"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    },
+    "sleecpatch": {
+      "file": "SafeSCAD_SLEECPATCH.sleec",
+      "capabilities": [
+        "CreateConsentForm",
+        "DetermineImportance",
+        "EnsureAccessibility",
+        "EnsureAlertIndependence",
+        "EnsureAlertness",
+        "FindInformation",
+        "InformUser",
+        "ObtainConsentForUserDrive",
+        "PreparingSystem",
+        "RemindUser",
+        "ShowConsentForm",
+        "TakeControlForSafety",
+        "TrackMetrics",
+        "TrackVisionField"
+      ],
+      "count": 14,
+      "declared_events": 24,
+      "declared_measures": 21,
+      "excluded": [
+        {
+          "symbol": "BaselineDiffers",
+          "reason": "not a system capability; it indicates a condition"
+        },
+        {
+          "symbol": "ConfirmWithUser",
+          "reason": "not a system capability; it indicates a user interaction"
+        },
+        {
+          "symbol": "SensorsConnect",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "SystemDriving",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "SystemOn",
+          "reason": "not a system capability; it indicates a system state"
+        },
+        {
+          "symbol": "UserCanTurnOffMonitoring",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserCanTurnOffSystem",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserDriving",
+          "reason": "not a system capability; it indicates a user state"
+        },
+        {
+          "symbol": "UserEnters",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "UserWantsControl",
+          "reason": "not a system capability; it indicates a user state"
+        },
+        {
+          "symbol": "blindSpot",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "commonLanguage",
+          "reason": "not a system capability; it represents a contextual fact"
+        },
+        {
+          "symbol": "decisionPoint",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "eyeMovements",
+          "reason": "not a system capability; it represents a measurement"
+        },
+        {
+          "symbol": "fullAttentionNeeded",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "hasLicense",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "health",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "hearRateVariability",
+          "reason": "not a system capability; it represents a measurement"
+        },
+        {
+          "symbol": "informationImportant",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "needsAccomodation",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "objectNearby",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "obtainConsent",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "properlyPlaced",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "rulesFollowed",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "sameCity",
+          "reason": "not a system capability; it represents a condition"
+        },
+        {
+          "symbol": "substanceUse",
+          "reason": "not a system capability; it represents a user characteristic"
+        },
+        {
+          "symbol": "userGivesControl",
+          "reason": "not a system capability; it represents a user action"
+        },
+        {
+          "symbol": "userImpaired",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "userNotice",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "userUnderstands",
+          "reason": "not a system capability; it represents a user state"
+        },
+        {
+          "symbol": "warningSignalOff",
+          "reason": "not a system capability; it represents a condition"
+        }
+      ],
+      "added_vs_original": [],
+      "removed_vs_original": []
+    }
+  }
+}

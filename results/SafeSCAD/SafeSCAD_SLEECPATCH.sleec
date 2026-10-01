@@ -46,7 +46,7 @@ def_start
     measure warningSignalOff: boolean
     measure userGivesControl: boolean
     measure decisionPoint: boolean
-event UserDrivingWhileAlert
+event UserDrivingWithBlindSpot
 event UserDrivingWithDistraction
 def_end
 
@@ -55,20 +55,20 @@ rule_start
 
 	R1 when UserDriving then EnsureAlertness
 
-R1_1 when UserDrivingWhileAlert then TrackMetrics
+R1_1 when UserDrivingWithDistraction then TrackMetrics
 
 	// Drowsiness detected
-R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser unless {informationImportant}
+	R1_2 when TrackMetrics and (({hearRateVariability} = low) and ({eyeMovements} = low)) then InformUser
 
 R2 when UserDrivingWithDistraction and {fullAttentionNeeded} then EnsureAlertness
 
+    R2_1 when EnsureAlertness then TrackMetrics
 
     R3 when SensorsConnect and (not {properlyPlaced}) then InformUser
 
     R3_1 when SensorsConnect and (not {properlyPlaced}) then not UserDriving
 
-	R4 when UserDriving then not InformUser
-		unless {informationImportant}
+R4 when UserDrivingWithBlindSpot then not InformUser unless {informationImportant}
 
 	R5 when FindInformation then DetermineImportance
 

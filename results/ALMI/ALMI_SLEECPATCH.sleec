@@ -106,10 +106,11 @@ rule_start
 	    unless ({riskLevel} = high)
 	R20 when UserChangeItemLocation then UpdateMap
 	    unless ({riskLevel} = high) then InterfereSafely
-R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures unless (not {humanAssents})
+R21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures
 	R21_1 when FireSafetyMeasures then OpenWindows
 	R21_2 when FireSafetyMeasures then AskUserIfOK
 	R21_3 when FireSafetyMeasures then InformCaregiver
+R22 when HumanOnFloor and ({riskLevel} = high) then CallEmergencyServices
 rule_end
 
 concern_start

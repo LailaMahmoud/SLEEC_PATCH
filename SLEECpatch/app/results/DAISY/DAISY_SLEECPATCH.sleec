@@ -83,9 +83,6 @@ def_start
 	constant legalAge = 18
 	constant StateThreshold = 100
 
-event MeetingUserWithPatientAge11
-measure UserAgeUnder12:boolean
-event ExaminingPatientWithParentalConsent
 def_end
 
 rule_start
@@ -138,14 +135,14 @@ rule_start
 	then CollectPatientData otherwise not CollectPatientData
 
 	Rule17 when CollectingTrainingData and {trainingDataRepresentative} then TrainDaisy
-Rule18 when MeetingUser and ({patientComfortable} and {patientAgeConsidered} and {parentalConsentAvailable}) then ExaminingPatientWithParentalConsent
-	Rule19 when MeetingUser and {patientXReligion} then not ExaminingPatient
-		 unless {userDirectsOtherwise}
-		 unless {medicalEmergency}
+	Rule18 when MeetingUser and ({patientComfortable} and {patientAgeConsidered}) then ExaminingPatient
+Rule19 when MeetingUser and ({patientXReligion} and (not ({patientComfortable} and {patientAgeConsidered}))) then not ExaminingPatient unless {userDirectsOtherwise} unless {medicalEmergency}
 	Rule20 when MeetingUser then informDaisyAbilities
 	Rule21 when ExaminingPatient then CanEndSession
 	Rule21_1 when ExaminingPatient then CanCallHuman
 
+R_new when MeetingUser and (not {trainingDataRepresentative}) then CallSupport
+c2_new when UserEndSession then RobotStopSession
 rule_end
 
 concern_start
