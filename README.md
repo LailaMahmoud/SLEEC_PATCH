@@ -156,10 +156,12 @@ SLEEC-PATCH uses LEGOS-SLEEC for formal analysis of SLEEC specifications.
 LEGOS-SLEEC detects and diagnoses well-formedness issues. SLEEC-PATCH extends this workflow with candidate repair generation, patch validation, formal re-analysis, regression analysis, and evaluation.
 
 ## Repository Structure
-
+SLEEC-PATCH/
+   └──     
     SLEECpatch/
     └── app/
         ├── app.py
+        ├── scripts/
         ├── services/
         ├── sleec_usecases/
         ├── results/
@@ -169,6 +171,8 @@ LEGOS-SLEEC detects and diagnoses well-formedness issues. SLEEC-PATCH extends th
 
     scripts/
         └── evaluation and table-generation scripts
+SLEEC LEGOS/
+└──   SLEECNORM, ANALYZER, SLEECPARSER,SLEEC GRAMMAR
 
 ## Reproducibility
 
