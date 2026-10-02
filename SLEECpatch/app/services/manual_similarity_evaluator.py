@@ -489,94 +489,56 @@ class ManualSimilarityEvaluator:
         # (response/polarity and, where applicable, context) but never
         # reward a component that is absent on both sides.
         relevant = {
-        # ---------------------------------------------------------
-        # New-rule generation
-        # ---------------------------------------------------------
-        "new_rule_generation": {
-            "trigger", "response", "polarity", "defeater", "temporal"
-        },
-        "concern_new_rule_generation": {
-            "trigger", "response", "polarity", "defeater", "temporal"
-        },
+            # ---------------------------------------------------------
+            # Canonical semantic operators
+            # ---------------------------------------------------------
+            "new_rule_generation": {
+                "trigger", "response", "polarity", "defeater", "temporal"
+            },
+            "event_specialization": {
+                "target", "trigger", "response", "polarity",
+                "defeater", "temporal"
+            },
+            "measure_specialization": {
+                "target", "trigger", "response", "polarity",
+                "defeater", "temporal"
+            },
+            "response_refinement": {
+                "target", "trigger", "response", "polarity",
+                "defeater", "temporal"
+            },
 
-        # ---------------------------------------------------------
-        # Event specialization
-        # ---------------------------------------------------------
-        "event_specialization": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "conflict_event_specialization": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "redundancy_event_specialization": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
+            # ---------------------------------------------------------
+            # Deterministic operators
+            # ---------------------------------------------------------
+            "trigger_strengthening": {
+                "target", "trigger", "response", "polarity",
+                "defeater", "temporal"
+            },
+            "trigger_refinement": {
+                "target", "trigger", "response", "polarity",
+                "defeater", "temporal"
+            },
+            "defeater_introduction": {
+                "target", "trigger", "response", "polarity",
+                "defeater", "temporal"
+            },
+            "defeater_propagation": {
+                "target", "trigger", "response", "polarity",
+                "defeater", "temporal"
+            },
+            "purpose_defeater": {
+                "target", "trigger", "response", "polarity",
+                "defeater", "temporal"
+            },
 
-        # ---------------------------------------------------------
-        # Measure specialization
-        # ---------------------------------------------------------
-        "measure_specialization": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "conflict_measure_specialization": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "redundancy_measure_specialization": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-
-        # ---------------------------------------------------------
-        # Capability refinement
-        # ---------------------------------------------------------
-        "capability_refinement": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "purpose_capability_refinement": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-
-        # ---------------------------------------------------------
-        # Deterministic operators
-        # ---------------------------------------------------------
-        "trigger_strengthening": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "trigger_refinement": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "defeater_introduction": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "defeater_propagation": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-        "purpose_defeater": {
-            "target", "trigger", "response", "polarity",
-            "defeater", "temporal"
-        },
-
-        # ---------------------------------------------------------
-        # Rule merging
-        # ---------------------------------------------------------
-        "rule_merging": {
-            "trigger", "response", "polarity", "defeater", "temporal"
-        },
-        "semantic_rule_merging": {
-            "trigger", "response", "polarity", "defeater", "temporal"
-        },
-    }
+            # ---------------------------------------------------------
+            # Deterministic rule merging
+            # ---------------------------------------------------------
+            "rule_merging": {
+                "trigger", "response", "polarity", "defeater", "temporal"
+            },
+        }
         selected_names = relevant.get(op, set(components))
         selected = {
             name: score

@@ -14,6 +14,7 @@ from services.deterministic_repair_engine import DeterministicRepairEngine
 from services.patch_ranker import PatchRanker
 from services.use_case_descriptions import get_use_case_description
 from services.semantic_patch_validator import SemanticPatchValidator
+from services.boolean_simplifier import simplify_sleec_booleans
 
 
 class SLEECPatchWorkbenchEngine:
@@ -26,14 +27,17 @@ class SLEECPatchWorkbenchEngine:
         self.operator_selector = RepairOperatorSelector()
         self.deterministic_engine = DeterministicRepairEngine()
         self.semantic_validator = SemanticPatchValidator()
-        # Section C ranking:
-        # structural/logical = deterministic;
-        # semantic clarity/interpretability = GPT, after formal verification.
-        self.patch_ranker = PatchRanker(
-            semantic_assessor=self._assess_patch_quality_for_ranking
-        )
+        # Quantitative lexicographic ranking is deterministic and is applied
+        # only after formal verification.
+        self.patch_ranker = PatchRanker()
         self.detector_cache = OrderedDict()
         self.detector_cache_lock = threading.RLock()
+
+        # The underlying SLEEC analyzer uses shared/module-level state and
+        # Z3-backed objects. Serialize analyzer execution so concurrent Flask
+        # requests cannot enter the detector at the same time.
+        self.detector_execution_lock = threading.RLock()
+
         self.detector_cache_max_entries = int(
             os.environ.get("SLEEC_DETECTOR_CACHE_SIZE", "64")
         )
@@ -65,7 +69,8 @@ class SLEECPatchWorkbenchEngine:
 
     def run_detector_cached(self, sleec_text):
         if self.detector_cache_max_entries <= 0:
-            return self.detector.run_text(sleec_text)
+            with self.detector_execution_lock:
+                return self.detector.run_text(sleec_text)
 
         cache_key = hashlib.sha256(
             str(sleec_text or "").encode("utf-8")
@@ -77,7 +82,8 @@ class SLEECPatchWorkbenchEngine:
                 self.detector_cache.move_to_end(cache_key)
                 return copy.deepcopy(cached)
 
-        result = self.detector.run_text(sleec_text)
+        with self.detector_execution_lock:
+            result = self.detector.run_text(sleec_text)
 
         with self.detector_cache_lock:
             self.detector_cache[cache_key] = copy.deepcopy(result)
@@ -609,7 +615,7 @@ class SLEECPatchWorkbenchEngine:
             "rule_removal": "Remove redundant rule",
             "event_specialization": "Specialize event",
             "measure_specialization": "Specialize measure",
-            "capability_refinement": "Refine capability",
+            "response_refinement": "Response refinement",
             "new_rule_generation": "Add new rule"
         }
 
@@ -727,20 +733,17 @@ class SLEECPatchWorkbenchEngine:
             # the permitted source.
             "grounding_evidence": patch.get("grounding_evidence", {}),
 
-            "new_event": (
-                patch.get("new_event", "")
-                if operation == "semantic_rule_merging"
-                else patch.get("new_event", patch.get("missing_element", ""))
+            "new_event": patch.get(
+                "new_event",
+                patch.get("missing_element", "")
             ),
-            "new_measure": (
-                patch.get("new_measure", "")
-                if operation == "semantic_rule_merging"
-                else patch.get("new_measure", patch.get("missing_element", ""))
+            "new_measure": patch.get(
+                "new_measure",
+                patch.get("missing_element", "")
             ),
-            "new_capability": (
-                patch.get("new_capability", "")
-                if operation == "semantic_rule_merging"
-                else patch.get("new_capability", patch.get("missing_element", ""))
+            "new_capability": patch.get(
+                "new_capability",
+                patch.get("missing_element", "")
             ),
 
             "new_rule": patch.get("new_rule", patch.get("proposed_rule", "")),
@@ -795,36 +798,19 @@ class SLEECPatchWorkbenchEngine:
         "refine_vague_predicate",
         "refine_action",
 
-        # Legacy semantic operator names
-        "capability_refinement",
+        # Canonical semantic operators
         "event_specialization",
         "measure_specialization",
-
-        # WFI-specific semantic operators
-        "redundancy_event_specialization",
-        "redundancy_measure_specialization",
-        "purpose_capability_refinement",
-        "conflict_event_specialization",
-        "conflict_measure_specialization",
-        "semantic_rule_merging",
+        "response_refinement",
         ]
 
         add_operations = [
             "add",
             "add_rule",
-
-            # Legacy semantic operator
             "new_rule_generation",
-
-            # WFI-specific semantic operator
-            "concern_new_rule_generation",
         ]
 
-        if operation in {
-            "event_specialization",
-            "redundancy_event_specialization",
-            "conflict_event_specialization",
-        }:
+        if operation == "event_specialization":
             new_event = patch.get("new_event") or patch.get("missing_element", "")
 
             if new_event and f"event {new_event}" not in sleec_text:
@@ -833,11 +819,7 @@ class SLEECPatchWorkbenchEngine:
                     f"event {new_event}\ndef_end"
                 )
 
-        if operation in {
-            "measure_specialization",
-            "redundancy_measure_specialization",
-            "conflict_measure_specialization",
-        }:
+        if operation == "measure_specialization":
             new_measure = patch.get("new_measure") or patch.get("missing_element", "")
 
             if new_measure and f"measure {new_measure}" not in sleec_text:
@@ -846,20 +828,18 @@ class SLEECPatchWorkbenchEngine:
                     f"measure {new_measure}:boolean\ndef_end"
                 )
 
-        if operation in {
-            "capability_refinement",
-            "purpose_capability_refinement",
-        }:
-            new_capability = (
-                patch.get("new_capability")
+        if operation == "response_refinement":
+            new_response = (
+                patch.get("new_response")
+                or patch.get("new_capability")  # legacy schema fallback
                 or patch.get("missing_element")
                 or ""
             )
 
-            if new_capability and f"event {new_capability}" not in sleec_text:
+            if new_response and f"event {new_response}" not in sleec_text:
                 sleec_text = sleec_text.replace(
                     "def_end",
-                    f"event {new_capability}\ndef_end"
+                    f"event {new_response}\ndef_end"
                 )
 
         if operation in delete_operations:
@@ -878,7 +858,7 @@ class SLEECPatchWorkbenchEngine:
         # Replace the primary diagnosed rule with the merged rule
         # and remove the other diagnosed conflicting rule(s).
         # ---------------------------------------------------------
-        if operation in {"rule_merging", "semantic_rule_merging"}:
+        if operation == "rule_merging":
             if not proposed_rule:
                 return sleec_text
 
@@ -1317,7 +1297,7 @@ class SLEECPatchWorkbenchEngine:
             "refine_vague_predicate",
             "event_specialization",
             "measure_specialization",
-            "capability_refinement"
+            "response_refinement"
         ] else 0
 
         rules_added = 1 if operation in [
@@ -1356,14 +1336,12 @@ class SLEECPatchWorkbenchEngine:
         actions_refined = 1 if operation in [
             "refine_action",
             "replace_action",
-            "capability_refinement"
+            "response_refinement"
         ] else 0
 
-        capabilities_refined = 1 if operation in [
-            "refine_action",
-            "replace_action",
-            "capability_refinement"
-        ] else 0
+        # Legacy database metric retained for schema compatibility.
+        # Response refinement is counted by actions_refined above.
+        capabilities_refined = 0
 
         return {
             "rules_modified": rules_modified,
@@ -1460,6 +1438,12 @@ class SLEECPatchWorkbenchEngine:
 
     def verify_candidate_patch(self, original_sleec, issue, patch):
         patched_sleec = self.apply_patch_to_text(original_sleec, patch)
+
+        # Common post-transformation simplification for deterministic repairs.
+        # This occurs before syntax/formal verification and therefore before
+        # quantitative ranking.
+        if patch.get("source") == "deterministic":
+            patched_sleec = simplify_sleec_booleans(patched_sleec)
 
         validation_gate = self.validate_patched_sleec(patched_sleec)
         if not validation_gate["valid"]:
@@ -2165,9 +2149,6 @@ class SLEECPatchWorkbenchEngine:
                 p["id"] = f"g{i}"
                 p["source"] = p.get("source", "llm")
 
-                if p.get("operation") == "semantic_rule_merging":
-                    p["rule_ids"] = diagnosed_rule_ids
-
                 self.store.save_patch_candidate({
                     "run_id": run_id,
                     "use_case": use_case,
@@ -2262,7 +2243,10 @@ class SLEECPatchWorkbenchEngine:
             "existing_responses": self.extract_rule_actions(rules_json)
         }
 
-        verified_patches = self.patch_ranker.rank(verified_patches)
+        verified_patches = self.patch_ranker.rank(
+            verified_patches,
+            original_sleec=sleec_text,
+        )
 
         output_file = self.build_final_sleecpatch_file(
             use_case,

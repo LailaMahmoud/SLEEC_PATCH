@@ -52,7 +52,7 @@ class SemanticPatchValidator:
             issue_text, proposed_rule
         )
         operator = self._check_operator_semantics(
-            operation, original_rule, proposed_rule, patch
+            issue_type, operation, original_rule, proposed_rule, patch
         )
         temporal = self._check_temporal_alignment(
             issue_text, original_rule, proposed_rule
@@ -107,7 +107,7 @@ class SemanticPatchValidator:
         introduce one new semantic concept through missing_element (or the
         corresponding new_* field).
 
-        concern_new_rule_generation is different: missing_element may contain
+        new_rule_generation is different: missing_element may contain
         the complete generated rule, so it is not interpreted as one vocabulary
         declaration. New vocabulary in a generated rule is reported for semantic
         grounding validation rather than rejected here solely because it is new.
@@ -154,21 +154,19 @@ class SemanticPatchValidator:
         ).strip()
 
         event_ops = {
-            "redundancy_event_specialization",
-            "conflict_event_specialization",
+            "event_specialization",
         }
 
         measure_ops = {
-            "redundancy_measure_specialization",
-            "conflict_measure_specialization",
+            "measure_specialization",
         }
 
-        capability_ops = {
-            "purpose_capability_refinement",
+        response_ops = {
+            "response_refinement",
         }
 
         new_rule_ops = {
-            "concern_new_rule_generation",
+            "new_rule_generation",
         }
 
         allowed_new = set()
@@ -200,11 +198,12 @@ class SemanticPatchValidator:
                 allowed_new.add(missing.lower())
 
         # ---------------------------------------------------------
-        # CAPABILITY REFINEMENT
+        # RESPONSE REFINEMENT
         # ---------------------------------------------------------
-        elif operation in capability_ops:
+        elif operation in response_ops:
             missing = str(
-                patch.get("new_capability")
+                patch.get("new_response")
+                or patch.get("new_capability")
                 or patch.get("missing_element")
                 or ""
             ).strip()
@@ -413,16 +412,9 @@ class SemanticPatchValidator:
         operation = str(patch.get("operation", "") or "").strip()
 
         if operation in {
-            # Redundancy specialization
-            "redundancy_event_specialization",
-            "redundancy_measure_specialization",
-
-            # Purpose / restrictiveness refinement
-            "purpose_capability_refinement",
-
-            # Situational-conflict specialization
-            "conflict_event_specialization",
-            "conflict_measure_specialization",
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement",
         }:
             if not existing_element:
                 errors.append(
@@ -525,6 +517,7 @@ class SemanticPatchValidator:
 
     def _check_operator_semantics(
         self,
+        issue_type,
         operation,
         original_rule,
         proposed_rule,
@@ -561,53 +554,139 @@ class SemanticPatchValidator:
                 )
 
         # ---------------------------------------------------------
-        # REDUNDANCY — EVENT SPECIALIZATION
+        # EVENT SPECIALIZATION
+        # WFI-specific validation:
+        #   - Redundancy
+        #   - Situational conflict
         # ---------------------------------------------------------
-        elif operation == "redundancy_event_specialization":
+        elif operation == "event_specialization":
             missing = str(
                 patch.get("new_event")
                 or patch.get("missing_element")
                 or ""
             ).strip()
 
-            if not missing:
-                errors.append(
-                    "Redundancy event specialization did not declare "
-                    "a new event."
-                )
+            normalized_issue = str(issue_type or "").strip().lower()
 
-            elif missing.lower() not in proposed_rule.lower():
+            if normalized_issue in {"redundancy", "redundancies"}:
+                if not missing:
+                    errors.append(
+                        "Redundancy event specialization did not declare "
+                        "a new event."
+                    )
+
+                elif missing.lower() not in proposed_rule.lower():
+                    errors.append(
+                        "Specialized redundancy event is not used in "
+                        "the proposed rule."
+                    )
+
+            elif normalized_issue in {
+                "conflict",
+                "conflicts",
+                "situational_conflict",
+                "situational_conflicts",
+            }:
+                if not missing:
+                    errors.append(
+                        "Conflict event specialization did not declare "
+                        "a new event."
+                    )
+
+                elif missing.lower() not in proposed_rule.lower():
+                    errors.append(
+                        "Specialized conflict event is not used in "
+                        "the proposed rule."
+                    )
+
+                # A changed response is not automatically invalid, but it is
+                # suspicious for an event-specialization operator.
+                if (
+                    original_action
+                    and proposed_action
+                    and original_action.lower() != proposed_action.lower()
+                ):
+                    warnings.append(
+                        "Conflict event specialization also changed "
+                        "the response."
+                    )
+
+            else:
                 errors.append(
-                    "Specialized redundancy event is not used in "
-                    "the proposed rule."
+                    "event_specialization is not applicable to "
+                    f"issue type '{issue_type}'."
                 )
 
         # ---------------------------------------------------------
-        # REDUNDANCY — MEASURE SPECIALIZATION
+        # MEASURE SPECIALIZATION
+        # Same canonical operator; WFI-specific validation.
         # ---------------------------------------------------------
-        elif operation == "redundancy_measure_specialization":
+        elif operation == "measure_specialization":
             missing = str(
                 patch.get("new_measure")
                 or patch.get("missing_element")
                 or ""
             ).strip()
 
-            if not missing:
-                errors.append(
-                    "Redundancy measure specialization did not declare "
-                    "a new measure."
-                )
+            normalized_issue = str(issue_type or "").strip().lower()
 
-            elif missing.lower() not in proposed_rule.lower():
+            # REDUNDANCY-specific implementation
+            if normalized_issue in {"redundancy", "redundancies"}:
+                if not missing:
+                    errors.append(
+                        "Redundancy measure specialization did not declare "
+                        "a new measure."
+                    )
+
+                elif missing.lower() not in proposed_rule.lower():
+                    errors.append(
+                        "Specialized redundancy measure is not used in "
+                        "the proposed rule."
+                    )
+
+            # SITUATIONAL-CONFLICT-specific implementation
+            elif normalized_issue in {
+                "conflict",
+                "conflicts",
+                "situational_conflict",
+                "situational_conflicts",
+            }:
+                if not missing:
+                    errors.append(
+                        "Conflict measure specialization did not declare "
+                        "a new measure."
+                    )
+
+                elif missing.lower() not in proposed_rule.lower():
+                    errors.append(
+                        "Specialized conflict measure is not used in "
+                        "the proposed rule."
+                    )
+
+            else:
                 errors.append(
-                    "Specialized redundancy measure is not used in "
-                    "the proposed rule."
+                    "measure_specialization is not applicable to "
+                    f"issue type '{issue_type}'."
                 )
 
         # ---------------------------------------------------------
-        # CONCERN — NEW RULE GENERATION
+        # NEW RULE GENERATION
+        # Concern-specific implementation.
         # ---------------------------------------------------------
-        elif operation == "concern_new_rule_generation":
+        elif operation == "new_rule_generation":
+            normalized_issue = str(issue_type or "").strip().lower()
+
+            if normalized_issue not in {
+                "concern",
+                "concerns",
+                "insufficiency",
+                "insufficiencies",
+            }:
+                errors.append(
+                    "new_rule_generation is not applicable to "
+                    f"issue type '{issue_type}'."
+                )
+
             if not proposed_rule.strip():
                 errors.append(
                     "Concern new-rule generation produced an empty rule."
@@ -624,120 +703,93 @@ class SemanticPatchValidator:
                 )
 
         # ---------------------------------------------------------
-        # PURPOSE — CAPABILITY REFINEMENT
+        # RESPONSE REFINEMENT
+        # Same canonical operator; WFI-specific validation.
         # ---------------------------------------------------------
-        elif operation == "purpose_capability_refinement":
+        elif operation == "response_refinement":
             missing = str(
-                patch.get("new_capability")
+                patch.get("new_response")
+                or patch.get("new_capability")  # legacy schema fallback
                 or patch.get("missing_element")
                 or ""
             ).strip()
 
+            normalized_issue = str(issue_type or "").strip().lower()
+
+            # Shared structural requirement:
+            # the refined response must be explicitly represented in
+            # the proposed target rule.
             if not missing:
                 errors.append(
-                    "Purpose capability refinement did not declare "
-                    "a refined capability."
+                    "Response refinement did not declare a refined response."
                 )
 
             elif missing.lower() not in proposed_rule.lower():
                 errors.append(
-                    "Refined capability is not used in the proposed rule."
+                    "Refined response is not used in the proposed rule."
                 )
 
-        # ---------------------------------------------------------
-        # CONFLICT — EVENT SPECIALIZATION
-        # ---------------------------------------------------------
-        elif operation == "conflict_event_specialization":
-            missing = str(
-                patch.get("new_event")
-                or patch.get("missing_element")
-                or ""
-            ).strip()
+            # -----------------------------------------------------
+            # SITUATIONAL-CONFLICT-specific implementation
+            # -----------------------------------------------------
+            if normalized_issue in {
+                "conflict",
+                "conflicts",
+                "situational_conflict",
+                "situational_conflicts",
+            }:
+                if (
+                    original_action
+                    and proposed_action
+                    and original_action.lower() == proposed_action.lower()
+                ):
+                    errors.append(
+                        "Conflict response refinement did not change "
+                        "the target rule's response."
+                    )
 
-            if not missing:
+            # -----------------------------------------------------
+            # REDUNDANCY-specific implementation
+            # -----------------------------------------------------
+            elif normalized_issue in {
+                "redundancy",
+                "redundancies",
+            }:
+                if (
+                    original_action
+                    and proposed_action
+                    and original_action.lower() == proposed_action.lower()
+                ):
+                    errors.append(
+                        "Redundancy response refinement did not change "
+                        "the target rule's response."
+                    )
+
+            # -----------------------------------------------------
+            # PURPOSE-BLOCKING / RESTRICTIVENESS-specific implementation
+            # -----------------------------------------------------
+            elif normalized_issue in {
+                "purpose_blocking",
+                "purpose blocking",
+                "purpose",
+                "restrictiveness",
+                "restrictive",
+            }:
+                if (
+                    original_action
+                    and proposed_action
+                    and original_action.lower() == proposed_action.lower()
+                ):
+                    errors.append(
+                        "Purpose-blocking response refinement did not change "
+                        "the target rule's response."
+                    )
+
+            else:
                 errors.append(
-                    "Conflict event specialization did not declare "
-                    "a new event."
+                    "response_refinement is not applicable to "
+                    f"issue type '{issue_type}'."
                 )
-
-            elif missing.lower() not in proposed_rule.lower():
-                errors.append(
-                    "Specialized conflict event is not used in "
-                    "the proposed rule."
-                )
-
-            # A changed response is not automatically invalid, but it is
-            # suspicious for an event-specialization operator.
-            if (
-                original_action
-                and proposed_action
-                and original_action.lower() != proposed_action.lower()
-            ):
-                warnings.append(
-                    "Conflict event specialization also changed "
-                    "the response."
-                )
-
-        # ---------------------------------------------------------
-        # CONFLICT — MEASURE SPECIALIZATION
-        # ---------------------------------------------------------
-        elif operation == "conflict_measure_specialization":
-            missing = str(
-                patch.get("new_measure")
-                or patch.get("missing_element")
-                or ""
-            ).strip()
-
-            if not missing:
-                errors.append(
-                    "Conflict measure specialization did not declare "
-                    "a new measure."
-                )
-
-            elif missing.lower() not in proposed_rule.lower():
-                errors.append(
-                    "Specialized conflict measure is not used in "
-                    "the proposed rule."
-                )
-        # ---------------------------------------------------------
-        # CONFLICT — SEMANTIC RULE MERGING
-        # ---------------------------------------------------------
-        elif operation == "semantic_rule_merging":
-            if not proposed_rule:
-                errors.append(
-                    "Semantic Rule Merging did not produce a merged rule."
-                )
-
-            # Semantic Rule Merging should combine the diagnosed
-            # conflicting rules rather than inventing a new event,
-            # measure, or capability merely to avoid the conflict.
-            new_event = str(
-                patch.get("new_event", "") or ""
-            ).strip()
-
-            new_measure = str(
-                patch.get("new_measure", "") or ""
-            ).strip()
-
-            new_capability = str(
-                patch.get("new_capability", "") or ""
-            ).strip()
-
-            if new_event or new_measure or new_capability:
-                errors.append(
-                    "Semantic Rule Merging must merge the diagnosed rules "
-                    "without introducing an unrelated new event, measure, "
-                    "or capability."
-                )
-
-            # A semantic merge should represent the diagnosed pair.
-            # Formal correctness is NOT decided here; the resulting
-            # specification will be checked by LEGOS-SLEEC.
-            if not original_rule:
-                errors.append(
-                    "Semantic Rule Merging requires the diagnosed "
-                    "conflicting rules as its original-rule context."
-                )        
 
         return {
             "passed": not errors,

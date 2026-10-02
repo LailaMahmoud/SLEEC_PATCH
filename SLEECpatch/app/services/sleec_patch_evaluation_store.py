@@ -108,8 +108,30 @@ class SLEECPatchEvaluationStore:
             return "SERIAL PRIMARY KEY"
         return "INTEGER PRIMARY KEY AUTOINCREMENT"
 
+    LEGACY_OPERATOR_ALIASES = {
+        "capability_refinement": "response_refinement",
+        "purpose_capability_refinement": "response_refinement",
+    }
+
+    def normalize_loaded_operator(self, operation):
+        """Normalize legacy persisted operator names on read only."""
+        value = str(operation or "").strip()
+        return self.LEGACY_OPERATOR_ALIASES.get(value, value)
+
     def rows_to_dicts(self, rows):
-        return [dict(r) for r in rows]
+        results = []
+
+        for row in rows:
+            item = dict(row)
+
+            if "operation" in item:
+                item["operation"] = self.normalize_loaded_operator(
+                    item.get("operation")
+                )
+
+            results.append(item)
+
+        return results
 
     def to_json(self, value):
         return json.dumps(value, default=str, ensure_ascii=False)

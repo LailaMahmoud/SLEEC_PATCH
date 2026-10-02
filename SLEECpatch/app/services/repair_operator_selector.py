@@ -28,42 +28,39 @@ class RepairOperatorSelector:
         ],
         "concerns": [
             "trigger_strengthening",
-            "defeater_introduction",
+            "defeater_refinement",
             "rule_decomposition",
+            "deadline_refinement",
         ],
         "purpose_blocking": [
-         "defeater_introduction",
+            "defeater_introduction",
         ],
     }
 
     BASE_LLM_OPERATORS = {
-    "conflicts": [
-        "conflict_event_specialization",
-        "conflict_measure_specialization",
-        "semantic_rule_merging",
+        "conflicts": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement",
+        ],
+        "situational_conflicts": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement",
+        ],
+        "redundancies": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement",
+        ],
+        "concerns": [
+            "new_rule_generation",
+        ],
+        "purpose_blocking": [
+            "response_refinement",
+        ],
+    }
 
-    ],
-
-    "situational_conflicts": [
-        "conflict_event_specialization",
-        "conflict_measure_specialization",
-        "semantic_rule_merging",
-
-    ],
-
-    "redundancies": [
-        "redundancy_event_specialization",
-        "redundancy_measure_specialization",
-    ],
-
-    "concerns": [
-        "concern_new_rule_generation",
-    ],
-
-    "purpose_blocking": [
-        "purpose_capability_refinement",
-    ],
-   }
     ISSUE_ALIASES = {
         "conflict": "conflicts",
         "situational_conflict": "situational_conflicts",
@@ -72,15 +69,6 @@ class RepairOperatorSelector:
         "purpose": "purpose_blocking",
         "restrictiveness": "purpose_blocking",
         "insufficiency": "concerns",
-    }
-
-    # Temporal Refinement is not a WFI category. It is a deterministic
-    # cross-cutting repair operator that may apply to existing WFIs when the
-    # diagnosis provides a different explicit numeric temporal bound.
-    TEMPORAL_REFINEMENT_WFIS = {
-        "concerns",
-        "conflicts",
-        "situational_conflicts",
     }
 
     def select(
@@ -152,18 +140,6 @@ class RepairOperatorSelector:
             )
             llm.extend(self.BASE_LLM_OPERATORS.get(issue_type, []))
 
-        # Cross-WFI diagnosis-driven applicability. Temporal Refinement is
-        # considered only for concern/conflict/situational-conflict diagnoses
-        # and only when the diagnosis supplies a different explicit numeric
-        # temporal bound for the same response as an affected rule.
-        if issue_type in self.TEMPORAL_REFINEMENT_WFIS:
-            self._select_temporal_refinement(
-                deterministic=deterministic,
-                applicability=applicability,
-                issue_rules=issue_rules,
-                selected_issue=selected_issue,
-            )
-
         return {
             "deterministic": deterministic,
             "llm": llm,
@@ -199,16 +175,16 @@ class RepairOperatorSelector:
                 "Two diagnosed conflicting rules are required to establish merge compatibility.",
             )
             self._add(
-                llm, applicability, "conflict_event_specialization", False,
+                llm, applicability, "event_specialization", False,
                 "A diagnosed conflicting rule pair is required before semantic event specialization is attempted.",
             )
             self._add(
-                llm, applicability, "conflict_measure_specialization", False,
+                llm, applicability, "measure_specialization", False,
                 "Two diagnosed conflicting rules are required to establish a shared environmental measure.",
             )
             self._add(
-                llm, applicability, "semantic_rule_merging", False,
-                "Two diagnosed conflicting rules are required before Semantic Rule Merging can be attempted.",
+                llm, applicability, "response_refinement", False,
+                "Two diagnosed conflicting rules are required before response refinement can target one of the conflicting responses.",
             )
             return
 
@@ -300,7 +276,7 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "conflict_event_specialization",
+            "event_specialization",
             event_applicable,
             (
                 "The diagnosis provides independent semantic evidence for a "
@@ -319,7 +295,7 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "conflict_measure_specialization",
+            "measure_specialization",
             bool(shared_measures),
             (
                 "The conflicting rules share declared measure(s): "
@@ -328,25 +304,31 @@ class RepairOperatorSelector:
                 else "The conflicting rules do not share a declared environmental measure."
             ),
         )
-        semantic_merge_applicable = (
-            len(issue_rules) >= 2
-            and not merge_compatible
+
+        # Response refinement is applicable when the diagnosis identifies
+        # two conflicting rules with distinct main responses. The semantic
+        # operator may refine one response while preserving its trigger,
+        # deadline, polarity, and defeater.
+        r1_response = self.normalize_response(r1.get("action", ""))
+        r2_response = self.normalize_response(r2.get("action", ""))
+        response_applicable = bool(
+            r1_response
+            and r2_response
+            and r1_response != r2_response
         )
 
         self._add(
             llm,
             applicability,
-            "semantic_rule_merging",
-            semantic_merge_applicable,
+            "response_refinement",
+            response_applicable,
             (
-                "LEGOS-SLEEC identified the conflicting rules, but the pair "
-                "does not satisfy the structural contract for deterministic "
-                "rule_merging. Semantic Rule Merging may therefore propose "
-                "alternative merged-rule candidates for formal verification."
-                if semantic_merge_applicable
-                else
-                "Semantic Rule Merging is reserved for diagnosed conflict "
-                "pairs for which deterministic rule_merging is not applicable."
+                "The diagnosed conflict identifies distinct responses, so one "
+                "response may be semantically refined while preserving all "
+                "untargeted rule elements."
+                if response_applicable
+                else "Response refinement requires diagnosed conflicting rules "
+                     "with distinct main responses."
             ),
         )
 
@@ -418,7 +400,7 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "redundancy_event_specialization",
+            "event_specialization",
             event_applicable,
             (
                 "The diagnosed redundancy contains a trigger event and a distinct "
@@ -441,7 +423,7 @@ class RepairOperatorSelector:
         self._add(
             llm,
             applicability,
-            "redundancy_measure_specialization",
+            "measure_specialization",
             bool(target_measures),
             (
                 "The redundant rule uses declared measure(s): "
@@ -450,6 +432,30 @@ class RepairOperatorSelector:
                 else "Measure specialization requires an environmental measure."
             ),
         )
+
+        # Response refinement is applicable only when the diagnosed redundant
+        # path has a concrete response that can be semantically specialized.
+        redundant_response = (
+            self.normalize_response(redundant_rule.get("action", ""))
+            if redundant_rule
+            else ""
+        )
+        response_applicable = bool(redundant_rule and redundant_response)
+
+        self._add(
+            llm,
+            applicability,
+            "response_refinement",
+            response_applicable,
+            (
+                "The diagnosed redundant rule has a concrete response that may "
+                "be semantically refined to distinguish the redundant path."
+                if response_applicable
+                else "Response refinement requires a diagnosed redundant rule "
+                     "with a concrete response."
+            ),
+        )
+
     def _select_concern_operators(
         self,
         deterministic,
@@ -486,9 +492,25 @@ class RepairOperatorSelector:
         self._add(
             deterministic,
             applicability,
-            "defeater_introduction",
-            has_context and bool(issue_rules),
-            "The witness concern can be converted into an explicit exception on a related rule.",
+            "defeater_refinement",
+            has_context
+            and any(
+                str(rule.get("defeater", "")).strip()
+                for rule in issue_rules
+                if isinstance(rule, dict)
+            ),
+            (
+                "The diagnosed concern provides context for refining an existing "
+                "defeater on a related rule."
+                if has_context
+                and any(
+                    str(rule.get("defeater", "")).strip()
+                    for rule in issue_rules
+                    if isinstance(rule, dict)
+                )
+                else "Defeater refinement requires witness context and a related "
+                     "rule with an existing defeater."
+            ),
         )
         self._add(
             deterministic,
@@ -501,68 +523,92 @@ class RepairOperatorSelector:
                 else "Rule decomposition requires a diagnosed main-response rule and witness context."
             ),
         )
+        # Deadline refinement is concern-specific. It is applicable only
+        # when a related rule already has an explicit deadline and the
+        # diagnosis provides a strictly tighter deadline for the same response.
+        self._select_deadline_refinement(
+            deterministic=deterministic,
+            applicability=applicability,
+            issue_rules=issue_rules,
+            selected_issue=selected_issue,
+        )
+
         self._add(
             llm,
             applicability,
-            "concern_new_rule_generation",
+            "new_rule_generation",
             True,
             "An insufficiency represents missing normative behaviour; a new rule is a candidate semantic repair.",
         )
 
 
-    def _select_temporal_refinement(
+    def _select_deadline_refinement(
         self,
         deterministic,
         applicability,
         issue_rules,
         selected_issue,
     ):
-        """Select Temporal Refinement from diagnosis evidence, not WFI type.
+        """Select Deadline Refinement for an insufficiency diagnosis.
 
         Applicability requires:
         1. an affected rule with an explicit numeric ``within`` bound;
-        2. a diagnosis with a different explicit numeric ``within`` bound;
-        3. the diagnosed response and target-rule response to match after
-           ignoring polarity and temporal syntax.
+        2. a diagnosis with a strictly tighter explicit numeric ``within`` bound;
+        3. the diagnosed response and target-rule response to match while
+           preserving response polarity.
 
         This method never invents a deadline.
         """
-        context = self.find_temporal_refinement_context(
+        context = self.find_deadline_refinement_context(
             issue_rules=issue_rules,
             selected_issue=selected_issue,
         )
-        applicable = context is not None
 
-        if applicable:
+        applicable = False
+        reason = (
+            "Deadline refinement requires a related rule with an existing "
+            "deadline and a stricter diagnosed deadline for the same response."
+        )
+
+        if context is not None:
             old = context["existing_temporal"]
             new = context["diagnosed_temporal"]
-            subtype = (
-                "temporal_restriction"
-                if self.temporal_to_seconds(new["value"], new["unit"])
-                < self.temporal_to_seconds(old["value"], old["unit"])
-                else "temporal_relaxation"
+
+            old_seconds = self.temporal_to_seconds(
+                old["value"], old["unit"]
             )
-            reason = (
-                f"The diagnosis supplies {new['text']} for the same response "
-                f"whose affected rule uses {old['text']}; {subtype.replace('_', ' ')} "
-                "is applicable."
+            new_seconds = self.temporal_to_seconds(
+                new["value"], new["unit"]
             )
-        else:
-            reason = (
-                "Temporal refinement requires an affected rule and diagnosis "
-                "with different explicit numeric temporal bounds for the same response."
+
+            applicable = (
+                old_seconds is not None
+                and new_seconds is not None
+                and new_seconds < old_seconds
             )
+
+            if applicable:
+                reason = (
+                    f"The related rule uses {old['text']} for the diagnosed "
+                    f"response, while the concern requires the stricter "
+                    f"deadline {new['text']}."
+                )
+            else:
+                reason = (
+                    "The diagnosis does not provide a stricter deadline than "
+                    "the existing deadline for the same response."
+                )
 
         self._add(
             deterministic,
             applicability,
-            "temporal_refinement",
+            "deadline_refinement",
             applicable,
             reason,
         )
 
-    def find_temporal_refinement_context(self, issue_rules, selected_issue):
-        """Return target rule + diagnosed bound for a valid temporal mismatch."""
+    def find_deadline_refinement_context(self, issue_rules, selected_issue):
+        """Return target rule + diagnosed deadline for a valid concern deadline mismatch."""
         diagnosis_text = str(selected_issue or "")
         requirements = self.extract_temporal_requirements(diagnosis_text)
 
@@ -590,8 +636,23 @@ class RepairOperatorSelector:
                 if req["response"] != target_response:
                     continue
                 diagnosed = req["temporal"]
-                if self.same_temporal_bound(existing, diagnosed):
+
+                old_seconds = self.temporal_to_seconds(
+                    existing["value"], existing["unit"]
+                )
+                new_seconds = self.temporal_to_seconds(
+                    diagnosed["value"], diagnosed["unit"]
+                )
+
+                # Deadline refinement applies only when the diagnosed
+                # deadline is strictly tighter than the existing deadline.
+                if (
+                    old_seconds is None
+                    or new_seconds is None
+                    or new_seconds >= old_seconds
+                ):
                     continue
+
                 return {
                     "target_rule": rule,
                     "existing_temporal": existing,
@@ -657,21 +718,21 @@ class RepairOperatorSelector:
         )
 
         # ---------------------------------------------------------
-        # LLM: Capability Refinement
+        # LLM: Response Refinement
         # ---------------------------------------------------------
-        capability_applicable = bool(purpose_action)
+        response_applicable = bool(purpose_action)
 
         self._add(
             llm,
             applicability,
-            "purpose_capability_refinement",
+            "response_refinement",
             bool(purpose_action),
             (
                 "The intended purpose contains a response that can be "
-                "semantically refined into a more distinguishable capability."
+                "semantically refined into a more appropriate response."
                 if purpose_action
                 else
-                "Capability refinement requires a response in the "
+                "Response refinement requires a response in the "
                 "diagnosed purpose."
             ),
         )
@@ -793,7 +854,7 @@ class RepairOperatorSelector:
         # Multiple distinct trigger events in the same diagnosis establish
         # co-occurrence/conflict only. They do NOT establish that one event
         # specializes, refines, or is a subtype/component of another.
-        #conflict_event_specialization
+        # event_specialization
         # Therefore, do not select semantic event specialization solely from
         # distinct diagnosed trigger events.
         if len(diagnosed_trigger_events) < 2:
@@ -1034,7 +1095,6 @@ class RepairOperatorSelector:
 
     def normalize_response_for_temporal_match(self, text: object) -> str:
         response = str(text or "").strip()
-        response = re.sub(r"^not\s+", "", response, flags=re.IGNORECASE)
         response = re.sub(
             r"\s+within\s+\d+(?:\.\d+)?\s+(?:seconds?|minutes?|hours?|days?)\b.*$",
             "", response, flags=re.IGNORECASE

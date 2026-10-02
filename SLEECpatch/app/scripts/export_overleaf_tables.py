@@ -479,20 +479,20 @@ def generate_patch_results_table(rows: Sequence[dict]) -> str:
 
     lines = [
         r"\begin{table*}[t]",
-        r"\caption{Verified SLEEC-PATCH generation results. RM, RA, RD, DA, TR, RR, and CR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, response refinements, and capability refinements, respectively. Gen. and Val. denote generation and validation time in seconds.}",
+        r"\caption{Verified SLEEC-PATCH generation results. RM, RA, RD, DA, TR, and RR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, and response refinements, respectively. Gen. and Val. denote generation and validation time in seconds.}",
         r"\label{tab:patch-results}",
         r"\centering",
         r"\scriptsize",
         r"\setlength{\tabcolsep}{2.3pt}",
         r"\resizebox{\textwidth}{!}{%",
-        r"\begin{tabular}{lllrrrrllrrrrrrrrlll}",
+        r"\begin{tabular}{lllrrrrllrrrrrrrlll}",
         r"\toprule",
-        r"Case & IID & WFI & \#Patch & Total & Gen. & Val. & PID & Op. & RM & RA & RD & DA & TR & RR & CR & Rank & M-Sim. & Source & E-Review \\",
+        r"Case & IID & WFI & \#Patch & Total & Gen. & Val. & PID & Op. & RM & RA & RD & DA & TR & RR & Rank & M-Sim. & Source & E-Review \\",
         r"\midrule",
     ]
 
     if not rows:
-        lines.append(r"\multicolumn{20}{c}{No verified patch results were found.}\\")
+        lines.append(r"\multicolumn{19}{c}{No verified patch results were found.}\\")
     else:
         previous_case = None
         previous_issue = None
@@ -524,7 +524,6 @@ def generate_patch_results_table(rows: Sequence[dict]) -> str:
                 str(int(row.get("defeaters_added") or 0)),
                 str(int(row.get("conditions_refined") or 0)),
                 str(int(row.get("actions_refined") or 0)),
-                str(int(row.get("capabilities_refined") or 0)),
                 str(rank) if rank > 0 else "--",
                 f'{float(row.get("expert_similarity") or 0):.2f}',
                 latex_escape(row.get("source")),

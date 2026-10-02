@@ -108,7 +108,7 @@ class PatchLevelEvaluator:
             "rule_decomposition",
             "event_specialization",
             "measure_specialization",
-            "capability_refinement",
+            "response_refinement",
             "new_rule_generation"
         }:
             return self.soft_rule_match(proposed_rule, corrected_norm)

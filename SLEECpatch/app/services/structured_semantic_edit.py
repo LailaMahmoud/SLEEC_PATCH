@@ -48,7 +48,7 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
     declared_names.update(p.name for node in model.definitions if type(node).__name__ == "ScalarMeasure" for p in node.type.scaleParams)
     declaration = ""
     missing = ""
-    if operation in {"event_specialization", "capability_refinement", "measure_specialization"}:
+    if operation in {"event_specialization", "response_refinement", "measure_specialization"}:
         fields(change, ("from", "to", "meaning", "evidence"), ("scale_labels",))
         old, new = symbol(change["from"]), symbol(change["to"])
         for key in ("meaning", "evidence"):
@@ -62,9 +62,9 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
                 raise ValueError("Event specialization may change only the target rule's trigger event.")
             proposed = edit_inside(text, rule, rule.trigger, new)
             declaration = f"event {new}"
-        elif operation == "capability_refinement":
+        elif operation == "response_refinement":
             if old != rule.response.occ.event.event.name:
-                raise ValueError("Capability refinement may change only the target rule's main response event.")
+                raise ValueError("Response refinement may change only the target rule's main response event.")
             proposed = edit_inside(text, rule, rule.response.occ.event, new)
             declaration = f"event {new}"
         else:

@@ -1,5 +1,7 @@
 import re
 
+from sleec.sleecParser import parse_sleec_ast
+
 
 class PatchRanker:
 
@@ -8,26 +10,420 @@ class PatchRanker:
         # It must be invoked only on patches that already passed formal verification.
         self.semantic_assessor = semantic_assessor
 
-    def rank(self, verified_patches):
+    def rank(self, verified_patches, original_sleec):
+        """Rank formally verified patches by ascending lexicographic cost."""
         ranked = []
 
         for patch in verified_patches:
-            scores = self.score_patch(patch)
+            patched_sleec = str(patch.get("patched_sleec", "") or "")
+            if not patched_sleec:
+                raise ValueError(
+                    "Quantitative ranking requires patch['patched_sleec']."
+                )
 
-            patch["ranking"] = scores
-            patch["ranking_score"] = scores["total_score"]
+            metrics = self.compute_metrics(
+                original_sleec=original_sleec,
+                patched_sleec=patched_sleec,
+            )
+
+            patch["ranking"] = metrics
+
+            # Legacy storage field only; it does not determine ranking.
+            patch["ranking_score"] = 0
 
             ranked.append(patch)
 
         ranked.sort(
-            key=lambda p: p.get("ranking_score", 0),
-            reverse=True
+            key=lambda patch: tuple(
+                patch["ranking"]["lexicographic_key"]
+            )
         )
 
         for index, patch in enumerate(ranked, start=1):
             patch["rank"] = index
 
         return ranked
+
+    def compute_metrics(self, original_sleec, patched_sleec):
+        """Compute quantitative metrics from original and patched SLEEC."""
+        original_model = parse_sleec_ast(original_sleec)
+        patched_model = parse_sleec_ast(patched_sleec)
+
+        original_rules = self._rule_sources(original_model, original_sleec)
+        patched_rules = self._rule_sources(patched_model, patched_sleec)
+
+        original_ids = set(original_rules)
+        patched_ids = set(patched_rules)
+
+        added_rule_ids = patched_ids - original_ids
+        removed_rule_ids = original_ids - patched_ids
+
+        edited_rule_ids = {
+            rule_id
+            for rule_id in (original_ids & patched_ids)
+            if self._normalize_source(original_rules[rule_id])
+            != self._normalize_source(patched_rules[rule_id])
+        }
+
+        rules_added = len(added_rule_ids)
+        rules_removed = len(removed_rule_ids)
+        rules_edited = len(edited_rule_ids)
+
+        affected_rule_ids = (
+            added_rule_ids
+            | removed_rule_ids
+            | edited_rule_ids
+        )
+
+        rules_affected = len(affected_rule_ids)
+
+        original_events = self._definition_names(
+            original_model, {"Event"}
+        )
+        patched_events = self._definition_names(
+            patched_model, {"Event"}
+        )
+
+        measure_types = {
+            "BoolMeasure",
+            "NumMeasure",
+            "ScalarMeasure",
+        }
+
+        original_measures = self._definition_names(
+            original_model, measure_types
+        )
+        patched_measures = self._definition_names(
+            patched_model, measure_types
+        )
+
+        new_events = len(patched_events - original_events)
+        new_measures = len(patched_measures - original_measures)
+
+        # Count newly introduced defeater structures rather than relying
+        # on the net difference in total defeater counts.
+        new_defeaters = self._count_new_defeaters(
+            original_model,
+            original_sleec,
+            patched_model,
+            patched_sleec,
+        )
+
+        new_specification_elements = (
+            new_events
+            + new_measures
+            + new_defeaters
+        )
+
+        affected_patched_rules = self._affected_patched_rules(
+            patched_model,
+            affected_rule_ids,
+        )
+
+        # Syntactic metrics are computed only on the affected rules in the
+        # simplified patched specification, not on unrelated unchanged rules.
+        boolean_operator_count = self._count_boolean_operators(
+            affected_patched_rules
+        )
+        negation_count = self._count_negations(
+            affected_patched_rules
+        )
+
+        # One syntactic-complexity criterion:
+        # Boolean operators plus Boolean negations.
+        boolean_expression_complexity = (
+            boolean_operator_count + negation_count
+        )
+
+        defeater_count = self._count_rule_defeaters(
+            affected_patched_rules
+        )
+        defeater_nesting_depth = self._rule_defeater_depth(
+            affected_patched_rules
+        )
+
+        lexicographic_key = (
+            rules_affected,
+            new_specification_elements,
+            boolean_expression_complexity,
+            defeater_count,
+            defeater_nesting_depth,
+        )
+
+        return {
+            "rules_affected": rules_affected,
+            "rules_edited": rules_edited,
+            "rules_added": rules_added,
+            "rules_removed": rules_removed,
+            "new_specification_elements": new_specification_elements,
+            "new_events": new_events,
+            "new_measures": new_measures,
+            "new_defeaters": new_defeaters,
+            "boolean_operator_count": boolean_operator_count,
+            "negation_count": negation_count,
+            "boolean_expression_complexity": boolean_expression_complexity,
+            "defeater_count": defeater_count,
+            "defeater_nesting_depth": defeater_nesting_depth,
+            "lexicographic_key": list(lexicographic_key),
+        }
+
+    @staticmethod
+    def _normalize_source(text):
+        return re.sub(r"\\s+", " ", str(text or "")).strip()
+
+    @staticmethod
+    def _rule_sources(model, sleec_text):
+        result = {}
+
+        for rule in model.ruleBlock.rules:
+            result[str(rule.name)] = sleec_text[
+                rule._tx_position:rule._tx_position_end
+            ]
+
+        return result
+
+    @staticmethod
+    def _affected_patched_rules(model, affected_rule_ids):
+        """Return affected rules that exist in the patched specification."""
+        return [
+            rule
+            for rule in model.ruleBlock.rules
+            if str(rule.name) in affected_rule_ids
+        ]
+
+    @staticmethod
+    def _definition_names(model, accepted_types):
+        return {
+            str(definition.name)
+            for definition in model.definitions
+            if type(definition).__name__ in accepted_types
+        }
+
+    def _count_boolean_operators(self, rules):
+        """Count AND/OR Boolean AST nodes in affected rules."""
+        total = 0
+
+        for rule in rules:
+            total += self._count_boolean_operators_expr(
+                getattr(rule, "condition", None)
+            )
+            total += self._count_response_boolean_operators(
+                getattr(rule, "response", None)
+            )
+
+        return total
+
+    def _count_boolean_operators_expr(self, node):
+        if node is None:
+            return 0
+
+        kind = type(node).__name__
+
+        if kind == "BoolBinaryOp":
+            return (
+                1
+                + self._count_boolean_operators_expr(
+                    getattr(node, "lhs", None)
+                )
+                + self._count_boolean_operators_expr(
+                    getattr(node, "rhs", None)
+                )
+            )
+
+        if kind == "Negation":
+            return self._count_boolean_operators_expr(
+                getattr(node, "expr", None)
+            )
+
+        return 0
+
+    def _count_response_boolean_operators(self, response):
+        if response is None:
+            return 0
+
+        total = 0
+
+        for defeater in getattr(response, "defeater", []) or []:
+            total += self._count_boolean_operators_expr(
+                getattr(defeater, "expr", None)
+            )
+
+            nested = getattr(defeater, "response", None)
+            if nested is not None:
+                total += self._count_response_boolean_operators(
+                    nested
+                )
+
+        return total
+
+    def _count_negations(self, rules):
+        """Count Boolean NOT nodes in affected rules."""
+        total = 0
+
+        for rule in rules:
+            total += self._count_negations_expr(
+                getattr(rule, "condition", None)
+            )
+            total += self._count_response_negations(
+                getattr(rule, "response", None)
+            )
+
+        return total
+
+    def _count_negations_expr(self, node):
+        if node is None:
+            return 0
+
+        kind = type(node).__name__
+
+        if kind == "Negation":
+            return (
+                1
+                + self._count_negations_expr(
+                    getattr(node, "expr", None)
+                )
+            )
+
+        if kind == "BoolBinaryOp":
+            return (
+                self._count_negations_expr(
+                    getattr(node, "lhs", None)
+                )
+                + self._count_negations_expr(
+                    getattr(node, "rhs", None)
+                )
+            )
+
+        return 0
+
+    def _count_response_negations(self, response):
+        if response is None:
+            return 0
+
+        total = 0
+
+        for defeater in getattr(response, "defeater", []) or []:
+            total += self._count_negations_expr(
+                getattr(defeater, "expr", None)
+            )
+
+            nested = getattr(defeater, "response", None)
+            if nested is not None:
+                total += self._count_response_negations(nested)
+
+        return total
+
+    def _count_new_defeaters(
+        self,
+        original_model,
+        original_sleec,
+        patched_model,
+        patched_sleec,
+    ):
+        """Count defeater nodes newly introduced by the patch.
+
+        A modification to an existing defeater is not itself a new
+        specification element. Counts are therefore compared per rule.
+        """
+        original_rules = {
+            str(rule.name): rule
+            for rule in original_model.ruleBlock.rules
+        }
+
+        patched_rules = {
+            str(rule.name): rule
+            for rule in patched_model.ruleBlock.rules
+        }
+
+        total = 0
+
+        for rule_id, patched_rule in patched_rules.items():
+            patched_count = self._count_response_defeaters(
+                getattr(patched_rule, "response", None)
+            )
+
+            original_rule = original_rules.get(rule_id)
+
+            if original_rule is None:
+                original_count = 0
+            else:
+                original_count = self._count_response_defeaters(
+                    getattr(original_rule, "response", None)
+                )
+
+            total += max(
+                0,
+                patched_count - original_count,
+            )
+
+        return total
+
+    def _count_model_defeaters(self, model):
+        """Count all defeaters in a complete SLEEC model."""
+        return self._count_rule_defeaters(
+            list(model.ruleBlock.rules)
+        )
+
+    def _count_rule_defeaters(self, rules):
+        """Count defeaters recursively in the supplied rules."""
+        return sum(
+            self._count_response_defeaters(
+                getattr(rule, "response", None)
+            )
+            for rule in rules
+        )
+
+    def _count_response_defeaters(self, response):
+        if response is None:
+            return 0
+
+        total = 0
+
+        for defeater in getattr(response, "defeater", []) or []:
+            total += 1
+
+            nested = getattr(defeater, "response", None)
+            if nested is not None:
+                total += self._count_response_defeaters(nested)
+
+        return total
+
+    def _rule_defeater_depth(self, rules):
+        """Return maximum defeater nesting depth in supplied rules."""
+        maximum = 0
+
+        for rule in rules:
+            maximum = max(
+                maximum,
+                self._response_defeater_depth(
+                    getattr(rule, "response", None),
+                    0,
+                ),
+            )
+
+        return maximum
+
+    def _response_defeater_depth(self, response, current_depth):
+        if response is None:
+            return current_depth
+
+        maximum = current_depth
+
+        for defeater in getattr(response, "defeater", []) or []:
+            depth = current_depth + 1
+            maximum = max(maximum, depth)
+
+            nested = getattr(defeater, "response", None)
+            if nested is not None:
+                maximum = max(
+                    maximum,
+                    self._response_defeater_depth(
+                        nested,
+                        depth,
+                    ),
+                )
+
+        return maximum
 
     def score_patch(self, patch):
         original = str(patch.get("original_rule", ""))

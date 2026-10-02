@@ -50,11 +50,11 @@ class EvaluationAPatchMatch:
             "defeater_introduction": "defeater_modification",
             "add_defeater": "defeater_modification",
             "purpose_defeater": "defeater_modification",
-            "capability_refinement": "capability_refinement",
+            "response_refinement": "response_refinement",
             "action_refinement": "response_modification",
             "replace_action": "response_modification",
-            "event_specialization": "capability_refinement",
-            "measure_specialization": "capability_refinement"
+            "event_specialization": "event_specialization",
+            "measure_specialization": "measure_specialization"
         }
 
         return mapping.get(str(operation), "other")
@@ -183,9 +183,9 @@ class EvaluationAPatchMatch:
                     "The generated patch uses trigger/condition terms that are present in the corrected target rule."
                 )
 
-        # 5. Capability/action refinement:
-        # match if proposed action appears in corrected target rule/action
-        if operation in ["capability_refinement", "action_refinement", "replace_action"]:
+        # 5. Response/action refinement:
+        # match if proposed response appears in corrected target rule/action
+        if operation in ["response_refinement", "action_refinement", "replace_action"]:
             if proposed_action and proposed_action in corrected_raw:
                 return self.match_result(
                     True,
