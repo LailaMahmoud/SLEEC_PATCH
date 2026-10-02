@@ -130,18 +130,38 @@ class DeterministicRepairEngine:
         # =========================================================
 
         if "rule_removal" in operators:
-            if isinstance(selected_issue, dict):
-                redundant_id = selected_issue.get('source_id')
-            else:
-                ids = [r['id'] for r in rules if re.search(r'(?<!\w)'+re.escape(r['id'])+r'(?!\w)', issue_text)]
-                ids.sort(key=lambda rid: issue_text.index(rid))
-                redundant_id = ids[0] if ids else None
-            redundant = self.find_rule(redundant_id, rules) if redundant_id else None
-            if redundant:
-                patches.append({'patch_id': f'd_remove_{redundant_id}', 'id': f'd_remove_{redundant_id}',
-                    'source':'deterministic', 'issue_type':'redundancies','operation':'rule_removal',
-                    'target_rule_id':redundant_id, 'original_rule':self.rule_to_text(redundant),
-                    'proposed_rule':'', 'natural_language_explanation':'Remove only the diagnosed redundant rule; preserve all supporting rules.'})
+            redundant_rule, survivor_rule = self.find_redundant_rule_pair(
+                selected_issue,
+                rules,
+            )
+
+            if redundant_rule and survivor_rule:
+                redundant_id = str(
+                    redundant_rule.get("id", "")
+                ).strip()
+
+                survivor_id = str(
+                    survivor_rule.get("id", "")
+                ).strip()
+
+                patches.append({
+                    "patch_id": f"d_remove_{redundant_id}",
+                    "id": f"d_remove_{redundant_id}",
+                    "source": "deterministic",
+                    "issue_type": "redundancies",
+                    "operation": "rule_removal",
+                    "target_rule_id": redundant_id,
+                    "supporting_rule_id": survivor_id,
+                    "original_rule": self.rule_to_text(
+                        redundant_rule
+                    ),
+                    "proposed_rule": "",
+                    "natural_language_explanation": (
+                        f"Remove diagnosed redundant rule "
+                        f"{redundant_id}; preserve supporting "
+                        f"rule {survivor_id}."
+                    ),
+                })
 
         # =========================================================
         # 2. DEFEATER PROPAGATION
@@ -511,8 +531,29 @@ class DeterministicRepairEngine:
             target_rule.get("condition", "")
         )
 
-        if not purpose_context:
+        # Purpose-specific defeater introduction requires context that is
+        # genuinely additional to the blocking rule's trigger.
+        purpose_parts = self.split_top_level_and(
+            self.clean_condition(purpose_condition)
+        )
+
+        rule_norms = {
+            self.norm_atom(part)
+            for part in self.split_top_level_and(
+                self.clean_condition(target_rule.get("condition", ""))
+            )
+        }
+
+        purpose_specific_parts = [
+            part
+            for part in purpose_parts
+            if self.norm_atom(part) not in rule_norms
+        ]
+
+        if not purpose_specific_parts:
             return patches
+
+        purpose_context = " and ".join(purpose_specific_parts)
 
         # Preserve SLEEC-compatible Boolean structure.
         purpose_context = self.normalize_boolean_expression(
@@ -954,7 +995,49 @@ class DeterministicRepairEngine:
             return raw
 
         return f"{raw} unless {condition}"
+    def strengthen_concern_trigger(self, rule, context):
+        """
+        Apply concern Trigger Strengthening.
 
+        The concern context must add information not already present
+        in the original trigger. Duplicate/no-op contexts return the
+        original rule unchanged.
+        """
+        context = self.clean_condition(context)
+
+        if not context:
+            return self.rule_raw(rule)
+
+        original_condition = self.clean_condition(
+            rule.get("condition", "")
+        )
+
+        # Reject a context that is already one of the trigger conditions.
+        existing_parts = [
+            self.clean_condition(part)
+            for part in self.condition_parts(original_condition)
+        ]
+
+        if context in existing_parts:
+            return self.rule_raw(rule)
+
+        specific = self.specific_context(
+            context,
+            original_condition,
+        )
+
+        if not specific:
+            return self.rule_raw(rule)
+
+        proposed = self.strengthen_trigger_with_condition(
+            rule,
+            specific,
+        )
+
+        if not proposed:
+            return self.rule_raw(rule)
+
+        return proposed
     def strengthen_trigger(self, rule, context):
         return self.strengthen_trigger_with_condition(rule, context)
 
@@ -2497,6 +2580,80 @@ class DeterministicRepairEngine:
                 })
 
         return branches
+    def find_deadline_refinement_context(self, selected_issue, rules):
+        """
+        Find an existing rule whose deadline can be strictly tightened.
+
+        Deadline refinement is applicable only when:
+        - the existing rule already has a deadline;
+        - the diagnosis contains a deadline;
+        - both refer to the same response;
+        - response polarity is preserved; and
+        - the diagnosed deadline is strictly tighter.
+        """
+        context = self.find_temporal_refinement_context(
+            selected_issue=selected_issue,
+            rules=rules,
+        )
+
+        if not context:
+            return None
+
+        existing = context["existing_temporal"]
+        diagnosed = context["diagnosed_temporal"]
+
+        if diagnosed["seconds"] >= existing["seconds"]:
+            return None
+
+        target_action = str(
+            context["target_rule"].get("action", "")
+        ).strip()
+
+        parsed = self.parse_when_then(selected_issue)
+        diagnosed_action = str(parsed.get("action", "")).strip()
+
+        target_negative = target_action.lower().startswith("not ")
+        diagnosed_negative = diagnosed_action.lower().startswith("not ")
+
+        if target_negative != diagnosed_negative:
+            return None
+
+        return context
+
+
+    def generate_deadline_refinement_patch(self, selected_issue, rules):
+        """
+        Generate a deterministic Deadline Refinement patch.
+
+        Only the temporal bound is changed. The original trigger,
+        response, defeater, and alternative response are preserved.
+        """
+        context = self.find_deadline_refinement_context(
+            selected_issue=selected_issue,
+            rules=rules,
+        )
+
+        if not context:
+            return None
+
+        patch = self.make_temporal_refinement_patch(
+            target_rule=context["target_rule"],
+            diagnosed_temporal=context["diagnosed_temporal"]["text"],
+            issue_type="concerns",
+        )
+
+        if not patch:
+            return None
+
+        # Canonical public operation name.
+        patch["operation"] = "deadline_refinement"
+
+        # Record the temporal change explicitly for evaluation,
+        # debugging, and regression tests.
+        patch["old_deadline"] = context["existing_temporal"]["text"]
+        patch["new_deadline"] = context["diagnosed_temporal"]["text"]
+
+        return patch
 
     def generate_temporal_refinement_patch(self, issue_type, selected_issue, rules):
         """Generate a diagnosis-driven temporal patch for supported WFI types."""
@@ -3132,32 +3289,70 @@ class DeterministicRepairEngine:
         return self.clean_condition(match.group(1)), match.group(2).strip()
 
     def exclude_context_from_defeater(self, rule, context, concern_action=""):
+        """
+        Refine an existing defeater by excluding the diagnosed concern context.
+
+        Supports both SLEEC defeater forms:
+
+            unless C
+            unless C then B
+
+        The refinement conjoins the existing defeater condition with the
+        complement of the diagnosed concern context.  If an alternative
+        response exists, it is preserved unchanged.
+        """
         existing = self.clean_condition(rule.get("defeater", ""))
         if not existing:
             return ""
 
         defeater_condition, alternative = self.split_defeater(existing)
-        if not defeater_condition or not alternative:
+
+        # A defeater condition is required, but an alternative response
+        # is optional: "unless C" is a valid defeater.
+        if not defeater_condition:
             return ""
 
-        # Only refine a defeater whose alternative is the diagnosed concern
-        # response (ignoring temporal text).  This prevents unrelated edits.
-        if concern_action and (
-            self.normalize_action(alternative) != self.normalize_action(concern_action)
-            or self.is_negative(alternative) != self.is_negative(concern_action)
+        # When an alternative response exists and the diagnosis specifies
+        # a concern action, they must refer to the same response and polarity.
+        if alternative and concern_action and (
+            self.normalize_action(alternative)
+            != self.normalize_action(concern_action)
+            or self.is_negative(alternative)
+            != self.is_negative(concern_action)
         ):
             return ""
 
         context = self.normalize_boolean_expression(context)
-        defeater_condition = self.normalize_boolean_expression(defeater_condition)
+        defeater_condition = self.normalize_boolean_expression(
+            defeater_condition
+        )
+
+        if not context or not defeater_condition:
+            return ""
+
         complement = self.negate_boolean_expression(context)
         if not complement:
             return ""
-        narrowed = self.and_expr(defeater_condition, complement)
-        return (
-            f'{rule["id"]} when {rule["condition"]} then {rule["action"]} '
-            f'unless {self.parenthesize(narrowed)} then {alternative}'
+
+        narrowed = self.and_expr(
+            defeater_condition,
+            complement
         )
+
+        if not narrowed:
+            return ""
+
+        base = (
+            f'{rule["id"]} when {rule["condition"]} '
+            f'then {rule["action"]} '
+            f'unless {self.parenthesize(narrowed)}'
+        )
+
+        # Preserve an existing alternative response exactly.
+        if alternative:
+            return f"{base} then {alternative}"
+
+        return base
 
     def is_negative(self, action):
         return bool(re.match(r"^not\s+", str(action or "").strip(), re.IGNORECASE))
@@ -3421,10 +3616,37 @@ class DeterministicRepairEngine:
 
                 # Only compare temporal preservation when this branch
                 # preserves the original response.
-                if branch_response == original_response:
-                    branch_temporal = self.temporal_bound(
-                        parsed.get("temporal", "")
+                original_action = str(
+                    original_rule.get("action", "")
+                ).strip()
+
+                branch_action = str(
+                    parsed.get("action", "")
+                ).strip()
+
+                original_negative = bool(
+                    re.match(
+                        r"^not\s+",
+                        original_action,
+                        flags=re.IGNORECASE,
                     )
+                )
+
+                branch_negative = bool(
+                    re.match(
+                        r"^not\s+",
+                        branch_action,
+                        flags=re.IGNORECASE,
+                    )
+                )
+
+                # Preserve the original deadline only when the branch
+                # preserves both the original response and its polarity.
+                if (
+                    branch_response == original_response
+                    and branch_negative == original_negative
+                ):
+                    branch_temporal = self.temporal_bound(branch)
 
                     if not branch_temporal:
                         return False

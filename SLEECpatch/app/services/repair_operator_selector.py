@@ -150,9 +150,43 @@ class RepairOperatorSelector:
             deterministic = ["defeater_refinement" if op == "defeater_introduction" else op for op in deterministic]
             if not any(r.get("defeater") for r in issue_rules):
                 deterministic = [op for op in deterministic if op != "defeater_refinement"]
-            context = self.find_temporal_refinement_context(issue_rules, selected_issue)
-            applicable = bool(context and self.temporal_to_seconds(context['diagnosed_temporal']['value'], context['diagnosed_temporal']['unit']) < self.temporal_to_seconds(context['existing_temporal']['value'], context['existing_temporal']['unit']) and not context['target_rule'].get('action','').strip().startswith('not '))
-            self._add(deterministic, applicability, 'deadline_refinement', applicable, 'Requires a weaker numeric deadline for the same positive response.')
+            context = self.find_deadline_refinement_context(
+
+                issue_rules,
+                selected_issue,
+            )
+
+            deadline_applicable = False
+            if context:
+                existing_seconds = self.temporal_to_seconds(
+                    context["existing_temporal"]["value"],
+                    context["existing_temporal"]["unit"],
+                )
+                diagnosed_seconds = self.temporal_to_seconds(
+                    context["diagnosed_temporal"]["value"],
+                    context["diagnosed_temporal"]["unit"],
+                )
+                target_action = str(
+                    context["target_rule"].get("action", "")
+                ).strip()
+
+                # Deadline refinement only tightens an existing deadline.
+                # The target obligation itself must be a positive response.
+                deadline_applicable = (
+                    diagnosed_seconds < existing_seconds
+                    and not target_action.lower().startswith("not ")
+                )
+
+            self._add(
+                deterministic,
+                applicability,
+                "deadline_refinement",
+                deadline_applicable,
+                (
+                    "Applicable when the diagnosis requires the same positive "
+                    "response under a strictly tighter numeric deadline."
+                ),
+            )
             applicability.pop('defeater_introduction', None)
             applicability['defeater_refinement'] = {'is_applicable': 'defeater_refinement' in deterministic, 'reason': 'Requires an implicated existing defeater.'}
 
@@ -519,7 +553,7 @@ class RepairOperatorSelector:
 
         This method never invents a deadline.
         """
-        context = self.find_temporal_refinement_context(
+        context = self.find_deadline_refinement_context(
             issue_rules=issue_rules,
             selected_issue=selected_issue,
         )
@@ -552,7 +586,48 @@ class RepairOperatorSelector:
             applicable,
             reason,
         )
+    def find_deadline_refinement_context(self, issue_rules, selected_issue):
+        """Return context only when the diagnosis requires a tighter deadline."""
+        context = self.find_temporal_refinement_context(
+            issue_rules,
+            selected_issue,
+        )
 
+        if not context:
+            return None
+
+        existing = context["existing_temporal"]
+        diagnosed = context["diagnosed_temporal"]
+
+        existing_seconds = self.temporal_to_seconds(
+            existing["value"],
+            existing["unit"],
+        )
+        diagnosed_seconds = self.temporal_to_seconds(
+            diagnosed["value"],
+            diagnosed["unit"],
+        )
+
+        # Deadline refinement only tightens an existing deadline.
+        if diagnosed_seconds >= existing_seconds:
+            return None
+
+        target_action = str(
+            context["target_rule"].get("action", "")
+        ).strip()
+
+        diagnosed_action = self.parse_then_action(
+            str(selected_issue or "")
+        ).strip()
+
+        target_negative = target_action.lower().startswith("not ")
+        diagnosed_negative = diagnosed_action.lower().startswith("not ")
+
+        # Preserve response polarity.
+        if target_negative != diagnosed_negative:
+            return None
+
+        return context
     def find_temporal_refinement_context(self, issue_rules, selected_issue):
         """Return target rule + diagnosed bound for a valid temporal mismatch."""
         diagnosis_text = str(selected_issue or "")
@@ -623,13 +698,23 @@ class RepairOperatorSelector:
     ):
         purpose_condition = self.parse_when_condition(selected_issue)
         purpose_action = self.parse_then_action(selected_issue)
+        # Purpose-blocking defeater introduction requires a blocking
+        # rule plus purpose-specific context that is not already part
+        # of the blocking rule's trigger.
+        purpose_terms = self.condition_terms(purpose_condition)
 
-        # ---------------------------------------------------------
-        # Deterministic: Defeater Introduction
-        # ---------------------------------------------------------
+        blocking_terms = set()
+        if issue_rules:
+            blocking_terms = self.condition_terms(
+                issue_rules[0].get("condition", "")
+            )
+
+        additional_purpose_terms = purpose_terms - blocking_terms
+
         defeater_applicable = (
             bool(issue_rules)
             and bool(purpose_condition)
+            and bool(additional_purpose_terms)
         )
 
         self._add(
