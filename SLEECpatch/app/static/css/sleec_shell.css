@@ -74,20 +74,22 @@
   border-radius: 14px;
   background: linear-gradient(145deg, rgba(254, 235, 202, 0.96), rgba(244, 204, 166, 0.72));
   color: var(--accent-hover);
+  font-family: var(--font-body);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   box-shadow: inset 0 0 0 1px rgba(77, 75, 48, 0.10), 0 12px 22px rgba(72, 34, 22, 0.10);
 }
 
 .brand-mark strong,
 .brand-mark small {
+  font-family: var(--font-body);
   display: block;
   line-height: 1.2;
 }
 
 .brand-mark strong {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0;
 }
 

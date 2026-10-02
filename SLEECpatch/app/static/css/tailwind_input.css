@@ -45,19 +45,19 @@
   }
 
   .brand-mark {
-    @apply inline-flex min-w-0 cursor-pointer items-center gap-3 border-0 bg-transparent p-0 text-left text-sleec-ink transition hover:-translate-y-px;
+    @apply inline-flex min-w-0 cursor-pointer items-center gap-3 border-0 bg-transparent p-0 font-sans text-left text-sleec-ink transition hover:-translate-y-px;
   }
 
   .brand-orb {
-    @apply grid size-[42px] place-items-center rounded-[14px] bg-sleec-accent-soft text-xs font-extrabold text-sleec-accent shadow-[inset_0_0_0_1px_rgba(77,75,48,0.10),0_12px_22px_rgba(72,34,22,0.10)];
+    @apply grid size-[42px] place-items-center rounded-[14px] bg-sleec-accent-soft font-sans text-xs font-semibold text-sleec-accent shadow-[inset_0_0_0_1px_rgba(77,75,48,0.10),0_12px_22px_rgba(72,34,22,0.10)];
   }
 
   .brand-mark strong {
-    @apply block text-sm font-extrabold leading-tight text-sleec-ink;
+    @apply block font-sans text-sm font-semibold leading-tight text-sleec-ink;
   }
 
   .brand-mark small {
-    @apply mt-0.5 block text-xs leading-tight text-sleec-muted;
+    @apply mt-0.5 block font-sans text-xs leading-tight text-sleec-muted;
   }
 
   .workflow-nav {

@@ -1,7 +1,7 @@
 """Verification and human review are independent judgments."""
 
 LLM_ONLY_OPERATORS = frozenset({
-    "event_specialization", "measure_specialization", "capability_refinement", "new_rule_generation"
+    "event_specialization", "measure_specialization", "response_refinement", "new_rule_generation"
 })
 
 

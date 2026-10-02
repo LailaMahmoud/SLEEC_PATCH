@@ -23,9 +23,11 @@ CASE_ORDER = [
 EXCLUDED_CASES = {"DPA", "DressAssist", "DRESSASSIST"}
 
 OPERATION_LABELS = {
-    "capability_refinement": "cap. ref.",
+    "response_refinement": "resp. ref.",
     "defeater_introduction": "def. intro.",
     "defeater_propagation": "def. prop.",
+    "defeater_refinement": "def. ref.",
+    "deadline_refinement": "deadline ref.",
     "event_specialization": "event spec.",
     "measure_specialization": "measure spec.",
     "new_rule_generation": "new rule",
@@ -86,7 +88,7 @@ def issue_sort_key(issue_id):
 
 
 def operation_label(value):
-    value = str(value or "")
+    value = str(value or "").replace("capability_refinement", "response_refinement")
     return OPERATION_LABELS.get(value, value.replace("_", " "))
 
 

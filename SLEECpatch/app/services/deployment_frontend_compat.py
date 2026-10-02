@@ -1,11 +1,11 @@
 """Translate the empowered backend's responses for the preserved live frontend.
 
-The imported backend files remain byte-for-byte copies of their source commit.
 This module does not generate, repair, rank or persist patches. It supplies UI
 status aliases and report fields, and checks human edits against the selected
 issue using the imported engine's own target/regression methods.
 """
 import copy
+from services.operator_names import normalize_operators
 
 from flask import request
 
@@ -43,7 +43,7 @@ def frontend_patch(patch):
 
 
 def generation_payload(payload):
-    result = copy.deepcopy(payload)
+    result = normalize_operators(copy.deepcopy(payload))
     checked = {}
     for field in ("verified_patches", "failed_patches"):
         result[field] = [frontend_patch(patch) for patch in result.get(field, [])]
@@ -57,7 +57,7 @@ def generation_payload(payload):
 
 
 def report_payload(payload):
-    result = copy.deepcopy(payload)
+    result = normalize_operators(copy.deepcopy(payload))
     runs = result.get("experiment_runs", [])
     rows = result.get("evaluation_details", [])
     # Keep the source backend's patch-level metrics and add the run-level fields

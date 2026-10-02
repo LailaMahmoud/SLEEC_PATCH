@@ -1,3 +1,4 @@
+from services.operator_names import normalize_operators
 import json
 import os
 import sqlite3
@@ -109,7 +110,7 @@ class SLEECPatchEvaluationStore:
         return "INTEGER PRIMARY KEY AUTOINCREMENT"
 
     def rows_to_dicts(self, rows):
-        return [dict(r) for r in rows]
+        return [normalize_operators(dict(r)) for r in rows]
 
     def to_json(self, value):
         return json.dumps(value, default=str, ensure_ascii=False)

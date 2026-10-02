@@ -5,6 +5,7 @@ import re
 from services.rule_model import (parse_sleec_ast, source, expression_value,
                                  edit_inside, with_guard, conjunction, negation, compact)
 from services.repair_operator_selector import RepairOperatorSelector
+from services.boolean_simplifier import simplify_patch, simplify_rule
 
 
 def selected_source(model, issue_type, diagnosis):
@@ -62,13 +63,14 @@ def target_resolution(text, issue_type, diagnosis):
     # An LLM may propose a new rule for a diagnosed concern even when there is
     # no existing rule to edit. This context is not a generated repair.
     common = {"addition_scope": addition_scope}
-    reported = diagnosis.get("affected_rule_ids", [])
+    explicit_redundant = diagnosis.get("redundant_rule_ids", []) if issue_type == "redundancies" else []
+    reported = list(dict.fromkeys(diagnosis.get("affected_rule_ids", []) + explicit_redundant))
     if reported:
         ids = [node.name for node in rules if node.name in reported]
         if len(ids) != len(set(reported)):
             return {"rule_ids": [], "basis": "unresolved", "addition_scope": None, "reason": "A reported rule is absent from the current specification."}
         if issue_type == "redundancies":
-            ids = [diagnosis["source_id"]] if diagnosis.get("source_id") in ids else []
+            ids = list(explicit_redundant) if explicit_redundant else ([diagnosis["source_id"]] if diagnosis.get("source_id") in ids else [])
         return {**common, "rule_ids": ids, "basis": "detector_report",
                 "reason": "These rules are identified in the detector report."}
     node = selected_source(model, issue_type, diagnosis)
@@ -88,17 +90,15 @@ def target_resolution(text, issue_type, diagnosis):
             continue
         if not branches:
             continue
-        if contexts and all(expression_value(rule.condition, item["values"]) is False for item in contexts):
-            continue
         candidates.append(rule.name)
-    if len(candidates) != 1:
+    if not candidates:
         return {**common, "rule_ids": [], "candidate_rule_ids": candidates,
                 "related_responses": related, "basis": "unresolved",
-                "reason": "The source and witness do not identify a unique repair target."}
+                "reason": "The source and witness do not identify a related repair target."}
     return {**common, "rule_ids": candidates, "related_responses": related,
             "basis": "source_and_trace" if contexts else "source_match",
             "observed_contexts": contexts,
-            "reason": "One rule matches the source trigger and response and is not excluded by the observed measure values. This is a repair hypothesis, not a causal proof."}
+            "reason": "These rules match the source trigger and response. Each is a separate repair hypothesis subject to verification; a false guard is retained as a possible broadening target."}
 
 
 def next_id(base, used):
@@ -126,19 +126,33 @@ def generate_repairs(text, issue_type, diagnosis, operators):
     patches = []
 
     def add(rule, operation, proposed, explanation):
-        if compact(proposed) == compact(source(text, rule)):
+        proposed = simplify_rule(proposed)
+        if compact(proposed) == compact(simplify_rule(source(text, rule))):
             return
         patch_id = f"d_{operation}_{rule.name}_{len(patches) + 1}"
-        patches.append({"patch_id": patch_id, "id": patch_id, "source": "deterministic",
+        patches.append(simplify_patch({"patch_id": patch_id, "id": patch_id, "source": "deterministic",
                         "issue_type": issue_type, "operation": operation, "target_rule_id": rule.name,
                         "original_rule": source(text, rule), "proposed_rule": proposed,
                         "diagnosis": copy.deepcopy(diagnosis), "target_resolution": copy.deepcopy(resolution),
-                        "natural_language_explanation": explanation})
+                        "natural_language_explanation": explanation}))
 
     if issue_type == "redundancies" and "rule_removal" in operators:
+        if targets:
+            add(targets[0], "rule_removal", "", "Remove only the explicitly diagnosed redundant targets; retain supporting rules.")
+            if len(targets) > 1:
+                patches[-1]['removed_rule_ids'] = [rule.name for rule in targets[1:]]
+                patches[-1]['original_rule'] = "\n".join(source(text, rule) for rule in targets)
+    if issue_type == "redundancies" and "defeater_propagation" in operators:
         for rule in targets:
-            add(rule, "rule_removal", "", "Remove only the redundant target; retain its supporting rules.")
-        return patches
+            for defeater in rule.response.defeater:
+                # Move the selected exception into the guard; retain every
+                # other response/exception verbatim. Verification checks that
+                # the supporting path supplies the eliminated behaviour.
+                body = (text[rule.response._tx_position:defeater._tx_position]
+                        + text[defeater._tx_position_end:rule.response._tx_position_end]).strip()
+                add(rule, "defeater_propagation",
+                    with_guard(text, rule, conjunction(source(text, rule.condition), negation(source(text, defeater.expr))), response=body),
+                    "Exclude the redundant exception path from this rule; retain supporting rules.")
 
     if issue_type in {"concerns", "purpose_blocking"}:
         requirement = selected_source(model, issue_type, diagnosis)
@@ -155,40 +169,44 @@ def generate_repairs(text, issue_type, diagnosis, operators):
             if rule.trigger.event.name != requirement.trigger.event.name:
                 continue
             if issue_type == "purpose_blocking":
-                if "purpose_defeater" in operators and guard:
-                    add(rule, "purpose_defeater", source(text, rule) + f" unless {guard}",
+                if "defeater_introduction" in operators and guard:
+                    add(rule, "defeater_introduction", source(text, rule) + f" unless {guard}",
                         "Relax this blocking rule only in the purpose context; preserve its existing responses and exceptions.")
                 continue
-            if rule.response.occ.event.event.name != occ.event.event.name:
-                continue
+            main_matches = rule.response.occ.event.event.name == occ.event.event.name
             desired = source(text, occ)
             desired = re.sub(r"^not\s+", "", desired) if occ.neg else "not " + desired
-            # Retiming an existing obligation keeps its polarity. Reversing a
-            # prohibition can remove a protection (e.g. consent). New-rule
-            # proposals belong to the LLM stage, not this generator.
-            if (rule.response.occ.neg != occ.neg
-                    and set(operators) & {"trigger_strengthening", "rule_decomposition"}):
-                # Retain all response alternatives and defeaters, changing only
-                # the implicated main occurrence. Unaffected contexts keep the
-                # entire original response, including its original deadline.
-                changed_body = (desired + text[rule.response.occ._tx_position_end:rule.response._tx_position_end])
-                old_guard = source(text, rule.condition)
-                if not guard or compact(guard) == compact(old_guard):
-                    proposed = edit_inside(text, rule, rule.response.occ, desired)
-                    operation = "trigger_strengthening"
-                else:
-                    proposed = (with_guard(text, rule, conjunction(old_guard, guard), response=changed_body)
-                                + "\n" + with_guard(text, rule, conjunction(old_guard, negation(guard)), next_id(rule.name, used)))
-                    operation = "rule_decomposition"
-                add(rule, operation, proposed, "Enforce the opposite of the concern within its declared deadline. Preserve the original response outside its context and retain all exceptions.")
-            if "defeater_introduction" in operators:
+            old_guard = source(text, rule.condition)
+            opposite = rule.response.occ.neg != occ.neg
+            if "trigger_strengthening" in operators and main_matches and guard and old_guard and opposite:
+                add(rule, "trigger_strengthening",
+                    with_guard(text, rule, f"({old_guard} or {guard})"),
+                    "Broaden the measure context with OR, retaining the trigger event and complete response.")
+            if "rule_decomposition" in operators and main_matches and guard:
+                changed_body = desired + text[rule.response.occ._tx_position_end:rule.response._tx_position_end]
+                proposed = (with_guard(text, rule, conjunction(old_guard, guard), response=changed_body)
+                            + "\n" + with_guard(text, rule, conjunction(old_guard, negation(guard)), next_id(rule.name, used)))
+                add(rule, "rule_decomposition", proposed,
+                    "Enforce the response preventing the concern in its context; preserve the complete original response in the complementary branch.")
+            if "deadline_refinement" in operators and main_matches and opposite and not rule.response.occ.neg:
+                selector = RepairOperatorSelector()
+                old = selector.extract_temporal_bound(source(text, rule.response.occ))
+                new = selector.extract_temporal_bound(source(text, occ))
+                if old and new and selector.temporal_to_seconds(new['value'], new['unit']) < selector.temporal_to_seconds(old['value'], old['unit']):
+                    # Only simple upper bounds; interval lower bounds are not discarded.
+                    replacement = source(text, rule.response.occ).replace(old['text'], new['text'], 1)
+                    add(rule, "deadline_refinement", edit_inside(text, rule, rule.response.occ, replacement),
+                        "Tighten only the deadline to the bound supplied by the concern.")
+            if "defeater_refinement" in operators and guard:
                 for defeater in rule.response.defeater:
-                    if (defeater.response is None or defeater.response.occ.event.event.name != occ.event.event.name
+                    if defeater.response is None and not main_matches:
+                        continue
+                    if defeater.response is not None and (defeater.response.occ.event.event.name != occ.event.event.name
                             or defeater.response.occ.neg != occ.neg):
                         continue
                     replacement = conjunction(source(text, defeater.expr), negation(guard))
-                    add(rule, "defeater_introduction", edit_inside(text, rule, defeater.expr, replacement),
-                        "Exclude the concern context from this implicated exception; preserve the other exceptions and their order.")
+                    add(rule, "defeater_refinement", edit_inside(text, rule, defeater.expr, replacement),
+                        "Exclude the concern context from this existing exception; preserve all responses and other exceptions.")
         return patches
 
     if issue_type in {"conflicts", "situational_conflicts"}:
@@ -203,6 +221,15 @@ def generate_repairs(text, issue_type, diagnosis, operators):
                     add(rule, "trigger_refinement",
                         with_guard(text, rule, conjunction(source(text, rule.condition), negation(context))),
                         f"Give {other.name} priority in its measure context. Retain this rule's complete response and exceptions; review the priority choice.")
+                if "defeater_introduction" in operators and context:
+                    add(rule, "defeater_introduction", source(text, rule) + f" unless {context}",
+                        f"Give {other.name} priority in its contextual condition.")
+                if "rule_merging" in operators and rule.trigger.event.name == other.trigger.event.name and context and not rule.condition:
+                    if not rule.response.defeater and not other.response.defeater:
+                        add(rule, "rule_merging", source(text, rule) + f" unless {context} then {{" + source(text, other.response) + "}",
+                            "Merge the default and contextual responses into one rule.")
+                        patches[-1]['removed_rule_ids'] = [other.name]
+                        patches[-1]['original_rule'] += "\n" + source(text, other)
                 if "defeater_introduction" in operators:
                     for defeater in rule.response.defeater:
                         if defeater.response is None:
@@ -223,5 +250,5 @@ def generate_repairs(text, issue_type, diagnosis, operators):
     # Several proof paths can lead to the same proposed text.
     unique = {}
     for patch in patches:
-        unique.setdefault((patch["target_rule_id"], patch["proposed_rule"]), patch)
+        unique.setdefault((patch["operation"], patch["target_rule_id"], patch["proposed_rule"]), patch)
     return list(unique.values())

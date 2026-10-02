@@ -46,15 +46,17 @@ class EvaluationAPatchMatch:
             "trigger_refinement": "rule_refinement",
             "trigger_strengthening": "rule_refinement",
             "defeater_propagation": "rule_refinement",
+            "defeater_refinement": "defeater_modification",
+            "deadline_refinement": "rule_refinement",
             "rule_decomposition": "rule_refinement",
             "defeater_introduction": "defeater_modification",
             "add_defeater": "defeater_modification",
             "purpose_defeater": "defeater_modification",
-            "capability_refinement": "capability_refinement",
+            "response_refinement": "response_refinement",
             "action_refinement": "response_modification",
             "replace_action": "response_modification",
-            "event_specialization": "capability_refinement",
-            "measure_specialization": "capability_refinement"
+            "event_specialization": "response_refinement",
+            "measure_specialization": "response_refinement"
         }
 
         return mapping.get(str(operation), "other")
@@ -168,6 +170,8 @@ class EvaluationAPatchMatch:
             "trigger_strengthening",
             "trigger_refinement",
             "defeater_propagation",
+            "defeater_refinement",
+            "deadline_refinement",
             "rule_decomposition",
             "constraint_added",
             "condition_refinement"
@@ -185,7 +189,7 @@ class EvaluationAPatchMatch:
 
         # 5. Capability/action refinement:
         # match if proposed action appears in corrected target rule/action
-        if operation in ["capability_refinement", "action_refinement", "replace_action"]:
+        if operation in ["response_refinement", "action_refinement", "replace_action"]:
             if proposed_action and proposed_action in corrected_raw:
                 return self.match_result(
                     True,

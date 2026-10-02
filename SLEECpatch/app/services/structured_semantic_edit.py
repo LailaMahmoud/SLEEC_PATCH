@@ -2,7 +2,7 @@
 import re
 
 from services.rule_model import parse_sleec_ast, source, edit_inside, apply_rule_patch
-from services.evidence_repair import concern_context
+from services.evidence_repair import concern_context, response_occurrences
 
 
 IDENTIFIER = re.compile(r"[A-Za-z_]\w*\Z", re.ASCII)
@@ -48,9 +48,9 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
     declared_names.update(p.name for node in model.definitions if type(node).__name__ == "ScalarMeasure" for p in node.type.scaleParams)
     declaration = ""
     missing = ""
-    if operation in {"event_specialization", "capability_refinement", "measure_specialization"}:
-        fields(change, ("from", "to", "meaning", "evidence"), ("scale_labels",))
-        old, new = symbol(change["from"]), symbol(change["to"])
+    if operation in {"event_specialization", "response_refinement", "measure_specialization"}:
+        fields(change, ("from", "to", "meaning", "evidence"), ("scale_labels", "response_path", "element_path", "complementary_rule_id", "measure_type", "context"))
+        old, new = (symbol(change["from"]) if change["from"] else ""), symbol(change["to"])
         for key in ("meaning", "evidence"):
             if not isinstance(change[key], str) or not change[key].strip():
                 raise ValueError("Define the new concept and explain its connection to the evidence.")
@@ -62,19 +62,52 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
                 raise ValueError("Event specialization may change only the target rule's trigger event.")
             proposed = edit_inside(text, rule, rule.trigger, new)
             declaration = f"event {new}"
-        elif operation == "capability_refinement":
-            if old != rule.response.occ.event.event.name:
-                raise ValueError("Capability refinement may change only the target rule's main response event.")
-            proposed = edit_inside(text, rule, rule.response.occ.event, new)
+        elif operation == "response_refinement":
+            paths = dict(response_occurrences(rule.response))
+            occurrence = paths.get(change.get("response_path", "main"))
+            if occurrence is None or old != occurrence.event.event.name:
+                raise ValueError("Response refinement must identify the exact response path and existing event.")
+            proposed = edit_inside(text, rule, occurrence.event, new)
             declaration = f"event {new}"
         else:
+            from services.rule_model import with_guard, conjunction
+            path = change.get("element_path", "trigger")
+            if path == "trigger":
+                element = rule.condition
+            elif re.fullmatch(r"unless\[\d+\]", path):
+                index = int(path[7:-1])
+                if index >= len(rule.response.defeater):
+                    raise ValueError("Unknown defeater path.")
+                element = rule.response.defeater[index].expr
+            else:
+                raise ValueError("Measure specialization requires an exact condition path.")
             measure = definitions.get(old)
-            if measure is None or type(measure).__name__ not in {"BoolMeasure", "NumMeasure", "ScalarMeasure"}:
-                raise ValueError("Measure specialization must name an existing measure.")
-            pattern = r"\{\s*" + re.escape(old) + r"\s*\}"
-            proposed, count = re.subn(pattern, "{" + new + "}", source(text, rule))
-            if not count:
-                raise ValueError("The measure is not used in the selected rule.")
+            if not old:
+                if path != "trigger": raise ValueError("New contexts must target the trigger.")
+                measure_type = change.get("measure_type", "boolean")
+                if measure_type not in {"boolean", "numeric", "scale"}:
+                    raise ValueError("Unsupported new measure type.")
+                if measure_type == "scale":
+                    labels = change.get("scale_labels")
+                    if not isinstance(labels, list) or not labels:
+                        raise ValueError("A new scale requires its ordered labels.")
+                    labels = [symbol(label) for label in labels]
+                    if len(set(labels)) != len(labels) or set(labels) & (declared_names | {new}):
+                        raise ValueError("New scale labels must be unused and distinct.")
+                    measure_type = "scale("+",".join(labels)+")"
+                new_context = change.get("context", "{"+new+"}")
+                if not isinstance(new_context, str) or not re.search(r"\{\s*"+re.escape(new)+r"\s*\}", new_context):
+                    raise ValueError("The new context must reference the introduced measure.")
+                proposed = with_guard(text, rule, conjunction(source(text, rule.condition), new_context))
+                declaration = f"measure {new}:{measure_type}"
+            else:
+                if measure is None or type(measure).__name__ not in {"BoolMeasure", "NumMeasure", "ScalarMeasure"}:
+                    raise ValueError("Measure specialization must name an existing measure.")
+                pattern = r"\{\s*" + re.escape(old) + r"\s*\}"
+                replacement, count = re.subn(pattern, "{" + new + "}", source(text, element))
+                if not count:
+                    raise ValueError("The measure is not used in the selected condition.")
+                proposed = edit_inside(text, rule, element, replacement)
             if type(measure).__name__ == "ScalarMeasure":
                 labels = change.get("scale_labels")
                 old_labels = [item.name for item in measure.type.scaleParams]
@@ -84,9 +117,10 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
                 if len(set(labels)) != len(labels) or set(labels) & (declared_names | {new}):
                     raise ValueError("Specialized scale labels must be distinct, unused names.")
                 mapping = dict(zip(old_labels, labels))
-                proposed = re.sub(r"\b(?:" + "|".join(map(re.escape, old_labels)) + r")\b", lambda m: mapping[m.group(0)], proposed)
+                replacement = re.sub(r"\b(?:" + "|".join(map(re.escape, old_labels)) + r")\b", lambda m: mapping[m.group(0)], replacement)
+                proposed = edit_inside(text, rule, element, replacement)
                 declaration = f"measure {new}:scale({','.join(labels)})"
-            else:
+            elif old:
                 if "scale_labels" in change:
                     raise ValueError("Only scale measures can declare scale labels.")
                 declaration = re.sub(r"^(measure\s+)" + re.escape(old) + r"\b", lambda m: m.group(1) + new, source(text, measure), count=1)
@@ -120,9 +154,17 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
     else:
         raise ValueError("This is not a supported semantic edit operation.")
 
-    patch = {**proposal, "original_rule": source(text, rule), "proposed_rule": proposed,
+    additional_edits = {}
+    counterpart = change.get("complementary_rule_id")
+    if counterpart:
+        if operation != "measure_specialization" or old or counterpart == target_id or counterpart not in allowed_rule_ids or counterpart not in rules:
+            raise ValueError("A complementary partition requires a new context and another implicated rule.")
+        other = rules[counterpart]
+        additional_edits[counterpart] = with_guard(text, other, conjunction(source(text, other.condition), "(not "+new_context+")"))
+
+    patch = {**proposal, "structured_edit_validated": True, "original_rule": source(text, rule), "proposed_rule": proposed,
              "missing_element": missing, "declaration_text": declaration,
-             "source": "llm", "semantic_review_status": "pending"}
+             "source": "llm", "semantic_review_status": "pending", "additional_rule_edits": additional_edits, "original_sleec": text}
     updated = apply_rule_patch(text, patch)
     try:
         parsed = parse_sleec_ast(updated)
@@ -135,7 +177,7 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
     if set(after) != expected_ids or len(after) != len(parsed.ruleBlock.rules):
         raise ValueError("The proposal changed the rule structure beyond its declared edit.")
     for name, node in rules.items():
-        if name != target_id or operation == "new_rule_generation":
+        if (name != target_id and name not in additional_edits) or operation == "new_rule_generation":
             if after.get(name) != source(text, node):
                 raise ValueError("The proposal changed an unrelated rule.")
     # Reject injected concern/purpose/relation edits in the condition field.

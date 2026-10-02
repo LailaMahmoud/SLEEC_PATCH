@@ -28,8 +28,9 @@ class RepairOperatorSelector:
         ],
         "concerns": [
             "trigger_strengthening",
-            "defeater_introduction",
+            "defeater_refinement",
             "rule_decomposition",
+            "deadline_refinement",
         ],
         "purpose_blocking": [
          "defeater_introduction",
@@ -37,33 +38,12 @@ class RepairOperatorSelector:
     }
 
     BASE_LLM_OPERATORS = {
-    "conflicts": [
-        "conflict_event_specialization",
-        "conflict_measure_specialization",
-        "semantic_rule_merging",
-
-    ],
-
-    "situational_conflicts": [
-        "conflict_event_specialization",
-        "conflict_measure_specialization",
-        "semantic_rule_merging",
-
-    ],
-
-    "redundancies": [
-        "redundancy_event_specialization",
-        "redundancy_measure_specialization",
-    ],
-
-    "concerns": [
-        "concern_new_rule_generation",
-    ],
-
-    "purpose_blocking": [
-        "purpose_capability_refinement",
-    ],
-   }
+        "conflicts": ["event_specialization", "measure_specialization", "response_refinement"],
+        "situational_conflicts": ["event_specialization", "measure_specialization", "response_refinement"],
+        "redundancies": ["event_specialization", "measure_specialization", "response_refinement"],
+        "concerns": ["new_rule_generation"],
+        "purpose_blocking": ["response_refinement"],
+    }
     ISSUE_ALIASES = {
         "conflict": "conflicts",
         "situational_conflict": "situational_conflicts",
@@ -92,8 +72,12 @@ class RepairOperatorSelector:
         existing_measures: Optional[Sequence[str]] = None,
         existing_responses: Optional[Sequence[str]] = None,
         system_description: str = "",
+        sleec_text: str = "",
     ) -> Dict[str, object]:
         issue_type = self.ISSUE_ALIASES.get(issue_type, issue_type)
+        if sleec_text:
+            from services.paper_repairs import plan
+            return plan(sleec_text, issue_type, selected_issue, system_description)
         rules = list(rules or [])
         existing_events = list(existing_events or [])
         existing_measures = list(existing_measures or [])
@@ -152,17 +136,25 @@ class RepairOperatorSelector:
             )
             llm.extend(self.BASE_LLM_OPERATORS.get(issue_type, []))
 
-        # Cross-WFI diagnosis-driven applicability. Temporal Refinement is
-        # considered only for concern/conflict/situational-conflict diagnoses
-        # and only when the diagnosis supplies a different explicit numeric
-        # temporal bound for the same response as an affected rule.
-        if issue_type in self.TEMPORAL_REFINEMENT_WFIS:
-            self._select_temporal_refinement(
-                deterministic=deterministic,
-                applicability=applicability,
-                issue_rules=issue_rules,
-                selected_issue=selected_issue,
-            )
+        from services.operator_names import ALIASES
+        llm = [ALIASES.get(op, op) for op in llm if op != "semantic_rule_merging"]
+        applicability = {ALIASES.get(op, op): value for op, value in applicability.items() if op != "semantic_rule_merging"}
+        for op in self.BASE_LLM_OPERATORS.get(issue_type, []):
+            applicable = bool(issue_rules) and (
+                (op == "event_specialization" and any(self.trigger_event(r, existing_events) for r in issue_rules))
+                or (op == "response_refinement" and any(r.get("action") for r in issue_rules))
+                or (op == "measure_specialization" and (system_description or any(r.get("guard") or r.get("defeater") for r in issue_rules))))
+            if op != "new_rule_generation":
+                self._add(llm, applicability, op, applicable, "Requires the corresponding implicated rule element and a grounded semantic distinction.")
+        if issue_type == "concerns":
+            deterministic = ["defeater_refinement" if op == "defeater_introduction" else op for op in deterministic]
+            if not any(r.get("defeater") for r in issue_rules):
+                deterministic = [op for op in deterministic if op != "defeater_refinement"]
+            context = self.find_temporal_refinement_context(issue_rules, selected_issue)
+            applicable = bool(context and self.temporal_to_seconds(context['diagnosed_temporal']['value'], context['diagnosed_temporal']['unit']) < self.temporal_to_seconds(context['existing_temporal']['value'], context['existing_temporal']['unit']) and not context['target_rule'].get('action','').strip().startswith('not '))
+            self._add(deterministic, applicability, 'deadline_refinement', applicable, 'Requires a weaker numeric deadline for the same positive response.')
+            applicability.pop('defeater_introduction', None)
+            applicability['defeater_refinement'] = {'is_applicable': 'defeater_refinement' in deterministic, 'reason': 'Requires an implicated existing defeater.'}
 
         return {
             "deterministic": deterministic,
@@ -505,7 +497,7 @@ class RepairOperatorSelector:
             llm,
             applicability,
             "concern_new_rule_generation",
-            True,
+            bool(concern_condition and concern_action),
             "An insufficiency represents missing normative behaviour; a new rule is a candidate semantic repair.",
         )
 
@@ -657,21 +649,21 @@ class RepairOperatorSelector:
         )
 
         # ---------------------------------------------------------
-        # LLM: Capability Refinement
+        # LLM: Response Refinement
         # ---------------------------------------------------------
         capability_applicable = bool(purpose_action)
 
         self._add(
             llm,
             applicability,
-            "purpose_capability_refinement",
+            "purpose_response_refinement",
             bool(purpose_action),
             (
                 "The intended purpose contains a response that can be "
                 "semantically refined into a more distinguishable capability."
                 if purpose_action
                 else
-                "Capability refinement requires a response in the "
+                "Response refinement requires a response in the "
                 "diagnosed purpose."
             ),
         )
@@ -700,7 +692,8 @@ class RepairOperatorSelector:
         return ids
 
     def find_issue_rules(self, selected_issue: object, rules: Sequence[dict]) -> List[dict]:
-        rule_ids = self.extract_rule_ids(selected_issue)
+        rule_ids = [str(rule.get("id")) for rule in rules if rule.get("id") and re.search(r"(?<!\w)"+re.escape(str(rule["id"]))+r"(?!\w)", str(selected_issue))]
+        rule_ids.sort(key=lambda rid: str(selected_issue).find(rid))
         by_id = {
             str(rule.get("id", "")).lower(): rule
             for rule in rules

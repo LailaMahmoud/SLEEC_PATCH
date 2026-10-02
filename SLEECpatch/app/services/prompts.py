@@ -64,22 +64,8 @@ IMPORTANT:
 
 
 LLM_SEMANTIC_OPERATORS = [
-    # Redundancy
-    "redundancy_event_specialization",
-    "redundancy_measure_specialization",
-
-    # Concern / insufficiency
-    "concern_new_rule_generation",
-
-    # Purpose blocking / restrictiveness
-    "purpose_capability_refinement",
-
-    # Situational conflict
-    "conflict_event_specialization",
-    "conflict_measure_specialization",
-    "semantic_rule_merging",
+    "event_specialization", "measure_specialization", "response_refinement", "new_rule_generation"
 ]
-
 
 def build_sleec_syntax_bank(rules):
     rules = rules or []
@@ -379,7 +365,7 @@ Preserve:
 Do NOT invent an environmental predicate merely to force a candidate.''',
 
 
-'capability_refinement': '''EXAMPLE: CAPABILITY REFINEMENT — ALMI
+'response_refinement': '''EXAMPLE: RESPONSE REFINEMENT — ALMI
 
 This example demonstrates the repair pattern and grounding requirements only.
 Do not copy ALMI vocabulary into another use case.
@@ -406,7 +392,7 @@ The diagnosed behaviour requires a more specific response than the broad
 CallEmergencyServices capability.
 
 Selected operator:
-capability_refinement
+response_refinement
 
 Generation task:
 Use the diagnosis and witness to determine what response distinction is
@@ -432,7 +418,7 @@ CallEmergencyServicesForUnconsciousHuman
 unless those capabilities are explicitly supported by the supplied
 current-use-case evidence.
 
-The diagnosis and witness identify WHY capability refinement is required.
+The diagnosis and witness identify WHY response refinement is required.
 Their natural-language wording must not automatically be converted into
 a new capability.
 
@@ -442,7 +428,7 @@ Preserve:
 - the temporal constraint; and
 - defeaters.
 
-Change only the response required by capability_refinement.''',
+Change only the response required by response_refinement.''',
 
 
 'new_rule_generation': '''EXAMPLE: NEW RULE GENERATION — ALMI
@@ -641,126 +627,10 @@ def event_specialization_prompt(
         existing_measures=None,
         existing_responses=None
     ):
-        repair_operator = "event_specialization"
-
-        payload = _build_semantic_payload(
-            issue_type=issue_type,
-            rules=rules,
-            findings=findings,
-            repair_operator=repair_operator,
-            system_description=system_description,
-            existing_events=existing_events,
-            existing_measures=existing_measures,
-            existing_responses=existing_responses
-        )
-
-        return f"""
-    {_semantic_common_instructions()}
-
-    SELECTED REPAIR OPERATOR:
-    event_specialization
-
-    EVENT SPECIALIZATION:
-
-    The repair operator has already been selected by SLEEC-PATCH.
-
-    Instantiate event_specialization to distinguish partially conflicting
-    behaviours associated with different event contexts in the diagnosed WFI.
-
-    Event specialization does NOT require one diagnosed event to be a subtype
-    of another diagnosed event.
-
-    For example, two conflicting rules may be triggered by different emergency
-    events. Those events establish distinct semantic contexts that may require
-    different behaviours. Do not replace one diagnosed trigger event with the
-    other merely because both appear in the witness.
-
-    Follow these requirements strictly:
-
-    1. Identify the exact diagnosed rule or rules involved in the supplied
-    diagnosis and witness.
-
-    2. Identify the trigger event context whose associated behaviour must be
-    made more specific in order to distinguish the partially conflicting
-    behaviours.
-
-    3. Use the diagnosis, witness, system description, existing events,
-    measures, and responses to determine the semantic distinction required
-    by the selected event_specialization operator.
-
-    4. Treat different diagnosed trigger events as evidence of distinct event
-    contexts only. Do NOT assume that one diagnosed event is a subtype,
-    replacement, or specialization of the other.
-
-    5. Generate only the missing event-specialization element required to
-    distinguish the conflicting behaviours.
-
-    6. Any event introduced or used by the repair must be grounded in:
-    - existing_events; OR
-    - an event explicitly and unambiguously supported by
-        system_description.
-
-    7. Prefer existing declared vocabulary whenever it is sufficient.
-
-    8. NEVER invent an event merely by concatenating:
-        <existing event> + <diagnosis phrase/context>
-
-    9. Do not convert a measure, Boolean state, response, capability, or
-    arbitrary diagnosis phrase into an event merely to instantiate this
-    operator.
-
-    10. Preserve the stakeholder intent represented by the diagnosed rules.
-        Do not transfer contextual restrictions from one event context to
-        another unless the supplied diagnosis or system description explicitly
-        supports that transfer.
-
-    11. In particular, a condition associated with one emergency context must
-        not automatically be imposed on another emergency context merely
-        because the two rules conflict.
-
-    12. Preserve unaffected trigger conditions, temporal constraints, and
-        defeaters unless their modification is necessary to express the
-        selected event-specialization repair.
-
-    13. Do not replace this operator with defeater introduction, trigger
-        refinement, trigger strengthening, measure specialization, capability
-        refinement, or new-rule generation.
-
-    14. Do not modify unrelated rules.
-
-    15. The generated candidate must address the supplied diagnosis/witness by
-        making the relevant event-triggered behaviours distinguishable.
-
-    16. Before returning the candidate, check:
-        - Are the diagnosed rules correctly identified?
-        - Are the relevant event contexts grounded?
-        - Have you avoided treating two different diagnosed events as if one
-        were automatically a subtype of the other?
-        - Is every introduced event grounded?
-        - Does the candidate distinguish the partially conflicting behaviours?
-        - Is stakeholder intent preserved?
-        - Are unrelated rules unchanged?
-        - Is the proposed rule valid SLEEC syntax?
-        - Is the candidate directed at the supplied witness?
-
-    Generate only the semantic/syntactic element required by the selected
-    event_specialization operator.
-
-    Do not claim that the generated candidate is formally correct or verified.
-    SLEEC-PATCH will apply the candidate to the original specification and
-    determine correctness through LEGOS-SLEEC re-analysis.
-
-    OPERATOR-SPECIFIC ALMI WORKED EXAMPLE:
-    {OPERATOR_EXAMPLES["event_specialization"]}
-
-    Use the ALMI example only to understand the repair pattern.
-    Do not copy ALMI vocabulary into another use case.
-
-    CURRENT USE-CASE INPUT:
-    {json.dumps(payload, indent=2, ensure_ascii=False)}
-
-    {PATCH_OUTPUT_FORMAT}
-    """
+    return build_prompt(issue_type=issue_type, rules=rules, findings=findings,
+        repair_operator="event_specialization", system_description=system_description,
+        existing_events=existing_events, existing_measures=existing_measures,
+        existing_responses=existing_responses)
 
 
 def measure_specialization_prompt(
@@ -772,100 +642,13 @@ def measure_specialization_prompt(
     existing_measures=None,
     existing_responses=None
 ):
-    repair_operator = "measure_specialization"
-
-    payload = _build_semantic_payload(
-        issue_type=issue_type,
-        rules=rules,
-        findings=findings,
-        repair_operator=repair_operator,
-        system_description=system_description,
-        existing_events=existing_events,
-        existing_measures=existing_measures,
-        existing_responses=existing_responses
-    )
-
-    return f"""
-{_semantic_common_instructions()}
-
-SELECTED REPAIR OPERATOR:
-measure_specialization
-
-MEASURE SPECIALIZATION:
-
-Instantiate measure_specialization ONLY when the diagnosed WFI depends on
-an environmental or contextual measure that is too broad to distinguish
-the relevant situations.
-
-Follow these requirements strictly:
-
-1. Identify the exact target rule involved in the diagnosis/witness.
-
-2. Identify the existing measure or contextual predicate that is too broad.
-
-3. Use the diagnosis and witness to determine what environmental/contextual
-   distinction is required to eliminate the selected WFI.
-
-4. Search existing_measures and system_description for a grounded,
-   more discriminative predicate expressing that distinction.
-
-5. Prefer an already declared measure from existing_measures whenever one
-   is sufficient.
-
-6. A specialized measure is permitted only when it is:
-   - already present in existing_measures; OR
-   - explicitly and unambiguously supported as an environmental/contextual
-     predicate by system_description.
-
-7. Do not turn an event, response, capability, or free-text diagnosis phrase
-   into a measure merely to make this operator applicable.
-
-8. Do not invent a measure simply because two rules conflict.
-
-9. Preserve the target rule's event, response/action, temporal constraint,
-   unrelated conditions, and defeater unless measure specialization itself
-   requires changing the selected measure.
-
-10. Do not perform trigger refinement, trigger strengthening,
-    defeater introduction, event specialization, capability refinement,
-    or new-rule generation instead.
-
-11. The specialized measure must be more discriminative than the existing
-    measure and must address the diagnosed contextual distinction.
-
-12. Do not modify unrelated rules.
-
-13. Before returning the patch, check:
-    - Is the target rule correct?
-    - Is there actually a broad measure requiring specialization?
-    - Is the new predicate grounded?
-    - Is it actually a measure/context predicate?
-    - Is it more discriminative than the existing measure?
-    - Are the event and response preserved?
-    - Is temporal syntax preserved?
-    - Does the proposed change address the witness?
-
-14. Generate only a grounded, more discriminative environmental/contextual
-    predicate supported by the supplied current-use-case evidence. Do not
-    invent a predicate to force a candidate.
-
-The generated measure is a candidate semantic repair. Its formal correctness
-will be determined later by SLEEC-PATCH verification.
-
-OPERATOR-SPECIFIC ALMI WORKED EXAMPLE:
-{OPERATOR_EXAMPLES["measure_specialization"]}
-
-Use the ALMI example only to understand the repair pattern.
-Do not copy ALMI vocabulary into the current use case.
-
-CURRENT USE-CASE INPUT:
-{json.dumps(payload, indent=2, ensure_ascii=False)}
-
-{PATCH_OUTPUT_FORMAT}
-"""
+    return build_prompt(issue_type=issue_type, rules=rules, findings=findings,
+        repair_operator="measure_specialization", system_description=system_description,
+        existing_events=existing_events, existing_measures=existing_measures,
+        existing_responses=existing_responses)
 
 
-def capability_refinement_prompt(
+def response_refinement_prompt(
     issue_type,
     rules,
     findings,
@@ -874,98 +657,10 @@ def capability_refinement_prompt(
     existing_measures=None,
     existing_responses=None
 ):
-    repair_operator = "capability_refinement"
-
-    payload = _build_semantic_payload(
-        issue_type=issue_type,
-        rules=rules,
-        findings=findings,
-        repair_operator=repair_operator,
-        system_description=system_description,
-        existing_events=existing_events,
-        existing_measures=existing_measures,
-        existing_responses=existing_responses
-    )
-
-    return f"""
-{_semantic_common_instructions()}
-
-SELECTED REPAIR OPERATOR:
-capability_refinement
-
-CAPABILITY REFINEMENT:
-
-Instantiate capability_refinement ONLY when the response/action in the
-target rule is too broad and the diagnosed WFI requires a grounded,
-more-specific system capability.
-
-Follow these requirements strictly:
-
-1. Identify the exact target rule involved in the diagnosis/witness.
-
-2. Identify the broad response/action that requires refinement.
-
-3. Use the diagnosis and witness to determine what response distinction is
-   required to eliminate the selected WFI.
-
-4. Search existing_responses and system_description for a grounded,
-   more-specific capability expressing that distinction.
-
-5. Prefer an already declared response from existing_responses whenever one
-   is sufficient.
-
-6. A refined capability is permitted only when it is:
-   - already present in existing_responses; OR
-   - explicitly and unambiguously supported as a system capability by
-     system_description.
-
-7. Do not create a capability by attaching diagnosis wording to the
-   existing response name.
-
-8. Do not convert an event, measure, contextual state, or diagnosis phrase
-   into a capability merely to make this operator applicable.
-
-9. Preserve the target rule's trigger, contextual conditions, temporal
-   constraint, and defeater unless capability refinement itself requires
-   modification of the response.
-
-10. Do not perform event specialization, measure specialization,
-    trigger refinement, defeater introduction, or new-rule generation
-    instead.
-
-11. The new capability must be semantically more specific than the original
-    response and must address the diagnosed behaviour.
-
-12. Do not modify unrelated rules.
-
-13. Before returning the patch, check:
-    - Is the target rule correct?
-    - Is the original response genuinely too broad?
-    - Is the refined capability grounded?
-    - Is it actually a system response/capability?
-    - Is it more specific than the original response?
-    - Is the trigger preserved?
-    - Is temporal syntax preserved?
-    - Does the proposed change address the witness?
-
-14. Generate only a grounded, more-specific capability supported by the
-    supplied current-use-case evidence. Do not invent a capability to force
-    a candidate.
-
-The generated capability is a candidate semantic repair. Its formal
-correctness will be determined later by SLEEC-PATCH verification.
-
-OPERATOR-SPECIFIC ALMI WORKED EXAMPLE:
-{OPERATOR_EXAMPLES["capability_refinement"]}
-
-Use the ALMI example only to understand the repair pattern.
-Do not copy ALMI vocabulary into the current use case.
-
-CURRENT USE-CASE INPUT:
-{json.dumps(payload, indent=2, ensure_ascii=False)}
-
-{PATCH_OUTPUT_FORMAT}
-"""
+    return build_prompt(issue_type=issue_type, rules=rules, findings=findings,
+        repair_operator="response_refinement", system_description=system_description,
+        existing_events=existing_events, existing_measures=existing_measures,
+        existing_responses=existing_responses)
 
 
 def new_rule_generation_prompt(
@@ -977,109 +672,11 @@ def new_rule_generation_prompt(
     existing_measures=None,
     existing_responses=None
 ):
-    repair_operator = "new_rule_generation"
+    return build_prompt(issue_type=issue_type, rules=rules, findings=findings,
+        repair_operator="new_rule_generation", system_description=system_description,
+        existing_events=existing_events, existing_measures=existing_measures,
+        existing_responses=existing_responses)
 
-    payload = _build_semantic_payload(
-        issue_type=issue_type,
-        rules=rules,
-        findings=findings,
-        repair_operator=repair_operator,
-        system_description=system_description,
-        existing_events=existing_events,
-        existing_measures=existing_measures,
-        existing_responses=existing_responses
-    )
-
-    return f"""
-{_semantic_common_instructions()}
-
-SELECTED REPAIR OPERATOR:
-new_rule_generation
-
-NEW-RULE GENERATION:
-
-Instantiate new_rule_generation ONLY when the diagnosis/witness demonstrates
-missing normative behaviour that cannot be represented by merely refining an
-existing rule.
-
-Follow these requirements strictly:
-
-1. Identify the exact missing normative behaviour demonstrated by the
-   diagnosis and witness.
-
-2. Determine the event or trigger required for that missing behaviour.
-
-3. Determine any contextual measures required by the diagnosis.
-
-4. Determine the required system response.
-
-5. Check the existing rules before generating a new rule.
-   Do not generate a duplicate or semantically equivalent rule.
-
-6. Every event used in the new rule must be grounded in existing_events or
-   explicitly and unambiguously supported as an event by system_description.
-
-7. Every measure/context predicate used in the new rule must be grounded in
-   existing_measures or explicitly and unambiguously supported as a measure
-   by system_description.
-
-8. Every response used in the new rule must be grounded in existing_responses
-   or explicitly and unambiguously supported as a system capability by
-   system_description.
-
-9. Diagnosis and witness determine WHAT normative gap must be addressed.
-   Do not automatically transform their natural-language wording into new
-   formal vocabulary.
-
-10. Prefer composing the new rule from already declared events, measures,
-    and responses.
-
-11. Do not invent a new event, measure, or capability merely to make
-    new_rule_generation applicable.
-
-12. Generate ONE additional normative rule for the selected missing
-    behaviour unless the output contract explicitly requires otherwise.
-
-13. Do not rewrite an existing rule and label it new_rule_generation.
-
-14. Do not introduce deterministic repairs such as defeaters or trigger
-    strengthening instead.
-
-15. Preserve any temporal requirement explicitly required by the diagnosis
-    or witness.
-
-16. The generated rule must directly prevent or address the supplied witness
-    concern.
-
-17. Before returning the patch, check:
-    - Does the witness demonstrate missing normative behaviour?
-    - Is a genuinely new rule required?
-    - Are all events grounded?
-    - Are all measures grounded?
-    - Is the response grounded?
-    - Does an equivalent rule already exist?
-    - Is temporal information preserved?
-    - Is the new rule valid SLEEC syntax?
-    - Does the new rule address the witness?
-
-18. Construct the candidate rule only from grounded semantic elements
-    supported by the supplied current-use-case evidence. Do not invent
-    unsupported vocabulary or normative behaviour to force a candidate.
-
-The generated rule is a candidate semantic repair. Its formal correctness
-will be determined later by SLEEC-PATCH verification.
-
-OPERATOR-SPECIFIC ALMI WORKED EXAMPLE:
-{OPERATOR_EXAMPLES["new_rule_generation"]}
-
-Use the ALMI example only to understand the repair pattern.
-Do not copy ALMI vocabulary into the current use case.
-
-CURRENT USE-CASE INPUT:
-{json.dumps(payload, indent=2, ensure_ascii=False)}
-
-{PATCH_OUTPUT_FORMAT}
-"""
 
 def redundancy_event_specialization_prompt(
     issue_type,
@@ -1365,7 +962,7 @@ Each candidate must independently address the same diagnosed concern.
 """
 
 
-def purpose_capability_refinement_prompt(
+def purpose_response_refinement_prompt(
     issue_type,
     rules,
     findings,
@@ -1374,7 +971,7 @@ def purpose_capability_refinement_prompt(
     existing_measures=None,
     existing_responses=None
 ):
-    repair_operator = "purpose_capability_refinement"
+    repair_operator = "purpose_response_refinement"
 
     payload = _build_semantic_payload(
         issue_type=issue_type,
@@ -1405,11 +1002,11 @@ Refine a broad system response/capability into a more specific capability
 when the diagnosed purpose-blocking WFI shows that the existing response
 is too broad for the intended behaviour.
 
-This follows the capability-refinement principle used by SLEEC-PATCH:
+This follows the response-refinement principle used by SLEEC-PATCH:
 - identify the response/action that is too broad;
 - refine that response into a more specific system capability;
 - preserve the rest of the affected rule unless changing it is required
-  by the selected capability refinement.
+  by the selected response refinement.
 
 TASK:
 1. Identify the exact rule involved in the diagnosed purpose blocking.
@@ -1426,11 +1023,11 @@ TASK:
 5. Modify only the response/capability required by this operator.
 
 6. Preserve the trigger, contextual conditions, temporal constraint, and
-   existing defeaters unless the capability refinement itself requires
+   existing defeaters unless the response refinement itself requires
    otherwise.
 
 7. Generate up to 3 genuinely semantically distinct candidates only when
-   the supplied evidence supports different capability refinements.
+   the supplied evidence supports different response refinements.
 
 GROUNDING:
 The refined capability must be grounded in the CURRENT use case.
@@ -1474,7 +1071,7 @@ Those are different repair operators.
 
 OPERATOR-SPECIFIC WORKED EXAMPLE:
 
-EXAMPLE: CAPABILITY REFINEMENT FOR RESTRICTIVENESS
+EXAMPLE: RESPONSE REFINEMENT FOR RESTRICTIVENESS
 
 Blocking rule:
 
@@ -1488,9 +1085,9 @@ Intended purpose:
 
 Selected operator:
 
-    capability_refinement
+    response_refinement
 
-Candidate capability refinement:
+Candidate response refinement:
 
     r1 when HumanOnFloor and not humanAssents
        then not RequestUrgentCareAssessment within 500 seconds
@@ -1505,10 +1102,10 @@ Notice what the repair preserves:
 - the negative response form;
 - the temporal bound within 500 seconds.
 
-Only the capability required by capability refinement is changed.
+Only the capability required by response refinement is changed.
 
 IMPORTANT:
-This example demonstrates the capability-refinement repair pattern only.
+This example demonstrates the response-refinement repair pattern only.
 
 Do NOT copy HumanOnFloor, humanAssents, CallEmergencyServices,
 RequestUrgentCareAssessment, or any other ALMI-specific concept into
@@ -1533,7 +1130,7 @@ CURRENT USE-CASE INPUT:
 {json.dumps(payload, indent=2, ensure_ascii=False)}
 
 CANDIDATE REQUIREMENT:
-Return up to 3 genuinely semantically distinct capability refinements.
+Return up to 3 genuinely semantically distinct response refinements.
 Do not manufacture cosmetic renamings merely to produce three candidates.
 
 {PATCH_OUTPUT_FORMAT}
@@ -1953,122 +1550,36 @@ def build_prompt(
     existing_measures=None,
     existing_responses=None
     ):
-    prompt_builders = {
-    "redundancy_event_specialization":
-        redundancy_event_specialization_prompt,
-
-    "redundancy_measure_specialization":
-        redundancy_measure_specialization_prompt,
-
-    "concern_new_rule_generation":
-        concern_new_rule_generation_prompt,
-
-    "purpose_capability_refinement":
-        purpose_capability_refinement_prompt,
-
-    "conflict_event_specialization":
-        conflict_event_specialization_prompt,
-
-    "conflict_measure_specialization":
-        conflict_measure_specialization_prompt,
-    "semantic_rule_merging":
-        semantic_rule_merging_prompt,    
-   }
-
     if repair_operator not in LLM_SEMANTIC_OPERATORS:
-        raise ValueError(
-            f"{repair_operator} is deterministic and must be generated "
-            f"by Python script, not GPT."
-        )
-
-    builder = prompt_builders.get(repair_operator)
-
-    if builder is None:
-        raise ValueError(
-            f"No prompt builder is registered for LLM semantic operator: "
-            f"{repair_operator}"
-        )
-
-    return builder(
-        issue_type=issue_type,
-        rules=rules,
-        findings=findings,
-        system_description=system_description,
-        existing_events=existing_events,
-        existing_measures=existing_measures,
-        existing_responses=existing_responses
-    )
-
-
-# PATCH RANKING — Section C
-def patch_quality_ranking_prompt(
-    patch,
-    system_description="",
-    existing_events=None,
-    existing_measures=None,
-    existing_responses=None
-):
-    payload = {
-        "system_description": system_description,
-        "original_rule": patch.get("original_rule", ""),
-        "proposed_rule": patch.get("proposed_rule", ""),
-        "operation": patch.get("operation", ""),
-        "natural_language_explanation": patch.get(
-            "natural_language_explanation", patch.get("explanation", "")
-        ),
-        "missing_element": patch.get("missing_element", ""),
-        "issue_type": patch.get("issue_type", ""),
-        "selected_issue": patch.get("selected_issue", ""),
-        "affected_rules": patch.get("affected_rules", []),
-        "diagnosis_context": patch.get("diagnosis_context", ""),
-        "existing_events": existing_events or [],
-        "existing_measures": existing_measures or [],
-        "existing_responses": existing_responses or []
-    }
-
-    return f"""
-The SLEEC repair below has ALREADY passed formal verification.
-Do NOT assess formal correctness and do NOT propose a different repair.
-
-Assess only:
-
-SEMANTIC CLARITY (0-100)
-Prefer specific, unambiguous, domain-grounded events, measures, and responses.
-
-VOCABULARY INTERPRETATION RULES:
-- existing_events, existing_measures, and existing_responses contain concepts
-  already declared or already used in the current SLEEC specification.
-- Do NOT classify or penalize a concept as newly introduced merely because it
-  is absent from the individual original_rule.
-- A concept is genuinely new only if it appears in proposed_rule but is absent
-  from existing_events, existing_measures, existing_responses, and original_rule.
-- Reuse of a declared concept should normally support semantic clarity when the
-  concept is used consistently with its domain meaning.
-- For a genuinely new concept, assess whether it is specific, unambiguous,
-  domain-grounded, explained by the repair rationale/system description, and
-  meaningfully distinct from existing vocabulary.
-- Penalize genuinely new generic placeholders such as RiskHigh, ConditionMet,
-  SituationBad, UserIsOk, NormalState, and SpecialCase.
-- Do NOT penalize declared concepts such as riskLevel, userOccupied,
-  humanAssents, SmokeDetectorAlarm, or userDisablesAlarm when they appear in
-  the supplied existing vocabulary.
-
-INTERPRETABILITY (0-100)
-Prefer preservation of apparent stakeholder intent, an understandable rationale,
-minimal dependence on unstated context, and descriptive predicates.
-Penalize unexplained action changes or contextual distinctions.
-
-AND, OR, NOT, WHEN, THEN, UNLESS, and WITHIN are SLEEC syntax, not predicates.
-If proposed_rule contains multiple rules, assess the complete repair.
-
-INPUT:
-{json.dumps(payload, indent=2, ensure_ascii=False)}
-
-Return ONLY this raw JSON object:
-{{
-  "semantic_clarity": 0,
-  "semantic_clarity_reason": "one concise reason",
-  "interpretability": 0,
-  "interpretability_reason": "one concise reason"
-}}
-"""
+        raise ValueError("Only the four selected semantic operators may be sent to the LLM.")
+    payload = {"selected_operator": repair_operator, "diagnosed_wfi": issue_type,
+               "diagnosis_and_witness": findings, "implicated_rules": rules,
+               "system_description": system_description, "existing_events": existing_events or [],
+               "existing_measures": existing_measures or [], "existing_responses": existing_responses or []}
+    return """Instantiate ONLY the selected operator, with one grounded candidate (or [] if evidence is insufficient).
+Return a raw JSON array. Never rewrite the specification. Preserve all untargeted elements.
+Do not assert applicability or formal correctness. A human must review the intended meaning.
+Each object has operation, target_rule_id, change, natural_language_explanation.
+For event_specialization: change={"from":existing trigger event,"to":new identifier,"meaning":definition,"evidence":support in the supplied context}.
+For response_refinement: use the same fields and optional response_path (default "main";
+use "main.unless[0]", "main.alternative", etc. for the specifically implicated response).
+Change only that event, preserving polarity, deadline, alternatives and defeaters.
+For measure_specialization: the same fields specialize one existing measure, with optional scale_labels
+(one new label per existing scale value, in order). Use element_path="trigger" or "unless[0]"
+to identify the single condition to change. Do not replace unrelated occurrences.
+For a new Boolean context where none exists, use from="", to=new measure identifier,
+element_path="trigger", meaning and evidence; this adds only the contextual condition.
+Optionally set complementary_rule_id to another implicated rule to conjoin the complement
+of the new context to that rule, partitioning the two diagnosed paths in ONE candidate.
+For a new numeric or scale measure, specify measure_type="numeric" or "scale", context
+(e.g. "({smokeSeverity} = high)"), and scale_labels (ordered unused labels for scale only).
+For new_rule_generation: change={"rule_id":unused identifier,"trigger_event":declared event,
+"condition":valid SLEEC Boolean expression,"response_event":declared event,"negated":true or false,
+"deadline":{"value":integer,"unit":"seconds" or "minutes" or "hours" or "days"}}.
+Use target_rule_id=null and source_requirement_id equal to the source concern ID.
+A deadline can also be {"kind":"source"} to retain the concern's timing.
+The rule must prevent the undesirable concern; never create a new concern.
+SLEEC conditions use {measure}, (not {measure}), ({a} and {b}), ({a} or {b}),
+and ({numericMeasure} > 3). Braces around Boolean/numeric measure references are mandatory.
+Evidence must explain the domain distinction using the supplied description/diagnosis/vocabulary.
+Context:\n""" + json.dumps(payload, default=str)

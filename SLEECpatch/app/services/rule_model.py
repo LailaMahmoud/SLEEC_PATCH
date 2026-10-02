@@ -155,7 +155,18 @@ def apply_rule_patch(text, patch):
         replacement = patch.get("proposed_rule", "")
         if not replacement:
             raise ValueError("A replacement rule cannot be empty.")
-    result = replace_span(text, nodes[target_id], replacement)
+    edits = [(nodes[target_id], replacement)]
+    for rid, value in patch.get("additional_rule_edits", {}).items():
+        if rid not in nodes or rid == target_id:
+            raise ValueError("Invalid additional edit target.")
+        edits.append((nodes[rid], value))
+    for rid in patch.get("removed_rule_ids", []):
+        if rid not in nodes or rid == target_id:
+            raise ValueError("Invalid additional removal target.")
+        edits.append((nodes[rid], ""))
+    result = text
+    for node, value in sorted(edits, key=lambda item: item[0]._tx_position, reverse=True):
+        result = replace_span(result, node, value)
     declaration = patch.get("declaration_text", "")
     if declaration:
         position = model.definitions[-1]._tx_position_end

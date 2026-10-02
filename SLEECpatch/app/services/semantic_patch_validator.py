@@ -26,6 +26,20 @@ class SemanticPatchValidator:
         existing_responses: List[str],
         system_description: str = "",
     ) -> dict:
+        if patch.get("change"):
+            from services.structured_semantic_edit import materialize_semantic_edit
+            keys = {"operation", "target_rule_id", "change", "natural_language_explanation", "source_requirement_id"}
+            proposal = {k: v for k, v in patch.items() if k in keys}
+            try:
+                checked = materialize_semantic_edit(sleec_text, proposal,
+                    patch.get("allowed_rule_ids", []), patch.get("addition_scope"))
+                if checked["proposed_rule"] != patch.get("proposed_rule") or checked["declaration_text"] != patch.get("declaration_text") or checked["additional_rule_edits"] != patch.get("additional_rule_edits", {}):
+                    raise ValueError("The candidate differs from its declared structured edit.")
+                return {"valid": True, "errors": [], "warnings": ["Domain meaning requires stakeholder review."],
+                        "operation": patch.get("operation"), "operator_validation": {"passed": True},
+                        "temporal_validation": {"passed": True}}
+            except ValueError as exc:
+                return {"valid": False, "errors": [str(exc)], "warnings": []}
         issue_text = str((issue or {}).get("value", "") or "")
         issue_type = str((issue or {}).get("issue_type", "") or "")
         operation = str(patch.get("operation", "") or "")
@@ -164,7 +178,7 @@ class SemanticPatchValidator:
         }
 
         capability_ops = {
-            "purpose_capability_refinement",
+            "purpose_response_refinement",
         }
 
         new_rule_ops = {
@@ -200,7 +214,7 @@ class SemanticPatchValidator:
                 allowed_new.add(missing.lower())
 
         # ---------------------------------------------------------
-        # CAPABILITY REFINEMENT
+        # RESPONSE REFINEMENT
         # ---------------------------------------------------------
         elif operation in capability_ops:
             missing = str(
@@ -418,7 +432,7 @@ class SemanticPatchValidator:
             "redundancy_measure_specialization",
 
             # Purpose / restrictiveness refinement
-            "purpose_capability_refinement",
+            "purpose_response_refinement",
 
             # Situational-conflict specialization
             "conflict_event_specialization",
@@ -624,9 +638,9 @@ class SemanticPatchValidator:
                 )
 
         # ---------------------------------------------------------
-        # PURPOSE — CAPABILITY REFINEMENT
+        # PURPOSE — RESPONSE REFINEMENT
         # ---------------------------------------------------------
-        elif operation == "purpose_capability_refinement":
+        elif operation == "purpose_response_refinement":
             missing = str(
                 patch.get("new_capability")
                 or patch.get("missing_element")
@@ -635,7 +649,7 @@ class SemanticPatchValidator:
 
             if not missing:
                 errors.append(
-                    "Purpose capability refinement did not declare "
+                    "Purpose response refinement did not declare "
                     "a refined capability."
                 )
 

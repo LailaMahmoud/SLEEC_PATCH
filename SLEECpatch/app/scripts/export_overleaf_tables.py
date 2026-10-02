@@ -479,7 +479,7 @@ def generate_patch_results_table(rows: Sequence[dict]) -> str:
 
     lines = [
         r"\begin{table*}[t]",
-        r"\caption{Verified SLEEC-PATCH generation results. RM, RA, RD, DA, TR, RR, and CR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, response refinements, and capability refinements, respectively. Gen. and Val. denote generation and validation time in seconds.}",
+        r"\caption{Verified SLEEC-PATCH generation results. RM, RA, RD, DA, TR, RR, and CR denote rules modified, rules added, rules deleted, defeaters added, trigger refinements, response refinements, and response refinements, respectively. Gen. and Val. denote generation and validation time in seconds.}",
         r"\label{tab:patch-results}",
         r"\centering",
         r"\scriptsize",

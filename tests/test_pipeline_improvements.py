@@ -139,7 +139,7 @@ class ImprovementTests(unittest.TestCase):
     def test_structured_event_and_capability_edits_preserve_deadlines_exceptions(self):
         text = spec("policy_safe when Start then Act within 5 minutes unless {urgent} then Backup", concern="")
         for op, change in [("event_specialization", {"from": "Start", "to": "ReadyToStart"}),
-                           ("capability_refinement", {"from": "Act", "to": "ActPrecisely"})]:
+                           ("response_refinement", {"from": "Act", "to": "ActPrecisely"})]:
             candidate = materialize_semantic_edit(text, proposal(op, **change), ["policy_safe"])
             self.assertIn("within 5 minutes unless {urgent} then Backup", candidate["proposed_rule"])
             self.assertTrue(self.engine.check_sleec_syntax(self.engine.apply_patch_to_text(text, candidate))["valid"])

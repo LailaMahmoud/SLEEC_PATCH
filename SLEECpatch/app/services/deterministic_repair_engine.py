@@ -3,7 +3,11 @@ import re
 
 class DeterministicRepairEngine:
 
-    def generate(self, issue_type, selected_issue, rules, operators, existing_events=None):
+    def generate(self, issue_type, selected_issue, rules, operators, existing_events=None, sleec_text=None):
+        if sleec_text is not None:
+            from services.paper_repairs import diagnosis_for
+            from services.evidence_repair import generate_repairs
+            return generate_repairs(sleec_text, issue_type, diagnosis_for(sleec_text, issue_type, selected_issue), operators)
         self._events = {str(event) for event in (existing_events or [])}
         patches = []
 
@@ -44,6 +48,16 @@ class DeterministicRepairEngine:
                 )
             )
 
+        if "deadline_refinement" in operators and issue_type == "concerns":
+            context = self.find_temporal_refinement_context(selected_issue, rules)
+            if context and context['diagnosed_temporal']['seconds'] < context['existing_temporal']['seconds']:
+                rule = context['target_rule']
+                if not str(rule.get('action','')).strip().startswith('not '):
+                    candidate = self.make_temporal_refinement_patch(rule, context['diagnosed_temporal']['text'], issue_type)
+                    if candidate:
+                        candidate['operation'] = 'deadline_refinement'
+                        patches.append(candidate)
+
         if (
             "temporal_refinement" in operators
             and issue_type in {
@@ -60,7 +74,8 @@ class DeterministicRepairEngine:
             if temporal_patch:
                 patches.append(temporal_patch)
 
-        return self.drop_noop_patches(patches)
+        from services.boolean_simplifier import simplify_patch
+        return self.drop_noop_patches([simplify_patch(p) for p in patches])
 
     def drop_noop_patches(self, patches):
         """Discard patches that leave the rule unchanged.
@@ -115,30 +130,18 @@ class DeterministicRepairEngine:
         # =========================================================
 
         if "rule_removal" in operators:
-            redundant_rule, survivor_rule = self.find_redundant_rule_pair(
-                selected_issue,
-                rules
-            )
-
-            if redundant_rule and survivor_rule:
-                redundant_id = redundant_rule["id"]
-                survivor_id = survivor_rule["id"]
-
-                patches.append({
-                    "patch_id": f"d_remove_{redundant_id}",
-                    "id": f"d_remove_{redundant_id}",
-                    "source": "deterministic",
-                    "issue_type": "redundancies",
-                    "operation": "rule_removal",
-                    "target_rule_id": redundant_id,
-                    "original_rule": self.rule_to_text(redundant_rule),
-                    "proposed_rule": "",
-                    "survivor_rule_id": survivor_id,
-                    "natural_language_explanation": (
-                        f"Remove {redundant_id} because it duplicates "
-                        f"{survivor_id}, which remains in the specification."
-                    )
-                })
+            if isinstance(selected_issue, dict):
+                redundant_id = selected_issue.get('source_id')
+            else:
+                ids = [r['id'] for r in rules if re.search(r'(?<!\w)'+re.escape(r['id'])+r'(?!\w)', issue_text)]
+                ids.sort(key=lambda rid: issue_text.index(rid))
+                redundant_id = ids[0] if ids else None
+            redundant = self.find_rule(redundant_id, rules) if redundant_id else None
+            if redundant:
+                patches.append({'patch_id': f'd_remove_{redundant_id}', 'id': f'd_remove_{redundant_id}',
+                    'source':'deterministic', 'issue_type':'redundancies','operation':'rule_removal',
+                    'target_rule_id':redundant_id, 'original_rule':self.rule_to_text(redundant),
+                    'proposed_rule':'', 'natural_language_explanation':'Remove only the diagnosed redundant rule; preserve all supporting rules.'})
 
         # =========================================================
         # 2. DEFEATER PROPAGATION
@@ -222,221 +225,13 @@ class DeterministicRepairEngine:
                     })
 
         return patches
-    def generate_existential_concern_patches(
-        self,
-        selected_issue,
-        rules,
-        operators
-    ):
+    def generate_existential_concern_patches(self, selected_issue, rules, operators):
+        """Response-free witnesses do not justify relabeling trigger narrowing
+        or new exception introduction as the paper's insufficiency refinements.
+        Use generate(..., sleec_text=...) for source-backed concern repairs.
         """
-        Generate deterministic candidates for existential insufficiencies:
+        return []
 
-            cX exists E and C
-
-        where:
-            E = witnessed undesirable event/capability/state
-            C = diagnosis-grounded undesirable context
-
-        Generic across all use cases.
-
-        Deterministic operators:
-            1. trigger_strengthening
-            2. defeater_introduction
-            3. rule_decomposition
-
-        Every returned object is only a CANDIDATE.
-        Formal correctness is decided later by LEGOS-SLEEC.
-        """
-        patches = []
-
-        concern = self.parse_concern(selected_issue)
-        condition = self.clean_condition(
-            concern.get("condition", "")
-        )
-
-        if not condition:
-            return patches
-
-        parts = self.split_top_level_and(condition)
-
-        # Existential concern needs:
-        #     witnessed capability/event + diagnostic context
-        if len(parts) < 2:
-            return patches
-
-        witnessed_action = self.clean_condition(parts[0])
-
-        if (
-            not witnessed_action
-            or self.is_measure_only_expression(witnessed_action)
-        ):
-            return patches
-
-        bad_context = self.normalize_boolean_expression(
-            " and ".join(parts[1:])
-        )
-
-        if not bad_context:
-            return patches
-
-        producers = self.find_existential_concern_producers(
-            witnessed_action,
-            rules
-        )
-
-        if not producers:
-            return patches
-
-        used_rule_ids = {
-            str(r.get("id", ""))
-            for r in rules
-            if isinstance(r, dict)
-        }
-
-        desired_action = self.opposite_action(witnessed_action)
-
-        if not desired_action:
-            return patches
-
-        for producer in producers:
-            rule_id = str(producer.get("id", "")).strip()
-
-            if not rule_id:
-                continue
-
-            original_rule = self.rule_to_text(producer)
-
-            # Determine whether the diagnosis context adds usable
-            # information to this particular producer.
-            usable_context = self.concern_specific_context(
-                condition,
-                producer.get("condition", "")
-            )
-
-            usable_context = self.normalize_boolean_expression(
-                usable_context
-            )
-
-            # If this producer already handles the diagnosed measure/context,
-            # do not manufacture contradictory or redundant candidates.
-            if not usable_context:
-                continue
-
-            # ----------------------------------------------------------
-            # 1. TRIGGER STRENGTHENING
-            #
-            # exists E and C
-            #
-            #     when T then E
-            #
-            # becomes:
-            #
-            #     when T and NOT(C) then E
-            # ----------------------------------------------------------
-            if "trigger_strengthening" in operators:
-                proposed_rule = self.refine_trigger_against_condition(
-                    producer,
-                    usable_context
-                )
-
-                if (
-                    proposed_rule
-                    and proposed_rule != original_rule
-                ):
-                    patches.append({
-                        "patch_id": f"d_exist_strengthen_{rule_id}",
-                        "id": f"d_exist_strengthen_{rule_id}",
-                        "source": "deterministic",
-                        "issue_type": "concerns",
-                        "operation": "trigger_strengthening",
-                        "target_rule_id": rule_id,
-                        "target_branch_type": "main",
-                        "target_branch_action": producer.get(
-                            "action", ""
-                        ),
-                        "original_rule": original_rule,
-                        "proposed_rule": proposed_rule,
-                        "natural_language_explanation": (
-                            "Strengthen the producer trigger with the "
-                            "complement of the diagnosis-grounded "
-                            "undesirable context."
-                        )
-                    })
-
-            # ----------------------------------------------------------
-            # 2. DEFEATER INTRODUCTION
-            #
-            #     when T then E
-            #
-            # becomes:
-            #
-            #     when T then E unless C
-            # ----------------------------------------------------------
-            if "defeater_introduction" in operators:
-                proposed_rule = self.add_defeater(
-                    producer,
-                    usable_context
-                )
-
-                if (
-                    proposed_rule
-                    and proposed_rule != original_rule
-                ):
-                    patches.append({
-                        "patch_id": f"d_exist_defeater_{rule_id}",
-                        "id": f"d_exist_defeater_{rule_id}",
-                        "source": "deterministic",
-                        "issue_type": "concerns",
-                        "operation": "defeater_introduction",
-                        "target_rule_id": rule_id,
-                        "target_branch_type": "main",
-                        "target_branch_action": producer.get(
-                            "action", ""
-                        ),
-                        "original_rule": original_rule,
-                        "proposed_rule": proposed_rule,
-                        "natural_language_explanation": (
-                            "Introduce the diagnosis-grounded undesirable "
-                            "context as an exception to the producer rule."
-                        )
-                    })
-
-            # ----------------------------------------------------------
-            # 3. RULE DECOMPOSITION
-            #
-            #     T and C     -> NOT E
-            #     T and NOT C -> E
-            # ----------------------------------------------------------
-            if "rule_decomposition" in operators:
-                proposed_rule = self.decompose_rule_for_concern(
-                    producer,
-                    usable_context,
-                    desired_action,
-                    used_rule_ids
-                )
-
-                if proposed_rule:
-                    patches.append({
-                        "patch_id": f"d_exist_decompose_{rule_id}",
-                        "id": f"d_exist_decompose_{rule_id}",
-                        "source": "deterministic",
-                        "issue_type": "concerns",
-                        "operation": "rule_decomposition",
-                        "target_rule_id": rule_id,
-                        "target_branch_type": "main",
-                        "target_branch_action": producer.get(
-                            "action", ""
-                        ),
-                        "original_rule": original_rule,
-                        "proposed_rule": proposed_rule,
-                        "natural_language_explanation": (
-                            "Decompose the producer into complementary "
-                            "diagnosis-grounded cases, preventing the "
-                            "witnessed capability in the undesirable case."
-                        )
-                    })
-
-        return patches
     def generate_concern_patches(self, selected_issue, rules, operators):
         """
         Generate deterministic candidate repairs for an insufficiency / concern.
@@ -465,11 +260,9 @@ class DeterministicRepairEngine:
         )
 
         if is_existential_concern:
-            return self.generate_existential_concern_patches(
-                selected_issue,
-                rules,
-                operators
-            )
+            # Response-free existential concerns need semantic new-rule generation;
+            # do not relabel a new defeater or a narrowed producer as refinement.
+            return []
 
         # Standard concerns keep the existing ALMI-compatible path.
         target_context = self.find_best_related_rule_context(
@@ -559,7 +352,7 @@ class DeterministicRepairEngine:
 
         # Defeater refinement remains available when the diagnosed response
         # is encoded by an existing alternative branch.
-        if "defeater_introduction" in operators and context:
+        if "defeater_refinement" in operators and context:
             proposed_rule = self.exclude_context_from_defeater(
                 target_rule,
                 context,
@@ -571,7 +364,7 @@ class DeterministicRepairEngine:
                     "id": f'd_concern_defeater_{target_rule["id"]}',
                     "source": "deterministic",
                     "issue_type": "concerns",
-                    "operation": "defeater_introduction",
+                    "operation": "defeater_refinement",
                     "target_rule_id": target_rule["id"],
                     "target_branch_type": branch_type,
                     "target_branch_action": branch_action,
@@ -626,7 +419,7 @@ class DeterministicRepairEngine:
         Paper-aligned deterministic operator:
             - defeater_introduction
 
-        Capability refinement is handled separately by the LLM pipeline.
+        Response refinement is handled separately by the LLM pipeline.
         """
 
         patches = []
@@ -1173,7 +966,12 @@ class DeterministicRepairEngine:
             return self.rule_raw(rule)
 
         head, trigger, body = split
-        return f"{head} when {self.combine_trigger(trigger, context)} then {body}"
+        from services.boolean_simplifier import simplify_expression
+        match = re.fullmatch(r"(\w+)(?:\s+and\s+(.+))?", trigger, re.S)
+        if not match or not match[2]:
+            return self.rule_raw(rule)
+        guard = simplify_expression(f"({match[2]} or {context})")
+        return f"{head} when {match[1]} and {guard} then {body}"
 
     def refine_trigger_against_condition(self, rule, context):
         context = self.specific_context(

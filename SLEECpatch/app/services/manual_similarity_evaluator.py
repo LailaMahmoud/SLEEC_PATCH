@@ -532,13 +532,13 @@ class ManualSimilarityEvaluator:
         },
 
         # ---------------------------------------------------------
-        # Capability refinement
+        # Response refinement
         # ---------------------------------------------------------
-        "capability_refinement": {
+        "response_refinement": {
             "target", "trigger", "response", "polarity",
             "defeater", "temporal"
         },
-        "purpose_capability_refinement": {
+        "purpose_response_refinement": {
             "target", "trigger", "response", "polarity",
             "defeater", "temporal"
         },

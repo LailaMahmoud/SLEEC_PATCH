@@ -101,6 +101,8 @@ class PatchLevelEvaluator:
         if operation in {
             "defeater_introduction",
             "defeater_propagation",
+            "defeater_refinement",
+            "deadline_refinement",
             "purpose_defeater",
             "trigger_strengthening",
             "trigger_refinement",
@@ -108,7 +110,7 @@ class PatchLevelEvaluator:
             "rule_decomposition",
             "event_specialization",
             "measure_specialization",
-            "capability_refinement",
+            "response_refinement",
             "new_rule_generation"
         }:
             return self.soft_rule_match(proposed_rule, corrected_norm)

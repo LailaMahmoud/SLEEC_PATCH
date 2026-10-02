@@ -1004,7 +1004,7 @@ class SLEECPatchWorkbenchEngine:
             "replace_action",
             "refine_vague_predicate",
             "refine_action",
-            "capability_refinement",
+            "response_refinement",
             "event_specialization",
             "measure_specialization"
         ]
@@ -1033,7 +1033,7 @@ class SLEECPatchWorkbenchEngine:
                     f"measure {new_measure}:boolean\ndef_end"
                 )
 
-        if operation == "capability_refinement":
+        if operation == "response_refinement":
             new_capability = (
                 patch.get("new_capability")
                 or patch.get("missing_element")
@@ -1167,7 +1167,7 @@ class SLEECPatchWorkbenchEngine:
             "refine_vague_predicate",
             "event_specialization",
             "measure_specialization",
-            "capability_refinement"
+            "response_refinement"
         ] else 0
 
         rules_added = 1 if operation in [
@@ -1201,13 +1201,13 @@ class SLEECPatchWorkbenchEngine:
         actions_refined = 1 if operation in [
             "refine_action",
             "replace_action",
-            "capability_refinement"
+            "response_refinement"
         ] else 0
 
         capabilities_refined = 1 if operation in [
             "refine_action",
             "replace_action",
-            "capability_refinement"
+            "response_refinement"
         ] else 0
 
         return {

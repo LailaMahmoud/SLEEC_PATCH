@@ -101,9 +101,8 @@ function rankingBand(score) {
 }
 
 function scoreBadge(label, value) {
-    const band = rankingBand(value);
     return `
-        <div class="score-chip ${band}">
+        <div class="score-chip neutral">
             <dt>${escapeHtml(label)}</dt>
             <dd>${escapeHtml(value || 0)}</dd>
         </div>
@@ -1283,10 +1282,11 @@ sleecPatchState.verifiedPatches.forEach((p, index) => {
             ${renderRegressionReport(currentPatchReport(p))}
 
             <dl class="score-list compact-score-list">
-                ${scoreBadge("Overall", p.ranking_score || ranking.total_score || 0)}
-                ${scoreBadge("Logical", ranking.logical_simplicity || 0)}
-                ${scoreBadge("Semantic", ranking.semantic_clarity || 0)}
-                ${scoreBadge("Interpretability", ranking.interpretability || 0)}
+                ${scoreBadge("Rules affected", ranking.rules_affected ?? 0)}
+                ${scoreBadge("New elements", ranking.new_elements ?? 0)}
+                ${scoreBadge("Boolean complexity", ranking.boolean_complexity ?? 0)}
+                ${scoreBadge("Defeaters", ranking.defeaters ?? 0)}
+                ${scoreBadge("Defeater depth", ranking.defeater_depth ?? 0)}
             </dl>
 
             ${renderRationaleList(rationale)}
@@ -1805,10 +1805,11 @@ function renderStakeholderDecision() {
                     []
                 )}
                 <dl class="score-list compact-score-list">
-                    ${scoreBadge("Overall", selectedPatch.ranking_score || ranking.total_score || 0)}
-                    ${scoreBadge("Logical", ranking.logical_simplicity || 0)}
-                    ${scoreBadge("Semantic", ranking.semantic_clarity || 0)}
-                    ${scoreBadge("Interpretability", ranking.interpretability || 0)}
+                    ${scoreBadge("Rules affected", ranking.rules_affected ?? 0)}
+                ${scoreBadge("New elements", ranking.new_elements ?? 0)}
+                ${scoreBadge("Boolean complexity", ranking.boolean_complexity ?? 0)}
+                ${scoreBadge("Defeaters", ranking.defeaters ?? 0)}
+                ${scoreBadge("Defeater depth", ranking.defeater_depth ?? 0)}
                 </dl>
             </div>
 
@@ -1942,7 +1943,7 @@ async function loadDetailedEvaluationResults() {
                     <th>Added</th>
                     <th>Deleted</th>
                     <th>Defeaters</th>
-                    <th>Capability Refined</th>
+                    <th>Response Refined</th>
                     <th>Review</th>
                 </tr>
             </thead>

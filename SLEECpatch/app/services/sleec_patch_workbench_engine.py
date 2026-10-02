@@ -26,41 +26,11 @@ class SLEECPatchWorkbenchEngine:
         self.operator_selector = RepairOperatorSelector()
         self.deterministic_engine = DeterministicRepairEngine()
         self.semantic_validator = SemanticPatchValidator()
-        # Section C ranking:
-        # structural/logical = deterministic;
-        # semantic clarity/interpretability = GPT, after formal verification.
-        self.patch_ranker = PatchRanker(
-            semantic_assessor=self._assess_patch_quality_for_ranking
-        )
+        self.patch_ranker = PatchRanker()
         self.detector_cache = OrderedDict()
         self.detector_cache_lock = threading.RLock()
         self.detector_cache_max_entries = int(
             os.environ.get("SLEEC_DETECTOR_CACHE_SIZE", "64")
-        )
-
-        # Context supplied to the Section-C quality assessor for the current WFI.
-        self._ranking_context = {}
-
-    def _assess_patch_quality_for_ranking(self, patch):
-        """
-        Called by PatchRanker only for formally verified patches.
-        GPT assesses semantic clarity and interpretability; it does not
-        re-decide formal correctness.
-        """
-        context = getattr(self, "_ranking_context", {}) or {}
-
-        quality_patch = dict(patch)
-        quality_patch["selected_issue"] = context.get("selected_issue", "")
-        quality_patch["issue_type"] = context.get("issue_type", "")
-        quality_patch["affected_rules"] = context.get("affected_rules", [])
-        quality_patch["diagnosis_context"] = context.get("diagnosis_context", "")
-
-        return self.gpt_patch_engine.assess_patch_quality(
-            patch=quality_patch,
-            system_description=context.get("system_description", ""),
-            existing_events=context.get("existing_events", []),
-            existing_measures=context.get("existing_measures", []),
-            existing_responses=context.get("existing_responses", [])
         )
 
     def run_detector_cached(self, sleec_text):
@@ -425,73 +395,9 @@ class SLEECPatchWorkbenchEngine:
 
 
     def sleec_text_to_rules_json(self, sleec_text):
-        rules = []
-        inside_rules = False
-        current = ""
-        depth = 0
+        from services.rule_model import rules_from_text
+        return rules_from_text(sleec_text)
 
-        # A rule may carry any identifier (R1, Rule5, c1, R1bb, r1_prime,
-        # R3_special_case). A new rule begins only where an 'Ident when' line
-        # appears at parenthesis/brace depth 0; deeper lines (defeaters,
-        # otherwise-blocks, wrapped continuations) fold into the current rule.
-        rule_start_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*\s+when\s+", re.IGNORECASE)
-
-        for line in sleec_text.splitlines():
-            line = line.strip()
-
-            if not line or line.startswith("//"):
-                continue
-
-            if line.lower() == "rule_start":
-                inside_rules = True
-                continue
-
-            if line.lower() == "rule_end":
-                inside_rules = False
-                if current:
-                    rules.append(current.strip())
-                break
-
-            if not inside_rules:
-                continue
-
-            if depth == 0 and rule_start_re.match(line):
-                if current:
-                    rules.append(current.strip())
-                current = line
-            elif current:
-                current += " " + line
-            else:
-                current = line
-
-            depth += line.count("(") - line.count(")")
-            depth += line.count("{") - line.count("}")
-
-            if depth < 0:
-                depth = 0
-
-        parsed_rules = []
-
-        pattern = re.compile(
-            r"^([A-Za-z_][A-Za-z0-9_]*)\s+when\s+(.+?)\s+then\s+(.+?)(?:\s+unless\s+(.+))?$",
-            re.IGNORECASE
-        )
-
-        for text in rules:
-            match = pattern.search(text)
-
-            if match:
-                parsed_rules.append({
-                    "id": match.group(1).strip(),
-                    "condition": match.group(2).strip(),
-                    "action": match.group(3).strip(),
-                    "defeater": match.group(4).strip() if match.group(4) else "",
-                    "raw": text
-                })
-
-        print("RULES PARSED:", len(parsed_rules))
-
-        return parsed_rules
 
     def parse_rule_block(self, rule_text):
         clean = re.sub(r"\s+", " ", str(rule_text or "")).strip()
@@ -603,13 +509,15 @@ class SLEECPatchWorkbenchEngine:
             "defeater_propagation": "Carry exception forward",
             "purpose_defeater": "Add purpose-specific exception",
             "trigger_refinement": "Narrow trigger context",
-            "trigger_strengthening": "Add trigger condition",
+            "trigger_strengthening": "Broaden trigger context",
+            "defeater_refinement": "Defeater refinement",
+            "deadline_refinement": "Deadline refinement",
             "rule_merging": "Merge overlapping rules",
             "rule_decomposition": "Split rule into cases",
             "rule_removal": "Remove redundant rule",
             "event_specialization": "Specialize event",
             "measure_specialization": "Specialize measure",
-            "capability_refinement": "Refine capability",
+            "response_refinement": "Response refinement",
             "new_rule_generation": "Add new rule"
         }
 
@@ -692,6 +600,11 @@ class SLEECPatchWorkbenchEngine:
         return flags
 
     def normalize_patch(self, patch, sleec_text=""):
+        from services.operator_names import normalize_operators
+        from services.boolean_simplifier import simplify_patch
+        patch = normalize_operators(patch)
+        if patch.get("source") == "deterministic":
+            patch = simplify_patch(patch)
         patch_id = patch.get("patch_id") or patch.get("id") or "p_unknown"
         target_rule_id = patch.get("target_rule_id", "")
         operation = patch.get("operation", "N/A")
@@ -703,7 +616,16 @@ class SLEECPatchWorkbenchEngine:
             target_rule_id
         )
 
+        if sleec_text and target_rule_id:
+            from services.rule_model import rules_from_text
+            baseline = {r['id']: r['raw'] for r in rules_from_text(sleec_text)}
+            ids = [target_rule_id] + patch.get('removed_rule_ids', [])
+            if all(rid in baseline for rid in ids):
+                original_rule = "\n".join(baseline[rid] for rid in ids)
+
         return {
+            **patch,
+            "original_sleec": sleec_text,
             "id": patch_id,
             "patch_id": patch_id,
             "result_id": patch.get("result_id", patch.get("_result_id", "")),
@@ -759,6 +681,15 @@ class SLEECPatchWorkbenchEngine:
         }
 
     def apply_patch_to_text(self, sleec_text, patch):
+        from services.rule_model import apply_rule_patch
+        from services.operator_names import normalize_operators
+        patch = normalize_operators(patch)
+        if patch.get("operation") in {
+            "rule_removal", "defeater_propagation", "trigger_refinement", "trigger_strengthening",
+            "defeater_introduction", "defeater_refinement", "deadline_refinement", "rule_decomposition",
+            "rule_merging", "event_specialization", "measure_specialization", "response_refinement", "new_rule_generation"
+        }:
+            return apply_rule_patch(sleec_text, patch)
         operation = patch.get("operation", "")
         original_rule = patch.get("original_rule", "")
         proposed_rule = patch.get("proposed_rule", "")
@@ -796,14 +727,14 @@ class SLEECPatchWorkbenchEngine:
         "refine_action",
 
         # Legacy semantic operator names
-        "capability_refinement",
+        "response_refinement",
         "event_specialization",
         "measure_specialization",
 
         # WFI-specific semantic operators
         "redundancy_event_specialization",
         "redundancy_measure_specialization",
-        "purpose_capability_refinement",
+        "purpose_response_refinement",
         "conflict_event_specialization",
         "conflict_measure_specialization",
         "semantic_rule_merging",
@@ -847,8 +778,8 @@ class SLEECPatchWorkbenchEngine:
                 )
 
         if operation in {
-            "capability_refinement",
-            "purpose_capability_refinement",
+            "response_refinement",
+            "purpose_response_refinement",
         }:
             new_capability = (
                 patch.get("new_capability")
@@ -1317,7 +1248,7 @@ class SLEECPatchWorkbenchEngine:
             "refine_vague_predicate",
             "event_specialization",
             "measure_specialization",
-            "capability_refinement"
+            "response_refinement"
         ] else 0
 
         rules_added = 1 if operation in [
@@ -1356,22 +1287,23 @@ class SLEECPatchWorkbenchEngine:
         actions_refined = 1 if operation in [
             "refine_action",
             "replace_action",
-            "capability_refinement"
+            "response_refinement"
         ] else 0
 
         capabilities_refined = 1 if operation in [
             "refine_action",
             "replace_action",
-            "capability_refinement"
+            "response_refinement"
         ] else 0
 
+        quantitative = self.patch_ranker.score_patch(patch)
         return {
-            "rules_modified": rules_modified,
-            "rules_added": rules_added,
-            "rules_deleted": rules_deleted,
-            "defeaters_added": defeaters_added,
-            "conditions_refined": conditions_refined,
-            "actions_refined": actions_refined,
+            "rules_modified": quantitative["rules_edited"],
+            "rules_added": quantitative["rules_added"],
+            "rules_deleted": quantitative["rules_removed"],
+            "defeaters_added": quantitative["new_defeaters"],
+            "conditions_refined": conditions_refined or int(operation == "defeater_refinement"),
+            "actions_refined": actions_refined or int(operation == "deadline_refinement"),
             "capabilities_refined": capabilities_refined
         }
 
@@ -1477,6 +1409,7 @@ class SLEECPatchWorkbenchEngine:
                 "new_analysis": validation_gate.get("analysis", {})
             }
 
+        patch["syntax_validation"] = validation_gate.get("syntax", {})
         original_analysis = self.run_detector_cached(original_sleec)
         original_structured = original_analysis.get("structured", {})
         new_analysis = validation_gate["analysis"]
@@ -1545,7 +1478,7 @@ class SLEECPatchWorkbenchEngine:
             current_patch["failure_reason"] = validation_gate["failure_reason"]
             current_patch["syntax_validation"] = validation_gate.get("syntax", {})
 
-            if syntax_attempts >= 2:
+            if current_patch.get("change") or syntax_attempts >= 2:
                 return self._surface_llm_patch(
                     current_patch,
                     patched_sleec,
@@ -1647,6 +1580,7 @@ class SLEECPatchWorkbenchEngine:
         target_fixed
         and related_issue is None
         and regression_report["regression_passed"]
+        and (not patch.get("change") or semantic_validation.get("valid") is True)
          )
 
         if not formally_verified:
@@ -1944,7 +1878,8 @@ class SLEECPatchWorkbenchEngine:
             existing_events=self.extract_defined_events(sleec_text),
             existing_measures=self.extract_defined_measures(sleec_text),
             existing_responses=self.extract_rule_actions(rules_json),
-            system_description=description
+            system_description=description,
+            sleec_text=sleec_text
         )
 
         print("\n========== REPAIR OPERATOR SELECTION ==========")
@@ -1991,12 +1926,9 @@ class SLEECPatchWorkbenchEngine:
             start_generation = time.time()
 
             deterministic_patches = self.deterministic_engine.generate(
-                issue_type=issue_key,
-                selected_issue=selected_issue_value,
-                rules=rules_json,
-                operators=operator_plan.get("deterministic", []),
-                existing_events=self.extract_defined_events(sleec_text)
-            )
+                issue_type=issue_key, selected_issue=operator_plan.get("diagnosis", selected_issue_value),
+                rules=rules_json, operators=operator_plan.get("deterministic", []),
+                existing_events=self.extract_defined_events(sleec_text), sleec_text=sleec_text)
 
             generation_time += time.time() - start_generation
 
@@ -2142,8 +2074,8 @@ class SLEECPatchWorkbenchEngine:
 
             try:
                 llm_patches = self.gpt_patch_engine.generate_all_patches(
-                    rules=rules_json,
-                    structured_findings=selected_findings,
+                    rules=[r for r in rules_json if r["id"] in operator_plan.get("target_resolution", {}).get("semantic_rule_ids", [])],
+                    structured_findings={issue_key: [operator_plan.get("diagnosis", selected_issue_value)]},
                     repair_operators=semantic_ops,
                     system_description=description,
                     existing_events=self.extract_defined_events(sleec_text),
@@ -2160,6 +2092,22 @@ class SLEECPatchWorkbenchEngine:
                 print(f"\nGPT CANDIDATE {idx}:")
                 print(candidate)
             print("==========================================\n")
+            from services.structured_semantic_edit import materialize_semantic_edit
+            materialized = []
+            resolution = operator_plan.get("target_resolution", {})
+            for proposal in llm_patches:
+                try:
+                    if "change" not in proposal:
+                        raise ValueError("Expected a structured operator edit, not a rewritten rule.")
+                    candidate = materialize_semantic_edit(sleec_text, proposal,
+                        resolution.get("semantic_rule_ids", resolution.get("rule_ids", [])), resolution.get("addition_scope"))
+                    candidate["allowed_rule_ids"] = resolution.get("semantic_rule_ids", resolution.get("rule_ids", []))
+                    candidate["addition_scope"] = resolution.get("addition_scope")
+                    materialized.append(candidate)
+                except ValueError as exc:
+                    failed_patches.append({**proposal, "verified": False, "failure_reason": str(exc)})
+                    failed_patch_count += 1
+            llm_patches = materialized
             for i, p in enumerate(llm_patches, start=1):
                 p["patch_id"] = f"g{i}"
                 p["id"] = f"g{i}"
@@ -2240,28 +2188,7 @@ class SLEECPatchWorkbenchEngine:
 
         total_time = time.time() - start_total
 
-        # Section C: rank only patches that already passed formal verification.
-        # Structural/logical metrics are deterministic.
-        # Semantic clarity/interpretability receive the WFI and declared vocabulary.
-        affected_rule_ids = self.extract_issue_rule_ids(selected_issue_value)
-        affected_rules = [
-            rule for rule in rules_json
-            if str(rule.get("id", "")).lower()
-            in {rid.lower() for rid in affected_rule_ids}
-        ]
-
-        self._ranking_context = {
-            "use_case": use_case,
-            "issue_type": issue_key,
-            "selected_issue": selected_issue_value,
-            "diagnosis_context": selected_issue_value,
-            "affected_rules": affected_rules,
-            "system_description": get_use_case_description(use_case),
-            "existing_events": self.extract_defined_events(sleec_text),
-            "existing_measures": self.extract_defined_measures(sleec_text),
-            "existing_responses": self.extract_rule_actions(rules_json)
-        }
-
+        # Rank verified candidates using the paper's quantitative lexicographic costs.
         verified_patches = self.patch_ranker.rank(verified_patches)
 
         output_file = self.build_final_sleecpatch_file(
