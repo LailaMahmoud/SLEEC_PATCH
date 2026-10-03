@@ -7,7 +7,7 @@ import tempfile
 import pandas as pd
 import io
 from contextlib import redirect_stdout
-
+from services.diagnosis_evidence import extract_evidence
 
 PROJECT_ROOT = os.path.abspath(
     os.path.join(
@@ -82,6 +82,11 @@ class SLEECDetectionEngine:
             "situational_conflict": self.safe_call("situational_conflict", check_situational, sleec_text)
         }
         self.enrich_detections_with_ast_context(sleec_text, detections)
+        self.enrich_detections_with_diagnosis_evidence(
+            sleec_text,
+            detections
+        )
+
         structured = self.build_structured_results(detections)
 
         return {
@@ -799,9 +804,76 @@ class SLEECDetectionEngine:
                     x.get("related_rules", [])
                     for x in detections["situational_conflict"]["findings"]
                 ]
-            }
+            },
+            "diagnoses_by_type": {
+                "concerns": [
+                    x.get("diagnosis", {})
+                    for x in detections["concern"]["findings"]
+                ],
+                "conflicts": [
+                    x.get("diagnosis", {})
+                    for x in detections["conflict"]["findings"]
+                ],
+                "purpose_blocking": [
+                    x.get("diagnosis", {})
+                    for x in detections["purpose"]["findings"]
+                ],
+                "redundancies": [
+                    x.get("diagnosis", {})
+                    for x in detections["redundancy"]["findings"]
+                ],
+                "situational_conflicts": [
+                    x.get("diagnosis", {})
+                    for x in detections["situational_conflict"]["findings"]
+                ]
+            },
         }
-    
+    def enrich_detections_with_diagnosis_evidence(self, sleec_text, detections):
+        detector_to_issue_type = {
+            "concern": "concerns",
+            "conflict": "conflicts",
+            "purpose": "purpose_blocking",
+            "redundancy": "redundancies",
+            "situational_conflict": "situational_conflicts",
+        }
+
+        for detector_type, issue_type in detector_to_issue_type.items():
+            detection = detections.get(detector_type, {})
+            message = detection.get("message", "")
+            if detector_type == "concern":
+                print("\n========== RAW CONCERN MESSAGE ==========")
+                print(message)
+                print("=========================================\n")
+
+            try:
+                evidence_findings = extract_evidence(
+                    detector_type,
+                    message,
+                    sleec_text
+                )
+            except Exception as exc:
+                print(
+                    f"[DIAGNOSIS EVIDENCE] "
+                    f"{detector_type} extraction failed: {exc}"
+                )
+                continue
+
+            findings = detection.get("findings", [])
+
+            for index, finding in enumerate(findings):
+                if index >= len(evidence_findings):
+                    break
+
+                evidence_finding = evidence_findings[index]
+                diagnosis = evidence_finding.get("diagnosis", {})
+
+                finding["diagnosis"] = diagnosis
+
+                if diagnosis.get("rule_references"):
+                    finding["rule_references"] = diagnosis["rule_references"]
+
+                if evidence_finding.get("original_rules"):
+                    finding["original_rules"] = evidence_finding["original_rules"]
     def run_text(self, sleec_text):
         
 
@@ -813,6 +885,10 @@ class SLEECDetectionEngine:
             "situational_conflict": self.safe_call("situational_conflict", check_situational, sleec_text)
         }
         self.enrich_detections_with_ast_context(sleec_text, detections)
+        self.enrich_detections_with_diagnosis_evidence(
+            sleec_text,
+            detections
+        )
 
         structured = self.build_structured_results(detections)
 

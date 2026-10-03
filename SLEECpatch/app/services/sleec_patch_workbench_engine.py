@@ -14,7 +14,7 @@ from services.deterministic_repair_engine import DeterministicRepairEngine
 from services.patch_ranker import PatchRanker
 from services.use_case_descriptions import get_use_case_description
 from services.semantic_patch_validator import SemanticPatchValidator
-
+from services.diagnosis_evidence import diagnosis_for_issue
 
 class SLEECPatchWorkbenchEngine:
 
@@ -1576,6 +1576,15 @@ class SLEECPatchWorkbenchEngine:
             if semantic_warning
             else ""
         )
+        print("\n========== LLM FORMAL VERIFICATION DEBUG ==========")
+        print("OPERATION:", patch.get("operation"))
+        print("TARGET FIXED:", target_fixed)
+        print("RELATED ISSUE:", related_issue)
+        print("REGRESSION PASSED:", regression_report["regression_passed"])
+        print("HAS STRUCTURED CHANGE:", bool(patch.get("change")))
+        print("SEMANTIC VALID:", semantic_validation.get("valid"))
+        print("SEMANTIC ERRORS:", semantic_validation.get("errors", []))
+        print("===================================================\n")
         formally_verified = bool(
         target_fixed
         and related_issue is None
@@ -1851,6 +1860,20 @@ class SLEECPatchWorkbenchEngine:
         selected_issue_value = issue.get("value", "")
         selected_issue_value = str(selected_issue_value)
 
+        selected_diagnosis = diagnosis_for_issue(
+            original_structured,
+            issue_key,
+            selected_issue_value,
+            issue.get("id")
+        )
+
+        print("\n========== SELECTED STRUCTURED DIAGNOSIS ==========")
+        print("ISSUE ID:", issue.get("id"))
+        print("ISSUE TYPE:", issue_key)
+        print("TRACE:", selected_diagnosis.get("trace", []))
+        print("AFFECTED RULES:", selected_diagnosis.get("affected_rule_ids", []))
+        print("===================================================\n")
+
         verified_patches = []
         failed_patches = []
         failed_patch_count = 0
@@ -1879,8 +1902,10 @@ class SLEECPatchWorkbenchEngine:
             existing_measures=self.extract_defined_measures(sleec_text),
             existing_responses=self.extract_rule_actions(rules_json),
             system_description=description,
-            sleec_text=sleec_text
-        )
+            sleec_text=sleec_text,
+            diagnosis=selected_diagnosis
+            )
+        
 
         print("\n========== REPAIR OPERATOR SELECTION ==========")
         print("Issue Type:", issue_key)

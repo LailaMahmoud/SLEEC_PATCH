@@ -33,10 +33,17 @@ def diagnosis_for(text, kind, finding):
     return result
 
 
-def plan(text, kind, finding, description=''):
+def plan(text, kind, finding, description='', diagnosis=None):
     from services.repair_operator_selector import RepairOperatorSelector
     model = parse_sleec_ast(text)
-    diagnosis = diagnosis_for(text, kind, finding)
+    if not diagnosis:
+        diagnosis = diagnosis_for(text, kind, finding)
+        print("\n========== PAPER REPAIR DIAGNOSIS ==========")
+        print("KIND:", kind)
+        print("AFFECTED RULES:", diagnosis.get("affected_rule_ids", []))
+        print("TRACE:", diagnosis.get("trace", []))
+        print("DESCRIPTION:", diagnosis.get("description", ""))
+        print("============================================\n")
     resolution = target_resolution(text, kind, diagnosis)
     resolution['semantic_rule_ids'] = list(dict.fromkeys(resolution['rule_ids'] + diagnosis.get('affected_rule_ids', [])))
     targets = [r for r in model.ruleBlock.rules if r.name in resolution['semantic_rule_ids']]

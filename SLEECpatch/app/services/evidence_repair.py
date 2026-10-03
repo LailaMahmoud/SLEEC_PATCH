@@ -116,6 +116,15 @@ def generate_repairs(text, issue_type, diagnosis, operators):
         raise ValueError("The deterministic generator accepts only the paper's deterministic operators.")
     model = parse_sleec_ast(text)
     resolution = target_resolution(text, issue_type, diagnosis)
+
+    if issue_type in {"conflicts", "situational_conflicts"}:
+        print("\n========== EVIDENCE REPAIR DEBUG ==========")
+        print("ISSUE TYPE:", issue_type)
+        print("DIAGNOSIS:", diagnosis)
+        print("RESOLUTION:", resolution)
+        print("OPERATORS:", operators)
+        print("===========================================\n")
+
     targets = [node for node in model.ruleBlock.rules if node.name in resolution["rule_ids"]]
     used = {node.name for node in model.ruleBlock.rules} | {node.name for node in model.definitions}
     used.update(label.name for node in model.definitions if type(node).__name__ == "ScalarMeasure"

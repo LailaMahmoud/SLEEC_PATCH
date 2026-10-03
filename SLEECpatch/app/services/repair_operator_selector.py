@@ -73,11 +73,12 @@ class RepairOperatorSelector:
         existing_responses: Optional[Sequence[str]] = None,
         system_description: str = "",
         sleec_text: str = "",
+        diagnosis: Optional[dict] = None,
     ) -> Dict[str, object]:
         issue_type = self.ISSUE_ALIASES.get(issue_type, issue_type)
         if sleec_text:
             from services.paper_repairs import plan
-            return plan(sleec_text, issue_type, selected_issue, system_description)
+            return plan(sleec_text, issue_type, selected_issue, system_description,diagnosis=diagnosis,)
         rules = list(rules or [])
         existing_events = list(existing_events or [])
         existing_measures = list(existing_measures or [])
@@ -587,7 +588,16 @@ class RepairOperatorSelector:
             reason,
         )
     def find_deadline_refinement_context(self, issue_rules, selected_issue):
-        """Return context only when the diagnosis requires a tighter deadline."""
+        """
+        Return context when a concern diagnoses failure to satisfy an
+        existing positive response within a strictly tighter deadline.
+
+        For concerns, a diagnosis of:
+            not RESPONSE within N
+        may be repaired by tightening an existing positive obligation:
+            RESPONSE within M
+        when N < M.
+        """
         context = self.find_temporal_refinement_context(
             issue_rules,
             selected_issue,
@@ -608,7 +618,6 @@ class RepairOperatorSelector:
             diagnosed["unit"],
         )
 
-        # Deadline refinement only tightens an existing deadline.
         if diagnosed_seconds >= existing_seconds:
             return None
 
@@ -616,15 +625,9 @@ class RepairOperatorSelector:
             context["target_rule"].get("action", "")
         ).strip()
 
-        diagnosed_action = self.parse_then_action(
-            str(selected_issue or "")
-        ).strip()
-
-        target_negative = target_action.lower().startswith("not ")
-        diagnosed_negative = diagnosed_action.lower().startswith("not ")
-
-        # Preserve response polarity.
-        if target_negative != diagnosed_negative:
+        # Deadline refinement repairs an existing positive obligation.
+        # A concern may express its violation using "not RESPONSE".
+        if target_action.lower().startswith("not "):
             return None
 
         return context
