@@ -1573,12 +1573,49 @@ Optionally set complementary_rule_id to another implicated rule to conjoin the c
 of the new context to that rule, partitioning the two diagnosed paths in ONE candidate.
 For a new numeric or scale measure, specify measure_type="numeric" or "scale", context
 (e.g. "({smokeSeverity} = high)"), and scale_labels (ordered unused labels for scale only).
-For new_rule_generation: change={"rule_id":unused identifier,"trigger_event":declared event,
-"condition":valid SLEEC Boolean expression,"response_event":declared event,"negated":true or false,
+For new_rule_generation: change={"rule_id":"R_new","trigger_event":declared event,
+"condition":SLEEC Boolean MEASURE/CONTEXT expression only,"response_event":declared event,
+"negated":true or false,
 "deadline":{"value":integer,"unit":"seconds" or "minutes" or "hours" or "days"}}.
+The application assigns the final unique rule identifier; "R_new" is only a placeholder.
+Do NOT put trigger_event or response_event inside condition.
+The condition field contains only measure/context expressions such as
+{measure}, (not {measure}), ({a} and {b}), or ({numericMeasure} > 3).
+Use an empty string when no additional condition is required.
 Use target_rule_id=null and source_requirement_id equal to the source concern ID.
-A deadline can also be {"kind":"source"} to retain the concern's timing.
-The rule must prevent the undesirable concern; never create a new concern.
+
+For new_rule_generation when diagnosed_wfi is a concern/insufficiency:
+- Treat the source concern as the undesirable behavior that the new rule must prevent.
+- Preserve the diagnosed concern trigger and diagnosed measure/context condition unless the supplied diagnosis provides explicit evidence for a different context.
+- Do NOT replace the diagnosed concern condition with its logical complement merely to avoid the witness.
+- The generated response must address the concern, not reproduce it.
+- If the source concern is "then not RESPONSE", generate the required positive RESPONSE when that repair is grounded by the diagnosis and existing vocabulary.
+- Do NOT copy the same negative response polarity from such a concern into the repair.
+- If the source concern has a deadline, use {"kind":"source"} unless the supplied diagnosis explicitly grounds a different deadline.
+- If the source concern has no deadline, use deadline=null.
+- Never invent a zero-second deadline.
+- If the diagnosis does not provide enough evidence for a grounded repair, return [] rather than inventing behavior.
+
+Example:
+Source concern:
+c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high))
+then not CallEmergencyServices
+
+Correct repair direction:
+{"operation":"new_rule_generation",
+ "target_rule_id":null,
+ "source_requirement_id":"c1",
+ "change":{
+   "rule_id":"R_new",
+   "trigger_event":"HumanOnFloor",
+   "condition":"({userOccupied} and ({riskLevel} = high))",
+   "response_event":"CallEmergencyServices",
+   "negated":false,
+   "deadline":null
+ },
+ "natural_language_explanation":"Supply the missing emergency response in the diagnosed concern context."}
+
+The rule must prevent the undesirable concern; never create or restate the diagnosed concern.
 SLEEC conditions use {measure}, (not {measure}), ({a} and {b}), ({a} or {b}),
 and ({numericMeasure} > 3). Braces around Boolean/numeric measure references are mandatory.
 Evidence must explain the domain distinction using the supplied description/diagnosis/vocabulary.

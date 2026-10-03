@@ -17,6 +17,7 @@ from services.semantic_patch_validator import SemanticPatchValidator
 from services.diagnosis_evidence import diagnosis_for_issue
 from services.repair_diagnosis_bridge import RepairDiagnosisBridge
 from services.patch_verification_bridge import PatchVerificationBridge
+from services.candidate_status import update_candidate_status
 
 class SLEECPatchWorkbenchEngine:
 
@@ -2121,6 +2122,11 @@ class SLEECPatchWorkbenchEngine:
                         verification["new_analysis"].get("structured", {})
                     )
                     normalized_patch["verified"] = bool(verification["verified"])
+
+                    # Synchronize formal verification fields used by the frontend.
+                    # This keeps verified/formally_verified/candidate_status consistent
+                    # without weakening the formal verification requirements.
+                    update_candidate_status(normalized_patch)
 
                     print("\n========== DETERMINISTIC VERIFICATION ==========")
                     print("PATCH:", normalized_patch.get("patch_id"))

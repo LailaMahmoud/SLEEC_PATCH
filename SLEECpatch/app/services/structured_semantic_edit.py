@@ -19,6 +19,15 @@ def fields(value, required, optional=()):
         raise ValueError(f"Expected fields: {', '.join(required)}.")
 
 
+def fresh_rule_id(declared_names):
+    """Allocate a deterministic unused SLEEC rule identifier."""
+    used = set(declared_names or [])
+    index = 1
+    while f"R{index}" in used:
+        index += 1
+    return f"R{index}"
+
+
 def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=None):
     fields(proposal, ("operation", "target_rule_id", "change", "natural_language_explanation"),
            ("patch_id", "id", "source", "issue_type", "diagnosis", "applicability", "source_requirement_id"))
@@ -125,32 +134,99 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
                     raise ValueError("Only scale measures can declare scale labels.")
                 declaration = re.sub(r"^(measure\s+)" + re.escape(old) + r"\b", lambda m: m.group(1) + new, source(text, measure), count=1)
     elif operation == "new_rule_generation":
-        fields(change, ("rule_id", "trigger_event", "condition", "response_event", "negated", "deadline"))
-        new_id = symbol(change["rule_id"])
-        trigger, response = symbol(change["trigger_event"]), symbol(change["response_event"])
-        if new_id in declared_names:
-            raise ValueError("The new rule ID is already in use.")
+        fields(
+            change,
+            ("rule_id", "trigger_event", "condition",
+             "response_event", "negated", "deadline"),
+        )
+
+        # GPT supplies semantic content. The application owns the final
+        # identifier so a model-generated ID can never collide with the
+        # current SLEEC namespace.
+        requested_rule_id = symbol(change["rule_id"])
+        new_id = fresh_rule_id(declared_names)
+
+        trigger = symbol(change["trigger_event"])
+        response = symbol(change["response_event"])
+
         for name in (trigger, response):
             if type(definitions.get(name)).__name__ != "Event":
                 raise ValueError("A new rule must use declared events.")
-        if type(change["negated"]) is not bool or not isinstance(change["condition"], str):
-            raise ValueError("Expected a Boolean polarity and a condition expression.")
+
+        if (
+            type(change["negated"]) is not bool
+            or not isinstance(change["condition"], str)
+        ):
+            raise ValueError(
+                "Expected a Boolean polarity and a condition expression."
+            )
+
+        condition = change["condition"].strip()
+
+        # trigger_event is represented separately. The condition field is
+        # only for SLEEC measure/context expressions.
+        event_names = {
+            name
+            for name, node in definitions.items()
+            if type(node).__name__ == "Event"
+        }
+        condition_identifiers = set(
+            re.findall(r"(?<!\{)\b[A-Za-z_]\w*\b(?!\s*\})", condition)
+        )
+        condition_keywords = {"and", "or", "not", "true", "false"}
+        event_leaks = (
+            condition_identifiers - condition_keywords
+        ) & event_names
+
+        if event_leaks:
+            raise ValueError(
+                "A new-rule condition may contain only measure/context "
+                "expressions; trigger/response events belong in their "
+                "dedicated fields. Event(s) found in condition: "
+                + ", ".join(sorted(event_leaks))
+            )
+
         deadline = change["deadline"]
         suffix = ""
+
         if deadline == {"kind": "source"}:
             if scope is None:
-                raise ValueError("Source timing requires the selected concern as an anchor.")
+                raise ValueError(
+                    "Source timing requires the selected concern as an anchor."
+                )
             suffix = " " + scope["timing"] if scope["timing"] else ""
+
         elif deadline == {"kind": "eventually"}:
             suffix = " eventually"
+
         elif deadline is not None:
             fields(deadline, ("value", "unit"))
-            if type(deadline["value"]) is not int or deadline["value"] < 0 or deadline["unit"] not in {"seconds", "minutes", "hours", "days"}:
-                raise ValueError("The deadline must use a nonnegative integer and a supported time unit.")
-            suffix = f" within {deadline['value']} {deadline['unit']}"
-        condition = change["condition"].strip()
-        proposed = (f"{new_id} when {trigger}" + (f" and {condition}" if condition else "")
-                    + " then " + ("not " if change["negated"] else "") + response + suffix)
+            if (
+                type(deadline["value"]) is not int
+                or deadline["value"] < 0
+                or deadline["unit"]
+                not in {"seconds", "minutes", "hours", "days"}
+            ):
+                raise ValueError(
+                    "The deadline must use a nonnegative integer "
+                    "and a supported time unit."
+                )
+            suffix = (
+                f" within {deadline['value']} {deadline['unit']}"
+            )
+
+        proposed = (
+            f"{new_id} when {trigger}"
+            + (f" and {condition}" if condition else "")
+            + " then "
+            + ("not " if change["negated"] else "")
+            + response
+            + suffix
+        )
+
+        # Keep the model's requested identifier only as provenance.
+        change["requested_rule_id"] = requested_rule_id
+        change["rule_id"] = new_id
     else:
         raise ValueError("This is not a supported semantic edit operation.")
 
@@ -162,7 +238,7 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
         other = rules[counterpart]
         additional_edits[counterpart] = with_guard(text, other, conjunction(source(text, other.condition), "(not "+new_context+")"))
 
-    patch = {**proposal, "structured_edit_validated": True, "original_rule": source(text, rule), "proposed_rule": proposed,
+    patch = {**proposal, "structured_edit_validated": True, "original_rule": "" if operation == "new_rule_generation" else source(text, rule), "proposed_rule": proposed,
              "missing_element": missing, "declaration_text": declaration,
              "source": "llm", "semantic_review_status": "pending", "additional_rule_edits": additional_edits, "original_sleec": text}
     updated = apply_rule_patch(text, patch)
