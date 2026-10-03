@@ -50,11 +50,33 @@ No LLM or qualitative score contributes to ranking. The stored `ranking_score` r
 * Decomposition uses the supplied concern deadline; it does not invent the paper's illustrative one-minute deadline when only a three-minute bound is provided.
 * Complex multistage concern/purpose responses are conservatively excluded from the single-response transformations. Related rules sharing the source trigger and response are separate hypotheses; verification determines which candidates succeed.
 
-## Validation
+## Initial implementation validation
 
 * **22 passing tests:** `venv/bin/python -m unittest discover -s tests -p test_paper_operators.py`: paper examples, operator boundaries, Boolean identities, precedence, complementary branches, declaration/response preservation, quantitative ranking and persisted-name compatibility.
 * **14 passing tests, 2 historical skips:** `PYTHONPATH=tests/deployment venv/bin/python -m unittest test_backend_integration`: real parser/detector and Flask routes, including a verified deadline-only repair and a structured semantic candidate. External HTTP is blocked; databases and solver scratch files are temporary.
 * Two deployment import-hash tests are explicitly skipped because they assert byte-identical historical backend/frontend files. The historical manifest is retained unchanged.
 * Python compilation, JavaScript syntax checking and `git diff --check` pass.
 
-The broad pre-existing suites are not green. An untouched `deployment` archive reproduces exactly the same **six Python errors and two failures** (missing detector APIs and evaluation-schema/report expectations), and **ten JavaScript failures** out of twelve tests (existing frontend-test harness mismatches). These are independent of the added operator tests and deployment integration checks; they have not been hidden or rewritten to pass.
+At that stage, the broad pre-existing suites were not green. An untouched `deployment` archive reproduced **six Python errors and two failures** (missing detector APIs and evaluation-schema/report expectations), and **ten JavaScript failures** out of twelve tests (frontend-test harness mismatches).
+
+## Verification and reporting completion, 2026-10-03
+
+The follow-up fixes restore detector failure handling, preserve per-finding evidence,
+unify automatic/manual verification across startup entry points, and make saved
+candidate outcomes and reports agree with the verified results. The active LLM
+prompt now has one structured-edit contract and executable JSON examples.
+Semantic validation uses request-local specification context.
+
+The main Python suite now passes **107 tests**; deployment checks pass **26 with
+2 historical snapshot skips**; the separate operator suite passes **59**; and
+all **17 JavaScript tests** pass. Legacy fixtures were updated where they still
+expected retired operators, qualitative ranking or old page IDs. Regression
+tests retain the detector-error, formal-verification and structural-edit checks;
+new route tests reproduce both the false manual pass and the automatic
+UI/database disagreement.
+
+These changes do not settle the paper ambiguities listed above or prove that
+every generated candidate repairs its target. Real offline case runs include
+both verified alternatives and rejected candidates. See
+[the completion report](pipeline-hardening.md) for the measured outcomes and
+remaining validation limits.

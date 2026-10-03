@@ -24,7 +24,7 @@ let workbenchVersion = 0;
 
 
 function escapeHtml(value) {
-    return String(value || "")
+    return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
@@ -918,6 +918,12 @@ async function diagnoseWFIs() {
 
     if (version !== workbenchVersion) return;
 
+    if (data.status !== "OK") {
+        document.getElementById("issuesOutput").innerHTML =
+            `<p class="badge bad">Diagnosis did not complete</p><p>${escapeHtml(data.error || "The detector could not complete its checks.")}</p>`;
+        refreshPatchWizard();
+        return;
+    }
     sleecPatchState.sleecText = sleecText;
     sleecPatchState.issues = orderedIssues(data.issues || []);
     sleecPatchState.rawDiagnosis = data;
@@ -1209,6 +1215,7 @@ function renderCandidatePatches(containerId, patches, title) {
             <p><b>Source:</b> ${escapeHtml(p.source)}</p>
             ${p.source_requirement_id ? `<p><b>Source concern:</b> ${escapeHtml(p.source_requirement_id)} — adds a rule.</p>` : ""}
             <p><b>Check result:</b> ${escapeHtml((p.candidate_status || "generated").replaceAll("_", " "))}</p>
+            ${p.verification_cache_hit === true ? "<p>Verification reused completed analysis of this exact specification.</p>" : ""}
             <p><b>Meaning review:</b> ${escapeHtml((p.semantic_review_status || "pending").replaceAll("_", " "))}</p>
             ${p.failure_reason ? `<p>${escapeHtml(p.failure_reason)}</p>` : ""}
 
@@ -1433,14 +1440,20 @@ async function verifySleecTextForProceed(sleecText, outputId) {
         issue: sleecPatchState.selectedIssue
     });
     if (version !== workbenchVersion) return null;
+    const verified = data.valid === true
+        && data.regression_report?.selected_issue_fixed === true
+        && data.regression_report?.regression_passed === true;
+    if (data.valid === true && !verified) {
+        data.failure_reason = "The server did not provide a successful selected-issue and regression check.";
+    }
     const out = document.getElementById(outputId);
     if (out) {
-        out.className = `verification-result ${data.valid ? "passed" : "failed"}`;
-        out.innerHTML = data.valid
+        out.className = `verification-result ${verified ? "passed" : "failed"}`;
+        out.innerHTML = verified
             ? `<span class="badge good">Formally verified</span><p>The selected issue is fixed and no new issues were detected. Meaning review is still required.</p>`
             : `<span class="badge bad">Not verified</span><p>${escapeHtml(data.failure_reason || data.error || "Verification failed.")}</p>`;
     }
-    return {...data, verified_text: sleecText};
+    return {...data, valid: verified, verified_text: sleecText};
 }
 
 async function verifySelectedPatchEdit() {

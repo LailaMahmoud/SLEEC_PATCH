@@ -122,6 +122,9 @@ class PatchVerificationBridge:
 
             # Already executable deterministic or legacy candidate.
             else:
+                if original_candidate.get("source") == "llm":
+                    raise ValueError(original_candidate.get("failure_reason") or
+                                     "An LLM proposal must use the structured semantic edit contract.")
                 executable = deepcopy(original_candidate)
 
             result["materialization"]["success"] = True

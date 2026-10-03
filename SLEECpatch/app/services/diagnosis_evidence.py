@@ -169,19 +169,7 @@ def extract_evidence(detector_type, message, sleec_text):
             )
 
         if not sources:
-            # LEGOS may append solver/debug blocks such as
-            # "check concern_1 ... Concern is raised" after the actual
-            # source finding. Those blocks contain witness output but no
-            # source declaration (for example, no "c1 when ...").
-            #
-            # They are not independent findings and must not cause already
-            # extracted formal evidence to be discarded.
-            if detector_type in ("concern", "purpose"):
-                continue
-
-            raise ValueError(
-                f"Cannot identify the source of the {detector_type} finding."
-            )
+            raise ValueError(f"Cannot identify the source of the {detector_type} finding.")
 
         source = sources[0]
         rule_report = raw_report
@@ -235,17 +223,22 @@ def diagnosis_for_issue(structured, issue_type, value, issue_id=None):
 
 
 def finding_identity(issue_type, value, diagnosis=None):
-    """Identity is independent of the witness and changing proof wording."""
+    """Identity is independent of the witness, the proof wording and the solver's
+    choice of supporting rules.
+
+    LEGOS checks well-formedness per rule, concern or purpose: a rule is
+    (situationally) conflicting or redundant, a concern is raised, a purpose is
+    blocked. The subject of the finding therefore identifies the issue; the
+    "because of" rules are explanation, and may differ between solver runs.
+    """
     diagnosis = diagnosis or {}
     source_id = diagnosis.get("source_id")
     if source_id:
-        identity = [issue_type, source_id]
-        if issue_type in {"conflicts", "situational_conflicts"}:
-            identity.extend(sorted(diagnosis.get("affected_rule_ids", [])))
-        return tuple(identity)
-    # Compatibility with saved runs from before structured evidence existed.
+        return (issue_type, str(source_id))
+    # Compatibility with saved runs from before structured evidence existed:
+    # LEGOS prints the diagnosed subject before any supporting rule.
     ids = re.findall(r"(?m)^\s*([A-Za-z_]\w*)\s+(?:when|exists)\b", str(value))
     if ids:
-        return (issue_type, *sorted(set(ids)))
+        return (issue_type, ids[0])
     stable = "\n".join(line for line in str(value).splitlines() if not re.match(r"\s*\*?at time\b", line))
     return (issue_type, re.sub(r"\s+", " ", stable).strip())

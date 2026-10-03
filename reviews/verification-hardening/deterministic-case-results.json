@@ -1,0 +1,428 @@
+{
+  "date": "2026-10-03",
+  "scope": "Deterministic generation only; model generation and external HTTP disabled; temporary SQLite and solver directories.",
+  "case_timeout_seconds": 240,
+  "checks": {
+    "main_python": {
+      "passed": 114
+    },
+    "deployment": {
+      "passed": 26,
+      "skipped": 2
+    },
+    "operator_pytest": {
+      "passed": 59
+    }
+  },
+  "notes": [
+    "Each issue is repaired against the original specification. Counts are alternative candidate rows, including candidates shared by different issue subjects.",
+    "Successful-result counts were asserted to match verified candidate counts.",
+    "OK denotes probe completion, not a fully repaired case."
+  ],
+  "cases": [
+    {
+      "case": "aspen.sleec",
+      "status": "OK",
+      "diagnosis_status": "OK",
+      "error": "",
+      "selected_issue_count": 8,
+      "issue_count": 8,
+      "repairs": [
+        {
+          "issue": "concerns_1",
+          "source_id": "c4",
+          "verified": 1,
+          "operations": [
+            "trigger_strengthening"
+          ],
+          "failed": [
+            {
+              "operation": "rule_decomposition",
+              "reason": "The selected issue remains in the patched specification."
+            }
+          ],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "fed83644535b436b9313ec78fb8f7063",
+            "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+            "use_case": "aspen",
+            "issue_id": "concerns_1",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 1,
+            "verified_patch_count": 1,
+            "generation_time_seconds": 0.076,
+            "validation_time_seconds": 24.759,
+            "total_time_seconds": 25.265,
+            "successful": true
+          }
+        },
+        {
+          "issue": "concerns_2",
+          "source_id": "c5",
+          "verified": 2,
+          "operations": [
+            "trigger_strengthening",
+            "trigger_strengthening"
+          ],
+          "failed": [
+            {
+              "operation": "trigger_strengthening",
+              "reason": "The selected issue remains in the patched specification."
+            },
+            {
+              "operation": "defeater_refinement",
+              "reason": "The selected issue remains in the patched specification."
+            }
+          ],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "8bf78f04b1184febb2aa0ddf024eb72d",
+            "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+            "use_case": "aspen",
+            "issue_id": "concerns_2",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 2,
+            "verified_patch_count": 2,
+            "generation_time_seconds": 0.076,
+            "validation_time_seconds": 47.813,
+            "total_time_seconds": 48.427,
+            "successful": true
+          }
+        },
+        {
+          "issue": "concerns_3",
+          "source_id": "c7",
+          "verified": 0,
+          "operations": [],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "23c82cfc0a7343eda7a53a2a80ba14cf",
+            "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+            "use_case": "aspen",
+            "issue_id": "concerns_3",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.076,
+            "validation_time_seconds": 0,
+            "total_time_seconds": 0.339,
+            "successful": false
+          }
+        },
+        {
+          "issue": "concerns_4",
+          "source_id": "c8",
+          "verified": 0,
+          "operations": [],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "b21b2e442d14484e8d32d49856991827",
+            "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+            "use_case": "aspen",
+            "issue_id": "concerns_4",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.075,
+            "validation_time_seconds": 0,
+            "total_time_seconds": 0.34,
+            "successful": false
+          }
+        },
+        {
+          "issue": "redundancies_1",
+          "source_id": "R14",
+          "verified": 1,
+          "operations": [
+            "rule_removal"
+          ],
+          "failed": [],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "02bb4822b08b4badabd6fa17b3da7312",
+            "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+            "use_case": "aspen",
+            "issue_id": "redundancies_1",
+            "issue_type": "redundancies",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 1,
+            "generation_time_seconds": 0.075,
+            "validation_time_seconds": 10.881,
+            "total_time_seconds": 11.335,
+            "successful": true
+          }
+        },
+        {
+          "issue": "situational_conflicts_1",
+          "source_id": "R4",
+          "verified": 2,
+          "operations": [
+            "trigger_refinement",
+            "defeater_introduction"
+          ],
+          "failed": [
+            {
+              "operation": "trigger_refinement",
+              "reason": "The selected issue remains in the patched specification. The patch introduces new well-formedness issues."
+            },
+            {
+              "operation": "defeater_introduction",
+              "reason": "The selected issue remains in the patched specification. The patch introduces new well-formedness issues."
+            }
+          ],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "31cb9549e65b4e1e8a65edd6941c3d01",
+            "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+            "use_case": "aspen",
+            "issue_id": "situational_conflicts_1",
+            "issue_type": "situational_conflicts",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 2,
+            "verified_patch_count": 2,
+            "generation_time_seconds": 0.076,
+            "validation_time_seconds": 40.352,
+            "total_time_seconds": 40.99,
+            "successful": true
+          }
+        },
+        {
+          "issue": "situational_conflicts_2",
+          "source_id": "R7_1",
+          "verified": 4,
+          "operations": [
+            "trigger_refinement",
+            "trigger_refinement",
+            "defeater_introduction",
+            "defeater_introduction"
+          ],
+          "failed": [],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "193c5b4ddef8469b9cf1f69487467738",
+            "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+            "use_case": "aspen",
+            "issue_id": "situational_conflicts_2",
+            "issue_type": "situational_conflicts",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 4,
+            "generation_time_seconds": 0.077,
+            "validation_time_seconds": 22.95,
+            "total_time_seconds": 23.646,
+            "successful": true
+          }
+        },
+        {
+          "issue": "situational_conflicts_3",
+          "source_id": "R13",
+          "verified": 2,
+          "operations": [
+            "trigger_refinement",
+            "defeater_introduction"
+          ],
+          "failed": [
+            {
+              "operation": "trigger_refinement",
+              "reason": "The patch introduces new well-formedness issues."
+            },
+            {
+              "operation": "defeater_introduction",
+              "reason": "The patch introduces new well-formedness issues."
+            }
+          ],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "1359867fe8804ddeb110c045f8922426",
+            "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+            "use_case": "aspen",
+            "issue_id": "situational_conflicts_3",
+            "issue_type": "situational_conflicts",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 2,
+            "verified_patch_count": 2,
+            "generation_time_seconds": 0.076,
+            "validation_time_seconds": 0.319,
+            "total_time_seconds": 0.939,
+            "successful": true
+          }
+        }
+      ],
+      "llm_calls": 0,
+      "saved_successes": 12,
+      "seconds": 167.839
+    },
+    {
+      "case": "ALMI.sleec",
+      "status": "OK",
+      "diagnosis_status": "OK",
+      "error": "",
+      "selected_issue_count": 3,
+      "issue_count": 3,
+      "repairs": [
+        {
+          "issue": "concerns_1",
+          "source_id": "c1",
+          "verified": 1,
+          "operations": [
+            "defeater_refinement"
+          ],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "13ce9711bd954346affbb3d5311b6213",
+            "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+            "use_case": "ALMI",
+            "issue_id": "concerns_1",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 1,
+            "generation_time_seconds": 0.139,
+            "validation_time_seconds": 8.789,
+            "total_time_seconds": 9.636,
+            "successful": true
+          }
+        },
+        {
+          "issue": "concerns_2",
+          "source_id": "c4",
+          "verified": 2,
+          "operations": [
+            "deadline_refinement",
+            "rule_decomposition"
+          ],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "4f40d19b2091424c959362571a00963f",
+            "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+            "use_case": "ALMI",
+            "issue_id": "concerns_2",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 2,
+            "generation_time_seconds": 0.153,
+            "validation_time_seconds": 18.86,
+            "total_time_seconds": 19.865,
+            "successful": true
+          }
+        },
+        {
+          "issue": "situational_conflicts_1",
+          "source_id": "R3",
+          "verified": 0,
+          "operations": [],
+          "failed": [],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "8ccef5b648f844dd830da4d3f17db93f",
+            "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+            "use_case": "ALMI",
+            "issue_id": "situational_conflicts_1",
+            "issue_type": "situational_conflicts",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.154,
+            "validation_time_seconds": 0,
+            "total_time_seconds": 0.642,
+            "successful": false
+          }
+        }
+      ],
+      "llm_calls": 0,
+      "saved_successes": 3,
+      "seconds": 41.799
+    },
+    {
+      "case": "DRESSASSIST.sleec",
+      "status": "OK",
+      "diagnosis_status": "OK",
+      "error": "",
+      "selected_issue_count": 1,
+      "issue_count": 1,
+      "repairs": [
+        {
+          "issue": "concerns_1",
+          "source_id": "c5",
+          "verified": 0,
+          "operations": [],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "422b6b91e1524fd0a2562893d407a9eb",
+            "input_sha256": "6d2a1cf5ad75f8b6a16c1e449de7f1b85eac38eb5a2d58982630b8a365f69ea4",
+            "use_case": "DRESSASSIST",
+            "issue_id": "concerns_1",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.136,
+            "validation_time_seconds": 0,
+            "total_time_seconds": 0.617,
+            "successful": false
+          }
+        }
+      ],
+      "llm_calls": 0,
+      "saved_successes": 0,
+      "seconds": 10.519
+    }
+  ]
+}

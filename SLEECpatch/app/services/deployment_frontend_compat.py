@@ -30,6 +30,7 @@ def frontend_patch(patch):
     syntax = patch.get("syntax_validation", {}).get("valid", patch.get("syntax_valid"))
     result["candidate_status"] = (
         "formally_verified" if verified else
+        "inconclusive" if patch.get("verification_inconclusive") else
         "rejected" if patch.get("failure_reason") else
         "syntax_valid" if syntax is True else "generated"
     )
@@ -84,31 +85,8 @@ def report_payload(payload):
 
 
 def edited_payload(engine, validation, submitted):
-    # The live editor posts the baseline and selected issue. Its "Use" button
-    # promises a resolved issue, whereas the source endpoint checks syntax and
-    # detector execution only. Reuse the source engine's regression semantics.
-    if validation.get("valid") is not True:
-        return validation
-    original = submitted.get("original_sleec")
-    issue = submitted.get("issue")
-    if not isinstance(original, str) or not isinstance(issue, dict):
-        return {**validation, "valid": False, "failure_reason": "Original input and selected issue are required."}
-    baseline = engine.validate_patched_sleec(original)
-    if not baseline.get("valid"):
-        return {**validation, "valid": False, "failure_reason": "Original input analysis failed: " + baseline.get("failure_reason", "")}
-    before = baseline["analysis"].get("structured", {})
-    kind, value = issue.get("issue_type"), issue.get("value")
-    if not isinstance(kind, str) or value not in before.get(kind, []):
-        return {**validation, "valid": False, "failure_reason": "The selected issue is not in the original diagnosis. Diagnose the input again."}
-    report = engine.build_regression_report(
-        kind, value, before, validation["analysis"].get("structured", {})
-    )
-    passed = report.get("regression_passed") is True
-    return {
-        **validation, "valid": passed, "regression_report": report,
-        "failure_reason": "" if passed else "The selected issue still exists or the edit introduces a new issue.",
-        "semantic_review_status": "pending",
-    }
+    return engine.verify_edited_sleec(submitted.get("original_sleec"),
+                                      submitted.get("sleec_text", ""), submitted.get("issue"))
 
 
 def install_frontend_compatibility(backend):
@@ -123,7 +101,7 @@ def install_frontend_compatibility(backend):
             return response
         endpoint = request.endpoint
         if endpoint not in {
-            "api_sleec_patch_generate_verified", "api_sleec_patch_verify_edited_sleec",
+            "api_sleec_patch_generate_verified",
             "api_sleec_patch_report_data", "api_sleec_patch_download_report_json",
         }:
             return response
@@ -135,8 +113,6 @@ def install_frontend_compatibility(backend):
             return response
         if endpoint == "api_sleec_patch_generate_verified":
             payload = generation_payload(payload)
-        elif endpoint == "api_sleec_patch_verify_edited_sleec":
-            payload = edited_payload(backend.sleec_patch_engine, payload, request.get_json(silent=True) or {})
         else:
             payload = report_payload(payload)
         response.set_data(app.json.dumps(payload))

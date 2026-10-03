@@ -8,12 +8,13 @@ const vm = require('node:vm');
 function setup() {
     const elements = new Map(), pending = [], alerts = [];
     const element = id => {
-        if (!elements.has(id)) elements.set(id, {value: '', innerHTML: '', textContent: '', className: '',
-            classList: {toggle() {}}, scrollTop: 0, scrollLeft: 0});
+        if (!elements.has(id)) elements.set(id, {value: '', innerHTML: '', textContent: '', className: '', style: {},
+            replaceChildren() {}, append() {}, addEventListener() {},
+            classList: {toggle() {}, add() {}, remove() {}}, scrollTop: 0, scrollLeft: 0});
         return elements.get(id);
     };
     const context = vm.createContext({console, alert: message => alerts.push(message),
-        document: {getElementById: element, addEventListener() {}},
+        document: {getElementById: element, createElement: () => element(Symbol()), addEventListener() {}},
         sessionStorage: {getItem() { return null; }},
         window: {withLoader: fn => fn()}});
     const run = code => vm.runInContext(code, context);
@@ -76,7 +77,7 @@ test('unsaved patch edits and edits after verification cannot reuse approval', a
     const check = h.run('verifySelectedPatchEdit()');
     assert.equal(h.pending[0].data.original_sleec, 'original input\n');
     assert.equal(h.pending[0].data.sleec_text, 'changed specification');
-    h.pending[0].resolve({valid: true}); await check;
+    h.pending[0].resolve({valid: true, regression_report: {selected_issue_fixed: true, regression_passed: true}}); await check;
     assert.equal(patch.edit_verified, true);
     h.element('stakeholderProposedRule').value = 'changed again';
     h.run('onPatchEdit(); integrateSelectedPatchAndProceed()');
@@ -144,4 +145,15 @@ test('leaving an issue unresolved does not label it as fixed', () => {
     h.run('leaveIssueUnresolved()');
     assert.equal(h.state().selectedIssue.id, 'concerns_2');
     assert.equal(h.run('issueRunStatus(sleecPatchState.issues[0])'), 'not run');
+});
+
+test('a failed detector is displayed as an error and cannot unlock the diagnosis step', async () => {
+    const h = setup(); h.diagnosed();
+    const job = h.run('diagnoseWFIs()');
+    h.pending[0].resolve({status: 'ERROR', error: 'Rule IDs must be unique; repeated: R3', issues: []});
+    await job;
+    assert.equal(h.state().rawDiagnosis, null);
+    assert.equal(h.run('canAdvancePatchWizard(3)'), false);
+    assert.match(h.element('issuesOutput').innerHTML, /Diagnosis did not complete/);
+    assert.match(h.element('issuesOutput').innerHTML, /repeated: R3/);
 });

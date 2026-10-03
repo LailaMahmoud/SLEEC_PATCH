@@ -224,9 +224,9 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
             + suffix
         )
 
-        # Keep the model's requested identifier only as provenance.
-        change["requested_rule_id"] = requested_rule_id
-        change["rule_id"] = new_id
+        # Keep the structured proposal unchanged. Semantic verification renders
+        # it again against the original specification and must obtain the same
+        # allocated ID without receiving extra fields in the change contract.
     else:
         raise ValueError("This is not a supported semantic edit operation.")
 
@@ -241,6 +241,11 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
     patch = {**proposal, "structured_edit_validated": True, "original_rule": "" if operation == "new_rule_generation" else source(text, rule), "proposed_rule": proposed,
              "missing_element": missing, "declaration_text": declaration,
              "source": "llm", "semantic_review_status": "pending", "additional_rule_edits": additional_edits, "original_sleec": text}
+    patch["allowed_rule_ids"] = list(allowed_rule_ids)
+    patch["addition_scope"] = addition_scope
+    if operation == "new_rule_generation":
+        patch["requested_rule_id"] = requested_rule_id
+        patch["assigned_rule_id"] = new_id
     updated = apply_rule_patch(text, patch)
     try:
         parsed = parse_sleec_ast(updated)
@@ -249,7 +254,7 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
     after = {node.name: source(updated, node) for node in parsed.ruleBlock.rules}
     expected_ids = set(rules)
     if operation == "new_rule_generation":
-        expected_ids.add(change["rule_id"])
+        expected_ids.add(new_id)
     if set(after) != expected_ids or len(after) != len(parsed.ruleBlock.rules):
         raise ValueError("The proposal changed the rule structure beyond its declared edit.")
     for name, node in rules.items():

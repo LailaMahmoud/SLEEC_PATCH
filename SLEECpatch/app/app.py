@@ -279,15 +279,19 @@ def api_sleec_patch_verify_edited_sleec():
     data = request.get_json() or {}
     sleec_text = data.get("sleec_text", "")
 
-    if not sleec_text.strip():
+    if not isinstance(sleec_text, str) or not sleec_text.strip():
         return jsonify({
             "status": "ERROR",
             "valid": False,
             "error": "Missing SLEEC text."
         }), 400
 
+    if not isinstance(data.get("original_sleec"), str) or not isinstance(data.get("issue"), dict):
+        return jsonify({"status": "ERROR", "valid": False,
+                        "error": "Original input and selected issue are required."}), 400
     try:
-        validation = sleec_patch_engine.validate_patched_sleec(sleec_text)
+        validation = sleec_patch_engine.verify_edited_sleec(
+            data["original_sleec"], sleec_text, data["issue"])
     except Exception as exc:
         traceback.print_exc()
         return jsonify({
@@ -550,60 +554,8 @@ def report_request_options():
 
 
 def build_report_payload(use_case="", include_patched_sleec=True):
-    evaluation_summary = sleec_patch_engine.store.summary()
-
-    if use_case:
-        patch_rows = sleec_patch_engine.store.results_for_use_case(
-            use_case,
-            include_patched_sleec=include_patched_sleec
-        )
-        evaluation_summary = [
-            row for row in evaluation_summary
-            if row.get("use_case") == use_case
-        ]
-    else:
-        patch_rows = sleec_patch_engine.store.all_results(
-            include_patched_sleec=include_patched_sleec
-        )
-
-    experiment_runs = sleec_patch_engine.store.pipeline_runs(use_case)
-    experiment_candidates = sleec_patch_engine.store.patch_candidates()
-    experiment_verifications = sleec_patch_engine.store.patch_verifications(
-        include_patched_sleec=include_patched_sleec
-    )
-    philosopher_reviews = philosopher_review_store.all_reviews()
-
-    if use_case:
-        experiment_candidates = [
-            row for row in experiment_candidates
-            if row.get("use_case") == use_case
-        ]
-        experiment_verifications = [
-            row for row in experiment_verifications
-            if row.get("use_case") == use_case
-        ]
-        philosopher_reviews = [
-            row for row in philosopher_reviews
-            if row.get("use_case") == use_case
-        ]
-
-    return {
-        "status": "OK",
-        "use_case": use_case or "ALL",
-        "include_patched_sleec": include_patched_sleec,
-        "persistence": sleec_patch_engine.store.persistence_status(),
-        "report_metrics": report_metrics(patch_rows),
-        "evaluation_summary": evaluation_summary,
-        "evaluation_details": patch_rows,
-        "philosopher_review_metrics": (
-            sleec_patch_engine.store.philosopher_review_metrics()
-        ),
-        "philosopher_review_summary": philosopher_review_store.summary(),
-        "philosopher_reviews": philosopher_reviews,
-        "experiment_runs": experiment_runs,
-        "experiment_candidates": experiment_candidates,
-        "experiment_verifications": experiment_verifications
-    }
+    from services.evaluation_reporting import build_report_payload as report
+    return report(sleec_patch_engine.store, philosopher_review_store, use_case, include_patched_sleec)
 
 
 def report_download_slug(use_case=""):
@@ -658,13 +610,14 @@ def generated_result_files(use_case=""):
 
 @app.route("/api/sleec-patch/report-data", methods=["GET", "POST"])
 def api_sleec_patch_report_data():
-    use_case, include_patched_sleec = report_request_options()
-    return jsonify(
-        build_report_payload(
-            use_case=use_case,
-            include_patched_sleec=include_patched_sleec
-        )
-    )
+    from services.evaluation_reporting import build_report_payload as report
+    data = request_payload()
+    payload = report(sleec_patch_engine.store, philosopher_review_store,
+                     str(data.get("use_case", "")).strip(),
+                     truthy(data.get("include_patched_sleec"), default=True))
+    response = jsonify(payload)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/api/sleec-patch/download-report-json", methods=["GET"])

@@ -51,14 +51,17 @@ class BSNRepairTests(unittest.TestCase):
         selector = self.engine.operator_selector
         for operators in selector.BASE_DETERMINISTIC_OPERATORS.values():
             self.assertFalse(set(operators) & (LLM_ONLY_OPERATORS | {"concern_completion"}))
-        self.assertIn("new_rule_generation", selector.select("concerns", rules=[])["llm"])
+        self.assertEqual(selector.select("concerns", rules=[])["llm"], [])
+        self.assertIn("new_rule_generation", selector.select("concerns", rules=[],
+            sleec_text=spec(), selected_issue="late", diagnosis={"source_id": "late"})["llm"])
         for operator in ["concern_completion", *LLM_ONLY_OPERATORS]:
             with self.subTest(operator=operator), self.assertRaises(ValueError):
                 generate_repairs(spec(), "concerns", {"source_id": "late"}, [operator])
         for corrected, sources in [(False, ["C2", "C8", "C9"]), (True, ["C9"])]:
             for source_id in sources:
-                self.assertEqual(generate_repairs(self.bsn(corrected), "concerns", {"source_id": source_id},
-                    selector.BASE_DETERMINISTIC_OPERATORS["concerns"]), [])
+                candidates = generate_repairs(self.bsn(corrected), "concerns", {"source_id": source_id},
+                    selector.BASE_DETERMINISTIC_OPERATORS["concerns"])
+                self.assertTrue(all(p["operation"] not in LLM_ONLY_OPERATORS | {"concern_completion"} for p in candidates))
 
     def test_handwritten_llm_fixtures_preserve_real_bsn_sources(self):
         changes = {
@@ -114,8 +117,9 @@ class BSNRepairTests(unittest.TestCase):
             diagnosis = {"source_id": "C9", "trace": [
                 {"kind": "event", "name": "UserWantsToRemoveSensors", "timestamp": 0},
                 {"kind": "measure", "timestamp": 0, "values": {"caregiverConsent": consent, "canPatientDeactivate": True}}]}
-            self.assertEqual(generate_repairs(text, "concerns", diagnosis,
-                self.engine.operator_selector.BASE_DETERMINISTIC_OPERATORS["concerns"]), [])
+            candidates = generate_repairs(text, "concerns", diagnosis,
+                self.engine.operator_selector.BASE_DETERMINISTIC_OPERATORS["concerns"])
+            self.assertTrue(all(p["operation"] not in LLM_ONLY_OPERATORS | {"concern_completion"} for p in candidates))
             scopes.append(target_resolution(text, "concerns", diagnosis)["addition_scope"])
         self.assertEqual(scopes[0], scopes[1])
         self.assertTrue(scopes[0]["response_negated"])
@@ -135,17 +139,19 @@ class BSNRepairTests(unittest.TestCase):
             self.assertIsNone(target_resolution(text, "concerns", {"source_id": "late"})["addition_scope"])
         self.assertIsNone(target_resolution(spec(), "concerns", {"source_id": "missing"})["addition_scope"])
 
-    def test_llm_supplies_rule_fields_and_duplicate_ids_are_rejected(self):
+    def test_llm_supplies_rule_fields_and_application_allocates_unique_ids(self):
         text = spec("policy_safe when Backup then Act",
                     "late when Start and ({urgent} or (not {ready})) then not Act within [1 minutes, 5 minutes]")
         candidate = self.llm_fixture(text, trigger_event="Backup", condition="{ready}",
                                      response_event="Start", negated=True, deadline=None)
         self.assertEqual(candidate["proposed_rule"],
-                         "complete_late when Backup and {ready} then not Start")
+                         "R1 when Backup and {ready} then not Start")
+        self.assertEqual(candidate["requested_rule_id"], "complete_late")
         self.assertFalse(formally_verified(candidate))
         self.assertEqual(candidate["semantic_review_status"], "pending")
-        with self.assertRaises(ValueError):
-            self.llm_fixture(text, rule_id="policy_safe")
+        collision = self.llm_fixture(text, rule_id="policy_safe")
+        self.assertEqual(collision["assigned_rule_id"], "R1")
+        self.assertEqual(collision["requested_rule_id"], "policy_safe")
 
     def test_missing_obligation_verifies_while_preserving_immediate_prohibition(self):
         text = spec("policy_safe when Start and (not {ready}) then not Act",
@@ -167,7 +173,7 @@ class BSNRepairTests(unittest.TestCase):
         candidate = self.llm_fixture(text, condition="")
         result = self.engine.verify_llm_patch_once(
             text, "concerns", before["structured"]["concerns"][0], before["structured"], candidate)
-        self.assertIsNone(result)
+        self.assertFalse(formally_verified(result))
         self.assertFalse(formally_verified(candidate))
         self.assertTrue(candidate["regression_report"]["new_issues_introduced"])
         self.assertTrue(candidate["failure_reason"])
@@ -230,8 +236,8 @@ class BSNRepairTests(unittest.TestCase):
         self.assertTrue(all(p["source_requirement_id"] == "late" for p in accepted))
         self.assertTrue(all(not p["target_rule_id"] for p in accepted))
         prompt = client.chat.completions.create.call_args.kwargs["messages"][1]["content"]
-        self.assertIn('"addition_scopes"', prompt)
-        example = prompt.split("Illustrative proposal for the selected operator (use the actual domain):")[1].split("INPUT:")[0]
+        self.assertIn('"source_text"', prompt)
+        example = prompt.split("Illustrative JSON example (syntax only; its identifiers are not evidence for the current case):")[1].split("INPUT:")[0]
         self.assertEqual(json.loads(example)["change"]["trigger_event"], "ParcelArrived")
         self.assertNotIn("complete_late", example)
 

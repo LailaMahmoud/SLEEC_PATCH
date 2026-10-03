@@ -3,11 +3,11 @@ import re
 
 class DeterministicRepairEngine:
 
-    def generate(self, issue_type, selected_issue, rules, operators, existing_events=None, sleec_text=None):
+    def generate(self, issue_type, selected_issue, rules, operators, existing_events=None, sleec_text=None, diagnosis=None):
         if sleec_text is not None:
             from services.paper_repairs import diagnosis_for
             from services.evidence_repair import generate_repairs
-            return generate_repairs(sleec_text, issue_type, diagnosis_for(sleec_text, issue_type, selected_issue), operators)
+            return generate_repairs(sleec_text, issue_type, diagnosis if diagnosis is not None else diagnosis_for(sleec_text, issue_type, selected_issue), operators)
         self._events = {str(event) for event in (existing_events or [])}
         patches = []
 
@@ -1955,6 +1955,8 @@ class DeterministicRepairEngine:
         return f"unless {self.wrap_group(defeater)}"
 
     def rule_to_text(self, rule):
+        if rule.get("raw"):
+            return rule["raw"]
         return self.rule_raw(rule)
 
     def find_defeater_propagation_pair(self, selected_issue, rules):

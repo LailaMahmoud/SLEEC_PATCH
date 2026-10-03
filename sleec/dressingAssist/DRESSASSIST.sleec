@@ -167,7 +167,7 @@ Rule17 when InteractingWithNonPatients then DetermineSensitivityLevel
 Rule18 when DetectUrgentHealthIssue then InformEmergencyContactAndHealthOrgs
 Rule19 when FirstMeetingUser then ObtainEmergencyContact
 Rule20_1 when UserDiscussingPrivateInfo then InformUserPrivateInformation
-Rule20_1 when UserDiscussingPrivateInfo and {irrelevant} then DiscardInformation
+Rule20_3 when UserDiscussingPrivateInfo and {irrelevant} then DiscardInformation
 Rule20_2 when InformUserPrivateInformation then ChangeSubject
 Rule21 when DesigningAgent and ({anthropomorphicNecessary} or {anthropomorphicAppearance}) then InformUserOfLimitations
 Rule22 when DeployingAgent and (({numDaysDeployed} > 3) and ({numHoursDeployed} > 5)) then ReviewInteraction

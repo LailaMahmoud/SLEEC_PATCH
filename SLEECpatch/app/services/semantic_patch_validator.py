@@ -48,11 +48,9 @@ class SemanticPatchValidator:
 
         # Make the active specification available to vocabulary validation
         # so declared measure-domain values are recognized generically.
-        self._active_sleec_text = str(sleec_text or "")
-
         vocabulary = self._check_vocabulary(
             patch, proposed_rule, original_rule,
-            existing_events, existing_measures, existing_responses
+            existing_events, existing_measures, existing_responses, sleec_text
         )
         grounding = self._check_grounding_evidence(
             patch=patch,
@@ -110,7 +108,7 @@ class SemanticPatchValidator:
 
     def _check_vocabulary(
         self, patch, proposed_rule, original_rule,
-        existing_events, existing_measures, existing_responses
+        existing_events, existing_measures, existing_responses, sleec_text=""
         ):
         """
         Validate vocabulary for WFI-specific semantic repair operators.
@@ -139,7 +137,7 @@ class SemanticPatchValidator:
 
         # Include vocabulary already declared anywhere in the active SLEEC spec.
         sleec_text = str(
-            getattr(self, "_active_sleec_text", "") or ""
+            sleec_text or ""
         )
 
         declared_spec_symbols = {

@@ -154,6 +154,21 @@ class EvidenceTests(unittest.TestCase):
         self.assertFalse(report["selected_issue_fixed"])
         self.assertEqual(report["new_issue_count"], 0)
 
+    def test_changing_supporting_proof_does_not_change_the_diagnosed_subject(self):
+        first = "Situational conflict under situation:\nFor rule:\npolicy_safe when Start then Act\nBecause of the following SLEEC rule:\npolicy_backup when Start then not Act"
+        second = first.replace("policy_backup", "policy_other")
+        before = {"situational_conflicts": [first], "diagnoses_by_type": {
+            "situational_conflicts": [{"source_id": "policy_safe", "affected_rule_ids": ["policy_safe", "policy_backup"]}]}}
+        after = {"situational_conflicts": [second], "diagnoses_by_type": {
+            "situational_conflicts": [{"source_id": "policy_safe", "affected_rule_ids": ["policy_safe", "policy_other"]}]}}
+        report = self.engine.build_regression_report("situational_conflicts", first, before, after)
+        self.assertFalse(report["selected_issue_fixed"])
+        self.assertEqual(report["new_issue_count"], 0)
+        after["diagnoses_by_type"]["situational_conflicts"][0]["source_id"] = "policy_new"
+        report = self.engine.build_regression_report("situational_conflicts", first, before, after)
+        self.assertEqual(report["new_issue_count"], 1)
+        self.assertFalse(report["regression_passed"])
+
     def test_real_exists_concern_keeps_trace(self):
         result = self.engine.detector.safe_call("concern", sleec_api.check_concern, MODEL)
         self.assertTrue(result["success"], result)
@@ -214,17 +229,22 @@ purpose_end
         deterministic = DeterministicRepairEngine()
         self.engine.deterministic_engine = Mock(wraps=deterministic)
         self.engine.operator_selector = Mock()
+        from services.evidence_repair import target_resolution
         self.engine.operator_selector.select.return_value = {
-            "deterministic": ["trigger_strengthening"], "llm": ["event_specialization"]}
+            "deterministic": ["deadline_refinement"], "llm": ["new_rule_generation"],
+            "diagnosis": evidence, "target_resolution": target_resolution(text, "concerns", evidence)}
         self.engine.store = Mock()
-        self.engine.patch_ranker = Mock()
-        self.engine.patch_ranker.rank.side_effect = lambda patches: patches
+        from services.patch_ranker import PatchRanker
+        self.engine.patch_ranker = PatchRanker()
         self.engine.gpt_patch_engine = GPTPatchEngine()
         client = Mock()
         # A controlled offline LLM candidate, rejected by the verification stub.
         client.chat.completions.create.return_value = SimpleNamespace(choices=[SimpleNamespace(
             message=SimpleNamespace(content=json.dumps([{
-                "target_rule_id": "R1", "proposed_rule": "R1 when Start then Act within 60 seconds"
+                "operation": "new_rule_generation", "target_rule_id": None, "source_requirement_id": "c1",
+                "change": {"rule_id": "R2", "trigger_event": "Start", "condition": "({risk} = high)",
+                           "response_event": "Act", "negated": False, "deadline": {"kind": "source"}},
+                "natural_language_explanation": "Prevent the selected concern within its stated deadline."
             }])) )])
         self.engine.semantic_validator = Mock()
         self.engine.semantic_validator.validate.return_value = {"valid": True}
@@ -244,7 +264,7 @@ purpose_end
             self.assertEqual(self.engine.normalize_patch(candidate, text)["diagnosis"], evidence)
         for call in self.engine.store.save_patch_candidate.call_args_list:
             self.assertEqual(call.args[0]["patch"]["diagnosis"], evidence)
-        self.assertEqual(self.engine._ranking_context["diagnosis_context"], evidence)
+        self.assertFalse(hasattr(self.engine, "_ranking_context"))
         prompt = client.chat.completions.create.call_args.kwargs["messages"][1]["content"]
         payload, _ = json.JSONDecoder().raw_decode(prompt.split("\nINPUT:\n", 1)[1])
         self.assertEqual(payload["diagnosis_evidence"], [evidence])

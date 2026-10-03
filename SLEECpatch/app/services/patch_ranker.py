@@ -1,6 +1,7 @@
 """Paper §3.3: ascending lexicographic modification and syntax costs."""
 import re
 from services.boolean_simplifier import simplify_rule
+from services.candidate_status import formally_verified
 
 
 class PatchRanker:
@@ -11,7 +12,7 @@ class PatchRanker:
     def rank(self, verified_patches):
         ranked = []
         for patch in verified_patches:
-            if patch.get('syntax_validation', {}).get('valid', patch.get('syntax_valid')) is not True or patch.get('verified') is not True or patch.get('target_fixed') is not True or not patch.get('regression_report', {}).get('regression_passed'):
+            if not formally_verified(patch):
                 continue
             patch['ranking'] = self.score_patch(patch)
             ranked.append(patch)

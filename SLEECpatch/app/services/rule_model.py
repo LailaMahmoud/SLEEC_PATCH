@@ -13,7 +13,8 @@ def rules_from_text(text):
     model = parse_sleec_ast(text)
     ids = [node.name for node in model.ruleBlock.rules]
     if len(set(ids)) != len(ids):
-        raise ValueError("Rule IDs must be unique.")
+        repeated = sorted({name for name in ids if ids.count(name) > 1})
+        raise ValueError("Rule IDs must be unique; repeated: " + ", ".join(repeated))
     return [rule_record(text, node) for node in model.ruleBlock.rules]
 
 

@@ -130,7 +130,7 @@ class PaperOperators(unittest.TestCase):
           ('response_refinement',original.replace('CallEmergencyServices','CallFireDepartment'),'event CallFireDepartment'),
           ('defeater_introduction',original+' unless ({userPresent} and (not {humanAssents}))',''),
           ('measure_specialization',original.replace(' then',' and {userPresent} then')+'\nr2 when HumanOnFloor and (not {userPresent}) then not CallEmergencyServices','measure userPresent:boolean')]
-        patches=[{'operation':op,'original_rule':original,'proposed_rule':body,'declaration_text':decl,'verified':True,'syntax_validation':{'valid':True},'target_fixed':True,'regression_report':{'regression_passed':True}} for op,body,decl in proposals]
+        patches=[{'operation':op,'source':'llm' if op in {'response_refinement','measure_specialization'} else 'deterministic','original_rule':original,'proposed_rule':body,'declaration_text':decl,'verified':True,'syntax_validation':{'valid':True},'target_fixed':True,'regression_report':{'regression_passed':True}} for op,body,decl in proposals]
         patches[-1]['original_rule']+='\nr2 when HumanOnFloor then not CallEmergencyServices'
         ranked=ranker.rank(list(reversed(patches)))
         self.assertEqual([p['operation'] for p in ranked],[p[0] for p in proposals])

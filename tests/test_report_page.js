@@ -49,8 +49,8 @@ test("a late response cannot overwrite the newly selected use case", async () =>
     await current;
     pending[0].resolve(response("ALL", 20));
     await flush();
-    assert.equal(element("metricTotalRows").textContent, 2);
-    assert.match(element("reportScope").textContent, /^DAISY:/);
+    assert.equal(element("statPatches").textContent, 2);
+    assert.match(element("reportScope").textContent, /^Showing DAISY/);
     assert.equal(element("loadReportButton").disabled, false);
 });
 
@@ -60,23 +60,23 @@ test("changing filters clears previous values and failed loads remain empty", as
     await flush();
     element("reportUseCase").value = "DAISY";
     const current = element("reportUseCase").listeners.change();
-    assert.equal(element("metricTotalRows").textContent, 0);
+    assert.equal(element("statPatches").textContent, 0);
     pending[1].resolve({ok: false, status: 500, json: async () => ({status: "ERROR", error: "Database unavailable"})});
     await current;
-    assert.equal(element("metricTotalRows").textContent, 0);
-    assert.match(element("reportScope").textContent, /Could not load DAISY/);
+    assert.equal(element("statPatches").textContent, 0);
+    assert.match(element("reportScope").textContent, /Could not load results for DAISY/);
 });
 
 test("patch count, diagnosis count and use-case count are shown separately", async () => {
     const {element, pending} = setup();
     pending[0].resolve(response("DAISY", 18, 9));
     await flush();
-    assert.equal(element("metricTotalRows").textContent, 18);
+    assert.equal(element("statPatches").textContent, 18);
     assert.equal(element("summaryCount").textContent, "1 use case");
-    assert.match(element("diagnosisOutput").innerHTML, /<td>9<\/td>/);
-    assert.match(element("summaryOutput").innerHTML, /Patch Records/);
-    assert.equal(element("metricAvgTime").textContent, "Not recorded");
-    assert.doesNotMatch(element("philosopherOutput").innerHTML, /99/);
+    assert.match(element("diagnosisOutput").innerHTML, /<td\b[^>]*>9<\/td>/);
+    assert.match(element("summaryOutput").innerHTML, />Patches</);
+    assert.equal(element("statTime").textContent, "–");
+    assert.doesNotMatch(element("expertOutput").innerHTML, /99/);
 });
 
 test("missing recorded diagnosis is not presented as zero issues", async () => {
@@ -87,5 +87,5 @@ test("missing recorded diagnosis is not presented as zero issues", async () => {
     pending[0].resolve({ok: true, json: async () => payload});
     await flush();
     assert.match(element("diagnosisOutput").innerHTML, /Not recorded/);
-    assert.doesNotMatch(element("diagnosisOutput").innerHTML, /<td>0<\/td>/);
+    assert.doesNotMatch(element("diagnosisOutput").innerHTML, /<td\b[^>]*>0<\/td>/);
 });

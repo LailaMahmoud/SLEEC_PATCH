@@ -73,16 +73,16 @@ class ImprovementTests(unittest.TestCase):
         self.assertEqual(changed, text.replace("5 minutes", "3 minutes"))
         self.assertTrue(self.engine.check_sleec_syntax(changed)["valid"])
 
-    def test_measure_values_choose_a_supported_target_without_arbitrary_ties(self):
+    def test_source_matches_remain_separate_hypotheses_with_trace_context(self):
         text = spec("policy_safe when Start and {ready} then Act within 5 minutes\npolicy_other when Start and (not {ready}) then Act within 5 minutes")
         evidence = {"source_id": "late", "trace": [
             {"kind": "event", "name": "Start", "timestamp": 10},
             {"kind": "measure", "timestamp": 10, "values": {"ready": True, "urgent": True}}]}
         result = target_resolution(text, "concerns", evidence)
-        self.assertEqual(result["rule_ids"], ["policy_safe"])
+        self.assertEqual(result["rule_ids"], ["policy_safe", "policy_other"])
         self.assertEqual(result["observed_contexts"][0]["timestamp"], 10)
         evidence["trace"] = []
-        self.assertEqual(target_resolution(text, "concerns", evidence)["rule_ids"], [])
+        self.assertEqual(target_resolution(text, "concerns", evidence)["rule_ids"], ["policy_safe", "policy_other"])
         self.assertEqual(self.engine.deterministic_engine.find_conflicting_rules("No rule reference", rules_from_text(text)), [])
 
     def test_numeric_and_scale_snapshots_use_declared_order(self):
@@ -109,11 +109,11 @@ class ImprovementTests(unittest.TestCase):
                 self.assertTrue(formally_verified(result))
 
     def test_repair_preserves_other_defeaters_and_avoids_rule_id_collisions(self):
-        text = spec("policy_safe when Start then Act unless {urgent} then not Act unless (not {ready}) then Backup\npolicy_safe_1 when Backup then Act",
+        text = spec("policy_safe when Start then Act within 5 minutes unless {urgent} then not Act unless (not {ready}) then Backup\npolicy_safe_1 when Backup then Act",
                     "late exists Start and ({urgent} and {ready}) while not Act")
         _, evidence, _ = self.diagnosis(text)
-        patches = generate_repairs(text, "concerns", evidence, ["rule_decomposition", "defeater_introduction"])
-        exception_patch = next(p for p in patches if p["operation"] == "defeater_introduction")
+        patches = generate_repairs(text, "concerns", evidence, ["rule_decomposition", "defeater_refinement"])
+        exception_patch = next(p for p in patches if p["operation"] == "defeater_refinement")
         self.assertIn("unless (not {ready}) then Backup", exception_patch["proposed_rule"])
         decomposition = next(p for p in patches if p["operation"] == "rule_decomposition")
         self.assertIn("policy_safe_2 when", decomposition["proposed_rule"])
@@ -169,7 +169,8 @@ class ImprovementTests(unittest.TestCase):
                                 "response_event": "Act", "negated": False, "deadline": {"value": 2, "unit": "minutes"}},
                      "natural_language_explanation": "Meet the concern's declared deadline."}
         valid = materialize_semantic_edit(spec(), candidate, ["policy_safe"])
-        self.assertIn("extra when Start", valid["proposed_rule"])
+        self.assertIn("R1 when Start", valid["proposed_rule"])
+        self.assertEqual(valid["requested_rule_id"], "extra")
         candidate["change"]["condition"] = "true then Act\nextra_injected when Start"
         with self.assertRaises(ValueError):
             materialize_semantic_edit(spec(), candidate, ["policy_safe"])
@@ -178,9 +179,11 @@ class ImprovementTests(unittest.TestCase):
         text = spec(concern="").replace("event Start", "event ParcelArrived").replace("event Act", "event Notify")
         text = text.replace("measure urgent:boolean", "measure priority:boolean")
         text = text.replace("policy_safe when Start then Act within 5 minutes", "r1 when ParcelArrived and {ready} then Notify within 5 minutes")
+        text += "concern_start\nmissed_notice when ParcelArrived and {priority} then not Notify within 2 minutes\nconcern_end\n"
+        scope = target_resolution(text, "concerns", {"source_id": "missed_notice"})["addition_scope"]
         for operation, example in OPERATOR_EXAMPLES.items():
             with self.subTest(operation=operation):
-                candidate = materialize_semantic_edit(text, json.loads(example), ["r1"])
+                candidate = materialize_semantic_edit(text, json.loads(example), ["r1"], scope)
                 self.assertTrue(self.engine.check_sleec_syntax(self.engine.apply_patch_to_text(text, candidate))["valid"])
 
     def test_unverified_candidates_never_reach_ranking_or_export(self):
@@ -222,12 +225,15 @@ class ImprovementTests(unittest.TestCase):
         self.assertEqual(rows[0][0], "inconclusive")
         self.assertEqual(json.loads(rows[0][1])["diagnosis"], candidate["diagnosis"])
 
-    def test_ranking_uses_each_candidates_context(self):
-        self.engine._ranking_context = {"diagnosis_context": "different concurrent request"}
-        context = {"diagnosis_context": {"source_id": "late"}, "selected_issue": "late", "issue_type": "concerns"}
-        self.engine._assess_patch_quality_for_ranking({"ranking_context": context})
-        sent = self.engine.gpt_patch_engine.assess_patch_quality.call_args.kwargs["patch"]
-        self.assertEqual(sent["diagnosis_context"], context["diagnosis_context"])
+    def test_ranking_preserves_each_candidates_evidence_without_an_llm_call(self):
+        context = {"source_id": "late", "trace": [{"timestamp": 12}]}
+        candidate = {"source": "deterministic", "operation": "deadline_refinement", "diagnosis": context,
+            "verified": True, "target_fixed": True, "syntax_validation": {"valid": True},
+            "regression_report": {"regression_passed": True}, "original_rule": "r1 when Start then Act within 5 minutes",
+            "proposed_rule": "r1 when Start then Act within 2 minutes"}
+        ranked = PatchRanker(self.engine.gpt_patch_engine.assess_patch_quality).rank([candidate])
+        self.assertEqual(ranked[0]["diagnosis"], context)
+        self.engine.gpt_patch_engine.assess_patch_quality.assert_not_called()
 
     def test_full_pipeline_materializes_verifies_ranks_and_saves_offline_llm_edit(self):
         text = spec()

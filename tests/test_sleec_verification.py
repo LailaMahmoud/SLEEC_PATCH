@@ -65,6 +65,8 @@ def workbench():
     engine.detector_cache_lock = threading.RLock()
     engine.detector_cache_max_entries = 64
     engine.gpt_patch_engine = Mock()
+    from services.semantic_patch_validator import SemanticPatchValidator
+    engine.semantic_validator = SemanticPatchValidator()
     return engine
 
 

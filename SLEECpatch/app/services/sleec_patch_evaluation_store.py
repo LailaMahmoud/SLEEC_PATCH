@@ -386,8 +386,10 @@ class SLEECPatchEvaluationStore:
     def ensure_columns(self):
         result_columns = self.table_columns("sleec_patch_results")
         candidate_columns = self.table_columns("sleec_patch_candidates")
+        run_columns = self.table_columns("sleec_patch_pipeline_runs")
 
         result_required_columns = {
+            "run_id": "TEXT",
             "source": "TEXT",
             "target_rule_id": "TEXT",
             "original_rule": "TEXT",
@@ -406,6 +408,9 @@ class SLEECPatchEvaluationStore:
 
         conn = self.connect()
         cur = conn.cursor()
+
+        if "input_sha256" not in run_columns:
+            cur.execute("ALTER TABLE sleec_patch_pipeline_runs ADD COLUMN input_sha256 TEXT")
 
         for col, col_type in result_required_columns.items():
             if col not in result_columns:
@@ -468,7 +473,8 @@ class SLEECPatchEvaluationStore:
             row.get("philosopher_comments", ""),
             row.get("review_timestamp", ""),
 
-            timestamp
+            timestamp,
+            row.get("run_id")
         )
 
         result_id = row.get("id") or row.get("result_id")
@@ -508,7 +514,8 @@ class SLEECPatchEvaluationStore:
                 philosopher_decision = COALESCE(NULLIF(philosopher_decision, ''), ?),
                 philosopher_comments = COALESCE(NULLIF(philosopher_comments, ''), ?),
                 review_timestamp = COALESCE(NULLIF(review_timestamp, ''), ?),
-                timestamp = ?
+                timestamp = ?,
+                run_id = COALESCE(?, run_id)
             WHERE id = ?
             """, values + (result_id,))
 
@@ -557,9 +564,10 @@ class SLEECPatchEvaluationStore:
             philosopher_comments,
             review_timestamp,
 
-            timestamp
+            timestamp,
+            run_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         if self.using_postgres():
@@ -578,99 +586,42 @@ class SLEECPatchEvaluationStore:
         return inserted_id
 
     def save_pipeline_run(self, row):
+        values = {key: row.get(key) for key in (
+            "run_id", "use_case", "issue_id", "issue_type", "max_attempts", "attempts",
+            "failed_patch_count", "verified_patch_count", "generation_time_seconds",
+            "validation_time_seconds", "total_time_seconds", "original_issue_count",
+            "generated_file_path", "input_sha256")}
+        values.update(selected_issue=str(row.get("selected_issue", "")),
+                      successful=int(row.get("successful") is True),
+                      repair_operators_json=self.to_json(row.get("repair_operators", {})),
+                      original_structured_json=self.to_json(row.get("original_structured", {})),
+                      timestamp=row.get("timestamp", datetime.now().isoformat()))
+        columns = list(values)
+        query = ("INSERT INTO sleec_patch_pipeline_runs (" + ", ".join(columns) + ") VALUES ("
+                 + ", ".join("?" for _ in columns) + ") ON CONFLICT (run_id) DO UPDATE SET "
+                 + ", ".join(f"{key} = EXCLUDED.{key}" for key in columns if key != "run_id"))
         conn = self.connect()
-        cur = conn.cursor()
+        try:
+            self.execute(conn.cursor(), query, tuple(values.values()))
+            conn.commit()
+        finally:
+            conn.close()
 
-        if self.using_postgres():
-            query = """
-            INSERT INTO sleec_patch_pipeline_runs (
-                run_id,
-                use_case,
-                issue_id,
-                issue_type,
-                selected_issue,
-                max_attempts,
-                attempts,
-                successful,
-                failed_patch_count,
-                verified_patch_count,
-                generation_time_seconds,
-                validation_time_seconds,
-                total_time_seconds,
-                repair_operators_json,
-                original_issue_count,
-                original_structured_json,
-                generated_file_path,
-                timestamp
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT (run_id) DO UPDATE SET
-                use_case = EXCLUDED.use_case,
-                issue_id = EXCLUDED.issue_id,
-                issue_type = EXCLUDED.issue_type,
-                selected_issue = EXCLUDED.selected_issue,
-                max_attempts = EXCLUDED.max_attempts,
-                attempts = EXCLUDED.attempts,
-                successful = EXCLUDED.successful,
-                failed_patch_count = EXCLUDED.failed_patch_count,
-                verified_patch_count = EXCLUDED.verified_patch_count,
-                generation_time_seconds = EXCLUDED.generation_time_seconds,
-                validation_time_seconds = EXCLUDED.validation_time_seconds,
-                total_time_seconds = EXCLUDED.total_time_seconds,
-                repair_operators_json = EXCLUDED.repair_operators_json,
-                original_issue_count = EXCLUDED.original_issue_count,
-                original_structured_json = EXCLUDED.original_structured_json,
-                generated_file_path = EXCLUDED.generated_file_path,
-                timestamp = EXCLUDED.timestamp
-            """
-        else:
-            query = """
-            INSERT OR REPLACE INTO sleec_patch_pipeline_runs (
-                run_id,
-                use_case,
-                issue_id,
-                issue_type,
-                selected_issue,
-                max_attempts,
-                attempts,
-                successful,
-                failed_patch_count,
-                verified_patch_count,
-                generation_time_seconds,
-                validation_time_seconds,
-                total_time_seconds,
-                repair_operators_json,
-                original_issue_count,
-                original_structured_json,
-                generated_file_path,
-                timestamp
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
-
-        self.execute(cur, query, (
-            row.get("run_id", ""),
-            row.get("use_case", ""),
-            row.get("issue_id", ""),
-            row.get("issue_type", ""),
-            str(row.get("selected_issue", "")),
-            row.get("max_attempts", 0),
-            row.get("attempts", 0),
-            1 if row.get("successful") else 0,
-            row.get("failed_patch_count", 0),
-            row.get("verified_patch_count", 0),
-            row.get("generation_time_seconds", 0),
-            row.get("validation_time_seconds", 0),
-            row.get("total_time_seconds", 0),
-            self.to_json(row.get("repair_operators", {})),
-            row.get("original_issue_count", 0),
-            self.to_json(row.get("original_structured", {})),
-            row.get("generated_file_path", ""),
-            row.get("timestamp", datetime.now().isoformat())
-        ))
-
-        conn.commit()
-        conn.close()
+    def update_patch_candidate(self, row):
+        # The generated proposal and its final outcome belong to the same row.
+        candidate = row.get("patch", {})
+        conn = self.connect()
+        try:
+            self.execute(conn.cursor(), """
+                UPDATE sleec_patch_candidates
+                SET candidate_status = ?, failure_reason = ?, patch_json = ?
+                WHERE run_id = ? AND patch_id = ? AND source = ?
+            """, (candidate.get("candidate_status", "generated"), candidate.get("failure_reason", ""),
+                  self.to_json(candidate), row.get("run_id", ""),
+                  candidate.get("patch_id", candidate.get("id", "")), candidate.get("source", "")))
+            conn.commit()
+        finally:
+            conn.close()
 
     def save_patch_candidate(self, row):
         conn = self.connect()
@@ -809,7 +760,7 @@ class SLEECPatchEvaluationStore:
 
     def result_columns(self, include_patched_sleec=True):
         columns = [
-            "id",
+            "id", "run_id", "generation_time_seconds", "validation_time_seconds",
             "use_case",
             "issue_id",
             "issue_type",

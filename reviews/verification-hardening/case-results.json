@@ -1,0 +1,493 @@
+{
+  "date": "2026-10-03",
+  "branch": "test",
+  "starting_revision": "5452ca7",
+  "llm_calls_enabled": false,
+  "database": "temporary SQLite",
+  "notes": [
+    "Each selected issue is repaired independently against the original specification.",
+    "Verified counts are alternative candidates, not a combined repaired specification.",
+    "OK means the checks completed; successful/verified fields record repair outcomes.",
+    "The full ASPEN case timed out; its focused conflict result is reported separately.",
+    "Two repeated ASPEN diagnoses test observed identity stability, not universal determinism."
+  ],
+  "tests": {
+    "main_python": {
+      "passed": 107
+    },
+    "deployment": {
+      "passed": 26,
+      "skipped": 2
+    },
+    "operators": {
+      "passed": 59
+    },
+    "javascript": {
+      "passed": 17
+    }
+  },
+  "cases": [
+    {
+      "case": "ALMI.sleec",
+      "status": "OK",
+      "error": "",
+      "issue_count": 3,
+      "repairs": [
+        {
+          "issue": "concerns_1",
+          "source_id": "c1",
+          "verified": 1,
+          "operations": [
+            "defeater_refinement"
+          ],
+          "failed": [
+            {
+              "operation": "rule_decomposition",
+              "reason": "The selected issue remains in the patched specification. The patch introduces new well-formedness issues."
+            }
+          ],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "7254aec2892e4979bf97c1ff00dc4b68",
+            "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+            "use_case": "ALMI",
+            "issue_id": "concerns_1",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 1,
+            "verified_patch_count": 1,
+            "generation_time_seconds": 0.16,
+            "validation_time_seconds": 20.563,
+            "total_time_seconds": 21.333,
+            "successful": true
+          }
+        },
+        {
+          "issue": "concerns_2",
+          "source_id": "c4",
+          "verified": 2,
+          "operations": [
+            "deadline_refinement",
+            "rule_decomposition"
+          ],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "f9b488ad6b194841bce7d06e67c329f9",
+            "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+            "use_case": "ALMI",
+            "issue_id": "concerns_2",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 2,
+            "generation_time_seconds": 0.142,
+            "validation_time_seconds": 19.277,
+            "total_time_seconds": 19.983,
+            "successful": true
+          }
+        },
+        {
+          "issue": "situational_conflicts_1",
+          "source_id": "R3",
+          "verified": 0,
+          "operations": [],
+          "failed": [
+            {
+              "operation": "defeater_introduction",
+              "reason": "The selected issue remains in the patched specification."
+            }
+          ],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "0bf9097885674ddda07df8163d7959d3",
+            "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+            "use_case": "ALMI",
+            "issue_id": "situational_conflicts_1",
+            "issue_type": "situational_conflicts",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 1,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.14,
+            "validation_time_seconds": 8.857,
+            "total_time_seconds": 9.489,
+            "successful": false
+          }
+        }
+      ],
+      "llm_calls": 0,
+      "saved_successes": 3,
+      "seconds": 65.816
+    },
+    {
+      "case": "aspen.sleec",
+      "status": "INCONCLUSIVE",
+      "error": "Case exceeded the probe timeout.",
+      "seconds": 240.024
+    },
+    {
+      "case": "DRESSASSIST.sleec",
+      "status": "ERROR",
+      "error": "SLEEC analysis failed: {'analysis': \"SLEEC analysis failed: {'concern': 'Rule IDs must be unique; repeated: Rule20_1', 'conflict': 'Rule IDs must be unique; repeated: Rule20_1', 'purpose': 'Rule IDs must be unique; repeated: Rule20_1', 'redundancy': 'Rule IDs must be unique; repeated: Rule20_1', 'situational_conflict': 'Rule IDs must be unique; repeated: Rule20_1'}\", 'concern': 'Rule IDs must be unique; repeated: Rule20_1', 'conflict': 'Rule IDs must be unique; repeated: Rule20_1', 'purpose': 'Rule IDs must be unique; repeated: Rule20_1', 'redundancy': 'Rule IDs must be unique; repeated: Rule20_1', 'situational_conflict': 'Rule IDs must be unique; repeated: Rule20_1'}",
+      "issue_count": 0,
+      "repairs": [],
+      "llm_calls": 0,
+      "saved_successes": 0,
+      "seconds": 1.566
+    },
+    {
+      "case": "Daisy.sleec",
+      "status": "OK",
+      "error": "",
+      "issue_count": 8,
+      "repairs": [
+        {
+          "issue": "concerns_1",
+          "source_id": "c1",
+          "verified": 0,
+          "operations": [],
+          "failed": [
+            {
+              "operation": "rule_decomposition",
+              "reason": "The selected issue remains in the patched specification."
+            }
+          ],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "0b45b905a52e414797094fe7d5e59d87",
+            "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+            "use_case": "Daisy",
+            "issue_id": "concerns_1",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 1,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.1,
+            "validation_time_seconds": 12.762,
+            "total_time_seconds": 13.555,
+            "successful": false
+          }
+        },
+        {
+          "issue": "concerns_2",
+          "source_id": "c2",
+          "verified": 0,
+          "operations": [],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "d1b4bc21b25c46ca817d5dd40f97221b",
+            "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+            "use_case": "Daisy",
+            "issue_id": "concerns_2",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.099,
+            "validation_time_seconds": 0,
+            "total_time_seconds": 0.449,
+            "successful": false
+          }
+        },
+        {
+          "issue": "concerns_3",
+          "source_id": "c3",
+          "verified": 0,
+          "operations": [],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "57f32d3eb934453ba77dd45ed7f839d1",
+            "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+            "use_case": "Daisy",
+            "issue_id": "concerns_3",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.099,
+            "validation_time_seconds": 0,
+            "total_time_seconds": 0.444,
+            "successful": false
+          }
+        },
+        {
+          "issue": "concerns_4",
+          "source_id": "c5",
+          "verified": 0,
+          "operations": [],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "911bc47f606148a5881163b295ee132a",
+            "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+            "use_case": "Daisy",
+            "issue_id": "concerns_4",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.098,
+            "validation_time_seconds": 0,
+            "total_time_seconds": 0.444,
+            "successful": false
+          }
+        },
+        {
+          "issue": "concerns_5",
+          "source_id": "c6",
+          "verified": 0,
+          "operations": [],
+          "failed": [],
+          "semantic_operators": [
+            "new_rule_generation"
+          ],
+          "log": {
+            "run_id": "d8036f9274bc4fd6a3ec02c24949aa29",
+            "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+            "use_case": "Daisy",
+            "issue_id": "concerns_5",
+            "issue_type": "concerns",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 0,
+            "generation_time_seconds": 0.098,
+            "validation_time_seconds": 0,
+            "total_time_seconds": 0.445,
+            "successful": false
+          }
+        },
+        {
+          "issue": "redundancies_1",
+          "source_id": "Rule16",
+          "verified": 1,
+          "operations": [
+            "rule_removal"
+          ],
+          "failed": [],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "b58887295d274e51a7e8ecbe8f543771",
+            "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+            "use_case": "Daisy",
+            "issue_id": "redundancies_1",
+            "issue_type": "redundancies",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 1,
+            "generation_time_seconds": 0.099,
+            "validation_time_seconds": 11.327,
+            "total_time_seconds": 11.922,
+            "successful": true
+          }
+        },
+        {
+          "issue": "situational_conflicts_1",
+          "source_id": "Rule18",
+          "verified": 4,
+          "operations": [
+            "trigger_refinement",
+            "trigger_refinement",
+            "defeater_introduction",
+            "defeater_introduction"
+          ],
+          "failed": [],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "cfeabd0fba464a55b555323b7d848245",
+            "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+            "use_case": "Daisy",
+            "issue_id": "situational_conflicts_1",
+            "issue_type": "situational_conflicts",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 4,
+            "generation_time_seconds": 0.099,
+            "validation_time_seconds": 41.061,
+            "total_time_seconds": 41.965,
+            "successful": true
+          }
+        },
+        {
+          "issue": "situational_conflicts_2",
+          "source_id": "Rule19",
+          "verified": 4,
+          "operations": [
+            "trigger_refinement",
+            "trigger_refinement",
+            "defeater_introduction",
+            "defeater_introduction"
+          ],
+          "failed": [],
+          "semantic_operators": [
+            "event_specialization",
+            "measure_specialization",
+            "response_refinement"
+          ],
+          "log": {
+            "run_id": "27b5e99bf5904fa98b3cc840603d7274",
+            "input_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+            "use_case": "Daisy",
+            "issue_id": "situational_conflicts_2",
+            "issue_type": "situational_conflicts",
+            "attempts": 1,
+            "max_attempts": 1,
+            "failed_patch_count": 0,
+            "verified_patch_count": 4,
+            "generation_time_seconds": 0.099,
+            "validation_time_seconds": 0.402,
+            "total_time_seconds": 1.311,
+            "successful": true
+          }
+        }
+      ],
+      "llm_calls": 0,
+      "saved_successes": 9,
+      "seconds": 86.319
+    }
+  ],
+  "aspen_focused_conflict": {
+    "case": "aspen.sleec",
+    "status": "OK",
+    "diagnosis_status": "OK",
+    "error": "",
+    "selected_issue_count": 1,
+    "issue_count": 8,
+    "repairs": [
+      {
+        "issue": "situational_conflicts_1",
+        "source_id": "R4",
+        "verified": 0,
+        "operations": [],
+        "failed": [
+          {
+            "operation": "trigger_refinement",
+            "reason": "The selected issue remains in the patched specification."
+          },
+          {
+            "operation": "defeater_introduction",
+            "reason": "The selected issue remains in the patched specification."
+          },
+          {
+            "operation": "defeater_introduction",
+            "reason": "The selected issue remains in the patched specification."
+          },
+          {
+            "operation": "trigger_refinement",
+            "reason": "The selected issue remains in the patched specification. The patch introduces new well-formedness issues."
+          },
+          {
+            "operation": "defeater_introduction",
+            "reason": "The selected issue remains in the patched specification. The patch introduces new well-formedness issues."
+          }
+        ],
+        "semantic_operators": [
+          "event_specialization",
+          "measure_specialization",
+          "response_refinement"
+        ],
+        "log": {
+          "run_id": "8e62d7c7368140b58d9996506ab513b0",
+          "input_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+          "use_case": "aspen",
+          "issue_id": "situational_conflicts_1",
+          "issue_type": "situational_conflicts",
+          "attempts": 1,
+          "max_attempts": 1,
+          "failed_patch_count": 5,
+          "verified_patch_count": 0,
+          "generation_time_seconds": 0.077,
+          "validation_time_seconds": 52.621,
+          "total_time_seconds": 53.17,
+          "successful": false
+        }
+      }
+    ],
+    "llm_calls": 0,
+    "saved_successes": 0,
+    "seconds": 67.403
+  },
+  "aspen_repeated_diagnosis": {
+    "runs": [
+      {
+        "failures": {},
+        "subjects": {
+          "concerns": [
+            "c4",
+            "c5",
+            "c7",
+            "c8"
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [
+            "R14"
+          ],
+          "situational_conflicts": [
+            "R13",
+            "R4",
+            "R7_1"
+          ]
+        }
+      },
+      {
+        "failures": {},
+        "subjects": {
+          "concerns": [
+            "c4",
+            "c5",
+            "c7",
+            "c8"
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [
+            "R14"
+          ],
+          "situational_conflicts": [
+            "R13",
+            "R4",
+            "R7_1"
+          ]
+        }
+      }
+    ],
+    "same_subjects": true,
+    "same_raw_evidence": false
+  }
+}

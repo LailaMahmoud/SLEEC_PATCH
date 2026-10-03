@@ -23,63 +23,19 @@ class GPTPatchEngine:
         self.model = model
 
     def clean_json(self, text):
+        if not isinstance(text, str):
+            raise ValueError("The model returned no textual JSON proposal.")
         text = text.strip()
         text = re.sub(r"```json", "", text)
         text = re.sub(r"```", "", text)
         return text.strip()
 
     def normalize_patch_schema(self, patch, issue_type, repair_operator):
-        if isinstance(patch, dict) and "change" in patch:
-            if patch.get("operation") != repair_operator:
-                raise ValueError("The proposal changed the selected operator.")
-            return {**patch, "source": "llm", "issue_type": issue_type}
-        required_defaults = {
-            "patch_id": "p_unknown",
-            "issue_type": issue_type,
-            "operation": repair_operator,
-            "target_rule_id": "",
-            "original_rule": "",
-            "missing_element": "",
-            "proposed_rule": "",
-            "natural_language_explanation": "",
-            "modification_cost": 0,
-            "new_events_added": 0,
-            "new_measures_added": 0,
-            "new_capabilities_added": 0,
-            "new_rules_added": 0,
-            "defeaters_added": 0,
-        }
-
-        normalized = dict(required_defaults)
-
-        if isinstance(patch, dict):
-            normalized.update(patch)
-
-        normalized["source"] = "llm"
-        normalized["issue_type"] = issue_type
-        normalized["operation"] = repair_operator
-
-        if not str(normalized.get("natural_language_explanation", "")).strip():
-            normalized["natural_language_explanation"] = (
-                "No explanation supplied by the LLM; review required."
-            )
-
-        for key in [
-            "modification_cost",
-            "new_events_added",
-            "new_measures_added",
-            "new_capabilities_added",
-            "new_rules_added",
-            "defeaters_added",
-        ]:
-            try:
-                normalized[key] = int(normalized.get(key, 0) or 0)
-            except (TypeError, ValueError):
-                normalized[key] = 0
-
-
-
-        return normalized
+        if not isinstance(patch, dict) or not isinstance(patch.get("change"), dict):
+            raise ValueError("Expected a structured semantic edit with a change object.")
+        if patch.get("operation") != repair_operator:
+            raise ValueError("The proposal changed the selected operator.")
+        return {**patch, "source": "llm", "issue_type": issue_type}
 
     def call_gpt(
         self,
@@ -166,7 +122,7 @@ LEGOS-SLEEC re-analysis.
                 for patch in parsed
             ]
 
-        except Exception:
+        except (TypeError, ValueError) as exc:
             return [{
                 "patch_id": "parse_error",
                 "source": "llm",
@@ -175,7 +131,8 @@ LEGOS-SLEEC re-analysis.
                 "target_rule_id": "",
                 "original_rule": "",
                 "proposed_rule": content,
-                "natural_language_explanation": "GPT output was not valid JSON.",
+                "natural_language_explanation": "The model response did not match the structured edit contract.",
+                "failure_reason": str(exc),
                 "modification_cost": 0,
                 "new_events_added": 0,
                 "new_measures_added": 0,

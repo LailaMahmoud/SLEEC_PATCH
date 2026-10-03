@@ -110,6 +110,74 @@ def next_id(base, used):
     return result
 
 
+def immediate_branches(text, response, context=""):
+    """Effective guards for immediate obligations, including exception priority.
+
+    Timed/reparation responses need temporal reasoning; a measure observed at
+    one trigger cannot stand in for its value at a later trigger.
+    """
+    if response.alternative or response.nd:
+        return
+    remaining = context
+    for defeater in reversed(response.defeater):
+        guard = source(text, defeater.expr)
+        if defeater.response is not None:
+            yield from immediate_branches(text, defeater.response, conjunction(remaining, guard))
+        remaining = conjunction(remaining, negation(guard))
+    if not response.occ.limit and not response.occ.inf:
+        yield response, remaining
+
+
+def grouped_conflict_repairs(text, model, targets, operators, add):
+    """Resolve all immediate competitors of a reported rule in one candidate.
+
+    Extra peers are source-derived hypotheses, not added to the solver proof.
+    They must share the trigger and impose the opposite immediate response.
+    """
+    grouped = set()
+    if not {"trigger_refinement", "defeater_introduction"}.intersection(operators):
+        return grouped
+    for rule in targets:
+        branches = list(immediate_branches(text, rule.response))
+        for branch, _ in branches:
+            contexts, peers = [], []
+            for other in model.ruleBlock.rules:
+                if other is rule or other.trigger.event.name != rule.trigger.event.name:
+                    continue
+                for opposite, guard in immediate_branches(text, other.response, source(text, other.condition)):
+                    if (opposite.occ.event.event.name != branch.occ.event.event.name
+                            or opposite.occ.neg == branch.occ.neg or not guard):
+                        continue
+                    if guard not in contexts:
+                        contexts.append(guard)
+                    if other.name not in peers:
+                        peers.append(other.name)
+            # Pairwise generation below already covers one competing rule.
+            if len(peers) < 2:
+                continue
+            grouped.add(rule.name)
+            context = contexts[0]
+            for guard in contexts[1:]:
+                context = f"({context} or {guard})"
+            explanation = (f"Give {', '.join(peers)} priority in their effective measure contexts. "
+                           "These same-trigger, opposite-response rules are source-derived repair hypotheses; review the priority choice.")
+            if "trigger_refinement" in operators:
+                add(rule, "trigger_refinement", with_guard(text, rule,
+                    conjunction(source(text, rule.condition), negation(context))), explanation)
+            if "defeater_introduction" in operators:
+                # Braces are required for an exception inside an exception's
+                # response; a bare trailing unless would affect the whole rule.
+                body = source(text, branch).strip()
+                if branch is rule.response:
+                    replacement = body + f" unless {context}"
+                else:
+                    if body.startswith("{") and body.endswith("}"):
+                        body = body[1:-1].strip()
+                    replacement = "{" + body + f" unless {context}" + "}"
+                add(rule, "defeater_introduction", edit_inside(text, rule, branch, replacement), explanation)
+    return grouped
+
+
 def generate_repairs(text, issue_type, diagnosis, operators):
     allowed = {op for ops in RepairOperatorSelector.BASE_DETERMINISTIC_OPERATORS.values() for op in ops}
     if set(operators) - allowed:
@@ -193,10 +261,14 @@ def generate_repairs(text, issue_type, diagnosis, operators):
                     "Broaden the measure context with OR, retaining the trigger event and complete response.")
             if "rule_decomposition" in operators and main_matches and guard:
                 changed_body = desired + text[rule.response.occ._tx_position_end:rule.response._tx_position_end]
-                proposed = (with_guard(text, rule, conjunction(old_guard, guard), response=changed_body)
-                            + "\n" + with_guard(text, rule, conjunction(old_guard, negation(guard)), next_id(rule.name, used)))
-                add(rule, "rule_decomposition", proposed,
-                    "Enforce the response preventing the concern in its context; preserve the complete original response in the complementary branch.")
+                # Splitting an unchanged response into C / not C is logically
+                # identical to the input. It cannot repair the concern, and can
+                # cause expensive redundant-rule proofs for the new fragments.
+                if compact(changed_body) != compact(source(text, rule.response)):
+                    proposed = (with_guard(text, rule, conjunction(old_guard, guard), response=changed_body)
+                                + "\n" + with_guard(text, rule, conjunction(old_guard, negation(guard)), next_id(rule.name, used)))
+                    add(rule, "rule_decomposition", proposed,
+                        "Enforce the response preventing the concern in its context; preserve the complete original response in the complementary branch.")
             if "deadline_refinement" in operators and main_matches and opposite and not rule.response.occ.neg:
                 selector = RepairOperatorSelector()
                 old = selector.extract_temporal_bound(source(text, rule.response.occ))
@@ -219,9 +291,12 @@ def generate_repairs(text, issue_type, diagnosis, operators):
         return patches
 
     if issue_type in {"conflicts", "situational_conflicts"}:
+        grouped = grouped_conflict_repairs(text, model, targets, operators, add)
         for rule in targets:
             for other in targets:
                 if other is rule:
+                    continue
+                if rule.name in grouped and rule.trigger.event.name == other.trigger.event.name:
                     continue
                 # These proposals explicitly choose which obligation takes
                 # priority. Stakeholder review remains separate from proof.
@@ -248,7 +323,10 @@ def generate_repairs(text, issue_type, diagnosis, operators):
                             continue
                         if context:
                             replacement = conjunction(source(text, defeater.expr), negation(context))
-                        elif other.response.defeater:
+                        elif (other.response.defeater
+                              and rule.trigger.event.name == other.trigger.event.name
+                              and not alt.limit and not alt.inf
+                              and not other.response.occ.limit and not other.response.occ.inf):
                             # Only let this exception apply where the competing
                             # rule has an explicit exception of its own.
                             replacement = conjunction(source(text, defeater.expr), source(text, other.response.defeater[0].expr))
