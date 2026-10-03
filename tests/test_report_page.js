@@ -89,3 +89,15 @@ test("missing recorded diagnosis is not presented as zero issues", async () => {
     assert.match(element("diagnosisOutput").innerHTML, /Not recorded/);
     assert.doesNotMatch(element("diagnosisOutput").innerHTML, /<td\b[^>]*>0<\/td>/);
 });
+
+test("the combined LaTeX download follows the current use-case selection", () => {
+    const {element} = setup();
+    assert.equal(element("latexLink").href, "/api/sleec-patch/download-report-latex?");
+    element("reportUseCase").value = "Case & sample";
+    element("reportUseCase").listeners.change();
+    assert.equal(element("latexLink").href,
+        "/api/sleec-patch/download-report-latex?use_case=Case+%26+sample");
+    element("reportUseCase").value = "";
+    element("reportUseCase").listeners.change();
+    assert.equal(element("latexLink").href, "/api/sleec-patch/download-report-latex?");
+});

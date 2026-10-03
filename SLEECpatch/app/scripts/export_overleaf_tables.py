@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 from services.manual_similarity_evaluator import ManualSimilarityEvaluator
 APP_DIR = Path(__file__).resolve().parents[1]
-REPO_ROOT = APP_DIR.parents[1]
+# The container copies the app to /app/app instead of <repo>/SLEECpatch/app.
+REPO_ROOT = APP_DIR.parent.parent if APP_DIR.parent.name == "SLEECpatch" else APP_DIR.parent
 
 # The application is under:
 #   <repo>/SLEECpatch/app
@@ -156,7 +157,7 @@ def safe_json(value: object) -> dict:
 
 def load_verification_rankings(
     conn: sqlite3.Connection,
-) -> Dict[Tuple[str, str, str], Dict[str, float]]:
+) -> Dict[Tuple[str, str, str, str], Dict[str, float]]:
     """
     Read rank/ranking_score from sleec_patch_verifications.
 
@@ -166,15 +167,21 @@ def load_verification_rankings(
     if not table_exists(conn, "sleec_patch_verifications"):
         return {}
 
-    columns = database_columns(conn, "sleec_patch_verifications")
     rows = conn.execute(
         "SELECT * FROM sleec_patch_verifications"
     ).fetchall()
+    return verification_rankings(rows)
 
-    rankings: Dict[Tuple[str, str, str], Dict[str, float]] = {}
 
-    for row in rows:
-        data = dict(row)
+def verification_rankings(rows) -> Dict[Tuple[str, str, str, str], Dict[str, float]]:
+    """Match rankings to the same repair run, keeping the newest record."""
+    records = sorted((dict(row) for row in rows), key=lambda row: (
+        str(row.get("timestamp") or ""), int(row.get("id") or 0)
+    ))
+
+    rankings: Dict[Tuple[str, str, str, str], Dict[str, float]] = {}
+
+    for data in records:
         patch_json = safe_json(data.get("patch_json"))
         ranking_json = safe_json(data.get("ranking_json"))
 
@@ -198,11 +205,7 @@ def load_verification_rankings(
         if not patch_id:
             continue
 
-        rank = (
-            data.get("rank")
-            if "rank" in columns
-            else None
-        )
+        rank = data.get("rank")
         if rank in (None, "", 0, "0"):
             rank = (
                 ranking_json.get("rank")
@@ -210,11 +213,7 @@ def load_verification_rankings(
                 or 0
             )
 
-        ranking_score = (
-            data.get("ranking_score")
-            if "ranking_score" in columns
-            else None
-        )
+        ranking_score = data.get("ranking_score")
         if ranking_score in (None, ""):
             ranking_score = (
                 ranking_json.get("ranking_score")
@@ -223,13 +222,41 @@ def load_verification_rankings(
                 or 0
             )
 
-        key = (use_case, issue_id, patch_id)
+        key = (use_case, issue_id, patch_id, str(data.get("run_id") or ""))
         rankings[key] = {
             "rank": int(rank or 0),
             "ranking_score": float(ranking_score or 0),
         }
 
     return rankings
+
+
+def with_verification_rankings(rows, rankings) -> List[dict]:
+    result = []
+    for source in rows:
+        row = dict(source)
+        key = tuple(str(row.get(field) or "") for field in (
+            "use_case", "issue_id", "patch_id", "run_id"
+        ))
+        verification = rankings.get(key, {})
+        if not int(row.get("rank") or 0):
+            row["rank"] = int(verification.get("rank", 0))
+        if not float(row.get("ranking_score") or 0):
+            row["ranking_score"] = float(verification.get("ranking_score", 0))
+        result.append(row)
+    return result
+
+
+def load_store_verified_patch_rows(store, use_case: str = "") -> List[dict]:
+    """Use the app's configured PostgreSQL/SQLite store for web downloads."""
+    rows = store.fetch_results(
+        where_clause="verified = 1" + (" AND use_case = ?" if use_case else ""),
+        params=(use_case,) if use_case else (),
+        include_patched_sleec=False,
+        order_by="timestamp ASC, id ASC",
+    )
+    rankings = verification_rankings(store.patch_verifications())
+    return with_verification_rankings(rows, rankings)
 
 
 def load_verified_patch_rows(db_path: Path) -> List[dict]:
@@ -263,6 +290,7 @@ def load_verified_patch_rows(db_path: Path) -> List[dict]:
         if "ranking_score" in result_columns
         else "0 AS ranking_score"
     )
+    run_expr = "run_id" if "run_id" in result_columns else "'' AS run_id"
 
     result_rows = conn.execute(f"""
         SELECT
@@ -290,6 +318,7 @@ def load_verified_patch_rows(db_path: Path) -> List[dict]:
             expert_similarity,
             requires_social_scientist_review,
             timestamp,
+            {run_expr},
             {rank_expr},
             {score_expr}
         FROM sleec_patch_results
@@ -297,31 +326,9 @@ def load_verified_patch_rows(db_path: Path) -> List[dict]:
         ORDER BY use_case, issue_id, timestamp, id
     """).fetchall()
 
-    verification_rankings = load_verification_rankings(conn)
+    rankings = load_verification_rankings(conn)
     conn.close()
-
-    rows: List[dict] = []
-
-    for sqlite_row in result_rows:
-        row = dict(sqlite_row)
-        key = (
-            str(row.get("use_case") or ""),
-            str(row.get("issue_id") or ""),
-            str(row.get("patch_id") or ""),
-        )
-        verification = verification_rankings.get(key, {})
-
-        if not int(row.get("rank") or 0):
-            row["rank"] = int(verification.get("rank", 0))
-
-        if not float(row.get("ranking_score") or 0):
-            row["ranking_score"] = float(
-                verification.get("ranking_score", 0)
-            )
-
-        rows.append(row)
-
-    return rows
+    return with_verification_rankings(result_rows, rankings)
 
 
 def latest_rows_per_patch(rows: Sequence[dict]) -> List[dict]:
@@ -376,9 +383,9 @@ def compute_manual_similarity(rows: Sequence[dict]) -> List[dict]:
             if not file_pair:
                 print(
                     f"WARNING: no SLEEC files found for {use_case}; "
-                    "M-Sim set to 0."
+                    "M-Sim unavailable."
                 )
-                row["expert_similarity"] = 0.0
+                row["expert_similarity"] = None
                 evaluated_rows.append(row)
                 continue
 
@@ -387,12 +394,12 @@ def compute_manual_similarity(rows: Sequence[dict]) -> List[dict]:
             original_path = SLEEC_DIR / original_name
             corrected_path = SLEEC_DIR / corrected_name
 
-            if not original_path.exists() or not corrected_path.exists():
+            if not original_path.is_file() or not corrected_path.is_file():
                 print(
                     f"WARNING: original/corrected SLEEC missing for "
-                    f"{use_case}; M-Sim set to 0."
+                    f"{use_case}; M-Sim unavailable."
                 )
-                row["expert_similarity"] = 0.0
+                row["expert_similarity"] = None
                 evaluated_rows.append(row)
                 continue
 
@@ -526,7 +533,7 @@ def generate_patch_results_table(rows: Sequence[dict]) -> str:
                 str(int(row.get("actions_refined") or 0)),
                 str(int(row.get("capabilities_refined") or 0)),
                 str(rank) if rank > 0 else "--",
-                f'{float(row.get("expert_similarity") or 0):.2f}',
+                f'{float(row["expert_similarity"]):.2f}' if row.get("expert_similarity") is not None else "--",
                 latex_escape(row.get("source")),
                 yes_no(row.get("requires_social_scientist_review")),
             ]
@@ -663,7 +670,7 @@ def extract_declared_capabilities(text: str) -> set[str]:
 
     return events | measures
 def parse_spec(path: Path) -> ParsedSpec:
-    if not path.exists():
+    if not path.is_file():
         return ParsedSpec({}, set(), 0, 0)
     text = path.read_text(encoding="utf-8", errors="replace")
     rules = parse_rule_blocks(text)
@@ -793,7 +800,7 @@ def generate_manual_similarity_details_table(
             r"Trig., Resp., Pol., Def., and Temp. denote trigger, "
             r"response, polarity, defeater, and temporal similarity, "
             r"respectively. A dash indicates that a component is not "
-            r"applicable to the repair comparison.}"
+            r"applicable or its reference specification is unavailable.}"
         ),
         r"\label{tab:manual-similarity-details}",
         r"\centering",
@@ -860,13 +867,16 @@ def generate_manual_similarity_details_table(
 def build_overleaf_exports(
     db_path: Path = DB_PATH,
     use_case: str = "",
+    *,
+    store=None,
 ) -> Dict[str, str]:
+    # Explicit SQLite paths remain supported by the co-author's local CLI.
+    # Web routes supply the live store and never open a separate local database.
+    source_rows = (load_store_verified_patch_rows(store, use_case) if store is not None
+                   else load_verified_patch_rows(db_path))
     rows = latest_rows_per_patch(
-    filter_rows_by_use_case(
-        load_verified_patch_rows(db_path),
-        use_case=use_case,
+        filter_rows_by_use_case(source_rows, use_case=use_case)
     )
-)
 
     # Compute fresh patch-level M-Sim using the expert-corrected SLEEC.
     # This updates only the in-memory rows; the database remains unchanged.
@@ -886,6 +896,9 @@ def build_overleaf_exports(
     bundle_lines = [
     "% Auto-generated by SLEEC-PATCH.",
     "% Import this file or copy the tables below into Overleaf.",
+    r"% Required in the document preamble: \usepackage{booktabs,multirow,graphicx}",
+    "% Contains results, component-level manual similarity, and specification comparison.",
+    "% Missing cumulative SLEEC-PATCH specifications are shown as --; candidates are not combined here.",
     "",
     patch_results.strip(),
     "",

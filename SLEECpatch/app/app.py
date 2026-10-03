@@ -642,18 +642,20 @@ def api_sleec_patch_download_report_json():
 @app.route("/api/sleec-patch/download-report-latex", methods=["GET"])
 def api_sleec_patch_download_report_latex():
     use_case, _include_patched_sleec = report_request_options()
-    latex_exports = build_overleaf_exports(use_case=use_case)
+    latex_exports = build_overleaf_exports(use_case=use_case, store=sleec_patch_engine.store)
     latex_text = latex_exports[
         f"sleec_patch_report_{overleaf_export_suffix(use_case)}.tex"
     ]
     buffer = io.BytesIO(latex_text.encode("utf-8"))
     buffer.seek(0)
-    return send_file(
+    response = send_file(
         buffer,
         mimetype="application/x-tex",
         as_attachment=True,
         download_name=report_latex_download_name(use_case)
     )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @app.route("/api/sleec-patch/download-report-zip", methods=["GET"])
@@ -663,7 +665,7 @@ def api_sleec_patch_download_report_zip():
         use_case=use_case,
         include_patched_sleec=include_patched_sleec
     )
-    latex_exports = build_overleaf_exports(use_case=use_case)
+    latex_exports = build_overleaf_exports(use_case=use_case, store=sleec_patch_engine.store)
 
     buffer = io.BytesIO()
 

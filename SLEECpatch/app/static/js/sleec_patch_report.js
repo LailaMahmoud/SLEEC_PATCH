@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "includePatchedSleec",
         "loadReportButton",
         "jsonLink",
+        "latexLink",
         "reportScope",
         "statPatches",
         "statPatchesSub",
@@ -95,6 +96,9 @@ function reportUrl() {
 
 function updateJsonLink() {
     reportEls.jsonLink.href = reportUrl();
+    const params = new URLSearchParams();
+    if (reportEls.reportUseCase.value) params.set("use_case", reportEls.reportUseCase.value);
+    reportEls.latexLink.href = `/api/sleec-patch/download-report-latex?${params.toString()}`;
 }
 
 function renderReport() {

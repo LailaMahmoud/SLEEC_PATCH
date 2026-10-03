@@ -13,6 +13,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import Mock, patch
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -271,6 +272,30 @@ class DeploymentRoutesTests(unittest.TestCase):
         self.assertIn('attachment', response.headers['Content-Disposition'])
         self.assertEqual(response.json['report_metrics']['repair_run_count'], 1)
         self.assertEqual(response.json['recorded_diagnoses'][0]['issue_count'], 9)
+
+    def test_latex_download_combines_results_similarity_and_comparison(self):
+        self.engine.store.save_result({'use_case': 'ALMI', 'issue_id': 'c1', 'patch_id': 'latex-patch',
+            'source': 'deterministic', 'verified': True, 'operation': 'rule_removal', 'target_rule_id': 'R1'})
+        self.engine.store.save_result({'use_case': 'DAISY', 'patch_id': 'excluded-patch', 'verified': True})
+        response = self.client.get('/api/sleec-patch/download-report-latex?use_case=ALMI')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('sleec-patch-report-almi.tex', response.headers['Content-Disposition'])
+        self.assertEqual(response.headers['Cache-Control'], 'no-store')
+        text = response.get_data(as_text=True)
+        self.assertEqual(text.count(r'\begin{table*}'), 3)
+        self.assertIn(r'\label{tab:manual-similarity-details}', text)
+        self.assertIn('latex-patch', text)
+        self.assertNotIn('excluded-patch', text)
+        page = self.client.get('/sleec-patch-report').get_data(as_text=True)
+        self.assertIn('id="latexLink"', page)
+
+    def test_existing_zip_export_uses_the_live_store_for_latex_too(self):
+        response = self.client.get('/api/sleec-patch/download-report-zip?use_case=ALMI')
+        self.assertEqual(response.status_code, 200)
+        with zipfile.ZipFile(io.BytesIO(response.data)) as archive:
+            text = archive.read('latex/sleec_patch_report_almi.tex').decode()
+            self.assertIn(r'\label{tab:manual-similarity-details}', text)
+            self.assertIn('No verified patch results', text)
 
 
 if __name__ == '__main__':
