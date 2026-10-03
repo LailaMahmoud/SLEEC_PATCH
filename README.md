@@ -64,14 +64,13 @@ Deterministic:
 LLM-assisted:
 - Event Specialization
 - Measure Specialization
-- Semantic Rule Merging
-
+- Response Refinement
 ### Concerns / Insufficiencies
 Deterministic:
 - Trigger Strengthening
-- Defeater Introduction
+- Defeater Refinement
 - Rule Decomposition
-- Temporal Refinement
+- Deadline Refinement
 
 LLM-assisted:
 - New Rule Generation
@@ -84,13 +83,15 @@ Deterministic:
 LLM-assisted:
 - Event Specialization
 - Measure Specialization
+- Response Refinement
+
 
 ### Purpose Blocking / Restrictiveness
 Deterministic:
-- Purpose-specific Defeater
+- Defeater Introduction
 
 LLM-assisted:
-- Capability Refinement
+- Response Refinement
 
 ## Prerequisites
 
