@@ -15,6 +15,8 @@ from services.patch_ranker import PatchRanker
 from services.use_case_descriptions import get_use_case_description
 from services.semantic_patch_validator import SemanticPatchValidator
 from services.diagnosis_evidence import diagnosis_for_issue
+from services.repair_diagnosis_bridge import RepairDiagnosisBridge
+from services.patch_verification_bridge import PatchVerificationBridge
 
 class SLEECPatchWorkbenchEngine:
 
@@ -248,15 +250,18 @@ class SLEECPatchWorkbenchEngine:
         rule_references_by_type = structured.get("rule_references_by_type", {})
         related_rules_by_type = structured.get("related_rules_by_type", {})
 
-        for issue_type, items in structured.items():
+        # Only genuine WFI categories become selectable issues.
+        # Metadata such as diagnoses_by_type must never be counted as a WFI.
+        wfi_types = (
+            "concerns",
+            "conflicts",
+            "purpose_blocking",
+            "redundancies",
+            "situational_conflicts",
+        )
 
-            if issue_type in {
-                "original_rules_by_type",
-                "wfi_artifacts_by_type",
-                "rule_references_by_type",
-                "related_rules_by_type",
-            }:
-                continue
+        for issue_type in wfi_types:
+            items = structured.get(issue_type, [])
 
             for index, item in enumerate(items, start=1):
 
@@ -809,7 +814,7 @@ class SLEECPatchWorkbenchEngine:
         # Replace the primary diagnosed rule with the merged rule
         # and remove the other diagnosed conflicting rule(s).
         # ---------------------------------------------------------
-        if operation in {"rule_merging", "semantic_rule_merging"}:
+        if operation == "rule_merging":
             if not proposed_rule:
                 return sleec_text
 
@@ -1866,6 +1871,47 @@ class SLEECPatchWorkbenchEngine:
             selected_issue_value,
             issue.get("id")
         )
+        # ----------------------------------------------------------
+        # Bridge formal LEGOS diagnosis to repair generation.
+        #
+        # The selected detector diagnosis remains authoritative.
+        # Repair-derived information is added separately and does
+        # not overwrite the formal diagnosis.
+        # ----------------------------------------------------------
+        diagnosis_bridge = RepairDiagnosisBridge()
+
+        repair_evidence = diagnosis_bridge.build(
+            sleec_text=sleec_text,
+            issue_type=issue_key,
+            issue=issue,
+            diagnosis=selected_diagnosis,
+        )
+
+        # Use the preserved authoritative diagnosis downstream.
+        selected_diagnosis = repair_evidence["diagnosis"]
+
+        print("\n========== REPAIR DIAGNOSIS BRIDGE ==========")
+        print("PROVENANCE:",
+              repair_evidence.get("diagnosis_provenance"))
+        print("SOURCE ID:",
+              selected_diagnosis.get("source_id"))
+        print("TRACE:",
+              selected_diagnosis.get("trace", []))
+        print("AFFECTED RULES:",
+              selected_diagnosis.get("affected_rule_ids", []))
+        print("TARGET RULES:",
+              repair_evidence["repair_context"].get(
+                  "target_rule_ids", []
+              ))
+        print("RELATED CANDIDATE RULES:",
+              repair_evidence["repair_context"].get(
+                  "candidate_related_rule_ids", []
+              ))
+        print("SEMANTIC RULES:",
+              repair_evidence["repair_context"].get(
+                  "semantic_rule_ids", []
+              ))
+        print("=============================================\n")
 
         print("\n========== SELECTED STRUCTURED DIAGNOSIS ==========")
         print("ISSUE ID:", issue.get("id"))
@@ -1918,18 +1964,55 @@ class SLEECPatchWorkbenchEngine:
             issue_key: [selected_issue_value]
         }
 
-        # Diagnosed rules referenced by the selected WFI.
-        # Reuse the same extraction logic as the repair-operator selector.
-        diagnosed_issue_rules = self.operator_selector.find_issue_rules(
-            selected_issue_value,
-            rules_json
-        )
+        # ----------------------------------------------------------
+        # Resolve repair-target rules from the diagnosis bridge.
+        #
+        # The bridge is primary because it preserves the exact LEGOS
+        # diagnosis and adds repair-derived target information.
+        #
+        # Text-based rule discovery is retained only as a legacy
+        # fallback when the bridge cannot identify any usable rule.
+        # ----------------------------------------------------------
 
-        diagnosed_rule_ids = [
-            str(rule.get("id", "")).strip()
-            for rule in diagnosed_issue_rules
-            if str(rule.get("id", "")).strip()
+        bridge_context = repair_evidence.get("repair_context", {})
+
+        diagnosed_rule_ids = list(dict.fromkeys(
+            bridge_context.get("semantic_rule_ids", [])
+            or bridge_context.get("target_rule_ids", [])
+        ))
+
+        diagnosed_issue_rules = [
+            rule
+            for rule in rules_json
+            if str(rule.get("id", "")).strip() in diagnosed_rule_ids
         ]
+
+        # Legacy fallback: do not lose the old working behaviour.
+        if not diagnosed_issue_rules:
+            diagnosed_issue_rules = self.operator_selector.find_issue_rules(
+                selected_issue_value,
+                rules_json
+            )
+
+            diagnosed_rule_ids = [
+                str(rule.get("id", "")).strip()
+                for rule in diagnosed_issue_rules
+                if str(rule.get("id", "")).strip()
+            ]
+
+        print("\n========== REPAIR TARGET RESOLUTION ==========")
+        print("BRIDGE TARGET IDS:",
+              bridge_context.get("target_rule_ids", []))
+        print("BRIDGE SEMANTIC IDS:",
+              bridge_context.get("semantic_rule_ids", []))
+        print("FINAL TARGET IDS:",
+              diagnosed_rule_ids)
+        print("TARGET SOURCE:",
+              "bridge" if (
+                  bridge_context.get("semantic_rule_ids")
+                  or bridge_context.get("target_rule_ids")
+              ) else "legacy_fallback")
+        print("=============================================\n")
 
         semantic_ops = operator_plan.get("llm", [])
         llm_patches = []
@@ -2117,21 +2200,69 @@ class SLEECPatchWorkbenchEngine:
                 print(f"\nGPT CANDIDATE {idx}:")
                 print(candidate)
             print("==========================================\n")
-            from services.structured_semantic_edit import materialize_semantic_edit
+            # Prepare GPT proposals for formal verification while preserving
+            # the exact generated proposal and diagnosis provenance.
+            verification_bridge = PatchVerificationBridge()
+
             materialized = []
             resolution = operator_plan.get("target_resolution", {})
+
+            allowed_rule_ids = resolution.get(
+                "semantic_rule_ids",
+                resolution.get("rule_ids", [])
+            )
+            addition_scope = resolution.get("addition_scope")
+
             for proposal in llm_patches:
-                try:
-                    if "change" not in proposal:
-                        raise ValueError("Expected a structured operator edit, not a rewritten rule.")
-                    candidate = materialize_semantic_edit(sleec_text, proposal,
-                        resolution.get("semantic_rule_ids", resolution.get("rule_ids", [])), resolution.get("addition_scope"))
-                    candidate["allowed_rule_ids"] = resolution.get("semantic_rule_ids", resolution.get("rule_ids", []))
-                    candidate["addition_scope"] = resolution.get("addition_scope")
+                bridge_result = verification_bridge.prepare(
+                    sleec_text=sleec_text,
+                    candidate=proposal,
+                    allowed_rule_ids=allowed_rule_ids,
+                    addition_scope=addition_scope,
+                    repair_evidence=repair_evidence,
+                )
+
+                if bridge_result.get("success"):
+                    candidate = bridge_result["executable_patch"]
                     materialized.append(candidate)
-                except ValueError as exc:
-                    failed_patches.append({**proposal, "verified": False, "failure_reason": str(exc)})
+
+                    print("\n========== PATCH VERIFICATION BRIDGE ==========")
+                    print("OPERATION:", proposal.get("operation"))
+                    print("TARGET:", proposal.get("target_rule_id"))
+                    print("MATERIALIZED: True")
+                    print("===============================================\n")
+
+                else:
+                    failure = {
+                        **proposal,
+                        "verified": False,
+                        "failure_stage": "materialization",
+                        "failure_reason": bridge_result.get(
+                            "materialization", {}
+                        ).get(
+                            "error",
+                            "Unable to materialize semantic repair."
+                        ),
+                        "generated_candidate": bridge_result.get(
+                            "generated_candidate",
+                            proposal
+                        ),
+                        "repair_provenance": bridge_result.get(
+                            "provenance",
+                            {}
+                        ),
+                    }
+
+                    failed_patches.append(failure)
                     failed_patch_count += 1
+
+                    print("\n========== PATCH VERIFICATION BRIDGE ==========")
+                    print("OPERATION:", proposal.get("operation"))
+                    print("TARGET:", proposal.get("target_rule_id"))
+                    print("MATERIALIZED: False")
+                    print("ERROR:", failure["failure_reason"])
+                    print("===============================================\n")
+
             llm_patches = materialized
             for i, p in enumerate(llm_patches, start=1):
                 p["patch_id"] = f"g{i}"

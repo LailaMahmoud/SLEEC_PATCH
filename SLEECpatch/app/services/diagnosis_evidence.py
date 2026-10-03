@@ -94,6 +94,39 @@ def referenced_sources(report, sources):
     return [source for _, source in sorted(matches, key=lambda item: item[0])]
 
 
+
+def referenced_sources_by_id(report, sources):
+    """
+    Match a LEGOS finding to an AST source by its exact declaration ID.
+
+    Concern and purpose reports preserve identifiers such as c4, c7, c8,
+    even when LEGOS normalizes the printed source text differently from
+    the original AST source span.
+    """
+    matches = []
+
+    for source in sources:
+        source_id = str(source.get("id", "")).strip()
+
+        if not source_id:
+            continue
+
+        pattern = (
+            r"(?m)^[ \t]*"
+            + re.escape(source_id)
+            + r"(?=[ \t]+(?:when|exists)\b)"
+        )
+
+        match = re.search(pattern, report)
+
+        if match:
+            matches.append((match.start(), source))
+
+    return [
+        source
+        for _, source in sorted(matches, key=lambda item: item[0])
+    ]
+
 def extract_evidence(detector_type, message, sleec_text):
     marker = REPORT_MARKERS[detector_type]
     if marker not in message:
@@ -112,9 +145,44 @@ def extract_evidence(detector_type, message, sleec_text):
         raw_report = block.strip()
         trace = parse_trace(raw_report, catalog["measure_types"])
         source_kind = detector_type if detector_type in ("concern", "purpose") else "rule"
-        sources = referenced_sources(raw_report, catalog[source_kind])
+
+        # Concern and purpose findings carry their declaration ID in the
+        # LEGOS report. Prefer exact ID matching because printed formatting
+        # may differ from the AST source span.
+        if detector_type in ("concern", "purpose"):
+            sources = referenced_sources_by_id(
+                raw_report,
+                catalog[source_kind],
+            )
+
+            # Compatibility fallback for reports where the declaration ID
+            # is not printed in the expected form.
+            if not sources:
+                sources = referenced_sources(
+                    raw_report,
+                    catalog[source_kind],
+                )
+        else:
+            sources = referenced_sources(
+                raw_report,
+                catalog[source_kind],
+            )
+
         if not sources:
-            raise ValueError(f"Cannot identify the source of the {detector_type} finding.")
+            # LEGOS may append solver/debug blocks such as
+            # "check concern_1 ... Concern is raised" after the actual
+            # source finding. Those blocks contain witness output but no
+            # source declaration (for example, no "c1 when ...").
+            #
+            # They are not independent findings and must not cause already
+            # extracted formal evidence to be discarded.
+            if detector_type in ("concern", "purpose"):
+                continue
+
+            raise ValueError(
+                f"Cannot identify the source of the {detector_type} finding."
+            )
+
         source = sources[0]
         rule_report = raw_report
         if detector_type == "concern":
