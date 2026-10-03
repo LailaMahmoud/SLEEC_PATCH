@@ -138,12 +138,15 @@ def materialize_semantic_edit(text, proposal, allowed_rule_ids, addition_scope=N
             change,
             ("rule_id", "trigger_event", "condition",
              "response_event", "negated", "deadline"),
+            ("requested_rule_id",),
         )
 
         # GPT supplies semantic content. The application owns the final
         # identifier so a model-generated ID can never collide with the
         # current SLEEC namespace.
-        requested_rule_id = symbol(change["rule_id"])
+        requested_rule_id = symbol(
+            change.get("requested_rule_id") or change["rule_id"]
+        )
         new_id = fresh_rule_id(declared_names)
 
         trigger = symbol(change["trigger_event"])
