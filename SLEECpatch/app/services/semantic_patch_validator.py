@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 from typing import List
 
 
@@ -29,10 +30,13 @@ class SemanticPatchValidator:
         if patch.get("change"):
             from services.structured_semantic_edit import materialize_semantic_edit
             keys = {"operation", "target_rule_id", "change", "natural_language_explanation", "source_requirement_id"}
-            proposal = {k: v for k, v in patch.items() if k in keys}
+            proposal = deepcopy(
+                {k: v for k, v in patch.items() if k in keys}
+            )
             try:
                 checked = materialize_semantic_edit(sleec_text, proposal,
-                    patch.get("allowed_rule_ids", []), patch.get("addition_scope"))
+                    list(patch.get("allowed_rule_ids", [])),
+                    deepcopy(patch.get("addition_scope")))
                 if checked["proposed_rule"] != patch.get("proposed_rule") or checked["declaration_text"] != patch.get("declaration_text") or checked["additional_rule_edits"] != patch.get("additional_rule_edits", {}):
                     raise ValueError("The candidate differs from its declared structured edit.")
                 return {"valid": True, "errors": [], "warnings": ["Domain meaning requires stakeholder review."],

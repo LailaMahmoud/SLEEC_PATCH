@@ -844,6 +844,7 @@ class SLEECPatchWorkbenchEngine:
         resolved = [before_records[key] for key in resolved_keys]
         remaining = [after_records[key] for key in remaining_keys]
 
+
         return {
             "selected_issue_fixed": selected_fixed,
             "new_issues_introduced": len(introduced) > 0,
@@ -1872,6 +1873,7 @@ class SLEECPatchWorkbenchEngine:
             verification_bridge = PatchVerificationBridge()
 
             materialized = []
+            surfaced_llm_candidates = []
             resolution = operator_plan.get("target_resolution", {})
 
             allowed_rule_ids = resolution.get(
@@ -1893,7 +1895,10 @@ class SLEECPatchWorkbenchEngine:
                 if bridge_result.get("success"):
                     candidate = bridge_result["executable_patch"]
                     candidate["diagnosis"] = copy.deepcopy(selected_diagnosis)
+                    candidate["materialization_status"] = "success"
+                    candidate["materialization_error"] = None
                     materialized.append(candidate)
+                    surfaced_llm_candidates.append(candidate)
 
                     print("\n========== PATCH VERIFICATION BRIDGE ==========")
                     print("OPERATION:", proposal.get("operation"))
@@ -1923,12 +1928,30 @@ class SLEECPatchWorkbenchEngine:
                         ),
                     }
 
+                    failure["materialization_status"] = "failed"
+                    failure["materialization_error"] = failure.get(
+                        "failure_reason"
+                    )
+                    failure["formally_verified"] = False
+                    failure["candidate_status"] = "materialization_failed"
+
                     update_candidate_status(failure)
-                    llm_candidates.append(failure)
-                    self.store.save_patch_candidate({"run_id": run_id, "use_case": use_case,
-                        "issue_id": issue.get("id", ""), "issue_type": issue_key, "attempt": attempts,
-                        "candidate_signature": self.patch_signature_text(failure), "patch": failure})
+
+                    self.store.save_patch_candidate({
+                        "run_id": run_id,
+                        "use_case": use_case,
+                        "issue_id": issue.get("id", ""),
+                        "issue_type": issue_key,
+                        "attempt": attempts,
+                        "candidate_signature": self.patch_signature_text(failure),
+                        "candidate_status": failure.get(
+                            "candidate_status",
+                            "materialization_failed"
+                        ),
+                        "patch": failure,
+                    })
                     failed_patches.append(failure)
+                    surfaced_llm_candidates.append(failure)
                     failed_patch_count += 1
 
                     print("\n========== PATCH VERIFICATION BRIDGE ==========")
@@ -1939,13 +1962,22 @@ class SLEECPatchWorkbenchEngine:
                     print("===============================================\n")
 
             llm_patches = materialized
-            for i, p in enumerate(llm_patches, start=1):
+            #llm_patches = materialized
+
+            for i, p in enumerate(surfaced_llm_candidates, start=1):
                 p.setdefault("patch_id", f"g{i}")
-                p["id"] = p["patch_id"]
+                p.setdefault("id", p["patch_id"])
                 p["source"] = p.get("source", "llm")
 
-                if p.get("operation") == "semantic_rule_merging":
-                    p["rule_ids"] = diagnosed_rule_ids
+            for i, p in enumerate(llm_patches, start=1):
+                p.setdefault("patch_id", f"g{i}")
+                p.setdefault("id", f"g{i}")
+                p["source"] = p.get("source", "llm")
+
+            for i, p in enumerate(llm_patches, start=1):
+                p.setdefault("patch_id", f"g{i}")
+                p.setdefault("id", f"g{i}")
+                p["source"] = p.get("source", "llm")
 
                 self.store.save_patch_candidate({
                     "run_id": run_id,
@@ -1958,9 +1990,12 @@ class SLEECPatchWorkbenchEngine:
                     "patch": p
                 })
 
-            llm_candidates.extend(llm_patches)
+            llm_candidates.extend(surfaced_llm_candidates)
             generation_time += time.time() - start_generation
 
+            # Only successfully materialized candidates enter LEGOS
+            # formal verification. Materialization failures remain visible
+            # through llm_candidates/failed_patches.
             for patch in llm_patches:
                 normalized_patch = self.normalize_patch(patch, sleec_text)
 
