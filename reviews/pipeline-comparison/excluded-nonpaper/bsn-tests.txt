@@ -5,7 +5,6 @@ test_complex_unknown_and_duplicate_concern_sources_are_not_completed (test_bsn_r
 test_full_llm_path_accepts_concern_anchor_without_existing_rule_target (test_bsn_repairs.BSNRepairTests.test_full_llm_path_accepts_concern_anchor_without_existing_rule_target) ... /Users/ayobamidele/Documents/PhD/codes/sleec/sleec/sleecParser.py:754: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
   res = check_property_refining(rule.get_premise(), set(),
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/Users/ayobamidele/Documents/PhD/codes/sleec/sleec/sleecParser.py:1099: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
   res = check_property_refining(rule.get_neg_rule(), set(),
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
 ok

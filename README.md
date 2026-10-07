@@ -55,11 +55,13 @@ SLEEC-PATCH currently considers:
 
 ## Repair Operators
 
-### Situational Conflicts
+Repair Operators
+Situational Conflicts
 Deterministic:
-- Trigger Refinement
-- Defeater Introduction
-- Rule Merging
+
+Trigger Refinement
+Defeater Introduction
+Rule Merging
 
 LLM-assisted:
 - Event Specialization
@@ -73,12 +75,14 @@ Deterministic:
 - Deadline Refinement
 
 LLM-assisted:
-- New Rule Generation
 
-### Redundancies
+New Rule Generation
+
+Redundancies
 Deterministic:
-- Rule Removal
-- Defeater Propagation
+
+Rule Removal
+Defeater Propagation
 
 LLM-assisted:
 - Event Specialization
@@ -86,10 +90,15 @@ LLM-assisted:
 - Response Refinement
 
 
-### Purpose Blocking / Restrictiveness
+Event Specialization
+Measure Specialization
+Response Refinement
+
+Purpose Blocking / Restrictiveness
 Deterministic:
 - Defeater Introduction
 
+Defeater Introduction
 LLM-assisted:
 - Response Refinement
 
