@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 DEFAULT_INPUT = Path(
-    "/Users/ayobamidele/Documents/postgres_full_database_log_export/"
+    "/Users//Documents/postgres_full_database_log_export/"
     "postgres_evaluation_details.csv"
 )
 
