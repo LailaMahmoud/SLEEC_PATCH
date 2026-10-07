@@ -64,18 +64,15 @@ Defeater Introduction
 Rule Merging
 
 LLM-assisted:
-
-Event Specialization
-Measure Specialization
-Response Refinement
-
-Concerns / Insufficiencies
+- Event Specialization
+- Measure Specialization
+- Response Refinement
+### Concerns / Insufficiencies
 Deterministic:
-
-Trigger Strengthening
-Defeater Refinement
-Rule Decomposition
-Deadline Refinement
+- Trigger Strengthening
+- Defeater Refinement
+- Rule Decomposition
+- Deadline Refinement
 
 LLM-assisted:
 
@@ -88,6 +85,10 @@ Rule Removal
 Defeater Propagation
 
 LLM-assisted:
+- Event Specialization
+- Measure Specialization
+- Response Refinement
+
 
 Event Specialization
 Measure Specialization
@@ -95,11 +96,11 @@ Response Refinement
 
 Purpose Blocking / Restrictiveness
 Deterministic:
+- Defeater Introduction
 
 Defeater Introduction
 LLM-assisted:
-
-Response Refinement
+- Response Refinement
 
 ## Prerequisites
 

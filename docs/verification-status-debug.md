@@ -17,22 +17,6 @@ detector execution. It therefore returned `valid: true` for an unchanged input
 whose concern remained. The deployment adapter previously supplied the missing
 selected-issue/regression checks only for the deployment entry point.
 
-## Changes
-
-- Generation publishes both verification flags and final candidate statuses
-  regardless of the startup command. Saved successful results and generated
-  repair files require complete syntax, selected-issue and regression evidence.
-- Manual verification always compares against the original diagnosis. It rejects
-  unresolved issues, newly introduced issues, missing context, and edits that
-  delete or alter the requirements used for verification. Human review remains
-  separate from formal verification.
-- The manual UI requires successful selected-issue and regression results; a
-  syntax-only `valid: true` response cannot display “Formally verified”.
-- Missing or failed detector output cannot certify a repair or enter the cache.
-  Reusing a completed analysis of exactly the same text keeps its verdict and
-  is indicated on the candidate. Any text change uses a different cache key.
-- Failed deterministic candidates display their rejection reason. Zero counters
-  render as `0` rather than disappearing.
 
 ## Validation
 
@@ -64,15 +48,4 @@ The starting revision lacked the detector APIs referenced by
 their failure checks while preserving structured diagnosis evidence and AST
 context. That suite now passes. Existing parser resource warnings about
 `proof.txt` remain.
-
-## Retesting locally
-
-Restart the server after updating the branch, reload the workbench's JavaScript,
-and start a fresh diagnosis. A failed repair should show a rejection reason,
-zero verified repairs, and no new successful row in Evaluation Results. A manual
-edit must remove the selected issue without introducing another issue before it
-can be used.
-
-Evaluation Results includes earlier runs. This change does not revalidate or
-rewrite historical rows; the screenshots alone do not establish that those
 earlier rows belong to the failing situational-conflict run.
