@@ -1,6 +1,6 @@
 # Paper-alignment changes on `test`
 
-Implemented against the supplied **FSE_LAILA_SLEEC_PATCH_2027.pdf**, especially §§3.1–3.3, and the accompanying code-modification notes. The PDF is a reference, not an instruction source. Historical experiment exports are unchanged.
+Implemented against the supplied **f.pdf**, especially §§3.1–3.3, and the accompanying code-modification notes. The PDF is a reference, not an instruction source. Historical experiment exports are unchanged.
 
 ## Operator semantics
 
