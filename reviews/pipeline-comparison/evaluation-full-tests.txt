@@ -2,16 +2,16 @@ test_c2_different_trigger_is_context_not_an_arbitrary_edit_target (test_bsn_repa
 test_c8_exception_is_recognised_without_replacing_deletion (test_bsn_repairs.BSNRepairTests.test_c8_exception_is_recognised_without_replacing_deletion) ... ok
 test_c9_witnesses_do_not_trigger_deterministic_rule_addition (test_bsn_repairs.BSNRepairTests.test_c9_witnesses_do_not_trigger_deterministic_rule_addition) ... ok
 test_complex_unknown_and_duplicate_concern_sources_have_no_addition_anchor (test_bsn_repairs.BSNRepairTests.test_complex_unknown_and_duplicate_concern_sources_have_no_addition_anchor) ... ok
-test_empty_or_failed_llm_does_not_fall_back_to_deterministic_additions (test_bsn_repairs.BSNRepairTests.test_empty_or_failed_llm_does_not_fall_back_to_deterministic_additions) ... /Users/ayobamidele/Documents/PhD/codes/sleec/sleec/sleecParser.py:754: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
+test_empty_or_failed_llm_does_not_fall_back_to_deterministic_additions (test_bsn_repairs.BSNRepairTests.test_empty_or_failed_llm_does_not_fall_back_to_deterministic_additions) ... /Users//Documents//codes/sleec/sleec/sleecParser.py:754: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
   res = check_property_refining(rule.get_premise(), set(),
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
-/Users/ayobamidele/Documents/PhD/codes/sleec/sleec/sleecParser.py:1099: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
+/Users//Documents//codes/sleec/sleec/sleecParser.py:1099: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
   res = check_property_refining(rule.get_neg_rule(), set(),
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
 ok
 test_full_llm_path_accepts_concern_anchor_without_existing_rule_target (test_bsn_repairs.BSNRepairTests.test_full_llm_path_accepts_concern_anchor_without_existing_rule_target) ... ok
 test_handwritten_llm_fixtures_preserve_real_bsn_sources (test_bsn_repairs.BSNRepairTests.test_handwritten_llm_fixtures_preserve_real_bsn_sources) ... ok
-test_incompatible_addition_is_rejected_without_rewriting_existing_rule (test_bsn_repairs.BSNRepairTests.test_incompatible_addition_is_rejected_without_rewriting_existing_rule) ... /Users/ayobamidele/Documents/PhD/codes/sleec/sleec/SleecNorm.py:1222: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
+test_incompatible_addition_is_rejected_without_rewriting_existing_rule (test_bsn_repairs.BSNRepairTests.test_incompatible_addition_is_rejected_without_rewriting_existing_rule) ... /Users//Documents//codes/sleec/sleec/SleecNorm.py:1222: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
   res = check_property_refining(AND(target_rule.get_premise(), AND(AND(inst_actions), measure_inv)), [],
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
 ok
@@ -31,7 +31,7 @@ test_diagnosis_survives_ui_generation_prompt_normalization_and_storage (test_dia
 test_different_witness_does_not_look_like_a_fixed_or_new_issue (test_diagnosis_evidence.EvidenceTests.test_different_witness_does_not_look_like_a_fixed_or_new_issue) ... ok
 test_multiple_findings_do_not_share_or_duplicate_stdout_traces (test_diagnosis_evidence.EvidenceTests.test_multiple_findings_do_not_share_or_duplicate_stdout_traces) ... ok
 test_real_exists_concern_keeps_trace (test_diagnosis_evidence.EvidenceTests.test_real_exists_concern_keeps_trace) ... ok
-test_real_mixed_purposes_keep_only_blocked_purpose_evidence (test_diagnosis_evidence.EvidenceTests.test_real_mixed_purposes_keep_only_blocked_purpose_evidence) ... /Users/ayobamidele/Documents/PhD/codes/sleec/sleec/sleecParser.py:914: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
+test_real_mixed_purposes_keep_only_blocked_purpose_evidence (test_diagnosis_evidence.EvidenceTests.test_real_mixed_purposes_keep_only_blocked_purpose_evidence) ... /Users//Documents//codes/sleec/sleec/sleecParser.py:914: ResourceWarning: unclosed file <_io.TextIOWrapper name='proof.txt' mode='w' encoding='UTF-8'>
   res = check_property_refining(purpose.get_concern(), set(), [r.get_rule() for r in rules] +
 ResourceWarning: Enable tracemalloc to get the object allocation traceback
 ok
