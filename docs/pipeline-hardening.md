@@ -2,10 +2,7 @@
 
 Reviewed against working revision on 2026-10-03. This completes the
 partly applied detector rewrite and the verification/reporting fixes. Tests use
-temporary databases and solver working directories. Historical experiment rows
-are not evidence that the same repairs pass the current checks.
-
-
+temporary databases and solver working directories.
 ## Automated checks
 
 | Suite | Result |
