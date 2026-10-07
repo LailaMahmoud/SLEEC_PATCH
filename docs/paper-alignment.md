@@ -39,16 +39,7 @@ Ranking is ascending and lexicographic:
 
 No LLM or qualitative score contributes to ranking. The stored `ranking_score` remains numeric for compatibility and is now negative ordinal rank; consumers should use `rank` or `ranking.lexicographic_key`. The workbench displays quantitative counts. Database reads and response adaptation normalize old `capability_refinement` operator names; the existing aggregate database column `capabilities_refined` is retained for schema compatibility.
 
-## Paper ambiguities and limits
 
-“Perfect alignment” would overstate the evidence:
-
-* The trigger-strengthening example omits parentheses. The implementation keeps the event mandatory and applies OR only to measure contexts.
-* Table 2 counts one new element for a defeater example that introduces both `isHumanOnFloor` and an exception. Following the requested metric, these count as **two** new elements when both are introduced. Tests cover the paper's ranking order and explicitly test this counting discrepancy.
-* The table's Boolean counts do not fully explain whether existing operators are included. This implementation counts the nonnegative increase from simplified original to simplified proposed conditions, including the event-to-context conjunction, with `not` counted once. It does not hard-code table numbers.
-* The paper introduces an event-observation measure (`isHumanOnFloor`) without specifying a formal relation to the event. The implementation does not invent that observation relation. Deterministic conflict exceptions use diagnosed measure contexts; modeled event-state distinctions require explicit domain meaning and verification. This is not a claim of exact textual reproduction of that example.
-* Decomposition uses the supplied concern deadline; it does not invent the paper's illustrative one-minute deadline when only a three-minute bound is provided.
-* Complex multistage concern/purpose responses are conservatively excluded from the single-response transformations. Related rules sharing the source trigger and response are separate hypotheses; verification determines which candidates succeed.
 
 ## Initial implementation validation
 
