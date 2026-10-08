@@ -71,7 +71,7 @@ Re-run tests with `venv/bin/python -m unittest discover -s tests -v`.
 No live model response was obtained. The earlier sandbox request had a
 connection error. Automatic approval review then rejected sending the private
 BSN specification and diagnosis to OpenAI without explicit permission for that
-transfer. No workaround or further request was attempted.
+transfer.
 
 The old prepared request is archived as obsolete because its prompt contained
 a precomputed case-specific example. Any later authorized run must construct a

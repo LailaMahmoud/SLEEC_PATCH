@@ -180,6 +180,8 @@ LEGOS-SLEEC detects and diagnoses well-formedness issues. SLEEC-PATCH extends th
 
     scripts/
         └── evaluation and table-generation scripts
+    Results:
+    SLEECpatch/app/results/csv
 
 ## Reproducibility
 
