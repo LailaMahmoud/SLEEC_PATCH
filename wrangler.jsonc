@@ -6,7 +6,7 @@
 
   // Disable the public *.workers.dev URL (the one with the account name).
   // NOTE: attach the sleec-patch.com custom domain FIRST, otherwise this
-  // leaves the Worker with no public URL.
+  // ,,leaves the Worker with no public URL.
   "workers_dev": false,
 
   // Public URL. The zone for sleec-patch.com must already exist in this
@@ -17,7 +17,7 @@
 
   // The container image is built from the Dockerfile in this directory.
   // Build context is this directory, so the Dockerfile can COPY ./sleec,
-  // ./crayon/app, etc.
+  // ./app, etc.
   "containers": [
     {
       "class_name": "SleecPatchContainer",
