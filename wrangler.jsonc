@@ -17,7 +17,7 @@
 
   // The container image is built from the Dockerfile in this directory.
   // Build context is this directory, so the Dockerfile can COPY ./sleec,
-  // ./crayon/app, etc.
+  // ./app, etc.
   "containers": [
     {
       "class_name": "SleecPatchContainer",
