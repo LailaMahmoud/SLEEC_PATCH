@@ -1,0 +1,10 @@
+Use Case,Repair Runs,Distinct Issues,Candidates,Verified,Rejected,Unverified/No verification row,Deterministic Verified,LLM Verified,Avg Run Time (s),Verification Rate
+ALMI,3,3,10,6,4,0,5,1,46.464,0.6
+ASPEN,8,8,38,19,19,0,17,2,78.72,0.5
+AutoCAR,8,8,19,4,13,2,3,1,41.622,0.21052631578947367
+BSN,6,3,9,4,5,0,3,1,22.858,0.4444444444444444
+CSICobot,12,10,30,21,9,0,10,11,30.486,0.7
+DAISY,8,8,25,14,11,0,10,4,51.741,0.56
+DPA,3,3,7,3,4,0,2,1,42.916,0.42857142857142855
+DressAssist,1,1,1,1,0,0,0,1,15.049,1
+SafeSCAD,20,19,81,29,52,0,25,4,64.866,0.35802469135802467

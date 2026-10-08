@@ -1,0 +1,15 @@
+Failure Reason,Count,% of Rejected Verifications
+"A new rule must be anchored to the selected source concern, without an edited rule target.",29,0.24786324786324787
+The selected issue remains in the patched specification.,18,0.15384615384615385
+The semantic proposal must target a rule identified for this finding.,17,0.1452991452991453
+Every new name must be a single SLEEC identifier.,15,0.1282051282051282
+target issue not fixed,14,0.11965811965811966
+target issue not fixed; introduced new WFI during regression,7,0.05982905982905983
+"A specialized concept must have a new, unused name.",6,0.05128205128205128
+The selected issue remains in the patched specification. The patch introduces new well-formedness issues.,4,0.03418803418803419
+The structured edit does not produce valid SLEEC: None:90:106: Expected ')' => 'lable}))) *then Adjus',2,0.017094017094017096
+The structured edit does not produce valid SLEEC: None:105:55: Expected ')' => '} = false *and {human',1,0.008547008547008548
+The structured edit does not produce valid SLEEC: None:90:70: Expected ')' => 'vailable} *= false) t',1,0.008547008547008548
+The structured edit does not produce valid SLEEC: None:90:107: Expected ')' => 'lable}))) *then Adjus',1,0.008547008547008548
+introduced new WFI during regression,1,0.008547008547008548
+target issue not fixed; introduced related issue on edited rule; introduced new WFI during regression,1,0.008547008547008548

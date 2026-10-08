@@ -1,0 +1,219 @@
+Use Case,Issue ID,Issue Type,Patch ID,Attempt,Source,Operation,Target Rule,Verified,Target Fixed,Regression Passed,Verification Depth,Ranking Score,Failure Reason,Run ID,Timestamp
+ASPEN,redundancies_1,redundancies,d_rule_removal_R14_1,1,deterministic,rule_removal,R14,1,1,1,0,-1,,04033750502a498fa52ec31e9391aedf,2026-10-08T07:50:13.479943
+ASPEN,redundancies_1,redundancies,g3,5,llm,response_refinement,R14,0,0,0,0,0,"A specialized concept must have a new, unused name.",04033750502a498fa52ec31e9391aedf,2026-10-08T07:50:12.562849
+ASPEN,redundancies_1,redundancies,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",04033750502a498fa52ec31e9391aedf,2026-10-08T07:50:11.727907
+ASPEN,redundancies_1,redundancies,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,04033750502a498fa52ec31e9391aedf,2026-10-08T07:50:10.910873
+ASPEN,concerns_4,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,The structured edit does not produce valid SLEEC: None:105:55: Expected ')' => '} = false *and {human',a079f0d7d48347d6b95d022112e48a1a,2026-10-08T07:49:20.065313
+ASPEN,concerns_3,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,5e1e465080bb418588b59421be7bdfed,2026-10-08T07:48:55.832268
+ASPEN,concerns_2,concerns,d_trigger_strengthening_R13_4,1,deterministic,trigger_strengthening,R13,1,1,1,0,-2,,677159377da4431a95c42fbc7bb391cb,2026-10-08T07:47:54.824806
+ASPEN,concerns_2,concerns,d_trigger_strengthening_R7_1_3,1,deterministic,trigger_strengthening,R7_1,1,1,1,0,-1,,677159377da4431a95c42fbc7bb391cb,2026-10-08T07:47:53.865606
+ASPEN,concerns_2,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed; introduced new WFI during regression,677159377da4431a95c42fbc7bb391cb,2026-10-08T07:47:52.899233
+ASPEN,concerns_2,concerns,d_defeater_refinement_R4_2,1,deterministic,defeater_refinement,R4,0,0,0,0,0,The selected issue remains in the patched specification.,677159377da4431a95c42fbc7bb391cb,2026-10-08T07:47:51.930325
+ASPEN,concerns_2,concerns,d_trigger_strengthening_R4_1,1,deterministic,trigger_strengthening,R4,0,0,0,0,0,The selected issue remains in the patched specification.,677159377da4431a95c42fbc7bb391cb,2026-10-08T07:47:51.025620
+ASPEN,concerns_1,concerns,d_rule_decomposition_R11_1,1,deterministic,rule_decomposition,R11,1,1,1,0,-5,,09146de29eb7412b877e7f23717815d7,2026-10-08T07:45:47.121929
+ASPEN,concerns_1,concerns,d_rule_decomposition_R14_1_5,1,deterministic,rule_decomposition,R14_1,1,1,1,0,-4,,09146de29eb7412b877e7f23717815d7,2026-10-08T07:45:46.181481
+ASPEN,concerns_1,concerns,d_defeater_refinement_R11_2,1,deterministic,defeater_refinement,R11,1,1,1,0,-3,,09146de29eb7412b877e7f23717815d7,2026-10-08T07:45:45.181999
+ASPEN,concerns_1,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-2,,09146de29eb7412b877e7f23717815d7,2026-10-08T07:45:44.221801
+ASPEN,concerns_1,concerns,d_trigger_strengthening_R14_1_3,1,deterministic,trigger_strengthening,R14_1,1,1,1,0,-1,,09146de29eb7412b877e7f23717815d7,2026-10-08T07:45:43.295783
+ASPEN,concerns_1,concerns,d_rule_decomposition_R14_1_4,1,deterministic,rule_decomposition,R14_1,0,0,0,0,0,The selected issue remains in the patched specification.,09146de29eb7412b877e7f23717815d7,2026-10-08T07:45:42.408975
+ASPEN,situational_conflicts_3,situational_conflicts,d_defeater_introduction_R13_4,1,deterministic,defeater_introduction,R13,1,1,1,2,-4,,3e63700308d2492298cc00e859626c02,2026-10-08T07:43:02.753155
+ASPEN,situational_conflicts_3,situational_conflicts,d_trigger_refinement_R13_3,1,deterministic,trigger_refinement,R13,1,1,1,2,-3,,3e63700308d2492298cc00e859626c02,2026-10-08T07:43:01.867048
+ASPEN,situational_conflicts_3,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-2,,3e63700308d2492298cc00e859626c02,2026-10-08T07:43:00.975374
+ASPEN,situational_conflicts_3,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-1,,3e63700308d2492298cc00e859626c02,2026-10-08T07:43:00.003277
+ASPEN,situational_conflicts_3,situational_conflicts,g3,5,llm,response_refinement,R13,0,0,0,0,0,Every new name must be a single SLEEC identifier.,3e63700308d2492298cc00e859626c02,2026-10-08T07:42:59.095437
+ASPEN,situational_conflicts_3,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",3e63700308d2492298cc00e859626c02,2026-10-08T07:42:58.225970
+ASPEN,situational_conflicts_3,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,3e63700308d2492298cc00e859626c02,2026-10-08T07:42:57.358744
+ASPEN,situational_conflicts_2,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-4,,0c7da3ce7e8e409e8a81ee5c2225e65e,2026-10-08T07:38:27.332550
+ASPEN,situational_conflicts_2,situational_conflicts,d_defeater_introduction_R7_1_4,1,deterministic,defeater_introduction,R7_1,1,1,1,0,-3,,0c7da3ce7e8e409e8a81ee5c2225e65e,2026-10-08T07:38:26.386632
+ASPEN,situational_conflicts_2,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-2,,0c7da3ce7e8e409e8a81ee5c2225e65e,2026-10-08T07:38:25.440016
+ASPEN,situational_conflicts_2,situational_conflicts,d_trigger_refinement_R7_1_3,1,deterministic,trigger_refinement,R7_1,1,1,1,0,-1,,0c7da3ce7e8e409e8a81ee5c2225e65e,2026-10-08T07:38:24.505923
+ASPEN,situational_conflicts_2,situational_conflicts,g3,5,llm,response_refinement,R7_1,0,0,0,0,0,Every new name must be a single SLEEC identifier.,0c7da3ce7e8e409e8a81ee5c2225e65e,2026-10-08T07:38:23.578100
+ASPEN,situational_conflicts_2,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",0c7da3ce7e8e409e8a81ee5c2225e65e,2026-10-08T07:38:22.695196
+ASPEN,situational_conflicts_2,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,0c7da3ce7e8e409e8a81ee5c2225e65e,2026-10-08T07:38:21.857394
+ASPEN,situational_conflicts_1,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-2,,f531354e8c204198ad00f85ac8d013d2,2026-10-08T07:37:04.134178
+ASPEN,situational_conflicts_1,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-1,,f531354e8c204198ad00f85ac8d013d2,2026-10-08T07:37:03.217912
+ASPEN,situational_conflicts_1,situational_conflicts,g3,5,llm,response_refinement,R4,0,0,0,0,0,Every new name must be a single SLEEC identifier.,f531354e8c204198ad00f85ac8d013d2,2026-10-08T07:37:02.276543
+ASPEN,situational_conflicts_1,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",f531354e8c204198ad00f85ac8d013d2,2026-10-08T07:37:01.346799
+ASPEN,situational_conflicts_1,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,f531354e8c204198ad00f85ac8d013d2,2026-10-08T07:37:00.417848
+ASPEN,situational_conflicts_1,situational_conflicts,d_defeater_introduction_R13_4,1,deterministic,defeater_introduction,R13,0,0,0,0,0,The selected issue remains in the patched specification. The patch introduces new well-formedness issues.,f531354e8c204198ad00f85ac8d013d2,2026-10-08T07:36:59.431595
+ASPEN,situational_conflicts_1,situational_conflicts,d_trigger_refinement_R13_3,1,deterministic,trigger_refinement,R13,0,0,0,0,0,The selected issue remains in the patched specification. The patch introduces new well-formedness issues.,f531354e8c204198ad00f85ac8d013d2,2026-10-08T07:36:58.515832
+AutoCAR,redundancies_2,redundancies,d_rule_removal_R23_1,1,deterministic,rule_removal,R23,1,1,1,0,-1,,8ba61e9f883c4ac88fdfd8e5b52a275f,2026-10-08T07:32:35.420745
+AutoCAR,redundancies_2,redundancies,g3,5,llm,response_refinement,R23,0,0,0,0,0,Every new name must be a single SLEEC identifier.,8ba61e9f883c4ac88fdfd8e5b52a275f,2026-10-08T07:32:34.531052
+AutoCAR,redundancies_2,redundancies,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",8ba61e9f883c4ac88fdfd8e5b52a275f,2026-10-08T07:32:33.675936
+AutoCAR,redundancies_2,redundancies,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,8ba61e9f883c4ac88fdfd8e5b52a275f,2026-10-08T07:32:32.748922
+AutoCAR,redundancies_2,redundancies,d_defeater_propagation_R23_2,1,deterministic,defeater_propagation,R23,0,0,0,0,0,The selected issue remains in the patched specification.,8ba61e9f883c4ac88fdfd8e5b52a275f,2026-10-08T07:32:31.804471
+AutoCAR,redundancies_1,redundancies,d_rule_removal_R22_1,1,deterministic,rule_removal,R22,1,1,1,0,-1,,78c5a0251d9347e8b6c2a8857eaf92a2,2026-10-08T07:31:00.323538
+AutoCAR,redundancies_1,redundancies,g3,5,llm,response_refinement,R22,0,0,0,0,0,Every new name must be a single SLEEC identifier.,78c5a0251d9347e8b6c2a8857eaf92a2,2026-10-08T07:30:59.429160
+AutoCAR,redundancies_1,redundancies,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",78c5a0251d9347e8b6c2a8857eaf92a2,2026-10-08T07:30:58.557427
+AutoCAR,redundancies_1,redundancies,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,78c5a0251d9347e8b6c2a8857eaf92a2,2026-10-08T07:30:57.683004
+AutoCAR,redundancies_1,redundancies,d_defeater_propagation_R22_2,1,deterministic,defeater_propagation,R22,0,0,0,0,0,The selected issue remains in the patched specification.,78c5a0251d9347e8b6c2a8857eaf92a2,2026-10-08T07:30:56.784157
+AutoCAR,concerns_7,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed; introduced new WFI during regression,10297a6d35504f5d82d17e8c01c7a485,2026-10-08T07:29:38.300464
+AutoCAR,concerns_6,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed; introduced new WFI during regression,e8f7b566e2a24351b596a0fc1fb7b55f,2026-10-08T07:28:47.886922
+AutoCAR,concerns_5,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed; introduced new WFI during regression,6a6a7e9a2ff345ddaa40fd762e7dbb21,2026-10-08T07:27:59.315104
+AutoCAR,concerns_3,concerns,d_rule_decomposition_R17_1,1,deterministic,rule_decomposition,R17,1,1,1,0,-2,,3b79f30c38634ad7aed39cb113620936,2026-10-08T07:25:12.865906
+AutoCAR,concerns_3,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,3b79f30c38634ad7aed39cb113620936,2026-10-08T07:25:11.911635
+AutoCAR,concerns_2,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed,5a371626642644d6ac76f36b1b7c77bb,2026-10-08T07:23:36.462949
+AutoCAR,concerns_1,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed,af62d883b69d4df093fdcf36816cc0b7,2026-10-08T07:22:52.411837
+DAISY,redundancies_1,redundancies,d_rule_removal_Rule16_1,1,deterministic,rule_removal,Rule16,1,1,1,0,-1,,e10e63644e8e4783af6b09b03f3bca93,2026-10-08T07:18:45.814509
+DAISY,redundancies_1,redundancies,g2,5,llm,measure_specialization,Rule16,0,0,0,0,0,target issue not fixed,e10e63644e8e4783af6b09b03f3bca93,2026-10-08T07:18:44.876779
+DAISY,redundancies_1,redundancies,g1,5,llm,event_specialization,Rule16,0,0,0,0,0,target issue not fixed,e10e63644e8e4783af6b09b03f3bca93,2026-10-08T07:18:43.936741
+DAISY,redundancies_1,redundancies,g3,5,llm,response_refinement,Rule16,0,0,0,0,0,Every new name must be a single SLEEC identifier.,e10e63644e8e4783af6b09b03f3bca93,2026-10-08T07:18:43.066173
+DAISY,concerns_5,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,3a2e0629c6d8402799797eb3b0aa2f0a,2026-10-08T07:17:01.442259
+DAISY,concerns_4,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,374a09c8d3344079aac78fe20e5b64f5,2026-10-08T07:15:33.017492
+DAISY,concerns_3,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed; introduced new WFI during regression,8aae0a60187447488992e37adb8dcea5,2026-10-08T07:14:48.634100
+DAISY,concerns_2,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,9efb3ec33fc8422195bd3de4bc72a530,2026-10-08T07:13:42.403318
+DAISY,concerns_1,concerns,d_rule_decomposition_Rule5_2,1,deterministic,rule_decomposition,Rule5,1,1,1,0,-1,,24bd53275c2e41a5aa346c8f5ce16e76,2026-10-08T07:12:42.839986
+DAISY,concerns_1,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed,24bd53275c2e41a5aa346c8f5ce16e76,2026-10-08T07:12:41.868948
+DAISY,concerns_1,concerns,d_rule_decomposition_Rule5_1,1,deterministic,rule_decomposition,Rule5,0,0,0,0,0,The selected issue remains in the patched specification.,24bd53275c2e41a5aa346c8f5ce16e76,2026-10-08T07:12:40.918464
+DAISY,situational_conflicts_2,situational_conflicts,d_defeater_introduction_Rule19_2,1,deterministic,defeater_introduction,Rule19,1,1,1,0,-4,,d29ad7c2b87145698d77188dbcd35999,2026-10-08T07:08:52.031340
+DAISY,situational_conflicts_2,situational_conflicts,d_defeater_introduction_Rule18_4,1,deterministic,defeater_introduction,Rule18,1,1,1,0,-3,,d29ad7c2b87145698d77188dbcd35999,2026-10-08T07:08:51.112672
+DAISY,situational_conflicts_2,situational_conflicts,d_trigger_refinement_Rule19_1,1,deterministic,trigger_refinement,Rule19,1,1,1,0,-2,,d29ad7c2b87145698d77188dbcd35999,2026-10-08T07:08:50.193131
+DAISY,situational_conflicts_2,situational_conflicts,d_trigger_refinement_Rule18_3,1,deterministic,trigger_refinement,Rule18,1,1,1,0,-1,,d29ad7c2b87145698d77188dbcd35999,2026-10-08T07:08:49.245805
+DAISY,situational_conflicts_2,situational_conflicts,g3,5,llm,response_refinement,Rule19,0,0,0,0,0,Every new name must be a single SLEEC identifier.,d29ad7c2b87145698d77188dbcd35999,2026-10-08T07:08:48.332901
+DAISY,situational_conflicts_2,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",d29ad7c2b87145698d77188dbcd35999,2026-10-08T07:08:47.433559
+DAISY,situational_conflicts_2,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,d29ad7c2b87145698d77188dbcd35999,2026-10-08T07:08:46.484660
+CSICobot,redundancies_3,redundancies,g3,5,llm,response_refinement,R14,1,1,1,0,-2,,780d4135836e48c6aa2f837252556ae7,2026-10-08T07:04:18.833875
+CSICobot,redundancies_3,redundancies,d_rule_removal_R14_1,1,deterministic,rule_removal,R14,1,1,1,0,-1,,780d4135836e48c6aa2f837252556ae7,2026-10-08T07:04:17.925406
+CSICobot,redundancies_3,redundancies,g2,5,llm,measure_specialization,R14,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",780d4135836e48c6aa2f837252556ae7,2026-10-08T07:04:17.032728
+CSICobot,redundancies_3,redundancies,g1,5,llm,event_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",780d4135836e48c6aa2f837252556ae7,2026-10-08T07:04:16.160156
+DAISY,situational_conflicts_1,situational_conflicts,d_defeater_introduction_Rule19_4,1,deterministic,defeater_introduction,Rule19,1,1,1,0,-5,,075684b92d604af99a9545b11317dcd7,2026-10-08T07:03:11.968115
+DAISY,situational_conflicts_1,situational_conflicts,d_defeater_introduction_Rule18_2,1,deterministic,defeater_introduction,Rule18,1,1,1,0,-4,,075684b92d604af99a9545b11317dcd7,2026-10-08T07:03:11.064167
+DAISY,situational_conflicts_1,situational_conflicts,g3,5,llm,response_refinement,Rule18,1,1,1,0,-3,,075684b92d604af99a9545b11317dcd7,2026-10-08T07:03:10.108620
+DAISY,situational_conflicts_1,situational_conflicts,d_trigger_refinement_Rule19_3,1,deterministic,trigger_refinement,Rule19,1,1,1,0,-2,,075684b92d604af99a9545b11317dcd7,2026-10-08T07:03:09.157354
+DAISY,situational_conflicts_1,situational_conflicts,d_trigger_refinement_Rule18_1,1,deterministic,trigger_refinement,Rule18,1,1,1,0,-1,,075684b92d604af99a9545b11317dcd7,2026-10-08T07:03:08.217937
+DAISY,situational_conflicts_1,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",075684b92d604af99a9545b11317dcd7,2026-10-08T07:03:07.265168
+DAISY,situational_conflicts_1,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,075684b92d604af99a9545b11317dcd7,2026-10-08T07:03:06.306967
+CSICobot,redundancies_2,redundancies,g3,5,llm,response_refinement,R4b,1,1,1,0,-3,,ea07d004f35844f9ac28dd5123172c1a,2026-10-08T07:02:44.458749
+CSICobot,redundancies_2,redundancies,g1,5,llm,event_specialization,R4b,1,1,1,0,-2,,ea07d004f35844f9ac28dd5123172c1a,2026-10-08T07:02:43.561953
+CSICobot,redundancies_2,redundancies,d_rule_removal_R4b_1,1,deterministic,rule_removal,R4b,1,1,1,0,-1,,ea07d004f35844f9ac28dd5123172c1a,2026-10-08T07:02:42.622851
+CSICobot,redundancies_2,redundancies,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",ea07d004f35844f9ac28dd5123172c1a,2026-10-08T07:02:41.713283
+CSICobot,redundancies_2,redundancies,g3,5,llm,response_refinement,R4b,1,1,1,0,-3,,28fa48653e0f413ba4bc04d43e51d6d1,2026-10-08T07:01:40.777614
+CSICobot,redundancies_2,redundancies,g1,5,llm,event_specialization,R4b,1,1,1,0,-2,,28fa48653e0f413ba4bc04d43e51d6d1,2026-10-08T07:01:39.869782
+CSICobot,redundancies_2,redundancies,d_rule_removal_R4b_1,1,deterministic,rule_removal,R4b,1,1,1,0,-1,,28fa48653e0f413ba4bc04d43e51d6d1,2026-10-08T07:01:38.940631
+CSICobot,redundancies_2,redundancies,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",28fa48653e0f413ba4bc04d43e51d6d1,2026-10-08T07:01:38.007269
+CSICobot,redundancies_1,redundancies,g3,5,llm,response_refinement,R4,1,1,1,0,-3,,6e9871da5afc4102b5e012177c6f59c0,2026-10-08T06:59:39.179579
+CSICobot,redundancies_1,redundancies,g1,5,llm,event_specialization,R4,1,1,1,0,-2,,6e9871da5afc4102b5e012177c6f59c0,2026-10-08T06:59:38.271665
+CSICobot,redundancies_1,redundancies,d_rule_removal_R4_1,1,deterministic,rule_removal,R4,1,1,1,0,-1,,6e9871da5afc4102b5e012177c6f59c0,2026-10-08T06:59:37.339095
+CSICobot,redundancies_1,redundancies,g2,5,llm,measure_specialization,R4,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",6e9871da5afc4102b5e012177c6f59c0,2026-10-08T06:59:36.431347
+CSICobot,concerns_7,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,d5666bf90dc049c0a277887a5d057d6d,2026-10-08T06:58:29.244052
+CSICobot,concerns_6,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,f79b4daf79b84fd68d409979019d6c72,2026-10-08T06:57:34.207226
+CSICobot,concerns_5,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,The structured edit does not produce valid SLEEC: None:90:70: Expected ')' => 'vailable} *= false) t',4eebeb8b339d4e5298e4af91695a9a5c,2026-10-08T06:56:50.230262
+CSICobot,concerns_4,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,07f364894ad2457aa5e5068e0ac0b72f,2026-10-08T06:56:20.263342
+CSICobot,concerns_3,concerns,d_rule_decomposition_R1_1,1,deterministic,rule_decomposition,R1,1,1,1,0,-3,,081d725b976847febe2ec7752c9e5013,2026-10-08T06:55:21.187669
+CSICobot,concerns_3,concerns,d_defeater_refinement_R1_2,1,deterministic,defeater_refinement,R1,1,1,1,0,-2,,081d725b976847febe2ec7752c9e5013,2026-10-08T06:55:20.243922
+CSICobot,concerns_3,concerns,d_defeater_refinement_R1_3,1,deterministic,defeater_refinement,R1,1,1,1,0,-1,,081d725b976847febe2ec7752c9e5013,2026-10-08T06:55:19.328365
+CSICobot,concerns_3,concerns,d_rule_decomposition_R1_1,1,deterministic,rule_decomposition,R1,1,1,1,0,-3,,4d59ba161f08411ba54b930f294c966f,2026-10-08T06:55:19.272835
+CSICobot,concerns_3,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,The structured edit does not produce valid SLEEC: None:90:106: Expected ')' => 'lable}))) *then Adjus',081d725b976847febe2ec7752c9e5013,2026-10-08T06:55:18.401203
+CSICobot,concerns_3,concerns,d_defeater_refinement_R1_2,1,deterministic,defeater_refinement,R1,1,1,1,0,-2,,4d59ba161f08411ba54b930f294c966f,2026-10-08T06:55:18.308057
+CSICobot,concerns_3,concerns,d_defeater_refinement_R1_3,1,deterministic,defeater_refinement,R1,1,1,1,0,-1,,4d59ba161f08411ba54b930f294c966f,2026-10-08T06:55:17.354925
+CSICobot,concerns_3,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,The structured edit does not produce valid SLEEC: None:90:106: Expected ')' => 'lable}))) *then Adjus',4d59ba161f08411ba54b930f294c966f,2026-10-08T06:55:16.440400
+CSICobot,concerns_2,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,2270163f24fe4b699da9de024f595204,2026-10-08T06:54:01.701816
+CSICobot,concerns_1,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,The structured edit does not produce valid SLEEC: None:90:107: Expected ')' => 'lable}))) *then Adjus',fa50431493ff440c9982d3766b7373c0,2026-10-08T06:53:20.909928
+ALMI,concerns_2,concerns,d_rule_decomposition_R21_2,1,deterministic,rule_decomposition,R21,1,1,1,0,-4,,59101749aadd42cca1ffcad1683967ed,2026-10-08T06:49:27.403519
+ALMI,concerns_2,concerns,d_rule_decomposition_R21_1,1,deterministic,rule_decomposition,R21,1,1,1,0,-3,,59101749aadd42cca1ffcad1683967ed,2026-10-08T06:49:26.450601
+ALMI,concerns_2,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-2,,59101749aadd42cca1ffcad1683967ed,2026-10-08T06:49:25.479442
+ALMI,concerns_2,concerns,d_deadline_refinement_R21_3,1,deterministic,deadline_refinement,R21,1,1,1,0,-1,,59101749aadd42cca1ffcad1683967ed,2026-10-08T06:49:24.485180
+ALMI,concerns_1,concerns,d_defeater_refinement_R3_1,1,deterministic,defeater_refinement,R3,1,1,1,0,-1,,2f298393f90145538231ba935e6d850b,2026-10-08T06:47:36.205761
+ALMI,concerns_1,concerns,g1,5,llm,new_rule_generation,,0,1,0,0,0,introduced new WFI during regression,2f298393f90145538231ba935e6d850b,2026-10-08T06:47:35.276056
+ALMI,situational_conflicts_1,situational_conflicts,d_defeater_introduction_R3_1,1,deterministic,defeater_introduction,R3,1,1,1,0,-1,,c05e45afaeb0430e8f32ad1fafbd01d0,2026-10-08T06:45:49.108940
+ALMI,situational_conflicts_1,situational_conflicts,g1,5,llm,event_specialization,R3,0,0,0,0,0,target issue not fixed,c05e45afaeb0430e8f32ad1fafbd01d0,2026-10-08T06:45:48.200616
+ALMI,situational_conflicts_1,situational_conflicts,g3,5,llm,response_refinement,R3,0,0,0,0,0,Every new name must be a single SLEEC identifier.,c05e45afaeb0430e8f32ad1fafbd01d0,2026-10-08T06:45:47.270972
+ALMI,situational_conflicts_1,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",c05e45afaeb0430e8f32ad1fafbd01d0,2026-10-08T06:45:46.362016
+BSN,concerns_3,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed,d0758d51b6894ada9c571dc0bebe7890,2026-10-08T06:42:07.573376
+BSN,concerns_3,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed,bb1b55f4e8494a43ad17478800419459,2026-10-08T06:41:21.565076
+BSN,concerns_2,concerns,d_defeater_refinement_Rule12_1,1,deterministic,defeater_refinement,Rule12,1,1,1,0,-1,,87fe2aebb463417a8a88b0986c4deef9,2026-10-08T06:39:23.043383
+BSN,concerns_2,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed,87fe2aebb463417a8a88b0986c4deef9,2026-10-08T06:39:22.099978
+BSN,concerns_2,concerns,d_defeater_refinement_Rule12_1,1,deterministic,defeater_refinement,Rule12,1,1,1,0,-1,,c4b3ec7cf622436189c4a0923ec90f14,2026-10-08T06:38:02.501279
+BSN,concerns_2,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed,c4b3ec7cf622436189c4a0923ec90f14,2026-10-08T06:38:01.559025
+BSN,concerns_2,concerns,d_defeater_refinement_Rule12_1,1,deterministic,defeater_refinement,Rule12,1,1,1,0,-1,,638a96cb52c0440c8383c155ca04ba22,2026-10-08T06:35:54.891787
+BSN,concerns_2,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed,638a96cb52c0440c8383c155ca04ba22,2026-10-08T06:35:53.972250
+BSN,concerns_1,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,664775de48254640ba1a002fd7383d97,2026-10-08T06:34:23.903772
+DressAssist,concerns_1,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,b53e97c8485949b8a1d82a90db979e80,2026-10-08T06:31:19.402642
+DPA,concerns_3,concerns,d_rule_decomposition_R21_2,1,deterministic,rule_decomposition,R21,1,1,1,0,-1,,2529efc3fe42451e927b9acb236da734,2026-10-08T06:27:31.195684
+DPA,concerns_3,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed; introduced new WFI during regression,2529efc3fe42451e927b9acb236da734,2026-10-08T06:27:30.195143
+DPA,concerns_3,concerns,d_rule_decomposition_R21_1,1,deterministic,rule_decomposition,R21,0,0,0,0,0,The selected issue remains in the patched specification.,2529efc3fe42451e927b9acb236da734,2026-10-08T06:27:29.254698
+DPA,concerns_2,concerns,g1,5,llm,new_rule_generation,,1,1,1,0,-1,,75fddec3ef5343a4b4d92ebc988e944d,2026-10-08T06:25:43.751323
+DPA,concerns_1,concerns,d_rule_decomposition_R3_2,1,deterministic,rule_decomposition,R3,1,1,1,0,-1,,25ae0627fa3a44edb0b0fc2e508a70c7,2026-10-08T06:24:33.737700
+DPA,concerns_1,concerns,g1,5,llm,new_rule_generation,,0,0,0,0,0,target issue not fixed; introduced new WFI during regression,25ae0627fa3a44edb0b0fc2e508a70c7,2026-10-08T06:24:32.813105
+DPA,concerns_1,concerns,d_rule_decomposition_R3_1,1,deterministic,rule_decomposition,R3,0,0,0,0,0,The selected issue remains in the patched specification.,25ae0627fa3a44edb0b0fc2e508a70c7,2026-10-08T06:24:31.876416
+SafeSCAD,redundancies_3,redundancies,d_rule_removal_R2_1_1,1,deterministic,rule_removal,R2_1,1,1,1,0,-1,,1c7e77a215cd4af2a379fd39dd5c4472,2026-10-08T06:19:07.527340
+SafeSCAD,redundancies_3,redundancies,g3,5,llm,response_refinement,R2_1,0,0,0,0,0,"A specialized concept must have a new, unused name.",1c7e77a215cd4af2a379fd39dd5c4472,2026-10-08T06:19:06.587650
+SafeSCAD,redundancies_3,redundancies,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",1c7e77a215cd4af2a379fd39dd5c4472,2026-10-08T06:19:05.736785
+SafeSCAD,redundancies_3,redundancies,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,1c7e77a215cd4af2a379fd39dd5c4472,2026-10-08T06:19:04.890778
+SafeSCAD,redundancies_2,redundancies,d_rule_removal_R2_1,1,deterministic,rule_removal,R2,1,1,1,0,-1,,33c407722f1a4b859b22b5fc7195860f,2026-10-08T06:17:49.398208
+SafeSCAD,redundancies_2,redundancies,g3,5,llm,response_refinement,R2,0,0,0,0,0,"A specialized concept must have a new, unused name.",33c407722f1a4b859b22b5fc7195860f,2026-10-08T06:17:48.432057
+SafeSCAD,redundancies_2,redundancies,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",33c407722f1a4b859b22b5fc7195860f,2026-10-08T06:17:47.570345
+SafeSCAD,redundancies_2,redundancies,g1,5,llm,event_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",33c407722f1a4b859b22b5fc7195860f,2026-10-08T06:17:46.670676
+SafeSCAD,redundancies_1,redundancies,d_rule_removal_R1_1_1,1,deterministic,rule_removal,R1_1,1,1,1,0,-1,,78a68b22c6ac4a32b767b1ed585a43ff,2026-10-08T06:16:30.642948
+SafeSCAD,redundancies_1,redundancies,g3,5,llm,response_refinement,R1_1,0,0,0,0,0,"A specialized concept must have a new, unused name.",78a68b22c6ac4a32b767b1ed585a43ff,2026-10-08T06:16:29.700984
+SafeSCAD,redundancies_1,redundancies,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",78a68b22c6ac4a32b767b1ed585a43ff,2026-10-08T06:16:28.874254
+SafeSCAD,redundancies_1,redundancies,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,78a68b22c6ac4a32b767b1ed585a43ff,2026-10-08T06:16:28.044186
+SafeSCAD,purpose_blocking_2,purpose_blocking,d_defeater_introduction_R9_1_1,1,deterministic,rule_removal,R9_1,1,1,1,1,-1,,923e9adb301d46c4acd3127e413534fc,2026-10-08T06:13:58.902433
+SafeSCAD,purpose_blocking_2,purpose_blocking,g1,5,llm,response_refinement,R9_1,0,0,0,0,0,Every new name must be a single SLEEC identifier.,923e9adb301d46c4acd3127e413534fc,2026-10-08T06:13:57.990777
+SafeSCAD,purpose_blocking_1,purpose_blocking,d_defeater_introduction_R12_1,1,deterministic,defeater_introduction,R12,1,1,1,0,-1,,6a591941f838471a90ec7a3d6bb01233,2026-10-08T06:11:51.937368
+SafeSCAD,purpose_blocking_1,purpose_blocking,g1,5,llm,response_refinement,R12,0,0,0,0,0,"A specialized concept must have a new, unused name.",6a591941f838471a90ec7a3d6bb01233,2026-10-08T06:11:50.987591
+SafeSCAD,situational_conflicts_10,situational_conflicts,d_defeater_introduction_R17_2,1,deterministic,defeater_introduction,R17,1,1,1,0,-2,,d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:13.218769
+SafeSCAD,situational_conflicts_10,situational_conflicts,d_trigger_refinement_R17_1,1,deterministic,trigger_refinement,R17,1,1,1,0,-1,,d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:12.127645
+SafeSCAD,situational_conflicts_10,situational_conflicts,g1,5,llm,event_specialization,R17,0,0,0,0,0,target issue not fixed,d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:11.083176
+SafeSCAD,situational_conflicts_10,situational_conflicts,g3,5,llm,response_refinement,R17,0,0,0,0,0,Every new name must be a single SLEEC identifier.,d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:10.127132
+SafeSCAD,situational_conflicts_10,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:09.165538
+SafeSCAD,situational_conflicts_10,situational_conflicts,d_defeater_introduction_R1_1_6,1,deterministic,defeater_introduction,R1_1,0,0,0,0,0,The selected issue remains in the patched specification.,d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:08.169799
+SafeSCAD,situational_conflicts_10,situational_conflicts,d_trigger_refinement_R1_1_5,1,deterministic,trigger_refinement,R1_1,0,0,0,0,0,The selected issue remains in the patched specification.,d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:07.119425
+SafeSCAD,situational_conflicts_10,situational_conflicts,d_defeater_introduction_R1_4,1,deterministic,defeater_introduction,R1,0,0,0,0,0,The selected issue remains in the patched specification.,d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:06.092759
+SafeSCAD,situational_conflicts_10,situational_conflicts,d_trigger_refinement_R1_3,1,deterministic,trigger_refinement,R1,0,0,0,0,0,The selected issue remains in the patched specification.,d866a4462f2b4914a1081d2748002978,2026-10-08T06:09:05.010415
+SafeSCAD,situational_conflicts_9,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-3,,a87cc4981dc64edba8041e295ae73e4b,2026-10-08T06:06:23.729092
+SafeSCAD,situational_conflicts_9,situational_conflicts,g3,5,llm,response_refinement,R16,1,1,1,0,-2,,a87cc4981dc64edba8041e295ae73e4b,2026-10-08T06:06:22.703832
+SafeSCAD,situational_conflicts_9,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-1,,a87cc4981dc64edba8041e295ae73e4b,2026-10-08T06:06:21.697919
+SafeSCAD,situational_conflicts_9,situational_conflicts,g1,5,llm,event_specialization,R16,0,0,0,0,0,target issue not fixed,a87cc4981dc64edba8041e295ae73e4b,2026-10-08T06:06:20.765719
+SafeSCAD,situational_conflicts_9,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",a87cc4981dc64edba8041e295ae73e4b,2026-10-08T06:06:19.791048
+SafeSCAD,situational_conflicts_8,situational_conflicts,g3,5,llm,response_refinement,R12_1,0,0,0,0,0,Every new name must be a single SLEEC identifier.,306ce536a64b4bbcb4ccf3e0461acf3b,2026-10-08T06:04:31.290121
+SafeSCAD,situational_conflicts_8,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",306ce536a64b4bbcb4ccf3e0461acf3b,2026-10-08T06:04:30.364840
+SafeSCAD,situational_conflicts_8,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,306ce536a64b4bbcb4ccf3e0461acf3b,2026-10-08T06:04:29.420067
+SafeSCAD,situational_conflicts_8,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,0,0,0,0,0,The selected issue remains in the patched specification.,306ce536a64b4bbcb4ccf3e0461acf3b,2026-10-08T06:04:28.397283
+SafeSCAD,situational_conflicts_8,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,0,0,0,0,0,The selected issue remains in the patched specification.,306ce536a64b4bbcb4ccf3e0461acf3b,2026-10-08T06:04:27.403293
+SafeSCAD,situational_conflicts_7,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-3,,a9d9f7212fa446228c4c38dc9b0da295,2026-10-08T06:03:52.550381
+SafeSCAD,situational_conflicts_7,situational_conflicts,g3,5,llm,response_refinement,R11_1,1,1,1,0,-2,,a9d9f7212fa446228c4c38dc9b0da295,2026-10-08T06:03:51.528121
+SafeSCAD,situational_conflicts_7,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-1,,a9d9f7212fa446228c4c38dc9b0da295,2026-10-08T06:03:50.545007
+SafeSCAD,situational_conflicts_7,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",a9d9f7212fa446228c4c38dc9b0da295,2026-10-08T06:03:49.597526
+SafeSCAD,situational_conflicts_7,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,a9d9f7212fa446228c4c38dc9b0da295,2026-10-08T06:03:48.668786
+SafeSCAD,situational_conflicts_6,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-3,,36491e8c48a84f73a9b0659a8d80ae97,2026-10-08T06:02:47.986359
+SafeSCAD,situational_conflicts_6,situational_conflicts,g3,5,llm,response_refinement,R10,1,1,1,0,-2,,36491e8c48a84f73a9b0659a8d80ae97,2026-10-08T06:02:47.080220
+SafeSCAD,situational_conflicts_6,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-1,,36491e8c48a84f73a9b0659a8d80ae97,2026-10-08T06:02:46.119189
+SafeSCAD,situational_conflicts_6,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",36491e8c48a84f73a9b0659a8d80ae97,2026-10-08T06:02:45.195333
+SafeSCAD,situational_conflicts_6,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,36491e8c48a84f73a9b0659a8d80ae97,2026-10-08T06:02:44.209838
+SafeSCAD,situational_conflicts_5,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-3,,db8939c6043047db931e108ff4647825,2026-10-08T06:00:59.854235
+SafeSCAD,situational_conflicts_5,situational_conflicts,g3,5,llm,response_refinement,R9,1,1,1,0,-2,,db8939c6043047db931e108ff4647825,2026-10-08T06:00:58.852832
+SafeSCAD,situational_conflicts_5,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-1,,db8939c6043047db931e108ff4647825,2026-10-08T06:00:57.884496
+SafeSCAD,situational_conflicts_5,situational_conflicts,g1,5,llm,event_specialization,R9,0,0,0,0,0,target issue not fixed,db8939c6043047db931e108ff4647825,2026-10-08T06:00:56.892094
+SafeSCAD,situational_conflicts_5,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",db8939c6043047db931e108ff4647825,2026-10-08T06:00:55.856711
+SafeSCAD,situational_conflicts_4,situational_conflicts,d_defeater_introduction_R7_2,1,deterministic,defeater_introduction,R7,1,1,1,0,-2,,d355559975664de08f24ead240c12975,2026-10-08T05:58:43.068576
+SafeSCAD,situational_conflicts_4,situational_conflicts,d_trigger_refinement_R7_1,1,deterministic,trigger_refinement,R7,1,1,1,0,-1,,d355559975664de08f24ead240c12975,2026-10-08T05:58:42.051522
+SafeSCAD,situational_conflicts_4,situational_conflicts,g3,5,llm,response_refinement,R7,0,0,0,0,0,Every new name must be a single SLEEC identifier.,d355559975664de08f24ead240c12975,2026-10-08T05:58:41.117951
+SafeSCAD,situational_conflicts_4,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",d355559975664de08f24ead240c12975,2026-10-08T05:58:40.191318
+SafeSCAD,situational_conflicts_4,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,d355559975664de08f24ead240c12975,2026-10-08T05:58:39.296063
+SafeSCAD,situational_conflicts_4,situational_conflicts,d_defeater_introduction_R3_1_4,1,deterministic,defeater_introduction,R3_1,0,0,0,0,0,The selected issue remains in the patched specification. The patch introduces new well-formedness issues.,d355559975664de08f24ead240c12975,2026-10-08T05:58:38.349356
+SafeSCAD,situational_conflicts_4,situational_conflicts,d_trigger_refinement_R3_1_3,1,deterministic,trigger_refinement,R3_1,0,0,0,0,0,The selected issue remains in the patched specification. The patch introduces new well-formedness issues.,d355559975664de08f24ead240c12975,2026-10-08T05:58:37.281504
+SafeSCAD,situational_conflicts_3,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-2,,f7af4f04464e4337b4659bd23c82e87e,2026-10-08T05:56:45.126672
+SafeSCAD,situational_conflicts_3,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-1,,f7af4f04464e4337b4659bd23c82e87e,2026-10-08T05:56:44.148295
+SafeSCAD,situational_conflicts_3,situational_conflicts,g1,5,llm,event_specialization,R4,0,0,0,0,0,target issue not fixed; introduced related issue on edited rule; introduced new WFI during regression,f7af4f04464e4337b4659bd23c82e87e,2026-10-08T05:56:43.156385
+SafeSCAD,situational_conflicts_3,situational_conflicts,g3,5,llm,response_refinement,R4,0,0,0,0,0,Every new name must be a single SLEEC identifier.,f7af4f04464e4337b4659bd23c82e87e,2026-10-08T05:56:42.180088
+SafeSCAD,situational_conflicts_3,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",f7af4f04464e4337b4659bd23c82e87e,2026-10-08T05:56:41.266956
+SafeSCAD,situational_conflicts_2,situational_conflicts,d_defeater_introduction_R3_1_2,1,deterministic,defeater_introduction,R3_1,1,1,1,1,-2,,0d86cbe258074b36a1c23ff3f2af7731,2026-10-08T05:54:06.327296
+SafeSCAD,situational_conflicts_2,situational_conflicts,d_defeater_introduction_R3_1_2,1,deterministic,defeater_introduction,R3_1,1,1,1,1,-2,,ec6dc0d1ef3f4dd9b481b706c465ccbe,2026-10-08T05:54:06.315895
+SafeSCAD,situational_conflicts_2,situational_conflicts,d_trigger_refinement_R3_1_1,1,deterministic,trigger_refinement,R3_1,1,1,1,1,-1,,0d86cbe258074b36a1c23ff3f2af7731,2026-10-08T05:54:05.091731
+SafeSCAD,situational_conflicts_2,situational_conflicts,d_trigger_refinement_R3_1_1,1,deterministic,trigger_refinement,R3_1,1,1,1,1,-1,,ec6dc0d1ef3f4dd9b481b706c465ccbe,2026-10-08T05:54:05.085318
+SafeSCAD,situational_conflicts_2,situational_conflicts,g3,5,llm,response_refinement,R3_1,0,0,0,0,0,Every new name must be a single SLEEC identifier.,0d86cbe258074b36a1c23ff3f2af7731,2026-10-08T05:54:04.201429
+SafeSCAD,situational_conflicts_2,situational_conflicts,g3,5,llm,response_refinement,R3_1,0,0,0,0,0,Every new name must be a single SLEEC identifier.,ec6dc0d1ef3f4dd9b481b706c465ccbe,2026-10-08T05:54:04.097098
+SafeSCAD,situational_conflicts_2,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",0d86cbe258074b36a1c23ff3f2af7731,2026-10-08T05:54:03.329786
+SafeSCAD,situational_conflicts_2,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",ec6dc0d1ef3f4dd9b481b706c465ccbe,2026-10-08T05:54:03.200618
+SafeSCAD,situational_conflicts_2,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,0d86cbe258074b36a1c23ff3f2af7731,2026-10-08T05:54:02.458036
+SafeSCAD,situational_conflicts_2,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,ec6dc0d1ef3f4dd9b481b706c465ccbe,2026-10-08T05:54:02.311993
+SafeSCAD,situational_conflicts_2,situational_conflicts,d_defeater_introduction_R17_4,1,deterministic,defeater_introduction,R17,0,0,0,0,0,The selected issue remains in the patched specification.,0d86cbe258074b36a1c23ff3f2af7731,2026-10-08T05:54:01.510794
+SafeSCAD,situational_conflicts_2,situational_conflicts,d_defeater_introduction_R17_4,1,deterministic,defeater_introduction,R17,0,0,0,0,0,The selected issue remains in the patched specification.,ec6dc0d1ef3f4dd9b481b706c465ccbe,2026-10-08T05:54:01.416215
+SafeSCAD,situational_conflicts_2,situational_conflicts,d_trigger_refinement_R17_3,1,deterministic,trigger_refinement,R17,0,0,0,0,0,The selected issue remains in the patched specification.,0d86cbe258074b36a1c23ff3f2af7731,2026-10-08T05:54:00.524001
+SafeSCAD,situational_conflicts_2,situational_conflicts,d_trigger_refinement_R17_3,1,deterministic,trigger_refinement,R17,0,0,0,0,0,The selected issue remains in the patched specification.,ec6dc0d1ef3f4dd9b481b706c465ccbe,2026-10-08T05:54:00.451803
+SafeSCAD,situational_conflicts_1,situational_conflicts,d_defeater_introduction_R4_2,1,deterministic,defeater_introduction,R4,1,1,1,0,-2,,de5be815d0d44e63864f8ae21729a541,2026-10-08T05:48:32.021293
+SafeSCAD,situational_conflicts_1,situational_conflicts,d_trigger_refinement_R4_1,1,deterministic,trigger_refinement,R4,1,1,1,0,-1,,de5be815d0d44e63864f8ae21729a541,2026-10-08T05:48:31.065740
+SafeSCAD,situational_conflicts_1,situational_conflicts,g3,5,llm,response_refinement,R1_2,0,0,0,0,0,"A specialized concept must have a new, unused name.",de5be815d0d44e63864f8ae21729a541,2026-10-08T05:48:30.171843
+SafeSCAD,situational_conflicts_1,situational_conflicts,g2,5,llm,measure_specialization,,0,0,0,0,0,"A new rule must be anchored to the selected source concern, without an edited rule target.",de5be815d0d44e63864f8ae21729a541,2026-10-08T05:48:29.265387
+SafeSCAD,situational_conflicts_1,situational_conflicts,g1,5,llm,event_specialization,,0,0,0,0,0,The semantic proposal must target a rule identified for this finding.,de5be815d0d44e63864f8ae21729a541,2026-10-08T05:48:28.298333
