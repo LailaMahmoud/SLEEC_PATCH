@@ -19,7 +19,7 @@ success estimate.
 
 ## Method implication
 
-Section III.B of `LAILA_ICSE_2027-2.pdf` lists new-rule generation among the
+` lists new-rule generation among the
 LLM-assisted semantic operators. Deterministic concern completion therefore
 extends that published method description. These BSN gains should be attributed
 to the additional operator, separately from improvements to existing edits or
