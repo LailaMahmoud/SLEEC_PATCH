@@ -6,7 +6,7 @@
 
   // Disable the public *.workers.dev URL (the one with the account name).
   // NOTE: attach the sleec-patch.com custom domain FIRST, otherwise this
-  // ,leaves the Worker with no public URL.
+  // ,,leaves the Worker with no public URL.
   "workers_dev": false,
 
   // Public URL. The zone for sleec-patch.com must already exist in this

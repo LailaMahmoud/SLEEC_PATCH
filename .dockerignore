@@ -8,6 +8,9 @@ node_modules
 **/*.pyc
 **/*.pyo
 
+
+
+
 # Cloudflare/build artifacts
 .wrangler
 dist

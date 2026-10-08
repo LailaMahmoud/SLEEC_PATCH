@@ -1,6 +1,6 @@
 # SLEEC-PATCH slim container image (for Cloudflare Containers).
 # Serves ONLY the SLEEC-PATCH workbench + resolution-pipeline routes via the
-# slim launcher (sleec_patch_local.py) — no  ML stack.
+# slim launcher (sleec_patch_local.py) — no ML stack.
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \

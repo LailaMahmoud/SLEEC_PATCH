@@ -1,6 +1,6 @@
 # Paper methodology correction
 
-The author requires the methodology in Section III.B of
+The author requires the methodology in Section III.B
 `. Deterministic new-rule generation is not part of that
 method. The added `concern_completion` operator has been removed, and its BSN
 repair successes are excluded from paper-method results.

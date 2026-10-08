@@ -1,5 +1,5 @@
 {
-  "implementation": "/Users//Documents/codes/sleec",
+  "implementation": "//Users/codes//sleec",
   "cache": "bypassed",
   "llm_calls": 0,
   "scope": "Sequential diagnoses only, without a repair-generation stage or report database.",

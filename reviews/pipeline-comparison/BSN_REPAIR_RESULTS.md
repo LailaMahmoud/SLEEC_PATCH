@@ -1,3 +1,8 @@
+
+
+Changes remain local on `improvement/pipeline-robustness`. Nothing has been
+deployed. Experimental inputs are unchanged.
+
 ## Current evidence
 
 | Input | Sampled concerns | Current deterministic candidates | Live LLM repair result |
