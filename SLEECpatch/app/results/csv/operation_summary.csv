@@ -1,0 +1,11 @@
+Source,Operation,Verified Rows,% of Verified Rows
+deterministic,deadline_refinement,1,0.009900990099009901
+deterministic,defeater_introduction,21,0.2079207920792079
+deterministic,defeater_refinement,9,0.0891089108910891
+deterministic,rule_decomposition,10,0.09900990099009901
+deterministic,rule_removal,12,0.1188118811881188
+deterministic,trigger_refinement,19,0.18811881188118812
+deterministic,trigger_strengthening,3,0.0297029702970297
+llm,event_specialization,3,0.0297029702970297
+llm,new_rule_generation,14,0.13861386138613863
+llm,response_refinement,9,0.0891089108910891

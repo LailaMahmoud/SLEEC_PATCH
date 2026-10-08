@@ -1,0 +1,92 @@
+Case,Issue ID,WFI,Patch Count,Total (s),Generation (s),Validation (s),Patch ID,Operation,RM,RA,RD,DA,TR,RR,CR,Rank,M-Sim,Source,E-Review
+ALMI,concerns_1,Concern,1,30.62,3.77,25.23,d_defeater_refinement_R3_1,defeater_refinement,1,0,0,0,1,0,0,1,0.67,deterministic,Yes
+ALMI,concerns_2,Concern,4,73.1,3.74,65.86,d_deadline_refinement_R21_3,deadline_refinement,1,0,0,0,0,1,0,1,0.88,deterministic,Yes
+ALMI,,,,,,,d_rule_decomposition_R21_1,rule_decomposition,1,1,0,1,1,0,0,3,0.79,deterministic,Yes
+ALMI,,,,,,,d_rule_decomposition_R21_2,rule_decomposition,1,1,0,1,1,0,0,4,0.79,deterministic,Yes
+ALMI,,,,,,,g1,new_rule_generation,0,1,0,0,0,0,0,2,0.79,llm,Yes
+ALMI,situational_conflicts_1,Sit. conflict,1,35.67,10.91,23.04,d_defeater_introduction_R3_1,defeater_introduction,1,0,0,1,0,0,0,1,0.67,deterministic,Yes
+ASPEN,concerns_1,Concern,5,123.75,3.23,116.53,d_defeater_refinement_R11_2,defeater_refinement,1,0,0,0,1,0,0,3,0.89,deterministic,Yes
+ASPEN,,,,,,,d_rule_decomposition_R11_1,rule_decomposition,1,1,0,0,1,0,0,5,0.31,deterministic,Yes
+ASPEN,,,,,,,d_rule_decomposition_R14_1_5,rule_decomposition,1,1,0,0,1,0,0,4,0.93,deterministic,Yes
+ASPEN,,,,,,,d_trigger_strengthening_R14_1_3,trigger_strengthening,1,0,0,0,1,0,0,1,0.8,deterministic,Yes
+ASPEN,,,,,,,g1,new_rule_generation,0,1,0,0,0,0,0,2,0.33,llm,Yes
+ASPEN,concerns_2,Concern,2,96.78,3.77,89.83,d_trigger_strengthening_R13_4,trigger_strengthening,1,0,0,0,1,0,0,2,0.14,deterministic,Yes
+ASPEN,,,,,,,d_trigger_strengthening_R7_1_3,trigger_strengthening,1,0,0,0,1,0,0,1,0.86,deterministic,Yes
+ASPEN,concerns_3,Concern,1,29.91,3.1,26.42,g1,new_rule_generation,0,1,0,0,0,0,0,1,0.75,llm,Yes
+ASPEN,redundancies_1,Redundancy,1,26.4,10.44,14.81,d_rule_removal_R14_1,rule_removal,0,0,1,0,0,0,0,1,1,deterministic,No
+ASPEN,situational_conflicts_1,Sit. conflict,2,69.09,9.23,56.67,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,2,0.07,deterministic,Yes
+ASPEN,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,1,0.12,deterministic,Yes
+ASPEN,situational_conflicts_2,Sit. conflict,4,51.66,16.02,32.43,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,4,0.07,deterministic,Yes
+ASPEN,,,,,,,d_defeater_introduction_R7_1_4,defeater_introduction,1,0,0,1,0,0,0,3,0.8,deterministic,Yes
+ASPEN,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,2,0.12,deterministic,Yes
+ASPEN,,,,,,,d_trigger_refinement_R7_1_3,trigger_refinement,1,0,0,0,1,0,0,1,0.9,deterministic,Yes
+ASPEN,situational_conflicts_3,Sit. conflict,4,228.08,8.12,216.63,d_defeater_introduction_R13_4,defeater_introduction,2,0,0,1,0,0,0,4,0,deterministic,Yes
+ASPEN,,,,,,,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,2,0.07,deterministic,Yes
+ASPEN,,,,,,,d_trigger_refinement_R13_3,trigger_refinement,2,0,0,0,1,0,0,3,0.14,deterministic,Yes
+ASPEN,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,1,0.12,deterministic,Yes
+AutoCAR,concerns_3,Concern,2,74.53,5.03,66.93,d_rule_decomposition_R17_1,rule_decomposition,1,1,0,0,1,0,0,2,0.83,deterministic,Yes
+AutoCAR,,,,,,,g1,new_rule_generation,0,1,0,0,0,0,0,1,1,llm,Yes
+AutoCAR,redundancies_1,Redundancy,1,52.23,13.01,35.55,d_rule_removal_R22_1,rule_removal,0,0,1,0,0,0,0,1,0,deterministic,No
+AutoCAR,redundancies_2,Redundancy,1,48.41,9.03,35.7,d_rule_removal_R23_1,rule_removal,0,0,1,0,0,0,0,1,1,deterministic,No
+BSN,concerns_1,Concern,1,28.61,4.15,23.63,g1,new_rule_generation,0,1,0,0,0,0,0,1,0.71,llm,Yes
+BSN,concerns_2,Concern,1,7.1,4.46,0.8,d_defeater_refinement_Rule12_1,defeater_refinement,1,0,0,0,1,0,0,1,0.85,deterministic,Yes
+CSICobot,concerns_2,Concern,1,17.24,3.5,13.3,g1,new_rule_generation,0,1,0,0,0,0,0,1,1,llm,Yes
+CSICobot,concerns_3,Concern,3,8.34,3.68,0.35,d_defeater_refinement_R1_2,defeater_refinement,1,0,0,0,1,0,0,2,1,deterministic,Yes
+CSICobot,,,,,,,d_defeater_refinement_R1_3,defeater_refinement,1,0,0,0,1,0,0,1,1,deterministic,Yes
+CSICobot,,,,,,,d_rule_decomposition_R1_1,rule_decomposition,1,1,0,0,1,0,0,3,0.67,deterministic,Yes
+CSICobot,concerns_4,Concern,1,17.4,3.72,13.24,g1,new_rule_generation,0,1,0,0,0,0,0,1,0.73,llm,Yes
+CSICobot,concerns_6,Concern,1,16.62,2.87,13.3,g1,new_rule_generation,0,1,0,0,0,0,0,1,1,llm,Yes
+CSICobot,concerns_7,Concern,1,33.84,3.29,30.14,g1,new_rule_generation,0,1,0,0,0,0,0,1,1,llm,Yes
+CSICobot,redundancies_1,Redundancy,3,44.34,7.22,35.76,d_rule_removal_R4_1,rule_removal,0,0,1,0,0,0,0,1,0,deterministic,No
+CSICobot,,,,,,,g1,event_specialization,1,0,0,0,1,0,0,2,0.75,llm,Yes
+CSICobot,,,,,,,g3,response_refinement,1,0,0,0,0,1,1,3,0.75,llm,Yes
+CSICobot,redundancies_2,Redundancy,3,48.33,23.45,14.45,d_rule_removal_R4b_1,rule_removal,0,0,1,0,0,0,0,1,1,deterministic,No
+CSICobot,,,,,,,g1,event_specialization,1,0,0,0,1,0,0,2,0.67,llm,Yes
+CSICobot,,,,,,,g3,response_refinement,1,0,0,0,0,1,1,3,0.33,llm,Yes
+CSICobot,redundancies_3,Redundancy,2,37.48,9.47,26.69,d_rule_removal_R14_1,rule_removal,0,0,1,0,0,0,0,1,1,deterministic,No
+CSICobot,,,,,,,g3,response_refinement,1,0,0,0,0,1,1,2,0.67,llm,Yes
+DAISY,concerns_1,Concern,1,91.32,8.11,81,d_rule_decomposition_Rule5_2,rule_decomposition,1,1,0,1,1,0,0,1,0.58,deterministic,Yes
+DAISY,concerns_2,Concern,1,24.86,3.89,20.43,g1,new_rule_generation,0,1,0,0,0,0,0,1,1,llm,Yes
+DAISY,concerns_4,Concern,1,28.5,5.79,22.16,g1,new_rule_generation,0,1,0,0,0,0,0,1,1,llm,Yes
+DAISY,concerns_5,Concern,1,50.41,3.51,46.37,g1,new_rule_generation,0,1,0,0,0,0,0,1,1,llm,Yes
+DAISY,redundancies_1,Redundancy,1,64.13,10.53,52.13,d_rule_removal_Rule16_1,rule_removal,0,0,1,0,0,0,0,1,0,deterministic,No
+DAISY,situational_conflicts_1,Sit. conflict,5,116.27,8.95,76.02,d_defeater_introduction_Rule18_2,defeater_introduction,1,0,0,1,0,0,0,4,0.33,deterministic,Yes
+DAISY,,,,,,,d_defeater_introduction_Rule19_4,defeater_introduction,1,0,0,1,0,0,0,5,0.72,deterministic,Yes
+DAISY,,,,,,,d_trigger_refinement_Rule18_1,trigger_refinement,1,0,0,0,1,0,0,1,0.48,deterministic,Yes
+DAISY,,,,,,,d_trigger_refinement_Rule19_3,trigger_refinement,1,0,0,0,1,0,0,2,0.81,deterministic,Yes
+DAISY,,,,,,,g3,response_refinement,1,0,0,0,0,1,1,3,0.44,llm,Yes
+DAISY,situational_conflicts_2,Sit. conflict,4,13.12,8.57,0.55,d_defeater_introduction_Rule18_4,defeater_introduction,1,0,0,1,0,0,0,3,0.33,deterministic,Yes
+DAISY,,,,,,,d_defeater_introduction_Rule19_2,defeater_introduction,1,0,0,1,0,0,0,4,0.72,deterministic,Yes
+DAISY,,,,,,,d_trigger_refinement_Rule18_3,trigger_refinement,1,0,0,0,1,0,0,1,0.48,deterministic,Yes
+DAISY,,,,,,,d_trigger_refinement_Rule19_1,trigger_refinement,1,0,0,0,1,0,0,2,0.81,deterministic,Yes
+DPA,concerns_1,Concern,1,54.09,4.98,45.32,d_rule_decomposition_R3_2,rule_decomposition,1,1,0,1,1,0,0,1,0.83,deterministic,Yes
+DPA,concerns_2,Concern,1,28.64,4.98,22.46,g1,new_rule_generation,0,1,0,0,0,0,0,1,0.67,llm,Yes
+DPA,concerns_3,Concern,1,46.02,5.29,36.85,d_rule_decomposition_R21_2,rule_decomposition,1,1,0,1,1,0,0,1,0.82,deterministic,Yes
+DressAssist,concerns_1,Concern,1,15.05,3.57,10.81,g1,new_rule_generation,0,1,0,0,0,0,0,1,0,llm,Yes
+SafeSCAD,purpose_blocking_1,Purpose,1,30.64,2.73,26.77,d_defeater_introduction_R12_1,defeater_introduction,1,0,0,1,0,0,0,1,0.5,deterministic,Yes
+SafeSCAD,purpose_blocking_2,Purpose,1,77.07,2.99,73.04,d_defeater_introduction_R9_1_1,rule_removal,0,0,1,0,0,0,0,1,1,deterministic,No
+SafeSCAD,redundancies_1,Redundancy,1,31.82,7.95,22.84,d_rule_removal_R1_1_1,rule_removal,0,0,1,0,0,0,0,1,1,deterministic,No
+SafeSCAD,redundancies_2,Redundancy,1,37.97,15.16,21.79,d_rule_removal_R2_1,rule_removal,0,0,1,0,0,0,0,1,0,deterministic,No
+SafeSCAD,redundancies_3,Redundancy,1,43.45,7.95,34.46,d_rule_removal_R2_1_1,rule_removal,0,0,1,0,0,0,0,1,0,deterministic,No
+SafeSCAD,situational_conflicts_1,Sit. conflict,2,53.75,10.01,41.9,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,2,1,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,1,0.77,deterministic,Yes
+SafeSCAD,situational_conflicts_10,Sit. conflict,2,156.72,8.49,143.93,d_defeater_introduction_R17_2,defeater_introduction,1,0,0,1,0,0,0,2,1,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R17_1,trigger_refinement,1,0,0,0,1,0,0,1,0.86,deterministic,Yes
+SafeSCAD,situational_conflicts_2,Sit. conflict,2,277.09,8.67,264.49,d_defeater_introduction_R3_1_2,defeater_introduction,2,0,0,2,0,0,0,2,0.4,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R3_1_1,trigger_refinement,2,0,0,1,1,0,0,1,0.42,deterministic,Yes
+SafeSCAD,situational_conflicts_3,Sit. conflict,2,36.63,8.24,26.69,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,2,1,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,1,0.77,deterministic,Yes
+SafeSCAD,situational_conflicts_4,Sit. conflict,2,62.34,8.86,46.75,d_defeater_introduction_R7_2,defeater_introduction,1,0,0,1,0,0,0,2,0.8,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R7_1,trigger_refinement,1,0,0,0,1,0,0,1,0.92,deterministic,Yes
+SafeSCAD,situational_conflicts_5,Sit. conflict,3,65.91,9.04,55.01,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,3,1,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,1,0.77,deterministic,Yes
+SafeSCAD,,,,,,,g3,response_refinement,1,0,0,0,0,1,1,2,0.44,llm,Yes
+SafeSCAD,situational_conflicts_6,Sit. conflict,3,41.8,10.91,29.13,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,3,1,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,1,0.77,deterministic,Yes
+SafeSCAD,,,,,,,g3,response_refinement,1,0,0,0,0,1,1,2,0.67,llm,Yes
+SafeSCAD,situational_conflicts_7,Sit. conflict,3,39.03,8.45,28.85,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,3,1,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,1,0.77,deterministic,Yes
+SafeSCAD,,,,,,,g3,response_refinement,1,0,0,0,0,1,1,2,0.69,llm,Yes
+SafeSCAD,situational_conflicts_9,Sit. conflict,3,68.08,16.61,49.67,d_defeater_introduction_R4_2,defeater_introduction,1,0,0,1,0,0,0,3,1,deterministic,Yes
+SafeSCAD,,,,,,,d_trigger_refinement_R4_1,trigger_refinement,1,0,0,0,1,0,0,1,0.77,deterministic,Yes
+SafeSCAD,,,,,,,g3,response_refinement,1,0,0,0,0,1,1,2,0.75,llm,Yes
