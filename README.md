@@ -183,6 +183,20 @@ LEGOS-SLEEC detects and diagnoses well-formedness issues. SLEEC-PATCH extends th
     Results:
     SLEECpatch/app/results/csv
 
+    Case Studies
+Please find here, both the initial and SLEECPATCH normative requirements collected for nine case studies.
+
+ALMI (initial, SLEECPATCH)
+ASPEN (initial, SLEECPATCH)
+AutoCar (initial, SLEECPATCH)
+BSN (initial, SLEECPATCH)
+CSICobot (initial, SLEECPATCH)
+DAISY (initial, SLEECPATCH)
+DPA (initial, SLEECPATCH)
+DressAssist (initial, SLEECPATCH)
+SafeSCAD (initial, SLEECPATCH)
+
+
 ## Reproducibility
 
 1. Select one of the nine case studies.
