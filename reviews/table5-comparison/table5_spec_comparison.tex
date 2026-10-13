@@ -1,0 +1,22 @@
+% Requires booktabs, multirow and graphicx.
+\begin{table*}[t]
+\caption{Changes from the original specification to the stakeholder-corrected specification and to the composition of the recorded highest-ranked patches. -- denotes an unavailable composition. See notes for cumulative verification outcomes.}
+\label{tab:corrected-comparison}
+\centering\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrrrrrrrrrrrr}
+\toprule
+\multirow{2}{*}{Case study} & \multicolumn{8}{c}{Stakeholder-corrected} & \multicolumn{8}{c}{SLEEC-PATCH (top-ranked)} \\
+\cmidrule(lr){2-9}\cmidrule(lr){10-17}
+ & \#RM & \#RA & \#RD & \#NE & \#BO & \#Neg & \#Def & Depth & \#RM & \#RA & \#RD & \#NE & \#BO & \#Neg & \#Def & Depth \\
+\midrule
+ALMI & 0 & 4 & 1 & 1 & 5 & 2 & 0 & 1 & 2 & 0 & 0 & 0 & 3 & 1 & 0 & 1 \\
+ASPEN & 1 & 5 & 3 & 1 & 4 & 1 & 0 & 0 & -- & -- & -- & -- & -- & -- & -- & -- \\
+AutoCar & 1 & 20 & 1 & 1 & 49 & 22 & 0 & 0 & 0 & 0 & 2 & 0 & 0 & 0 & 0 & 0 \\
+BSN & 1 & 3 & 0 & 3 & 2 & 0 & 0 & 1 & 0 & 1 & 0 & 0 & 2 & 0 & 0 & 0 \\
+CSI-Cobot & 0 & 8 & 2 & 1 & 11 & 2 & 0 & 0 & 0 & 4 & 3 & 0 & 7 & 1 & 0 & 0 \\
+DAISY & 0 & 9 & 3 & 1 & 13 & 6 & 1 & 1 & -- & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule\end{tabular}%
+}
+\par\smallskip\parbox{\textwidth}{\footnotesize \#NE counts added event/measure declarations plus introduced defeaters. BO includes condition negations, which Neg also reports separately. Introduced syntax counts are nonnegative differences over the affected rules after Boolean simplification; Depth is maximum resulting defeater nesting. Identical selected edits are counted once. Conflicting existing-rule replacements are not overwritten. New-rule ID collisions are renamed without changing behaviour. $\dagger$ The composition fails fresh verification; its counts describe a constructed specification, not a verified cumulative repair. $\ddagger$ Cumulative verification is inconclusive. Issues with no selected patch remain unresolved. ASPEN has conflicting replacements for R7\_1. DAISY lacks saved baseline specifications and uses legacy ranks; its composition is unavailable. Fresh verification resolved original issues as follows: ALMI: 2/3; AutoCar: 2/9; BSN: 1/3; CSI-Cobot: 7/10, with no new issues in those compositions. Smaller edit counts do not imply equal repair coverage.}
+\end{table*}

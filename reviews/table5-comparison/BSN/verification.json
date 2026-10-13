@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "before_count": 3,
+  "after_count": 2,
+  "resolved_count": 1,
+  "new_count": 0,
+  "selected_still_present": [],
+  "selected_absent_from_baseline": [],
+  "remaining": [
+    {
+      "type": "concerns",
+      "subject": "C8",
+      "value": "C8 when DataCollected then not AnonymizeData eventually\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "C9",
+      "value": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\nConcern is raised"
+    }
+  ],
+  "introduced": []
+}

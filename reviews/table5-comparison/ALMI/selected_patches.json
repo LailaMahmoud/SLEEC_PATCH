@@ -1,0 +1,1122 @@
+[
+  {
+    "use_case": "ALMI",
+    "issue_id": "concerns_1",
+    "issue_type": "concerns",
+    "run_id": "10970b3793c34fe3b68dadd4b79ab321",
+    "timestamp": "2026-10-03T09:44:12.991749",
+    "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+    "generation_time_seconds": 3.429,
+    "validation_time_seconds": 24.58,
+    "verified_patch_count": 1,
+    "result_id": 196,
+    "patch_id": "d_defeater_refinement_R3_1",
+    "operation": "defeater_refinement",
+    "source": "deterministic",
+    "rank": 1,
+    "rank_method": "lexicographic",
+    "rules_modified": 1,
+    "rules_added": 0,
+    "rules_removed": 0,
+    "NE": 0,
+    "BO": 3,
+    "Neg": 1,
+    "Def": 0,
+    "Depth": 1,
+    "NE_provenance": "recorded",
+    "BO_provenance": "recorded",
+    "Neg_provenance": "calculated_from_simplified_saved_rules",
+    "Def_provenance": "recorded",
+    "Depth_provenance": "recorded",
+    "verification_record_id": 512,
+    "verification_match_method": "run_id_and_patch_content",
+    "selected_issue": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\nConcern is raised",
+    "patch": {
+      "patch_id": "d_defeater_refinement_R3_1",
+      "id": "d_defeater_refinement_R3_1",
+      "source": "deterministic",
+      "issue_type": "concerns",
+      "operation": "defeater_refinement",
+      "target_rule_id": "R3",
+      "original_rule": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices",
+      "proposed_rule": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices",
+      "diagnosis": {
+        "source_id": "c1",
+        "source_text": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices",
+        "raw_report": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\nConcern is raised\nat time 0: HumanOnFloor()\nat time 0: Measure(userOccupied=True, timeBetweenMeals=3, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=high, alarmOn=False)\n----------------------------------------------------------------------------------------------------",
+        "trace": [
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "HumanOnFloor",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: HumanOnFloor()"
+          },
+          {
+            "kind": "measure",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "Measure",
+            "values": {
+              "userOccupied": true,
+              "timeBetweenMeals": 3,
+              "personAuthorized": false,
+              "dataNeedsChecking": false,
+              "userAsksForAppropriateTasks": false,
+              "userNeedsSpecialAccomodations": false,
+              "userDisablesAlarm": false,
+              "alarmRestarts": false,
+              "needLevel": "nlow",
+              "humanAssents": false,
+              "safePathFound": false,
+              "hazardDetected": false,
+              "kitchenSafe": false,
+              "riskLevel": "high",
+              "alarmOn": false
+            },
+            "arguments_raw": "userOccupied=True, timeBetweenMeals=3, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=high, alarmOn=False",
+            "raw": "at time 0: Measure(userOccupied=True, timeBetweenMeals=3, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=high, alarmOn=False)"
+          }
+        ],
+        "affected_rule_ids": [],
+        "rule_references": [],
+        "rule_id_provenance": "unavailable"
+      },
+      "target_resolution": {
+        "addition_scope": {
+          "source_id": "c1",
+          "source_text": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices",
+          "trigger_event": "HumanOnFloor",
+          "condition": "({userOccupied} and ({riskLevel} = high))",
+          "response_event": "CallEmergencyServices",
+          "response_negated": true,
+          "timing": ""
+        },
+        "rule_ids": [
+          "R3"
+        ],
+        "related_responses": [
+          {
+            "rule_id": "R3",
+            "trigger_event": "HumanOnFloor",
+            "response_paths": [
+              "main",
+              "main.unless[0]"
+            ]
+          },
+          {
+            "rule_id": "R21",
+            "trigger_event": "SmokeDetectorAlarm",
+            "response_paths": [
+              "main"
+            ]
+          }
+        ],
+        "basis": "source_and_trace",
+        "observed_contexts": [
+          {
+            "timestamp": 0,
+            "values": {
+              "userOccupied": true,
+              "timeBetweenMeals": 3,
+              "personAuthorized": false,
+              "dataNeedsChecking": false,
+              "userAsksForAppropriateTasks": false,
+              "userNeedsSpecialAccomodations": false,
+              "userDisablesAlarm": false,
+              "alarmRestarts": false,
+              "needLevel": "nlow",
+              "humanAssents": false,
+              "safePathFound": false,
+              "hazardDetected": false,
+              "kitchenSafe": false,
+              "riskLevel": "high",
+              "alarmOn": false
+            }
+          }
+        ],
+        "reason": "These rules match the source trigger and response. Each is a separate repair hypothesis subject to verification; a false guard is retained as a possible broadening target."
+      },
+      "natural_language_explanation": "Exclude the concern context from this existing exception; preserve all responses and other exceptions.",
+      "original_sleec": "def_start\n\n\t// Events\n\tevent PreparingDeployment\n\tevent AgentDeployed\n\tevent MeetingUser    \n\tevent InformUser\n\tevent InformCaregiver\n\tevent CallEmergencyServices\n\tevent RemindLater\n\tevent AgentHasAppropriateAppearance\n\tevent AskForDetailLevelOfInstructions\n\tevent UseFirstPersonPluralLanguage\n\tevent CalibrateSpeech    \n\tevent RemindUserOfLimitations\n\t// Safety\n\tevent AskForEmergencyContact\n\tevent HumanOnFloor\n\tevent SmokeDetectorAlarm\n\tevent OpenWindows\n\tevent FireSafetyMeasures\n\tevent AskUserIfOK\n\tevent InterfereSafely\n\tevent UserHasLimitation\n\tevent CheckTemperature\n\tevent FoodPreparation\n\tevent TrackTime    \n\tevent UserUnpredictable\n\tevent GiveUserDangerousObjects\n\t// Cooking/kitchen related specifically\n\tevent MonitorMealTime\n\tevent BeforeCookingBegins\n\tevent UserWantsToCook\n\tevent AllowUserToCook\n\tevent GiveSuggestion\n\tevent GivingCookingInstructions\n\tevent ConsiderUserPractices\n\tevent UserChangeItemLocation\n\tevent UserChangeMind\n\tevent RecalculateApproach\n\t// Privacy\n\tevent ProvideDataSummaries\n\tevent CollectandRecordInformation\n\tevent UpdateInformation\n\tevent ShowDataHistory\n\tevent UpdateMap\n\n\t// measures\n\tmeasure userOccupied: boolean\n\tmeasure timeBetweenMeals: numeric\n\tmeasure personAuthorized: boolean\n\tmeasure dataNeedsChecking: boolean\n\tmeasure userAsksForAppropriateTasks: boolean\n\tmeasure userNeedsSpecialAccomodations: boolean\n\tmeasure userDisablesAlarm: boolean\n\tmeasure alarmRestarts: boolean\n\tmeasure needLevel: scale(nlow, nmedium, nhigh)\n\tmeasure humanAssents: boolean\n\tmeasure safePathFound: boolean\n\tmeasure hazardDetected: boolean\n\tmeasure kitchenSafe: boolean\n\tmeasure riskLevel: scale(low, medium, high)\n\tmeasure alarmOn: boolean\n\n\t// constants\n\tconstant maxTimeBetweenMeals = 28800 // is predetermined\ndef_end\n\nrule_start\n\tR1 when MonitorMealTime then InformUser within 10 minutes\n\t\tunless {userOccupied} then RemindLater\n\t// If the max time limit is exceeded, call the caregiver and inform them of the situation and in the meantime, suggest they have a snack.\n\tR2 when AgentDeployed then TrackTime\n\tR2_1 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then InformCaregiver\n\tR2_2 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then GiveSuggestion\n\tR3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices\n\n\tR4 when InterfereSafely and (not {safePathFound}) then InformUser\n\t   unless {userOccupied}\n\tR5 when UserWantsToCook then AllowUserToCook\n\tR5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely\n\tR6 when UserHasLimitation then InformUser\n\tR7 when UserWantsToCook then CheckTemperature\n\tR7_1 when CheckTemperature and {hazardDetected} then InformUser\n\tR8 when FoodPreparation then TrackTime\n\tR8_1 when TrackTime then InformUser\n\tR9 when MeetingUser then CollectandRecordInformation\n\tR9_1 when AgentDeployed then UpdateInformation\n\tR10 when GiveSuggestion then ConsiderUserPractices\n\tR11 when MeetingUser then AskForEmergencyContact\n\tR11_1 when AskForEmergencyContact then InformUser\n\tR12 when AgentDeployed and (not {personAuthorized}) then not ShowDataHistory\n\tR12_1 when ShowDataHistory and {dataNeedsChecking} then ProvideDataSummaries\n\tR13 when UserUnpredictable then not GiveUserDangerousObjects\n\tR14 when AgentDeployed and (not {userAsksForAppropriateTasks}) then RemindUserOfLimitations\n\t\tunless ({needLevel} > nmedium)\n\tR15 when PreparingDeployment then AgentHasAppropriateAppearance\n\t\tunless {userNeedsSpecialAccomodations}\n\tR16 when PreparingDeployment then CalibrateSpeech\n\tR17 when GivingCookingInstructions then UseFirstPersonPluralLanguage\n\tR17_1 when GivingCookingInstructions then InformUser //offer to repeat\n\tR18 when BeforeCookingBegins then AskForDetailLevelOfInstructions\n\tR19 when UserChangeMind then RecalculateApproach\n\t    unless ({riskLevel} = high)\n\tR20 when UserChangeItemLocation then UpdateMap\n\t    unless ({riskLevel} = high) then InterfereSafely\n\tR21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures \n\tR21_1 when FireSafetyMeasures then OpenWindows\n\tR21_2 when FireSafetyMeasures then AskUserIfOK\n\tR21_3 when FireSafetyMeasures then InformCaregiver\nrule_end\n\nconcern_start\n\t// Safety\n    c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\n    c2 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))  then not  InterfereSafely\n    c3 when CheckTemperature and {hazardDetected} then not InformUser\n    c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes\n    c5 when FireSafetyMeasures then not OpenWindows\n\t// Autonomy\n    c6 when UserWantsToCook then not AllowUserToCook\n    c7 when GivingCookingInstructions then not UseFirstPersonPluralLanguage\n    c8 when UserChangeMind and ({riskLevel} < high) then not RecalculateApproach\n\t// Cultural sensitivity\n\tc9 when GiveSuggestion then not ConsiderUserPractices\n\t// Privacy\n\tc10 when AgentDeployed and (not {personAuthorized}) then ShowDataHistory\n\t// Security\n\tc11 when ShowDataHistory and {dataNeedsChecking} then not ProvideDataSummaries\nconcern_end\n\npurpose_start\n\tpr1 exists PreparingDeployment\n\tpr2 exists MeetingUser\n\tpr3 exists InformUser\n\tpr4 when SmokeDetectorAlarm and ({userDisablesAlarm} or {alarmRestarts}) then InformUser\n\tpr5 exists RemindUserOfLimitations and ({userOccupied} and ({riskLevel} = high))\n\tpr6 when HumanOnFloor and {humanAssents} then AskUserIfOK\n\tpr7 when HumanOnFloor and ({riskLevel} = high) then CallEmergencyServices\n\tpr8 when UserUnpredictable then AskUserIfOK\n    // Avoid sharing user\u2019s personal information\n\tp9 exists ShowDataHistory and {personAuthorized}\n    // Ensuring that the user gets fed\n    p10 exists InformUser and (not {userOccupied}) while MonitorMealTime\n    // Must be able to keep the user reasonably safe in the kitchen\n\tp13 exists InformUser and {hazardDetected}\n\tp14 exists InterfereSafely and ({hazardDetected} or ({riskLevel} = high))\n    // Respecting user\u2019s autonomy when they request it\n\tp15 exists UserChangeMind and ({riskLevel} < high)\n    // Must be able to connect user to help when needed\n\tp16 exists CallEmergencyServices while HumanOnFloor\n\tp17 exists CallEmergencyServices while SmokeDetectorAlarm\npurpose_end\n",
+      "result_id": "",
+      "rule_ids": [],
+      "operation_label": "Defeater refinement",
+      "stakeholder_summary": "This patch applies 'Defeater refinement' to address the selected well-formedness issue.",
+      "review_flags": [
+        "Review priority-sensitive emergency behavior."
+      ],
+      "missing_element": "",
+      "grounding_evidence": {},
+      "new_event": "",
+      "new_measure": "",
+      "new_capability": "",
+      "new_rule": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices",
+      "applicability": {},
+      "modification_cost": 1,
+      "new_events_added": 0,
+      "new_measures_added": 0,
+      "new_capabilities_added": 0,
+      "new_rules_added": 0,
+      "defeaters_added": 0,
+      "verified": true,
+      "syntax_validation": {
+        "valid": true,
+        "error": "",
+        "rule_count": 33
+      },
+      "failure_reason": "",
+      "verification_cache_hit": false,
+      "patched_sleec": "def_start\n\n\t// Events\n\tevent PreparingDeployment\n\tevent AgentDeployed\n\tevent MeetingUser    \n\tevent InformUser\n\tevent InformCaregiver\n\tevent CallEmergencyServices\n\tevent RemindLater\n\tevent AgentHasAppropriateAppearance\n\tevent AskForDetailLevelOfInstructions\n\tevent UseFirstPersonPluralLanguage\n\tevent CalibrateSpeech    \n\tevent RemindUserOfLimitations\n\t// Safety\n\tevent AskForEmergencyContact\n\tevent HumanOnFloor\n\tevent SmokeDetectorAlarm\n\tevent OpenWindows\n\tevent FireSafetyMeasures\n\tevent AskUserIfOK\n\tevent InterfereSafely\n\tevent UserHasLimitation\n\tevent CheckTemperature\n\tevent FoodPreparation\n\tevent TrackTime    \n\tevent UserUnpredictable\n\tevent GiveUserDangerousObjects\n\t// Cooking/kitchen related specifically\n\tevent MonitorMealTime\n\tevent BeforeCookingBegins\n\tevent UserWantsToCook\n\tevent AllowUserToCook\n\tevent GiveSuggestion\n\tevent GivingCookingInstructions\n\tevent ConsiderUserPractices\n\tevent UserChangeItemLocation\n\tevent UserChangeMind\n\tevent RecalculateApproach\n\t// Privacy\n\tevent ProvideDataSummaries\n\tevent CollectandRecordInformation\n\tevent UpdateInformation\n\tevent ShowDataHistory\n\tevent UpdateMap\n\n\t// measures\n\tmeasure userOccupied: boolean\n\tmeasure timeBetweenMeals: numeric\n\tmeasure personAuthorized: boolean\n\tmeasure dataNeedsChecking: boolean\n\tmeasure userAsksForAppropriateTasks: boolean\n\tmeasure userNeedsSpecialAccomodations: boolean\n\tmeasure userDisablesAlarm: boolean\n\tmeasure alarmRestarts: boolean\n\tmeasure needLevel: scale(nlow, nmedium, nhigh)\n\tmeasure humanAssents: boolean\n\tmeasure safePathFound: boolean\n\tmeasure hazardDetected: boolean\n\tmeasure kitchenSafe: boolean\n\tmeasure riskLevel: scale(low, medium, high)\n\tmeasure alarmOn: boolean\n\n\t// constants\n\tconstant maxTimeBetweenMeals = 28800 // is predetermined\ndef_end\n\nrule_start\n\tR1 when MonitorMealTime then InformUser within 10 minutes\n\t\tunless {userOccupied} then RemindLater\n\t// If the max time limit is exceeded, call the caregiver and inform them of the situation and in the meantime, suggest they have a snack.\n\tR2 when AgentDeployed then TrackTime\n\tR2_1 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then InformCaregiver\n\tR2_2 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then GiveSuggestion\n\tR3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices\n\n\tR4 when InterfereSafely and (not {safePathFound}) then InformUser\n\t   unless {userOccupied}\n\tR5 when UserWantsToCook then AllowUserToCook\n\tR5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely\n\tR6 when UserHasLimitation then InformUser\n\tR7 when UserWantsToCook then CheckTemperature\n\tR7_1 when CheckTemperature and {hazardDetected} then InformUser\n\tR8 when FoodPreparation then TrackTime\n\tR8_1 when TrackTime then InformUser\n\tR9 when MeetingUser then CollectandRecordInformation\n\tR9_1 when AgentDeployed then UpdateInformation\n\tR10 when GiveSuggestion then ConsiderUserPractices\n\tR11 when MeetingUser then AskForEmergencyContact\n\tR11_1 when AskForEmergencyContact then InformUser\n\tR12 when AgentDeployed and (not {personAuthorized}) then not ShowDataHistory\n\tR12_1 when ShowDataHistory and {dataNeedsChecking} then ProvideDataSummaries\n\tR13 when UserUnpredictable then not GiveUserDangerousObjects\n\tR14 when AgentDeployed and (not {userAsksForAppropriateTasks}) then RemindUserOfLimitations\n\t\tunless ({needLevel} > nmedium)\n\tR15 when PreparingDeployment then AgentHasAppropriateAppearance\n\t\tunless {userNeedsSpecialAccomodations}\n\tR16 when PreparingDeployment then CalibrateSpeech\n\tR17 when GivingCookingInstructions then UseFirstPersonPluralLanguage\n\tR17_1 when GivingCookingInstructions then InformUser //offer to repeat\n\tR18 when BeforeCookingBegins then AskForDetailLevelOfInstructions\n\tR19 when UserChangeMind then RecalculateApproach\n\t    unless ({riskLevel} = high)\n\tR20 when UserChangeItemLocation then UpdateMap\n\t    unless ({riskLevel} = high) then InterfereSafely\n\tR21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures \n\tR21_1 when FireSafetyMeasures then OpenWindows\n\tR21_2 when FireSafetyMeasures then AskUserIfOK\n\tR21_3 when FireSafetyMeasures then InformCaregiver\nrule_end\n\nconcern_start\n\t// Safety\n    c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\n    c2 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))  then not  InterfereSafely\n    c3 when CheckTemperature and {hazardDetected} then not InformUser\n    c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes\n    c5 when FireSafetyMeasures then not OpenWindows\n\t// Autonomy\n    c6 when UserWantsToCook then not AllowUserToCook\n    c7 when GivingCookingInstructions then not UseFirstPersonPluralLanguage\n    c8 when UserChangeMind and ({riskLevel} < high) then not RecalculateApproach\n\t// Cultural sensitivity\n\tc9 when GiveSuggestion then not ConsiderUserPractices\n\t// Privacy\n\tc10 when AgentDeployed and (not {personAuthorized}) then ShowDataHistory\n\t// Security\n\tc11 when ShowDataHistory and {dataNeedsChecking} then not ProvideDataSummaries\nconcern_end\n\npurpose_start\n\tpr1 exists PreparingDeployment\n\tpr2 exists MeetingUser\n\tpr3 exists InformUser\n\tpr4 when SmokeDetectorAlarm and ({userDisablesAlarm} or {alarmRestarts}) then InformUser\n\tpr5 exists RemindUserOfLimitations and ({userOccupied} and ({riskLevel} = high))\n\tpr6 when HumanOnFloor and {humanAssents} then AskUserIfOK\n\tpr7 when HumanOnFloor and ({riskLevel} = high) then CallEmergencyServices\n\tpr8 when UserUnpredictable then AskUserIfOK\n    // Avoid sharing user\u2019s personal information\n\tp9 exists ShowDataHistory and {personAuthorized}\n    // Ensuring that the user gets fed\n    p10 exists InformUser and (not {userOccupied}) while MonitorMealTime\n    // Must be able to keep the user reasonably safe in the kitchen\n\tp13 exists InformUser and {hazardDetected}\n\tp14 exists InterfereSafely and ({hazardDetected} or ({riskLevel} = high))\n    // Respecting user\u2019s autonomy when they request it\n\tp15 exists UserChangeMind and ({riskLevel} < high)\n    // Must be able to connect user to help when needed\n\tp16 exists CallEmergencyServices while HumanOnFloor\n\tp17 exists CallEmergencyServices while SmokeDetectorAlarm\npurpose_end\n",
+      "target_fixed": true,
+      "related_issue": null,
+      "regression_report": {
+        "selected_issue_fixed": true,
+        "new_issues_introduced": false,
+        "regression_passed": true,
+        "before_issue_count": 3,
+        "after_issue_count": 2,
+        "new_issue_count": 0,
+        "resolved_issue_count": 1,
+        "remaining_issue_count": 2,
+        "before_counts_by_type": {
+          "concerns": 2,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 0,
+          "situational_conflicts": 1
+        },
+        "after_counts_by_type": {
+          "concerns": 1,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 0,
+          "situational_conflicts": 1
+        },
+        "new_issues": [],
+        "resolved_issues": [
+          {
+            "fingerprint": "concerns:3a8f11b36c245be9a527b58a",
+            "issue_type": "concerns",
+            "summary": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices Concern is raised",
+            "rule_ids": []
+          }
+        ],
+        "remaining_issues": [
+          {
+            "fingerprint": "concerns:65539e5e7451d7b4c2992dc1",
+            "issue_type": "concerns",
+            "summary": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "situational_conflicts:a89ff2bc8b5f3424b8323133",
+            "issue_type": "situational_conflicts",
+            "summary": "Situational conflict under situation : For rule: R3 when HumanOnFloor then CallEmergencyServices unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices ----------...",
+            "rule_ids": [
+              "R3",
+              "R10",
+              "R5_1"
+            ]
+          }
+        ]
+      },
+      "regression_passed": true,
+      "validation_result": {
+        "concerns": [
+          "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes\nConcern is raised"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [],
+        "situational_conflicts": [
+          "Situational conflict under situation :\n\nFor rule:\nR3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR10 when GiveSuggestion then ConsiderUserPractices\n----------------------------------------------------------------------------------------------------\nR5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely\n----------------------------------------------------------------------------------------------------"
+        ],
+        "original_rules_by_type": {
+          "concerns": [
+            [
+              "R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes\nunless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures",
+              "R3 when HumanOnFloor then CallEmergencyServices\nunless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices"
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            [
+              "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices",
+              "R10 when GiveSuggestion then ConsiderUserPractices",
+              "R5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely"
+            ]
+          ]
+        },
+        "wfi_artifacts_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c4",
+                "text": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes"
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            []
+          ]
+        },
+        "rule_references_by_type": {
+          "concerns": [
+            []
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            [
+              {
+                "role": "diagnosed",
+                "kind": "rule",
+                "id": "R3",
+                "text": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices"
+              },
+              {
+                "role": "referenced",
+                "kind": "rule",
+                "id": "R10",
+                "text": "R10 when GiveSuggestion then ConsiderUserPractices"
+              },
+              {
+                "role": "referenced",
+                "kind": "rule",
+                "id": "R5_1",
+                "text": "R5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely"
+              }
+            ]
+          ]
+        },
+        "related_rules_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R21",
+                "text": "R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes\nunless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures",
+                "score": 4
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R3",
+                "text": "R3 when HumanOnFloor then CallEmergencyServices\nunless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices",
+                "score": 1
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R21",
+                "text": "R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes\nunless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures",
+                "score": 7
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R20",
+                "text": "R20 when UserChangeItemLocation then UpdateMap\nunless ({riskLevel} = high) then InterfereSafely",
+                "score": 3
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when UserChangeMind then RecalculateApproach\nunless ({riskLevel} = high)",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R4",
+                "text": "R4 when InterfereSafely and (not {safePathFound}) then InformUser\nunless {userOccupied}",
+                "score": 2
+              }
+            ]
+          ]
+        },
+        "diagnoses_by_type": {
+          "concerns": [
+            {
+              "source_id": "c4",
+              "source_text": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes",
+              "raw_report": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes\nConcern is raised\nat time 0: SmokeDetectorAlarm()\nat time 0: Measure(userOccupied=False, timeBetweenMeals=4, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=low, alarmOn=False)\nat time 121: CallEmergencyServices()\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SmokeDetectorAlarm",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SmokeDetectorAlarm()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "userOccupied": false,
+                    "timeBetweenMeals": 4,
+                    "personAuthorized": false,
+                    "dataNeedsChecking": false,
+                    "userAsksForAppropriateTasks": false,
+                    "userNeedsSpecialAccomodations": false,
+                    "userDisablesAlarm": false,
+                    "alarmRestarts": false,
+                    "needLevel": "nlow",
+                    "humanAssents": false,
+                    "safePathFound": false,
+                    "hazardDetected": false,
+                    "kitchenSafe": false,
+                    "riskLevel": "low",
+                    "alarmOn": false
+                  },
+                  "arguments_raw": "userOccupied=False, timeBetweenMeals=4, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=low, alarmOn=False",
+                  "raw": "at time 0: Measure(userOccupied=False, timeBetweenMeals=4, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=low, alarmOn=False)"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 121,
+                  "timestamp_raw": "121",
+                  "time_unit": "seconds",
+                  "name": "CallEmergencyServices",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 121: CallEmergencyServices()"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            }
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            {
+              "source_id": "R3",
+              "source_text": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices",
+              "raw_report": "Situational conflict under situation :\nat time 0: SmokeDetectorAlarm()\nat time 0: Measure(userOccupied=True, timeBetweenMeals=8, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=medium, alarmOn=False)\nat time 300: HumanOnFloor()\nat time 300: Measure(userOccupied=False, timeBetweenMeals=9, personAuthorized=True, dataNeedsChecking=True, userAsksForAppropriateTasks=True, userNeedsSpecialAccomodations=True, userDisablesAlarm=True, alarmRestarts=True, needLevel=nmedium, humanAssents=False, safePathFound=True, hazardDetected=True, kitchenSafe=True, riskLevel=high, alarmOn=True)\nat time 300: blocked_not_CallEmergencyServices(end=300)\n\nFor rule:\nR3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR10 when GiveSuggestion then ConsiderUserPractices\n----------------------------------------------------------------------------------------------------\nR5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SmokeDetectorAlarm",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SmokeDetectorAlarm()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "userOccupied": true,
+                    "timeBetweenMeals": 8,
+                    "personAuthorized": false,
+                    "dataNeedsChecking": false,
+                    "userAsksForAppropriateTasks": false,
+                    "userNeedsSpecialAccomodations": false,
+                    "userDisablesAlarm": false,
+                    "alarmRestarts": false,
+                    "needLevel": "nlow",
+                    "humanAssents": false,
+                    "safePathFound": false,
+                    "hazardDetected": false,
+                    "kitchenSafe": false,
+                    "riskLevel": "medium",
+                    "alarmOn": false
+                  },
+                  "arguments_raw": "userOccupied=True, timeBetweenMeals=8, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=medium, alarmOn=False",
+                  "raw": "at time 0: Measure(userOccupied=True, timeBetweenMeals=8, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=medium, alarmOn=False)"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 300,
+                  "timestamp_raw": "300",
+                  "time_unit": "seconds",
+                  "name": "HumanOnFloor",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 300: HumanOnFloor()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 300,
+                  "timestamp_raw": "300",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "userOccupied": false,
+                    "timeBetweenMeals": 9,
+                    "personAuthorized": true,
+                    "dataNeedsChecking": true,
+                    "userAsksForAppropriateTasks": true,
+                    "userNeedsSpecialAccomodations": true,
+                    "userDisablesAlarm": true,
+                    "alarmRestarts": true,
+                    "needLevel": "nmedium",
+                    "humanAssents": false,
+                    "safePathFound": true,
+                    "hazardDetected": true,
+                    "kitchenSafe": true,
+                    "riskLevel": "high",
+                    "alarmOn": true
+                  },
+                  "arguments_raw": "userOccupied=False, timeBetweenMeals=9, personAuthorized=True, dataNeedsChecking=True, userAsksForAppropriateTasks=True, userNeedsSpecialAccomodations=True, userDisablesAlarm=True, alarmRestarts=True, needLevel=nmedium, humanAssents=False, safePathFound=True, hazardDetected=True, kitchenSafe=True, riskLevel=high, alarmOn=True",
+                  "raw": "at time 300: Measure(userOccupied=False, timeBetweenMeals=9, personAuthorized=True, dataNeedsChecking=True, userAsksForAppropriateTasks=True, userNeedsSpecialAccomodations=True, userDisablesAlarm=True, alarmRestarts=True, needLevel=nmedium, humanAssents=False, safePathFound=True, hazardDetected=True, kitchenSafe=True, riskLevel=high, alarmOn=True)"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 300,
+                  "timestamp_raw": "300",
+                  "time_unit": "seconds",
+                  "name": "blocked_not_CallEmergencyServices",
+                  "values": {
+                    "end": 300
+                  },
+                  "arguments_raw": "end=300",
+                  "raw": "at time 300: blocked_not_CallEmergencyServices(end=300)"
+                }
+              ],
+              "affected_rule_ids": [
+                "R3",
+                "R10",
+                "R5_1"
+              ],
+              "rule_references": [
+                {
+                  "id": "R3",
+                  "text": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices"
+                },
+                {
+                  "id": "R10",
+                  "text": "R10 when GiveSuggestion then ConsiderUserPractices"
+                },
+                {
+                  "id": "R5_1",
+                  "text": "R5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely"
+                }
+              ],
+              "rule_id_provenance": "detector_report"
+            }
+          ]
+        }
+      },
+      "syntax_valid": true,
+      "formally_verified": true,
+      "candidate_status": "formally_verified",
+      "semantic_review_status": "pending",
+      "requires_social_scientist_review": true,
+      "attempt": 1,
+      "ranking": {
+        "rules_affected": 1,
+        "rules_edited": 1,
+        "rules_added": 0,
+        "rules_removed": 0,
+        "new_elements": 0,
+        "new_events": 0,
+        "new_measures": 0,
+        "new_defeaters": 0,
+        "boolean_complexity": 3,
+        "defeaters": 1,
+        "defeater_depth": 1,
+        "lexicographic_key": [
+          1,
+          0,
+          3,
+          1,
+          1
+        ],
+        "method": "lexicographic",
+        "total_score": 0
+      },
+      "rank": 1,
+      "ranking_score": -1,
+      "ranking_rationale": [
+        "Prefer fewer affected rules, new elements, Boolean operators, defeaters, then lower defeater nesting depth."
+      ]
+    }
+  },
+  {
+    "use_case": "ALMI",
+    "issue_id": "concerns_2",
+    "issue_type": "concerns",
+    "run_id": "0ee3b69144ec493d95aa985483ed04c3",
+    "timestamp": "2026-10-03T09:48:18.442441",
+    "input_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+    "generation_time_seconds": 3.054,
+    "validation_time_seconds": 46.487,
+    "verified_patch_count": 3,
+    "result_id": 197,
+    "patch_id": "d_deadline_refinement_R21_2",
+    "operation": "deadline_refinement",
+    "source": "deterministic",
+    "rank": 1,
+    "rank_method": "lexicographic",
+    "rules_modified": 1,
+    "rules_added": 0,
+    "rules_removed": 0,
+    "NE": 0,
+    "BO": 0,
+    "Neg": 0,
+    "Def": 0,
+    "Depth": 1,
+    "NE_provenance": "recorded",
+    "BO_provenance": "recorded",
+    "Neg_provenance": "calculated_from_simplified_saved_rules",
+    "Def_provenance": "recorded",
+    "Depth_provenance": "recorded",
+    "verification_record_id": 513,
+    "verification_match_method": "run_id_and_patch_content",
+    "selected_issue": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes\nConcern is raised",
+    "patch": {
+      "patch_id": "d_deadline_refinement_R21_2",
+      "id": "d_deadline_refinement_R21_2",
+      "source": "deterministic",
+      "issue_type": "concerns",
+      "operation": "deadline_refinement",
+      "target_rule_id": "R21",
+      "original_rule": "R21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures",
+      "proposed_rule": "R21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures",
+      "diagnosis": {
+        "source_id": "c4",
+        "source_text": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes",
+        "raw_report": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes\nConcern is raised\nat time 0: SmokeDetectorAlarm()\nat time 0: Measure(userOccupied=False, timeBetweenMeals=5, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=low, alarmOn=False)\nat time 121: CallEmergencyServices()\n----------------------------------------------------------------------------------------------------",
+        "trace": [
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "SmokeDetectorAlarm",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: SmokeDetectorAlarm()"
+          },
+          {
+            "kind": "measure",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "Measure",
+            "values": {
+              "userOccupied": false,
+              "timeBetweenMeals": 5,
+              "personAuthorized": false,
+              "dataNeedsChecking": false,
+              "userAsksForAppropriateTasks": false,
+              "userNeedsSpecialAccomodations": false,
+              "userDisablesAlarm": false,
+              "alarmRestarts": false,
+              "needLevel": "nlow",
+              "humanAssents": false,
+              "safePathFound": false,
+              "hazardDetected": false,
+              "kitchenSafe": false,
+              "riskLevel": "low",
+              "alarmOn": false
+            },
+            "arguments_raw": "userOccupied=False, timeBetweenMeals=5, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=low, alarmOn=False",
+            "raw": "at time 0: Measure(userOccupied=False, timeBetweenMeals=5, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=low, alarmOn=False)"
+          },
+          {
+            "kind": "event",
+            "timestamp": 121,
+            "timestamp_raw": "121",
+            "time_unit": "seconds",
+            "name": "CallEmergencyServices",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 121: CallEmergencyServices()"
+          }
+        ],
+        "affected_rule_ids": [],
+        "rule_references": [],
+        "rule_id_provenance": "unavailable"
+      },
+      "target_resolution": {
+        "addition_scope": {
+          "source_id": "c4",
+          "source_text": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes",
+          "trigger_event": "SmokeDetectorAlarm",
+          "condition": "((not {userDisablesAlarm}) or {alarmRestarts})",
+          "response_event": "CallEmergencyServices",
+          "response_negated": true,
+          "timing": "within 2 minutes"
+        },
+        "rule_ids": [
+          "R21"
+        ],
+        "related_responses": [
+          {
+            "rule_id": "R3",
+            "trigger_event": "HumanOnFloor",
+            "response_paths": [
+              "main",
+              "main.unless[0]"
+            ]
+          },
+          {
+            "rule_id": "R21",
+            "trigger_event": "SmokeDetectorAlarm",
+            "response_paths": [
+              "main"
+            ]
+          }
+        ],
+        "basis": "source_and_trace",
+        "observed_contexts": [
+          {
+            "timestamp": 0,
+            "values": {
+              "userOccupied": false,
+              "timeBetweenMeals": 5,
+              "personAuthorized": false,
+              "dataNeedsChecking": false,
+              "userAsksForAppropriateTasks": false,
+              "userNeedsSpecialAccomodations": false,
+              "userDisablesAlarm": false,
+              "alarmRestarts": false,
+              "needLevel": "nlow",
+              "humanAssents": false,
+              "safePathFound": false,
+              "hazardDetected": false,
+              "kitchenSafe": false,
+              "riskLevel": "low",
+              "alarmOn": false
+            }
+          }
+        ],
+        "reason": "These rules match the source trigger and response. Each is a separate repair hypothesis subject to verification; a false guard is retained as a possible broadening target."
+      },
+      "natural_language_explanation": "Tighten only the deadline to the bound supplied by the concern.",
+      "original_sleec": "def_start\n\n\t// Events\n\tevent PreparingDeployment\n\tevent AgentDeployed\n\tevent MeetingUser    \n\tevent InformUser\n\tevent InformCaregiver\n\tevent CallEmergencyServices\n\tevent RemindLater\n\tevent AgentHasAppropriateAppearance\n\tevent AskForDetailLevelOfInstructions\n\tevent UseFirstPersonPluralLanguage\n\tevent CalibrateSpeech    \n\tevent RemindUserOfLimitations\n\t// Safety\n\tevent AskForEmergencyContact\n\tevent HumanOnFloor\n\tevent SmokeDetectorAlarm\n\tevent OpenWindows\n\tevent FireSafetyMeasures\n\tevent AskUserIfOK\n\tevent InterfereSafely\n\tevent UserHasLimitation\n\tevent CheckTemperature\n\tevent FoodPreparation\n\tevent TrackTime    \n\tevent UserUnpredictable\n\tevent GiveUserDangerousObjects\n\t// Cooking/kitchen related specifically\n\tevent MonitorMealTime\n\tevent BeforeCookingBegins\n\tevent UserWantsToCook\n\tevent AllowUserToCook\n\tevent GiveSuggestion\n\tevent GivingCookingInstructions\n\tevent ConsiderUserPractices\n\tevent UserChangeItemLocation\n\tevent UserChangeMind\n\tevent RecalculateApproach\n\t// Privacy\n\tevent ProvideDataSummaries\n\tevent CollectandRecordInformation\n\tevent UpdateInformation\n\tevent ShowDataHistory\n\tevent UpdateMap\n\n\t// measures\n\tmeasure userOccupied: boolean\n\tmeasure timeBetweenMeals: numeric\n\tmeasure personAuthorized: boolean\n\tmeasure dataNeedsChecking: boolean\n\tmeasure userAsksForAppropriateTasks: boolean\n\tmeasure userNeedsSpecialAccomodations: boolean\n\tmeasure userDisablesAlarm: boolean\n\tmeasure alarmRestarts: boolean\n\tmeasure needLevel: scale(nlow, nmedium, nhigh)\n\tmeasure humanAssents: boolean\n\tmeasure safePathFound: boolean\n\tmeasure hazardDetected: boolean\n\tmeasure kitchenSafe: boolean\n\tmeasure riskLevel: scale(low, medium, high)\n\tmeasure alarmOn: boolean\n\n\t// constants\n\tconstant maxTimeBetweenMeals = 28800 // is predetermined\ndef_end\n\nrule_start\n\tR1 when MonitorMealTime then InformUser within 10 minutes\n\t\tunless {userOccupied} then RemindLater\n\t// If the max time limit is exceeded, call the caregiver and inform them of the situation and in the meantime, suggest they have a snack.\n\tR2 when AgentDeployed then TrackTime\n\tR2_1 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then InformCaregiver\n\tR2_2 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then GiveSuggestion\n\tR3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices\n\n\tR4 when InterfereSafely and (not {safePathFound}) then InformUser\n\t   unless {userOccupied}\n\tR5 when UserWantsToCook then AllowUserToCook\n\tR5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely\n\tR6 when UserHasLimitation then InformUser\n\tR7 when UserWantsToCook then CheckTemperature\n\tR7_1 when CheckTemperature and {hazardDetected} then InformUser\n\tR8 when FoodPreparation then TrackTime\n\tR8_1 when TrackTime then InformUser\n\tR9 when MeetingUser then CollectandRecordInformation\n\tR9_1 when AgentDeployed then UpdateInformation\n\tR10 when GiveSuggestion then ConsiderUserPractices\n\tR11 when MeetingUser then AskForEmergencyContact\n\tR11_1 when AskForEmergencyContact then InformUser\n\tR12 when AgentDeployed and (not {personAuthorized}) then not ShowDataHistory\n\tR12_1 when ShowDataHistory and {dataNeedsChecking} then ProvideDataSummaries\n\tR13 when UserUnpredictable then not GiveUserDangerousObjects\n\tR14 when AgentDeployed and (not {userAsksForAppropriateTasks}) then RemindUserOfLimitations\n\t\tunless ({needLevel} > nmedium)\n\tR15 when PreparingDeployment then AgentHasAppropriateAppearance\n\t\tunless {userNeedsSpecialAccomodations}\n\tR16 when PreparingDeployment then CalibrateSpeech\n\tR17 when GivingCookingInstructions then UseFirstPersonPluralLanguage\n\tR17_1 when GivingCookingInstructions then InformUser //offer to repeat\n\tR18 when BeforeCookingBegins then AskForDetailLevelOfInstructions\n\tR19 when UserChangeMind then RecalculateApproach\n\t    unless ({riskLevel} = high)\n\tR20 when UserChangeItemLocation then UpdateMap\n\t    unless ({riskLevel} = high) then InterfereSafely\n\tR21 when SmokeDetectorAlarm then CallEmergencyServices within 5 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures \n\tR21_1 when FireSafetyMeasures then OpenWindows\n\tR21_2 when FireSafetyMeasures then AskUserIfOK\n\tR21_3 when FireSafetyMeasures then InformCaregiver\nrule_end\n\nconcern_start\n\t// Safety\n    c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\n    c2 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))  then not  InterfereSafely\n    c3 when CheckTemperature and {hazardDetected} then not InformUser\n    c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes\n    c5 when FireSafetyMeasures then not OpenWindows\n\t// Autonomy\n    c6 when UserWantsToCook then not AllowUserToCook\n    c7 when GivingCookingInstructions then not UseFirstPersonPluralLanguage\n    c8 when UserChangeMind and ({riskLevel} < high) then not RecalculateApproach\n\t// Cultural sensitivity\n\tc9 when GiveSuggestion then not ConsiderUserPractices\n\t// Privacy\n\tc10 when AgentDeployed and (not {personAuthorized}) then ShowDataHistory\n\t// Security\n\tc11 when ShowDataHistory and {dataNeedsChecking} then not ProvideDataSummaries\nconcern_end\n\npurpose_start\n\tpr1 exists PreparingDeployment\n\tpr2 exists MeetingUser\n\tpr3 exists InformUser\n\tpr4 when SmokeDetectorAlarm and ({userDisablesAlarm} or {alarmRestarts}) then InformUser\n\tpr5 exists RemindUserOfLimitations and ({userOccupied} and ({riskLevel} = high))\n\tpr6 when HumanOnFloor and {humanAssents} then AskUserIfOK\n\tpr7 when HumanOnFloor and ({riskLevel} = high) then CallEmergencyServices\n\tpr8 when UserUnpredictable then AskUserIfOK\n    // Avoid sharing user\u2019s personal information\n\tp9 exists ShowDataHistory and {personAuthorized}\n    // Ensuring that the user gets fed\n    p10 exists InformUser and (not {userOccupied}) while MonitorMealTime\n    // Must be able to keep the user reasonably safe in the kitchen\n\tp13 exists InformUser and {hazardDetected}\n\tp14 exists InterfereSafely and ({hazardDetected} or ({riskLevel} = high))\n    // Respecting user\u2019s autonomy when they request it\n\tp15 exists UserChangeMind and ({riskLevel} < high)\n    // Must be able to connect user to help when needed\n\tp16 exists CallEmergencyServices while HumanOnFloor\n\tp17 exists CallEmergencyServices while SmokeDetectorAlarm\npurpose_end\n",
+      "result_id": "",
+      "rule_ids": [],
+      "operation_label": "Deadline refinement",
+      "stakeholder_summary": "This patch applies 'Deadline refinement' to address the selected well-formedness issue.",
+      "review_flags": [
+        "Review priority-sensitive emergency behavior."
+      ],
+      "missing_element": "",
+      "grounding_evidence": {},
+      "new_event": "",
+      "new_measure": "",
+      "new_capability": "",
+      "new_rule": "R21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures",
+      "applicability": {},
+      "modification_cost": 1,
+      "new_events_added": 0,
+      "new_measures_added": 0,
+      "new_capabilities_added": 0,
+      "new_rules_added": 0,
+      "defeaters_added": 0,
+      "verified": true,
+      "syntax_validation": {
+        "valid": true,
+        "error": "",
+        "rule_count": 33
+      },
+      "failure_reason": "",
+      "verification_cache_hit": false,
+      "patched_sleec": "def_start\n\n\t// Events\n\tevent PreparingDeployment\n\tevent AgentDeployed\n\tevent MeetingUser    \n\tevent InformUser\n\tevent InformCaregiver\n\tevent CallEmergencyServices\n\tevent RemindLater\n\tevent AgentHasAppropriateAppearance\n\tevent AskForDetailLevelOfInstructions\n\tevent UseFirstPersonPluralLanguage\n\tevent CalibrateSpeech    \n\tevent RemindUserOfLimitations\n\t// Safety\n\tevent AskForEmergencyContact\n\tevent HumanOnFloor\n\tevent SmokeDetectorAlarm\n\tevent OpenWindows\n\tevent FireSafetyMeasures\n\tevent AskUserIfOK\n\tevent InterfereSafely\n\tevent UserHasLimitation\n\tevent CheckTemperature\n\tevent FoodPreparation\n\tevent TrackTime    \n\tevent UserUnpredictable\n\tevent GiveUserDangerousObjects\n\t// Cooking/kitchen related specifically\n\tevent MonitorMealTime\n\tevent BeforeCookingBegins\n\tevent UserWantsToCook\n\tevent AllowUserToCook\n\tevent GiveSuggestion\n\tevent GivingCookingInstructions\n\tevent ConsiderUserPractices\n\tevent UserChangeItemLocation\n\tevent UserChangeMind\n\tevent RecalculateApproach\n\t// Privacy\n\tevent ProvideDataSummaries\n\tevent CollectandRecordInformation\n\tevent UpdateInformation\n\tevent ShowDataHistory\n\tevent UpdateMap\n\n\t// measures\n\tmeasure userOccupied: boolean\n\tmeasure timeBetweenMeals: numeric\n\tmeasure personAuthorized: boolean\n\tmeasure dataNeedsChecking: boolean\n\tmeasure userAsksForAppropriateTasks: boolean\n\tmeasure userNeedsSpecialAccomodations: boolean\n\tmeasure userDisablesAlarm: boolean\n\tmeasure alarmRestarts: boolean\n\tmeasure needLevel: scale(nlow, nmedium, nhigh)\n\tmeasure humanAssents: boolean\n\tmeasure safePathFound: boolean\n\tmeasure hazardDetected: boolean\n\tmeasure kitchenSafe: boolean\n\tmeasure riskLevel: scale(low, medium, high)\n\tmeasure alarmOn: boolean\n\n\t// constants\n\tconstant maxTimeBetweenMeals = 28800 // is predetermined\ndef_end\n\nrule_start\n\tR1 when MonitorMealTime then InformUser within 10 minutes\n\t\tunless {userOccupied} then RemindLater\n\t// If the max time limit is exceeded, call the caregiver and inform them of the situation and in the meantime, suggest they have a snack.\n\tR2 when AgentDeployed then TrackTime\n\tR2_1 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then InformCaregiver\n\tR2_2 when TrackTime and ({timeBetweenMeals} > maxTimeBetweenMeals) then GiveSuggestion\n\tR3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices\n\n\tR4 when InterfereSafely and (not {safePathFound}) then InformUser\n\t   unless {userOccupied}\n\tR5 when UserWantsToCook then AllowUserToCook\n\tR5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\n\tthen InterfereSafely\n\tR6 when UserHasLimitation then InformUser\n\tR7 when UserWantsToCook then CheckTemperature\n\tR7_1 when CheckTemperature and {hazardDetected} then InformUser\n\tR8 when FoodPreparation then TrackTime\n\tR8_1 when TrackTime then InformUser\n\tR9 when MeetingUser then CollectandRecordInformation\n\tR9_1 when AgentDeployed then UpdateInformation\n\tR10 when GiveSuggestion then ConsiderUserPractices\n\tR11 when MeetingUser then AskForEmergencyContact\n\tR11_1 when AskForEmergencyContact then InformUser\n\tR12 when AgentDeployed and (not {personAuthorized}) then not ShowDataHistory\n\tR12_1 when ShowDataHistory and {dataNeedsChecking} then ProvideDataSummaries\n\tR13 when UserUnpredictable then not GiveUserDangerousObjects\n\tR14 when AgentDeployed and (not {userAsksForAppropriateTasks}) then RemindUserOfLimitations\n\t\tunless ({needLevel} > nmedium)\n\tR15 when PreparingDeployment then AgentHasAppropriateAppearance\n\t\tunless {userNeedsSpecialAccomodations}\n\tR16 when PreparingDeployment then CalibrateSpeech\n\tR17 when GivingCookingInstructions then UseFirstPersonPluralLanguage\n\tR17_1 when GivingCookingInstructions then InformUser //offer to repeat\n\tR18 when BeforeCookingBegins then AskForDetailLevelOfInstructions\n\tR19 when UserChangeMind then RecalculateApproach\n\t    unless ({riskLevel} = high)\n\tR20 when UserChangeItemLocation then UpdateMap\n\t    unless ({riskLevel} = high) then InterfereSafely\n\tR21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures \n\tR21_1 when FireSafetyMeasures then OpenWindows\n\tR21_2 when FireSafetyMeasures then AskUserIfOK\n\tR21_3 when FireSafetyMeasures then InformCaregiver\nrule_end\n\nconcern_start\n\t// Safety\n    c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\n    c2 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))  then not  InterfereSafely\n    c3 when CheckTemperature and {hazardDetected} then not InformUser\n    c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes\n    c5 when FireSafetyMeasures then not OpenWindows\n\t// Autonomy\n    c6 when UserWantsToCook then not AllowUserToCook\n    c7 when GivingCookingInstructions then not UseFirstPersonPluralLanguage\n    c8 when UserChangeMind and ({riskLevel} < high) then not RecalculateApproach\n\t// Cultural sensitivity\n\tc9 when GiveSuggestion then not ConsiderUserPractices\n\t// Privacy\n\tc10 when AgentDeployed and (not {personAuthorized}) then ShowDataHistory\n\t// Security\n\tc11 when ShowDataHistory and {dataNeedsChecking} then not ProvideDataSummaries\nconcern_end\n\npurpose_start\n\tpr1 exists PreparingDeployment\n\tpr2 exists MeetingUser\n\tpr3 exists InformUser\n\tpr4 when SmokeDetectorAlarm and ({userDisablesAlarm} or {alarmRestarts}) then InformUser\n\tpr5 exists RemindUserOfLimitations and ({userOccupied} and ({riskLevel} = high))\n\tpr6 when HumanOnFloor and {humanAssents} then AskUserIfOK\n\tpr7 when HumanOnFloor and ({riskLevel} = high) then CallEmergencyServices\n\tpr8 when UserUnpredictable then AskUserIfOK\n    // Avoid sharing user\u2019s personal information\n\tp9 exists ShowDataHistory and {personAuthorized}\n    // Ensuring that the user gets fed\n    p10 exists InformUser and (not {userOccupied}) while MonitorMealTime\n    // Must be able to keep the user reasonably safe in the kitchen\n\tp13 exists InformUser and {hazardDetected}\n\tp14 exists InterfereSafely and ({hazardDetected} or ({riskLevel} = high))\n    // Respecting user\u2019s autonomy when they request it\n\tp15 exists UserChangeMind and ({riskLevel} < high)\n    // Must be able to connect user to help when needed\n\tp16 exists CallEmergencyServices while HumanOnFloor\n\tp17 exists CallEmergencyServices while SmokeDetectorAlarm\npurpose_end\n",
+      "target_fixed": true,
+      "related_issue": null,
+      "regression_report": {
+        "selected_issue_fixed": true,
+        "new_issues_introduced": false,
+        "regression_passed": true,
+        "before_issue_count": 3,
+        "after_issue_count": 2,
+        "new_issue_count": 0,
+        "resolved_issue_count": 1,
+        "remaining_issue_count": 2,
+        "before_counts_by_type": {
+          "concerns": 2,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 0,
+          "situational_conflicts": 1
+        },
+        "after_counts_by_type": {
+          "concerns": 1,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 0,
+          "situational_conflicts": 1
+        },
+        "new_issues": [],
+        "resolved_issues": [
+          {
+            "fingerprint": "concerns:65539e5e7451d7b4c2992dc1",
+            "issue_type": "concerns",
+            "summary": "c4 when SmokeDetectorAlarm and ((not {userDisablesAlarm}) or {alarmRestarts}) then not CallEmergencyServices within 2 minutes Concern is raised",
+            "rule_ids": []
+          }
+        ],
+        "remaining_issues": [
+          {
+            "fingerprint": "concerns:3a8f11b36c245be9a527b58a",
+            "issue_type": "concerns",
+            "summary": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "situational_conflicts:a89ff2bc8b5f3424b8323133",
+            "issue_type": "situational_conflicts",
+            "summary": "Situational conflict under situation : For rule: R3 when HumanOnFloor then CallEmergencyServices unless (not {humanAssents}) then not CallEmergencyServices ----------------------------------------------------------------...",
+            "rule_ids": [
+              "R3",
+              "R21"
+            ]
+          }
+        ]
+      },
+      "regression_passed": true,
+      "validation_result": {
+        "concerns": [
+          "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\nConcern is raised"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [],
+        "situational_conflicts": [
+          "Situational conflict under situation :\n\nFor rule:\nR3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures\n----------------------------------------------------------------------------------------------------"
+        ],
+        "original_rules_by_type": {
+          "concerns": [
+            [
+              "R19 when UserChangeMind then RecalculateApproach\nunless ({riskLevel} = high)",
+              "R20 when UserChangeItemLocation then UpdateMap\nunless ({riskLevel} = high) then InterfereSafely",
+              "R3 when HumanOnFloor then CallEmergencyServices\nunless (not {humanAssents}) then not CallEmergencyServices"
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            [
+              "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices",
+              "R21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures"
+            ]
+          ]
+        },
+        "wfi_artifacts_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c1",
+                "text": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices"
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            []
+          ]
+        },
+        "rule_references_by_type": {
+          "concerns": [
+            []
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            [
+              {
+                "role": "diagnosed",
+                "kind": "rule",
+                "id": "R3",
+                "text": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices"
+              },
+              {
+                "role": "referenced",
+                "kind": "rule",
+                "id": "R21",
+                "text": "R21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures"
+              }
+            ]
+          ]
+        },
+        "related_rules_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when UserChangeMind then RecalculateApproach\nunless ({riskLevel} = high)",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R20",
+                "text": "R20 when UserChangeItemLocation then UpdateMap\nunless ({riskLevel} = high) then InterfereSafely",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R3",
+                "text": "R3 when HumanOnFloor then CallEmergencyServices\nunless (not {humanAssents}) then not CallEmergencyServices",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R5_1",
+                "text": "R5_1 when AllowUserToCook and ({hazardDetected} or ({riskLevel} = high))\nthen InterfereSafely",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R1",
+                "text": "R1 when MonitorMealTime then InformUser within 10 minutes\nunless {userOccupied} then RemindLater",
+                "score": 1
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            []
+          ]
+        },
+        "diagnoses_by_type": {
+          "concerns": [
+            {
+              "source_id": "c1",
+              "source_text": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices",
+              "raw_report": "c1 when HumanOnFloor and ({userOccupied} and ({riskLevel} = high)) then not CallEmergencyServices\nConcern is raised\nat time 0: HumanOnFloor()\nat time 0: Measure(userOccupied=True, timeBetweenMeals=3, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=high, alarmOn=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "HumanOnFloor",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: HumanOnFloor()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "userOccupied": true,
+                    "timeBetweenMeals": 3,
+                    "personAuthorized": false,
+                    "dataNeedsChecking": false,
+                    "userAsksForAppropriateTasks": false,
+                    "userNeedsSpecialAccomodations": false,
+                    "userDisablesAlarm": false,
+                    "alarmRestarts": false,
+                    "needLevel": "nlow",
+                    "humanAssents": false,
+                    "safePathFound": false,
+                    "hazardDetected": false,
+                    "kitchenSafe": false,
+                    "riskLevel": "high",
+                    "alarmOn": false
+                  },
+                  "arguments_raw": "userOccupied=True, timeBetweenMeals=3, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=high, alarmOn=False",
+                  "raw": "at time 0: Measure(userOccupied=True, timeBetweenMeals=3, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=high, alarmOn=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            }
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": [
+            {
+              "source_id": "R3",
+              "source_text": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices",
+              "raw_report": "Situational conflict under situation :\nat time 0: SmokeDetectorAlarm()\nat time 0: Measure(userOccupied=False, timeBetweenMeals=9, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=medium, alarmOn=False)\nat time 120: HumanOnFloor()\nat time 120: Measure(userOccupied=True, timeBetweenMeals=10, personAuthorized=True, dataNeedsChecking=True, userAsksForAppropriateTasks=True, userNeedsSpecialAccomodations=True, userDisablesAlarm=True, alarmRestarts=True, needLevel=nmedium, humanAssents=False, safePathFound=True, hazardDetected=True, kitchenSafe=True, riskLevel=low, alarmOn=True)\nat time 120: blocked_not_CallEmergencyServices(end=120)\n\nFor rule:\nR3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SmokeDetectorAlarm",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SmokeDetectorAlarm()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "userOccupied": false,
+                    "timeBetweenMeals": 9,
+                    "personAuthorized": false,
+                    "dataNeedsChecking": false,
+                    "userAsksForAppropriateTasks": false,
+                    "userNeedsSpecialAccomodations": false,
+                    "userDisablesAlarm": false,
+                    "alarmRestarts": false,
+                    "needLevel": "nlow",
+                    "humanAssents": false,
+                    "safePathFound": false,
+                    "hazardDetected": false,
+                    "kitchenSafe": false,
+                    "riskLevel": "medium",
+                    "alarmOn": false
+                  },
+                  "arguments_raw": "userOccupied=False, timeBetweenMeals=9, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=medium, alarmOn=False",
+                  "raw": "at time 0: Measure(userOccupied=False, timeBetweenMeals=9, personAuthorized=False, dataNeedsChecking=False, userAsksForAppropriateTasks=False, userNeedsSpecialAccomodations=False, userDisablesAlarm=False, alarmRestarts=False, needLevel=nlow, humanAssents=False, safePathFound=False, hazardDetected=False, kitchenSafe=False, riskLevel=medium, alarmOn=False)"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 120,
+                  "timestamp_raw": "120",
+                  "time_unit": "seconds",
+                  "name": "HumanOnFloor",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 120: HumanOnFloor()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 120,
+                  "timestamp_raw": "120",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "userOccupied": true,
+                    "timeBetweenMeals": 10,
+                    "personAuthorized": true,
+                    "dataNeedsChecking": true,
+                    "userAsksForAppropriateTasks": true,
+                    "userNeedsSpecialAccomodations": true,
+                    "userDisablesAlarm": true,
+                    "alarmRestarts": true,
+                    "needLevel": "nmedium",
+                    "humanAssents": false,
+                    "safePathFound": true,
+                    "hazardDetected": true,
+                    "kitchenSafe": true,
+                    "riskLevel": "low",
+                    "alarmOn": true
+                  },
+                  "arguments_raw": "userOccupied=True, timeBetweenMeals=10, personAuthorized=True, dataNeedsChecking=True, userAsksForAppropriateTasks=True, userNeedsSpecialAccomodations=True, userDisablesAlarm=True, alarmRestarts=True, needLevel=nmedium, humanAssents=False, safePathFound=True, hazardDetected=True, kitchenSafe=True, riskLevel=low, alarmOn=True",
+                  "raw": "at time 120: Measure(userOccupied=True, timeBetweenMeals=10, personAuthorized=True, dataNeedsChecking=True, userAsksForAppropriateTasks=True, userNeedsSpecialAccomodations=True, userDisablesAlarm=True, alarmRestarts=True, needLevel=nmedium, humanAssents=False, safePathFound=True, hazardDetected=True, kitchenSafe=True, riskLevel=low, alarmOn=True)"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 120,
+                  "timestamp_raw": "120",
+                  "time_unit": "seconds",
+                  "name": "blocked_not_CallEmergencyServices",
+                  "values": {
+                    "end": 120
+                  },
+                  "arguments_raw": "end=120",
+                  "raw": "at time 120: blocked_not_CallEmergencyServices(end=120)"
+                }
+              ],
+              "affected_rule_ids": [
+                "R3",
+                "R21"
+              ],
+              "rule_references": [
+                {
+                  "id": "R3",
+                  "text": "R3 when HumanOnFloor then CallEmergencyServices\n\t   unless (not {humanAssents}) then not CallEmergencyServices"
+                },
+                {
+                  "id": "R21",
+                  "text": "R21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures"
+                }
+              ],
+              "rule_id_provenance": "detector_report"
+            }
+          ]
+        }
+      },
+      "syntax_valid": true,
+      "formally_verified": true,
+      "candidate_status": "formally_verified",
+      "semantic_review_status": "pending",
+      "requires_social_scientist_review": true,
+      "attempt": 1,
+      "ranking": {
+        "rules_affected": 1,
+        "rules_edited": 1,
+        "rules_added": 0,
+        "rules_removed": 0,
+        "new_elements": 0,
+        "new_events": 0,
+        "new_measures": 0,
+        "new_defeaters": 0,
+        "boolean_complexity": 0,
+        "defeaters": 1,
+        "defeater_depth": 1,
+        "lexicographic_key": [
+          1,
+          0,
+          0,
+          1,
+          1
+        ],
+        "method": "lexicographic",
+        "total_score": 0
+      },
+      "rank": 1,
+      "ranking_score": -1,
+      "ranking_rationale": [
+        "Prefer fewer affected rules, new elements, Boolean operators, defeaters, then lower defeater nesting depth."
+      ]
+    }
+  }
+]

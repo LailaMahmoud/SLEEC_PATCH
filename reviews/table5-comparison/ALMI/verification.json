@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "before_count": 3,
+  "after_count": 1,
+  "resolved_count": 2,
+  "new_count": 0,
+  "selected_still_present": [],
+  "selected_absent_from_baseline": [],
+  "remaining": [
+    {
+      "type": "situational_conflicts",
+      "subject": "R3",
+      "value": "Situational conflict under situation :\n\nFor rule:\nR3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures\n----------------------------------------------------------------------------------------------------"
+    }
+  ],
+  "introduced": []
+}

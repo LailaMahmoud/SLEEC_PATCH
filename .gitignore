@@ -43,3 +43,5 @@ SLEECpatch/app/services/sleec_parser*.py
 !SLEECpatch/app/services/sleec_parser.py
 SLEECpatch/app/scripts/export_overleaf_tables*.py
 !SLEECpatch/app/scripts/export_overleaf_tables.py
+.neon
+.env.local

@@ -1,0 +1,575 @@
+[
+  {
+    "use_case": "ALMI",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/ALMI.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/ALMI-corrected.sleec",
+    "effectiveness": "not_measured",
+    "scope": "whole_specification",
+    "measurement": "AST source comparison; no formal analysis performed",
+    "original_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+    "modified_sha256": "7757714b353d822f57cfd1af1bc735407f7b886a0b17298b73ffb4ccfc98028e",
+    "requirements_unchanged": false,
+    "metrics": {
+      "rules_edited": 0,
+      "rules_added": 4,
+      "rules_deleted": 1,
+      "events_added": 1,
+      "events_removed": 0,
+      "measures_added": 0,
+      "measures_removed": 0,
+      "capabilities_added": 1,
+      "conditions_changed": 0,
+      "actions_changed": 0,
+      "constraints_added": 2,
+      "constraints_removed": 0,
+      "defeaters_added": 1,
+      "defeaters_removed": 1,
+      "defeaters_refined": 0,
+      "boolean_operators_added": 6,
+      "boolean_operators_removed": 1
+    },
+    "before_totals": {
+      "rules": 33,
+      "events": 40,
+      "measures": 15,
+      "defeaters": 8,
+      "boolean_operators": 15
+    },
+    "after_totals": {
+      "rules": 36,
+      "events": 41,
+      "measures": 15,
+      "defeaters": 8,
+      "boolean_operators": 20
+    },
+    "details": {
+      "added_rule_ids": [
+        "R21b",
+        "R3b",
+        "R3bb",
+        "R3bbb"
+      ],
+      "deleted_rule_ids": [
+        "R3"
+      ],
+      "edited_rule_ids": [],
+      "added_events": [
+        "AskCallHelp"
+      ],
+      "added_measures": [],
+      "added_capabilities": [
+        "AskCallHelp"
+      ]
+    },
+    "status": "measured"
+  },
+  {
+    "use_case": "ASPEN",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/aspen.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/aspen-corrected.sleec",
+    "effectiveness": "not_measured",
+    "scope": "whole_specification",
+    "measurement": "AST source comparison; no formal analysis performed",
+    "original_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+    "modified_sha256": "5eaa1748317b91c46ef8b9038fa0c5235a6f86b5520b200f48831f7eb65ac8b9",
+    "requirements_unchanged": true,
+    "metrics": {
+      "rules_edited": 1,
+      "rules_added": 5,
+      "rules_deleted": 3,
+      "events_added": 1,
+      "events_removed": 0,
+      "measures_added": 0,
+      "measures_removed": 0,
+      "capabilities_added": 1,
+      "conditions_changed": 1,
+      "actions_changed": 1,
+      "constraints_added": 8,
+      "constraints_removed": 5,
+      "defeaters_added": 0,
+      "defeaters_removed": 1,
+      "defeaters_refined": 0,
+      "boolean_operators_added": 9,
+      "boolean_operators_removed": 5
+    },
+    "before_totals": {
+      "rules": 23,
+      "events": 23,
+      "measures": 18,
+      "defeaters": 5,
+      "boolean_operators": 18
+    },
+    "after_totals": {
+      "rules": 25,
+      "events": 24,
+      "measures": 18,
+      "defeaters": 4,
+      "boolean_operators": 22
+    },
+    "details": {
+      "added_rule_ids": [
+        "R10b",
+        "R15",
+        "R4bb",
+        "R9b1",
+        "R9b2"
+      ],
+      "deleted_rule_ids": [
+        "R13",
+        "R14",
+        "R4"
+      ],
+      "edited_rule_ids": [
+        "R14_1"
+      ],
+      "added_events": [
+        "LogDroneAction"
+      ],
+      "added_measures": [],
+      "added_capabilities": [
+        "LogDroneAction"
+      ]
+    },
+    "status": "measured"
+  },
+  {
+    "use_case": "AutoCAR",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/Autocar.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/Autocar-corrected.sleec",
+    "effectiveness": "not_measured",
+    "scope": "whole_specification",
+    "measurement": "AST source comparison; no formal analysis performed",
+    "original_sha256": "8c3604363ab89b9ec53420413e7dd16cac8128579434849ac93b0ef790e35e73",
+    "modified_sha256": "d4b832c9a2bbfedb4801df611a7eaf53ef24f181e728f0bff81594964f86df4a",
+    "requirements_unchanged": false,
+    "metrics": {
+      "rules_edited": 1,
+      "rules_added": 20,
+      "rules_deleted": 1,
+      "events_added": 1,
+      "events_removed": 0,
+      "measures_added": 0,
+      "measures_removed": 0,
+      "capabilities_added": 1,
+      "conditions_changed": 1,
+      "actions_changed": 1,
+      "constraints_added": 28,
+      "constraints_removed": 1,
+      "defeaters_added": 0,
+      "defeaters_removed": 1,
+      "defeaters_refined": 0,
+      "boolean_operators_added": 49,
+      "boolean_operators_removed": 0
+    },
+    "before_totals": {
+      "rules": 27,
+      "events": 36,
+      "measures": 26,
+      "defeaters": 20,
+      "boolean_operators": 40
+    },
+    "after_totals": {
+      "rules": 46,
+      "events": 37,
+      "measures": 26,
+      "defeaters": 19,
+      "boolean_operators": 89
+    },
+    "details": {
+      "added_rule_ids": [
+        "R17b",
+        "R17bb",
+        "R17bbb",
+        "R17bbbb",
+        "R1b",
+        "R1bb",
+        "R24",
+        "R25",
+        "R27I",
+        "R27II",
+        "R27III",
+        "R27IV",
+        "R27IX",
+        "R27V",
+        "R27VI",
+        "R27VII",
+        "R27VIII",
+        "R27X",
+        "R27XI",
+        "R27XII"
+      ],
+      "deleted_rule_ids": [
+        "R23"
+      ],
+      "edited_rule_ids": [
+        "R19"
+      ],
+      "added_events": [
+        "StopAutonomousAssistance"
+      ],
+      "added_measures": [],
+      "added_capabilities": [
+        "StopAutonomousAssistance"
+      ]
+    },
+    "status": "measured"
+  },
+  {
+    "use_case": "BSN",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/BSN.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/BSN-corrected.sleec",
+    "effectiveness": "not_measured",
+    "scope": "whole_specification",
+    "measurement": "AST source comparison; no formal analysis performed",
+    "original_sha256": "997d1dd5aadd381507bbf1ee8d43e586d9702dc0488c4d3305177ada35bcea1a",
+    "modified_sha256": "26ea33109d0252410a0b22fadf5994ab818aef1bb9e2d2ea2289aa67822dc0c4",
+    "requirements_unchanged": false,
+    "metrics": {
+      "rules_edited": 1,
+      "rules_added": 3,
+      "rules_deleted": 0,
+      "events_added": 1,
+      "events_removed": 0,
+      "measures_added": 2,
+      "measures_removed": 1,
+      "capabilities_added": 0,
+      "conditions_changed": 0,
+      "actions_changed": 1,
+      "constraints_added": 2,
+      "constraints_removed": 0,
+      "defeaters_added": 0,
+      "defeaters_removed": 0,
+      "defeaters_refined": 1,
+      "boolean_operators_added": 2,
+      "boolean_operators_removed": 0
+    },
+    "before_totals": {
+      "rules": 29,
+      "events": 33,
+      "measures": 31,
+      "defeaters": 8,
+      "boolean_operators": 54
+    },
+    "after_totals": {
+      "rules": 32,
+      "events": 34,
+      "measures": 32,
+      "defeaters": 8,
+      "boolean_operators": 56
+    },
+    "details": {
+      "added_rule_ids": [
+        "Rule15bis",
+        "Rule19",
+        "Rule19b"
+      ],
+      "deleted_rule_ids": [],
+      "edited_rule_ids": [
+        "Rule1"
+      ],
+      "added_events": [
+        "UserRequestRemoveSensor"
+      ],
+      "added_measures": [
+        "canCaregiverDeactivate",
+        "canPatientDeactivate"
+      ],
+      "added_capabilities": []
+    },
+    "status": "measured"
+  },
+  {
+    "use_case": "CSICobot",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/CSI.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/CSI-corrected.sleec",
+    "effectiveness": "not_measured",
+    "scope": "whole_specification",
+    "measurement": "AST source comparison; no formal analysis performed",
+    "original_sha256": "e0773e33436e5e4e57932be02e49e3dd92f5acde0afaa105691fad2da394fec9",
+    "modified_sha256": "d37e9f9be1131c06fdbb466aed04af40aa1897e77123cd9b2ab4e730f89d5277",
+    "requirements_unchanged": false,
+    "metrics": {
+      "rules_edited": 0,
+      "rules_added": 8,
+      "rules_deleted": 2,
+      "events_added": 1,
+      "events_removed": 0,
+      "measures_added": 0,
+      "measures_removed": 0,
+      "capabilities_added": 1,
+      "conditions_changed": 0,
+      "actions_changed": 0,
+      "constraints_added": 10,
+      "constraints_removed": 1,
+      "defeaters_added": 0,
+      "defeaters_removed": 0,
+      "defeaters_refined": 0,
+      "boolean_operators_added": 12,
+      "boolean_operators_removed": 1
+    },
+    "before_totals": {
+      "rules": 20,
+      "events": 23,
+      "measures": 13,
+      "defeaters": 8,
+      "boolean_operators": 9
+    },
+    "after_totals": {
+      "rules": 26,
+      "events": 24,
+      "measures": 13,
+      "defeaters": 8,
+      "boolean_operators": 20
+    },
+    "details": {
+      "added_rule_ids": [
+        "R14v",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R1b",
+        "R20",
+        "R21"
+      ],
+      "deleted_rule_ids": [
+        "R14",
+        "R4b"
+      ],
+      "edited_rule_ids": [],
+      "added_events": [
+        "Communicate"
+      ],
+      "added_measures": [],
+      "added_capabilities": [
+        "Communicate"
+      ]
+    },
+    "status": "measured"
+  },
+  {
+    "use_case": "DAISY",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/Daisy.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/Daisy-corrected.sleec",
+    "effectiveness": "not_measured",
+    "scope": "whole_specification",
+    "measurement": "AST source comparison; no formal analysis performed",
+    "original_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+    "modified_sha256": "9678915465282b92e35d7a3f6edc189e5a9e4854f556ab3ce4808bbdee44b5f2",
+    "requirements_unchanged": true,
+    "metrics": {
+      "rules_edited": 0,
+      "rules_added": 9,
+      "rules_deleted": 3,
+      "events_added": 0,
+      "events_removed": 0,
+      "measures_added": 0,
+      "measures_removed": 0,
+      "capabilities_added": 0,
+      "conditions_changed": 0,
+      "actions_changed": 0,
+      "constraints_added": 11,
+      "constraints_removed": 5,
+      "defeaters_added": 3,
+      "defeaters_removed": 2,
+      "defeaters_refined": 0,
+      "boolean_operators_added": 19,
+      "boolean_operators_removed": 6
+    },
+    "before_totals": {
+      "rules": 26,
+      "events": 45,
+      "measures": 31,
+      "defeaters": 17,
+      "boolean_operators": 23
+    },
+    "after_totals": {
+      "rules": 32,
+      "events": 45,
+      "measures": 31,
+      "defeaters": 18,
+      "boolean_operators": 36
+    },
+    "details": {
+      "added_rule_ids": [
+        "Rule14_1",
+        "Rule14_2",
+        "Rule16b",
+        "Rule18b",
+        "Rule22",
+        "Rule23",
+        "Rule24",
+        "Rule25",
+        "Rule5_1"
+      ],
+      "deleted_rule_ids": [
+        "Rule16",
+        "Rule18",
+        "Rule19"
+      ],
+      "edited_rule_ids": [],
+      "added_events": [],
+      "added_measures": [],
+      "added_capabilities": []
+    },
+    "status": "measured"
+  },
+  {
+    "use_case": "DPA",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/DPA.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/DPA-corrected.sleec",
+    "effectiveness": "not_measured",
+    "scope": "whole_specification",
+    "measurement": "AST source comparison; no formal analysis performed",
+    "original_sha256": "4897cb8715b29e95af35f456049ab8735eeecc740581a7ee5c44a152aea04eab",
+    "modified_sha256": "f07d914441ac0001384817aa58fc4cd1359b59da3607d67a2f7361ebc0a63504",
+    "requirements_unchanged": true,
+    "metrics": {
+      "rules_edited": 1,
+      "rules_added": 5,
+      "rules_deleted": 2,
+      "events_added": 0,
+      "events_removed": 0,
+      "measures_added": 0,
+      "measures_removed": 0,
+      "capabilities_added": 0,
+      "conditions_changed": 0,
+      "actions_changed": 1,
+      "constraints_added": 16,
+      "constraints_removed": 0,
+      "defeaters_added": 0,
+      "defeaters_removed": 2,
+      "defeaters_refined": 0,
+      "boolean_operators_added": 20,
+      "boolean_operators_removed": 8
+    },
+    "before_totals": {
+      "rules": 22,
+      "events": 28,
+      "measures": 25,
+      "defeaters": 4,
+      "boolean_operators": 59
+    },
+    "after_totals": {
+      "rules": 25,
+      "events": 28,
+      "measures": 25,
+      "defeaters": 2,
+      "boolean_operators": 71
+    },
+    "details": {
+      "added_rule_ids": [
+        "R21_0",
+        "R21_1",
+        "R3_0",
+        "R3_1",
+        "R8_0"
+      ],
+      "deleted_rule_ids": [
+        "R21",
+        "R3"
+      ],
+      "edited_rule_ids": [
+        "R1"
+      ],
+      "added_events": [],
+      "added_measures": [],
+      "added_capabilities": []
+    },
+    "status": "measured"
+  },
+  {
+    "use_case": "DressAssist",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/DRESSASSIST.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/DRESSASSIST-corrected.sleec",
+    "effectiveness": "not_measured",
+    "scope": "whole_specification",
+    "measurement": "AST source comparison; no formal analysis performed",
+    "original_sha256": "6d2a1cf5ad75f8b6a16c1e449de7f1b85eac38eb5a2d58982630b8a365f69ea4",
+    "modified_sha256": "44a98aa79e7fde7688a4957dc0d00911c313123b935aa0dc52e786dc0baa2e3c",
+    "requirements_unchanged": false,
+    "metrics": {
+      "rules_edited": 1,
+      "rules_added": 0,
+      "rules_deleted": 0,
+      "events_added": 1,
+      "events_removed": 0,
+      "measures_added": 0,
+      "measures_removed": 0,
+      "capabilities_added": 1,
+      "conditions_changed": 0,
+      "actions_changed": 1,
+      "constraints_added": 0,
+      "constraints_removed": 0,
+      "defeaters_added": 0,
+      "defeaters_removed": 0,
+      "defeaters_refined": 0,
+      "boolean_operators_added": 0,
+      "boolean_operators_removed": 0
+    },
+    "before_totals": {
+      "rules": 31,
+      "events": 54,
+      "measures": 42,
+      "defeaters": 39,
+      "boolean_operators": 29
+    },
+    "after_totals": {
+      "rules": 31,
+      "events": 55,
+      "measures": 42,
+      "defeaters": 39,
+      "boolean_operators": 29
+    },
+    "details": {
+      "added_rule_ids": [],
+      "deleted_rule_ids": [],
+      "edited_rule_ids": [
+        "Rule7_1"
+      ],
+      "added_events": [
+        "ObtainConsent"
+      ],
+      "added_measures": [],
+      "added_capabilities": [
+        "ObtainConsent"
+      ]
+    },
+    "status": "measured"
+  },
+  {
+    "use_case": "SafeSCAD",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/safescade.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/safescade-corrected.sleec",
+    "effectiveness": "not_measured",
+    "status": "error",
+    "error": "Rule IDs must be unique; repeated: R7_1"
+  },
+  {
+    "use_case": "Tabiat",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/Tabiat.SLEEC",
+    "modified_file": "SLEECpatch/app/sleec_usecases/Tabiat-corrected.sleec",
+    "effectiveness": "not_measured",
+    "status": "error",
+    "error": "None:1:1: Expected Comment or 'def_start' => '*.'"
+  },
+  {
+    "use_case": "Casper",
+    "method": "manual",
+    "original_file": "SLEECpatch/app/sleec_usecases/Casper.sleec",
+    "modified_file": "SLEECpatch/app/sleec_usecases/Casper-corrected.sleec",
+    "effectiveness": "not_measured",
+    "status": "error",
+    "error": "None:1:1: Expected Comment or 'def_start' => '*.'"
+  }
+]

@@ -1,0 +1,12 @@
+use_case,method,status,effectiveness,requirements_unchanged,rules_edited,rules_added,rules_deleted,events_added,events_removed,measures_added,measures_removed,capabilities_added,conditions_changed,actions_changed,constraints_added,constraints_removed,defeaters_added,defeaters_removed,defeaters_refined,boolean_operators_added,boolean_operators_removed,error
+ALMI,manual,measured,not_measured,False,0,4,1,1,0,0,0,1,0,0,2,0,1,1,0,6,1,
+ASPEN,manual,measured,not_measured,True,1,5,3,1,0,0,0,1,1,1,8,5,0,1,0,9,5,
+AutoCAR,manual,measured,not_measured,False,1,20,1,1,0,0,0,1,1,1,28,1,0,1,0,49,0,
+BSN,manual,measured,not_measured,False,1,3,0,1,0,2,1,0,0,1,2,0,0,0,1,2,0,
+CSICobot,manual,measured,not_measured,False,0,8,2,1,0,0,0,1,0,0,10,1,0,0,0,12,1,
+DAISY,manual,measured,not_measured,True,0,9,3,0,0,0,0,0,0,0,11,5,3,2,0,19,6,
+DPA,manual,measured,not_measured,True,1,5,2,0,0,0,0,0,0,1,16,0,0,2,0,20,8,
+DressAssist,manual,measured,not_measured,False,1,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,
+SafeSCAD,manual,error,not_measured,,,,,,,,,,,,,,,,,,,Rule IDs must be unique; repeated: R7_1
+Tabiat,manual,error,not_measured,,,,,,,,,,,,,,,,,,,None:1:1: Expected Comment or 'def_start' => '*.'
+Casper,manual,error,not_measured,,,,,,,,,,,,,,,,,,,None:1:1: Expected Comment or 'def_start' => '*.'

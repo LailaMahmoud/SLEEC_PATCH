@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "before_count": 9,
+  "after_count": 7,
+  "resolved_count": 2,
+  "new_count": 0,
+  "selected_still_present": [],
+  "selected_absent_from_baseline": [],
+  "remaining": [
+    {
+      "type": "concerns",
+      "subject": "c1",
+      "value": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "c2",
+      "value": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "c4",
+      "value": "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "c5",
+      "value": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "c6",
+      "value": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "c10",
+      "value": "c10 when UserTurnOnSystem then TurnOffSensors\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "c12",
+      "value": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised"
+    }
+  ],
+  "introduced": []
+}
