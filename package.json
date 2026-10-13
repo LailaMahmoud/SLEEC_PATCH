@@ -11,7 +11,9 @@
     "types": "wrangler types"
   },
   "dependencies": {
-    "@cloudflare/containers": "^0.3.7"
+    "@cloudflare/containers": "^0.3.7",
+    "@neon/config": "^1.8.4",
+    "@neon/env": "^1.5.1"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
