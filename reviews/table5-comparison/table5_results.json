@@ -1,0 +1,758 @@
+{
+  "report_file": "instance/research_exports/20261003T112746Z/report_data.json",
+  "report_sha256": "250eda250f85c3aa4c5fec6bbd7b0f3d033628e246d9966bc33706e215a327e5",
+  "table4_directory": "instance/research_exports/20261003T112746Z/latex",
+  "cases": [
+    {
+      "case": "ALMI",
+      "issue_groups": 3,
+      "selected_patch_count": 2,
+      "legacy_ranking": false,
+      "manual": {
+        "metrics": {
+          "RM": 0,
+          "RA": 4,
+          "RD": 1,
+          "NE": 1,
+          "BO": 5,
+          "Neg": 2,
+          "Def": 0,
+          "Depth": 1
+        },
+        "details": {
+          "edited_rules": [],
+          "added_rules": [
+            "R21b",
+            "R3b",
+            "R3bb",
+            "R3bbb"
+          ],
+          "removed_rules": [
+            "R3"
+          ],
+          "added_events": [
+            "AskCallHelp"
+          ],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 0,
+            "or_operators": 0,
+            "condition_negations": 1,
+            "response_negations": 1,
+            "defeaters": 1,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 1,
+            "boolean_operators": 1,
+            "total_negations": 2
+          },
+          "affected_syntax_after": {
+            "and_operators": 3,
+            "or_operators": 0,
+            "condition_negations": 3,
+            "response_negations": 0,
+            "defeaters": 1,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 2,
+            "boolean_operators": 6,
+            "total_negations": 3
+          }
+        },
+        "requirements_unchanged": false,
+        "original_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+        "modified_sha256": "7757714b353d822f57cfd1af1bc735407f7b886a0b17298b73ffb4ccfc98028e"
+      },
+      "assembly": {
+        "status": "assembled",
+        "errors": [],
+        "renamed_rules": []
+      },
+      "automatic": {
+        "metrics": {
+          "RM": 2,
+          "RA": 0,
+          "RD": 0,
+          "NE": 0,
+          "BO": 3,
+          "Neg": 1,
+          "Def": 0,
+          "Depth": 1
+        },
+        "details": {
+          "edited_rules": [
+            "R21",
+            "R3"
+          ],
+          "added_rules": [],
+          "removed_rules": [],
+          "added_events": [],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 1,
+            "or_operators": 0,
+            "condition_negations": 2,
+            "response_negations": 1,
+            "defeaters": 2,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 2,
+            "boolean_operators": 3,
+            "total_negations": 3
+          },
+          "affected_syntax_after": {
+            "and_operators": 3,
+            "or_operators": 0,
+            "condition_negations": 3,
+            "response_negations": 1,
+            "defeaters": 2,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 3,
+            "boolean_operators": 6,
+            "total_negations": 4
+          }
+        },
+        "requirements_unchanged": true,
+        "original_sha256": "5083e8dbebfbcf31208651be8f9ab19c39dc13597b8ba95d7f5cef6c3e4b4941",
+        "modified_sha256": "dda8107c0c6628bc230cb4d0f43d5d4aa94e16a8d8e9580883bd9b83a021ddb7"
+      },
+      "verification": {
+        "status": "passed",
+        "before_count": 3,
+        "after_count": 1,
+        "resolved_count": 2,
+        "new_count": 0,
+        "selected_still_present": [],
+        "selected_absent_from_baseline": [],
+        "remaining": [
+          {
+            "type": "situational_conflicts",
+            "subject": "R3",
+            "value": "Situational conflict under situation :\n\nFor rule:\nR3 when HumanOnFloor then CallEmergencyServices\n\t   unless ((not {humanAssents}) and (not ({userOccupied} and ({riskLevel} = high)))) then not CallEmergencyServices\n----------------------------------------------------------------------------------------------------\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR21 when SmokeDetectorAlarm then CallEmergencyServices within 2 minutes\n\t    unless ({userDisablesAlarm} and (not {alarmRestarts})) then FireSafetyMeasures\n----------------------------------------------------------------------------------------------------"
+          }
+        ],
+        "introduced": []
+      }
+    },
+    {
+      "case": "ASPEN",
+      "issue_groups": 8,
+      "selected_patch_count": 8,
+      "legacy_ranking": false,
+      "manual": {
+        "metrics": {
+          "RM": 1,
+          "RA": 5,
+          "RD": 3,
+          "NE": 1,
+          "BO": 4,
+          "Neg": 1,
+          "Def": 0,
+          "Depth": 0
+        },
+        "details": {
+          "edited_rules": [
+            "R14_1"
+          ],
+          "added_rules": [
+            "R10b",
+            "R15",
+            "R4bb",
+            "R9b1",
+            "R9b2"
+          ],
+          "removed_rules": [
+            "R13",
+            "R14",
+            "R4"
+          ],
+          "added_events": [
+            "LogDroneAction"
+          ],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 4,
+            "or_operators": 2,
+            "condition_negations": 0,
+            "response_negations": 2,
+            "defeaters": 1,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 3,
+            "boolean_operators": 6,
+            "total_negations": 2
+          },
+          "affected_syntax_after": {
+            "and_operators": 4,
+            "or_operators": 5,
+            "condition_negations": 1,
+            "response_negations": 1,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 5,
+            "boolean_operators": 10,
+            "total_negations": 2
+          }
+        },
+        "requirements_unchanged": true,
+        "original_sha256": "960ae33ef5a4ee8c22b230244cd2a2a7612c01004892205d97dd79f2ec10c1aa",
+        "modified_sha256": "5eaa1748317b91c46ef8b9038fa0c5235a6f86b5520b200f48831f7eb65ac8b9"
+      },
+      "assembly": {
+        "status": "unavailable",
+        "errors": [
+          "situational_conflicts_2/d_trigger_refinement_R7_1_3: conflicting selected replacements for existing rule R7_1."
+        ],
+        "renamed_rules": []
+      }
+    },
+    {
+      "case": "AutoCAR",
+      "issue_groups": 9,
+      "selected_patch_count": 2,
+      "legacy_ranking": false,
+      "manual": {
+        "metrics": {
+          "RM": 1,
+          "RA": 20,
+          "RD": 1,
+          "NE": 1,
+          "BO": 49,
+          "Neg": 22,
+          "Def": 0,
+          "Depth": 0
+        },
+        "details": {
+          "edited_rules": [
+            "R19"
+          ],
+          "added_rules": [
+            "R17b",
+            "R17bb",
+            "R17bbb",
+            "R17bbbb",
+            "R1b",
+            "R1bb",
+            "R24",
+            "R25",
+            "R27I",
+            "R27II",
+            "R27III",
+            "R27IV",
+            "R27IX",
+            "R27V",
+            "R27VI",
+            "R27VII",
+            "R27VIII",
+            "R27X",
+            "R27XI",
+            "R27XII"
+          ],
+          "removed_rules": [
+            "R23"
+          ],
+          "added_events": [
+            "StopAutonomousAssistance"
+          ],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 1,
+            "or_operators": 0,
+            "condition_negations": 0,
+            "response_negations": 1,
+            "defeaters": 1,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 1,
+            "boolean_operators": 1,
+            "total_negations": 1
+          },
+          "affected_syntax_after": {
+            "and_operators": 26,
+            "or_operators": 2,
+            "condition_negations": 22,
+            "response_negations": 14,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 5,
+            "boolean_operators": 50,
+            "total_negations": 36
+          }
+        },
+        "requirements_unchanged": false,
+        "original_sha256": "8c3604363ab89b9ec53420413e7dd16cac8128579434849ac93b0ef790e35e73",
+        "modified_sha256": "d4b832c9a2bbfedb4801df611a7eaf53ef24f181e728f0bff81594964f86df4a"
+      },
+      "assembly": {
+        "status": "assembled",
+        "errors": [],
+        "renamed_rules": []
+      },
+      "automatic": {
+        "metrics": {
+          "RM": 0,
+          "RA": 0,
+          "RD": 2,
+          "NE": 0,
+          "BO": 0,
+          "Neg": 0,
+          "Def": 0,
+          "Depth": 0
+        },
+        "details": {
+          "edited_rules": [],
+          "added_rules": [],
+          "removed_rules": [
+            "R22",
+            "R23"
+          ],
+          "added_events": [],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 0,
+            "or_operators": 0,
+            "condition_negations": 0,
+            "response_negations": 2,
+            "defeaters": 2,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 0,
+            "boolean_operators": 0,
+            "total_negations": 2
+          },
+          "affected_syntax_after": {
+            "and_operators": 0,
+            "or_operators": 0,
+            "condition_negations": 0,
+            "response_negations": 0,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 0,
+            "boolean_operators": 0,
+            "total_negations": 0
+          }
+        },
+        "requirements_unchanged": true,
+        "original_sha256": "8c3604363ab89b9ec53420413e7dd16cac8128579434849ac93b0ef790e35e73",
+        "modified_sha256": "12d576d0892a01cacf9111a2c963dc6ccef1896f8672800f6f7f477f30acd16d"
+      },
+      "verification": {
+        "status": "passed",
+        "before_count": 9,
+        "after_count": 7,
+        "resolved_count": 2,
+        "new_count": 0,
+        "selected_still_present": [],
+        "selected_absent_from_baseline": [],
+        "remaining": [
+          {
+            "type": "concerns",
+            "subject": "c1",
+            "value": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "c2",
+            "value": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "c4",
+            "value": "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "c5",
+            "value": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "c6",
+            "value": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "c10",
+            "value": "c10 when UserTurnOnSystem then TurnOffSensors\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "c12",
+            "value": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised"
+          }
+        ],
+        "introduced": []
+      }
+    },
+    {
+      "case": "BSN",
+      "issue_groups": 3,
+      "selected_patch_count": 1,
+      "legacy_ranking": false,
+      "manual": {
+        "metrics": {
+          "RM": 1,
+          "RA": 3,
+          "RD": 0,
+          "NE": 3,
+          "BO": 2,
+          "Neg": 0,
+          "Def": 0,
+          "Depth": 1
+        },
+        "details": {
+          "edited_rules": [
+            "Rule1"
+          ],
+          "added_rules": [
+            "Rule15bis",
+            "Rule19",
+            "Rule19b"
+          ],
+          "removed_rules": [],
+          "added_events": [
+            "UserRequestRemoveSensor"
+          ],
+          "added_measures": [
+            "canCaregiverDeactivate",
+            "canPatientDeactivate"
+          ],
+          "affected_syntax_before": {
+            "and_operators": 2,
+            "or_operators": 2,
+            "condition_negations": 0,
+            "response_negations": 0,
+            "defeaters": 1,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 3,
+            "boolean_operators": 4,
+            "total_negations": 0
+          },
+          "affected_syntax_after": {
+            "and_operators": 4,
+            "or_operators": 2,
+            "condition_negations": 0,
+            "response_negations": 0,
+            "defeaters": 1,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 3,
+            "boolean_operators": 6,
+            "total_negations": 0
+          }
+        },
+        "requirements_unchanged": false,
+        "original_sha256": "997d1dd5aadd381507bbf1ee8d43e586d9702dc0488c4d3305177ada35bcea1a",
+        "modified_sha256": "26ea33109d0252410a0b22fadf5994ab818aef1bb9e2d2ea2289aa67822dc0c4"
+      },
+      "assembly": {
+        "status": "assembled",
+        "errors": [],
+        "renamed_rules": []
+      },
+      "automatic": {
+        "metrics": {
+          "RM": 0,
+          "RA": 1,
+          "RD": 0,
+          "NE": 0,
+          "BO": 2,
+          "Neg": 0,
+          "Def": 0,
+          "Depth": 0
+        },
+        "details": {
+          "edited_rules": [],
+          "added_rules": [
+            "R1"
+          ],
+          "removed_rules": [],
+          "added_events": [],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 0,
+            "or_operators": 0,
+            "condition_negations": 0,
+            "response_negations": 0,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 0,
+            "boolean_operators": 0,
+            "total_negations": 0
+          },
+          "affected_syntax_after": {
+            "and_operators": 2,
+            "or_operators": 0,
+            "condition_negations": 0,
+            "response_negations": 0,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 2,
+            "boolean_operators": 2,
+            "total_negations": 0
+          }
+        },
+        "requirements_unchanged": true,
+        "original_sha256": "997d1dd5aadd381507bbf1ee8d43e586d9702dc0488c4d3305177ada35bcea1a",
+        "modified_sha256": "1187636b16e24bf709512d7c71cdec0f4a95de12ce1fb16bb898ecd5f7da3a00"
+      },
+      "verification": {
+        "status": "passed",
+        "before_count": 3,
+        "after_count": 2,
+        "resolved_count": 1,
+        "new_count": 0,
+        "selected_still_present": [],
+        "selected_absent_from_baseline": [],
+        "remaining": [
+          {
+            "type": "concerns",
+            "subject": "C8",
+            "value": "C8 when DataCollected then not AnonymizeData eventually\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "C9",
+            "value": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\nConcern is raised"
+          }
+        ],
+        "introduced": []
+      }
+    },
+    {
+      "case": "CSICobot",
+      "issue_groups": 10,
+      "selected_patch_count": 7,
+      "legacy_ranking": false,
+      "manual": {
+        "metrics": {
+          "RM": 0,
+          "RA": 8,
+          "RD": 2,
+          "NE": 1,
+          "BO": 11,
+          "Neg": 2,
+          "Def": 0,
+          "Depth": 0
+        },
+        "details": {
+          "edited_rules": [],
+          "added_rules": [
+            "R14v",
+            "R16",
+            "R17",
+            "R18",
+            "R19",
+            "R1b",
+            "R20",
+            "R21"
+          ],
+          "removed_rules": [
+            "R14",
+            "R4b"
+          ],
+          "added_events": [
+            "Communicate"
+          ],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 1,
+            "or_operators": 0,
+            "condition_negations": 0,
+            "response_negations": 0,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 1,
+            "boolean_operators": 1,
+            "total_negations": 0
+          },
+          "affected_syntax_after": {
+            "and_operators": 5,
+            "or_operators": 5,
+            "condition_negations": 2,
+            "response_negations": 2,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 5,
+            "boolean_operators": 12,
+            "total_negations": 4
+          }
+        },
+        "requirements_unchanged": false,
+        "original_sha256": "e0773e33436e5e4e57932be02e49e3dd92f5acde0afaa105691fad2da394fec9",
+        "modified_sha256": "d37e9f9be1131c06fdbb466aed04af40aa1897e77123cd9b2ab4e730f89d5277"
+      },
+      "assembly": {
+        "status": "assembled",
+        "errors": [],
+        "renamed_rules": [
+          {
+            "patch": "concerns_4/g1",
+            "from": "R16",
+            "to": "R16_1"
+          },
+          {
+            "patch": "concerns_6/g1",
+            "from": "R16",
+            "to": "R16_2"
+          },
+          {
+            "patch": "concerns_7/g1",
+            "from": "R16",
+            "to": "R16_3"
+          }
+        ]
+      },
+      "automatic": {
+        "metrics": {
+          "RM": 0,
+          "RA": 4,
+          "RD": 3,
+          "NE": 0,
+          "BO": 7,
+          "Neg": 1,
+          "Def": 0,
+          "Depth": 0
+        },
+        "details": {
+          "edited_rules": [],
+          "added_rules": [
+            "R16",
+            "R16_1",
+            "R16_2",
+            "R16_3"
+          ],
+          "removed_rules": [
+            "R14",
+            "R4",
+            "R4b"
+          ],
+          "added_events": [],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 1,
+            "or_operators": 0,
+            "condition_negations": 0,
+            "response_negations": 0,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 1,
+            "boolean_operators": 1,
+            "total_negations": 0
+          },
+          "affected_syntax_after": {
+            "and_operators": 4,
+            "or_operators": 3,
+            "condition_negations": 1,
+            "response_negations": 0,
+            "defeaters": 0,
+            "defeater_depth": 0,
+            "condition_nesting_depth": 4,
+            "boolean_operators": 8,
+            "total_negations": 1
+          }
+        },
+        "requirements_unchanged": true,
+        "original_sha256": "e0773e33436e5e4e57932be02e49e3dd92f5acde0afaa105691fad2da394fec9",
+        "modified_sha256": "2a1394dfc2ebb7e7d0f7e74ba98a616e3a929dfcf62accd8448096b369a0b82d"
+      },
+      "verification": {
+        "status": "passed",
+        "before_count": 10,
+        "after_count": 3,
+        "resolved_count": 7,
+        "new_count": 0,
+        "selected_still_present": [],
+        "selected_absent_from_baseline": [],
+        "remaining": [
+          {
+            "type": "concerns",
+            "subject": "c1",
+            "value": "c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "c3",
+            "value": "c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute\nConcern is raised"
+          },
+          {
+            "type": "concerns",
+            "subject": "c5",
+            "value": "c5 when ActionHumanRandom then  RobotMoving\nConcern is raised"
+          }
+        ],
+        "introduced": []
+      }
+    },
+    {
+      "case": "DAISY",
+      "issue_groups": 9,
+      "selected_patch_count": 6,
+      "legacy_ranking": true,
+      "manual": {
+        "metrics": {
+          "RM": 0,
+          "RA": 9,
+          "RD": 3,
+          "NE": 1,
+          "BO": 13,
+          "Neg": 6,
+          "Def": 1,
+          "Depth": 1
+        },
+        "details": {
+          "edited_rules": [],
+          "added_rules": [
+            "Rule14_1",
+            "Rule14_2",
+            "Rule16b",
+            "Rule18b",
+            "Rule22",
+            "Rule23",
+            "Rule24",
+            "Rule25",
+            "Rule5_1"
+          ],
+          "removed_rules": [
+            "Rule16",
+            "Rule18",
+            "Rule19"
+          ],
+          "added_events": [],
+          "added_measures": [],
+          "affected_syntax_before": {
+            "and_operators": 5,
+            "or_operators": 0,
+            "condition_negations": 1,
+            "response_negations": 2,
+            "defeaters": 2,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 3,
+            "boolean_operators": 6,
+            "total_negations": 3
+          },
+          "affected_syntax_after": {
+            "and_operators": 10,
+            "or_operators": 2,
+            "condition_negations": 7,
+            "response_negations": 4,
+            "defeaters": 3,
+            "defeater_depth": 1,
+            "condition_nesting_depth": 4,
+            "boolean_operators": 19,
+            "total_negations": 11
+          }
+        },
+        "requirements_unchanged": true,
+        "original_sha256": "c1cb5631818359a982f85aa555016a41dfe66be06a69b48f457e4c645d21c12f",
+        "modified_sha256": "9678915465282b92e35d7a3f6edc189e5a9e4854f556ab3ce4808bbdee44b5f2"
+      },
+      "assembly": {
+        "status": "unavailable",
+        "errors": [
+          "concerns_2/g1: the saved patch lacks its original specification.",
+          "concerns_3/g1: the saved patch lacks its original specification.",
+          "concerns_4/g2: the saved patch lacks its original specification.",
+          "situational_conflicts_1/d_conflict_exception_1: the saved patch lacks its original specification.",
+          "situational_conflicts_2/d_conflict_exception_2: the saved patch lacks its original specification.",
+          "situational_conflicts_3/d_conflict_exception_2: the saved patch lacks its original specification."
+        ],
+        "renamed_rules": []
+      }
+    }
+  ],
+  "selection": "Exactly the saved rank-1 rows from Table 4; zero-patch runs remain unresolved."
+}

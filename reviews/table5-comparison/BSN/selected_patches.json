@@ -1,0 +1,564 @@
+[
+  {
+    "use_case": "BSN",
+    "issue_id": "concerns_1",
+    "issue_type": "concerns",
+    "run_id": "ea126d9f4fa74a50babc0775c6106143",
+    "timestamp": "2026-10-03T10:20:40.477837",
+    "input_sha256": "997d1dd5aadd381507bbf1ee8d43e586d9702dc0488c4d3305177ada35bcea1a",
+    "generation_time_seconds": 12.51,
+    "validation_time_seconds": 29.734,
+    "verified_patch_count": 1,
+    "result_id": 216,
+    "patch_id": "g1",
+    "operation": "new_rule_generation",
+    "source": "llm",
+    "rank": 1,
+    "rank_method": "lexicographic",
+    "rules_modified": 0,
+    "rules_added": 1,
+    "rules_removed": 0,
+    "NE": 0,
+    "BO": 2,
+    "Neg": 0,
+    "Def": 0,
+    "Depth": 0,
+    "NE_provenance": "recorded",
+    "BO_provenance": "recorded",
+    "Neg_provenance": "calculated_from_simplified_saved_rules",
+    "Def_provenance": "recorded",
+    "Depth_provenance": "recorded",
+    "verification_record_id": 581,
+    "verification_match_method": "run_id_and_patch_content",
+    "selected_issue": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\nConcern is raised",
+    "patch": {
+      "operation": "new_rule_generation",
+      "target_rule_id": null,
+      "source_requirement_id": "C2",
+      "change": {
+        "rule_id": "R_new",
+        "trigger_event": "TrackVitals",
+        "condition": "({canDeactivate} and ({patientDiscomfort} > low))",
+        "response_event": "CaregiverCanDeactivate",
+        "negated": false,
+        "deadline": {
+          "kind": "source"
+        }
+      },
+      "natural_language_explanation": "Require the caregiver to be able to deactivate the system when the patient discomfort is above low, as indicated in the diagnosed concern.",
+      "source": "llm",
+      "issue_type": "concern",
+      "patch_id": "g1",
+      "structured_edit_validated": true,
+      "original_rule": "",
+      "proposed_rule": "R1 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then CaregiverCanDeactivate",
+      "missing_element": "",
+      "declaration_text": "",
+      "semantic_review_status": "pending",
+      "additional_rule_edits": {},
+      "original_sleec": "def_start\n\t// BSN actions\n\tevent HideGeographicLocation\n    event ConfirmSensorPlacement\n    event ConfirmUsersActivities\n    event AdjustServiceTimerate\n    event AdjustSamplingRate\n    event CalibrateBSN\n    event EnsureHardwareCompliance\n    // Related to contacts and emergency\n    event EmergencyConfirmed\n    event CallAmbulance\n    event ObtainEmergencyContact\n    // Related to BSN and human interactions\n    event MeetingUser\n    event ObtainUserConsentForData\n    event ObtainUserConsentForSensors\n    event InformUser\n    event TrackVitals\t\t// With assumption that this is being done accurately\n    event InformBSNPurposeAndResponseProtocol\n    event CallCaregiver\n    event EnsureEasyStopping\n    event RemoveSensors\n    event CaregiverCanDeactivate\n    // Related to data\n    event DataCollected\n    event DeleteData\n    event AnonymizeData\n\n    // Patient actions\n    event PatientOutdoors\n    event PatientAsleep\n    event PatientDoingChores\n    event PatientBathing\n    event UserWantsToRemoveSensors\n    event UserCanCallEmergency\n    event AdjustSensors\n    event UserWantsTimeout\n    event SystemShutDown\n    event ObtainRiskLevel\n\n    measure patientDiscomfort: scale(p_low, p_moderate, p_high)\n    measure riskLevel: scale(r_low, r_moderate, r_high)\n    measure batteryConsumption: scale(low, moderate, high)\n    measure numUsersKnown: boolean\n    measure numSampleKnown: boolean\n    measure canDeactivate: boolean\n    measure patientIsHome: boolean\n    measure signsImpaired: boolean\n    measure signsDetached: boolean\n    measure isWaterproof: boolean\n    measure hasFallAlertPendant: boolean\n    measure allowsBathroomTracking: boolean\n    measure canCommunicateRegularly: boolean\n    measure authorizedParties: boolean\n    measure emergencyDetected: boolean\n    measure messageOnTime: boolean\n    measure alternateSensorsDeployed: boolean\n    measure timeToFailureKnown: boolean\n    measure anomalyDetected: boolean\n    measure unusualActivity: boolean\n    measure sensorMalfunction: boolean\n    measure sensorMisplacement: boolean\n    measure userResponds: boolean\n    measure caregiverResponds: boolean\n    measure dataNeededForTraining: boolean\n    measure userWantsToStop: boolean\n    measure caregiverConsent: boolean\n    measure seeHealthHistory: boolean\n    measure seeDemographics: boolean\n    measure seeLocation: boolean\n    measure accurateHealthComparison: boolean\n\n    //WARNING: Defined constant values\n    constant autonomyConcern = 20\n    constant bufferPeriod = 100\ndef_end\n\nrule_start\n\t// Natural language rule 1\n\t// Track no matter what comfort is, unless it is medium or high and the caregiver can deactivate\n\tRule1 when PatientAsleep and ((({patientDiscomfort} = low) or ({patientDiscomfort} = moderate))\n\t    or ({patientDiscomfort} = high)) then TrackVitals\n\t\tunless ({canDeactivate} and ({patientDiscomfort} > low)) then CaregiverCanDeactivate\n\n\t// Natural language rule 2\n\tRule2 when PatientDoingChores and {patientIsHome} then TrackVitals\n\t\tunless (({signsImpaired} or {signsDetached}) and {alternateSensorsDeployed})\n\n\t// Natural language rule 3\n\tRule3 when PatientBathing then TrackVitals\n\t\tunless (((not {isWaterproof}) and {hasFallAlertPendant}) or (not {allowsBathroomTracking}))\n\n\t// Natural language rule 4\n\tRule4 when PatientOutdoors and (not {patientIsHome}) then HideGeographicLocation\n\t\tunless {canCommunicateRegularly}\n    unless {authorizedParties}\n    unless {emergencyDetected}\n\n    // Natural language rule 5\n    Rule5 when TrackVitals and ((not {messageOnTime}) and (not {numUsersKnown}))\n    then AdjustServiceTimerate\n\n    Rule5_1 when TrackVitals and ((not {messageOnTime}) and (not {numUsersKnown}))\n    then not SystemShutDown\n\n    // Natural language rule 6\n    Rule6 when TrackVitals and (((not {timeToFailureKnown}) and (not {numSampleKnown}))\n    or ({batteryConsumption} = high)) then AdjustSamplingRate\n\n    Rule6_1 when TrackVitals and (((not {timeToFailureKnown}) and (not {numSampleKnown}))\n    or ({batteryConsumption} = high)) then not SystemShutDown\n\n    // Natural language rule 7 part 1\n    // Because we can call for help whenever there is an emergency\n    Rule7 when EmergencyConfirmed then CallCaregiver\n\n    // Natural language rule 7 part 2\n    // But only inform caregiver when the risk level is medium or high\n    Rule7_1 when EmergencyConfirmed and ({riskLevel} >= moderate) then CallAmbulance\n\n    // If an anomaly in vital signals is detected ensure that they are not caused by circumstantial conditions.\n    // Confirm with user all sensors are properly placed\n    Rule8 when TrackVitals and {anomalyDetected} then ConfirmSensorPlacement\n\n    // Confirm if the user is not performing any unusual physical activity\n    Rule8_1 when TrackVitals and {anomalyDetected} then ConfirmUsersActivities\n\n    // If an anomaly in vital signals is detected but not caused by sensor malfunction, misplacement, or unusual activity, inform the user about it.\n    Rule9 when TrackVitals and ((({anomalyDetected} and (not {unusualActivity})) and\n        (not {sensorMalfunction})) and (not {sensorMisplacement})) then InformUser\n\n\t// If user does not respond to this information in any way, notify their emergency contact.\n    Rule9_1 when InformUser and (not {userResponds}) then CallCaregiver\n\n\t// If emergency does not answer, call medical help.\n\tRule9_2 when CallCaregiver and (not {caregiverResponds}) then CallAmbulance\n\n\tRule10 when MeetingUser then ObtainUserConsentForData\n\t// In first interaction with the user, inform them of the purposes of using this technology.\n\t// inform them that the emergency contact can be contacted if the sensors detect anomalies in their vital signs.\n\t// Inform them about what will happen in case the sensors malfunction and they do not respond\n\tRule11 when MeetingUser then InformBSNPurposeAndResponseProtocol\n\n\t// Ask them for an emergency contact\n    Rule11_1 when MeetingUser then ObtainEmergencyContact\n\n    Rule12 when DataCollected and (not {dataNeededForTraining}) then DeleteData\n    unless {dataNeededForTraining} then AnonymizeData\n\n\tRule13 when TrackVitals and {userWantsToStop} then EnsureEasyStopping\n\t    otherwise CallCaregiver\n\t\tunless ({riskLevel} > autonomyConcern)\n\t\t// If risk to user from removal is low, then alert caregiver\n\n\n\t// Do not remove sensors without explicit consent from caregiver to do so\n    Rule13_1 when UserWantsToRemoveSensors and (not {caregiverConsent})\n    then not RemoveSensors\n\n    Rule13_2 when UserWantsToRemoveSensors then InformUser\n\n    Rule13_3 when UserWantsTimeout then InformUser\n\n    // Inform/calibrate BSN signal so that the system doesn\u2019t overly interfere or cause stress\n    Rule14 when CalibrateBSN and ((({seeHealthHistory} and {seeDemographics}) and {seeLocation})\n                                    and {accurateHealthComparison}) then TrackVitals\n\n    Rule15 when DataCollected then DeleteData within bufferPeriod seconds\n\n    // Hardware must not unreasonably interfere with user\u2019s culture and religious acts\n    Rule16 when MeetingUser then EnsureHardwareCompliance\n\n    // Ask user for consent prior to fitting BSN\n    Rule16_1 when MeetingUser then ObtainUserConsentForSensors\n\n    Rule17 when TrackVitals then UserCanCallEmergency\n\n    Rule18 when CalibrateBSN then ObtainRiskLevel\nrule_end\n\n// Security, autonomy, legal, cultural, privacy, safety.\nconcern_start\n\t// Patient should not be able to remove sensors by himself.\n\tC1 when UserWantsToRemoveSensors and (not {caregiverConsent}) then RemoveSensors\n\n\t// Every time sensors are adjusted, check the patient for their level of comfort.\n\tC2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\n\n\t// The patient's privacy should be respected as much as possible. Patient should be able to select when they want a time out from the sensors. Patient should always be informed that their health monitoring will be decreased when they do it.\n\tC3 when UserWantsTimeout then not InformUser\n\n\t// If the patient does not want to wear the sensors due to privacy, the system should check in with the patient (via notifications). The system should also inform the user of the risks and tradeoffs between privacy and health as soon as they remove the sensors.\n\tC4 when UserWantsToRemoveSensors then not InformUser\n\n\t// System should not shut down if there is a flush of information (more than the system can handle).\n\tC5 when TrackVitals and ((not {messageOnTime}) and (not {numUsersKnown})) then SystemShutDown\n\n\t// As soon as system is setup, user and caregiver does not ask about the level of risk of the patient.\n\tC6 when CalibrateBSN then not ObtainRiskLevel\n\n    //All the data collected must eventually be deleted in the system.\n\tC7 when DataCollected then not DeleteData eventually\n\n    //All the data collected is anonymized\n    C8 when DataCollected then not AnonymizeData eventually\n\n    //If a user wants to remove sensors, then sensors must be removed (or it raises a concern)\n    C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\n\nconcern_end\npurpose_start\n// The purpose is to monitor a patient's health respecting their autonomy, safety, cultural differences, and privacy while protecting the user against security threats.\n\t// First we ensure every functionality is reachable\n    pr1 exists HideGeographicLocation\n    pr2 exists ConfirmSensorPlacement\n    pr3 exists ConfirmUsersActivities\n    pr4 exists AdjustServiceTimerate\n    pr5 exists AdjustSamplingRate\n    pr6 exists CalibrateBSN\n    pr7 exists EnsureHardwareCompliance\n    pr8 exists EmergencyConfirmed\n    pr9 exists CallAmbulance\n    pr10 exists ObtainEmergencyContact\n    pr11 exists MeetingUser\n    pr12 exists ObtainUserConsentForData\n    pr13 exists ObtainUserConsentForSensors\n    pr14 exists InformUser\n    pr15 exists TrackVitals\n    pr16 exists InformBSNPurposeAndResponseProtocol\n    pr17 exists CallCaregiver\n    pr18 exists EnsureEasyStopping\n    pr19 exists RemoveSensors\n    pr20 exists CaregiverCanDeactivate\n    pr21 exists DataCollected\n    pr22 exists DeleteData\n    pr23 exists AnonymizeData\n    pr24 exists PatientOutdoors\n    pr25 exists PatientAsleep\n    pr26 exists PatientDoingChores\n    pr27 exists PatientBathing\n    pr28 exists UserWantsToRemoveSensors\n    pr29 exists UserCanCallEmergency\n    pr30 exists AdjustSensors\n    pr31 exists UserWantsTimeout\n    pr32 exists SystemShutDown\n    pr33 exists ObtainRiskLevel\n\n\t// Autonomy - User should be able to not disclose their geographic location while outdoors\n\tP1 exists HideGeographicLocation and (not {patientIsHome})\n\n\t// Safety - BSN should be able to call a caregiver in case of an emergency\n\tP2 exists CallCaregiver while EmergencyConfirmed\n\n\t// Cultural difference\n\tP3 exists EnsureHardwareCompliance\n\n\t// Privacy - BSN should be able to delete data when it is no longer necessary\n\tP4 exists DeleteData and (not {dataNeededForTraining})\n\n    // Privacy - BSN should be able to anonymize data when it is being used\n    P5 exists AnonymizeData and {dataNeededForTraining}\n\n\t// Protect against threats\n\tP6 exists CallAmbulance and (riskLevel >= moderate)\n\n\t// BSN should be able to inform user when an anomaly is detected while tracking vitals\n\tP7 exists InformUser and {anomalyDetected} while TrackVitals\n\npurpose_end\n\n",
+      "allowed_rule_ids": [],
+      "addition_scope": {
+        "source_id": "C2",
+        "source_text": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate",
+        "trigger_event": "TrackVitals",
+        "condition": "({canDeactivate} and ({patientDiscomfort} > low))",
+        "response_event": "CaregiverCanDeactivate",
+        "response_negated": true,
+        "timing": ""
+      },
+      "requested_rule_id": "R_new",
+      "assigned_rule_id": "R1",
+      "generated_candidate": {
+        "operation": "new_rule_generation",
+        "target_rule_id": null,
+        "source_requirement_id": "C2",
+        "change": {
+          "rule_id": "R_new",
+          "trigger_event": "TrackVitals",
+          "condition": "({canDeactivate} and ({patientDiscomfort} > low))",
+          "response_event": "CaregiverCanDeactivate",
+          "negated": false,
+          "deadline": {
+            "kind": "source"
+          }
+        },
+        "natural_language_explanation": "Require the caregiver to be able to deactivate the system when the patient discomfort is above low, as indicated in the diagnosed concern.",
+        "source": "llm",
+        "issue_type": "concern",
+        "patch_id": "g1"
+      },
+      "repair_provenance": {
+        "source": "llm",
+        "operation": "new_rule_generation",
+        "target_rule_id": null,
+        "issue_id": "concerns_1",
+        "issue_type": "concerns",
+        "issue_value": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\nConcern is raised",
+        "diagnosis_provenance": "detector",
+        "source_requirement_id": "C2",
+        "affected_rule_ids": [],
+        "target_rule_ids": [],
+        "semantic_rule_ids": [],
+        "candidate_related_rule_ids": []
+      },
+      "diagnosis": {
+        "source_id": "C2",
+        "source_text": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate",
+        "raw_report": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\nConcern is raised\nat time 0: TrackVitals()\nat time 0: UserCanCallEmergency()\nat time 0: Measure(patientDiscomfort=p_moderate, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=True, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=True, alternateSensorsDeployed=False, timeToFailureKnown=True, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)\n----------------------------------------------------------------------------------------------------",
+        "trace": [
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "TrackVitals",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: TrackVitals()"
+          },
+          {
+            "kind": "event",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "UserCanCallEmergency",
+            "values": {},
+            "arguments_raw": "",
+            "raw": "at time 0: UserCanCallEmergency()"
+          },
+          {
+            "kind": "measure",
+            "timestamp": 0,
+            "timestamp_raw": "0",
+            "time_unit": "seconds",
+            "name": "Measure",
+            "values": {
+              "patientDiscomfort": "p_moderate",
+              "riskLevel": "r_low",
+              "batteryConsumption": "low",
+              "numUsersKnown": false,
+              "numSampleKnown": false,
+              "canDeactivate": true,
+              "patientIsHome": false,
+              "signsImpaired": false,
+              "signsDetached": false,
+              "isWaterproof": false,
+              "hasFallAlertPendant": false,
+              "allowsBathroomTracking": false,
+              "canCommunicateRegularly": false,
+              "authorizedParties": false,
+              "emergencyDetected": false,
+              "messageOnTime": true,
+              "alternateSensorsDeployed": false,
+              "timeToFailureKnown": true,
+              "anomalyDetected": false,
+              "unusualActivity": false,
+              "sensorMalfunction": false,
+              "sensorMisplacement": false,
+              "userResponds": false,
+              "caregiverResponds": false,
+              "dataNeededForTraining": false,
+              "userWantsToStop": false,
+              "caregiverConsent": false,
+              "seeHealthHistory": false,
+              "seeDemographics": false,
+              "seeLocation": false,
+              "accurateHealthComparison": false
+            },
+            "arguments_raw": "patientDiscomfort=p_moderate, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=True, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=True, alternateSensorsDeployed=False, timeToFailureKnown=True, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False",
+            "raw": "at time 0: Measure(patientDiscomfort=p_moderate, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=True, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=True, alternateSensorsDeployed=False, timeToFailureKnown=True, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)"
+          }
+        ],
+        "affected_rule_ids": [],
+        "rule_references": [],
+        "rule_id_provenance": "unavailable"
+      },
+      "materialization_status": "success",
+      "materialization_error": null,
+      "id": "g1",
+      "result_id": "",
+      "rule_ids": [],
+      "operation_label": "Add new rule",
+      "stakeholder_summary": "This patch applies 'Add new rule' to address the selected well-formedness issue.",
+      "review_flags": [
+        "Review any newly introduced domain concept."
+      ],
+      "grounding_evidence": {},
+      "new_event": "",
+      "new_measure": "",
+      "new_capability": "",
+      "new_rule": "R1 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then CaregiverCanDeactivate",
+      "applicability": {},
+      "modification_cost": 1,
+      "new_events_added": 0,
+      "new_measures_added": 0,
+      "new_capabilities_added": 0,
+      "new_rules_added": 0,
+      "defeaters_added": 0,
+      "verified": true,
+      "target_fixed": true,
+      "related_issue": null,
+      "validation_result": {
+        "concerns": [
+          "C8 when DataCollected then not AnonymizeData eventually\nConcern is raised",
+          "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\nConcern is raised"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [],
+        "situational_conflicts": [],
+        "original_rules_by_type": {
+          "concerns": [
+            [
+              "Rule12 when DataCollected and (not {dataNeededForTraining}) then DeleteData\nunless {dataNeededForTraining} then AnonymizeData",
+              "Rule15 when DataCollected then DeleteData within bufferPeriod seconds"
+            ],
+            [
+              "Rule13_1 when UserWantsToRemoveSensors and (not {caregiverConsent})\nthen not RemoveSensors",
+              "Rule13_2 when UserWantsToRemoveSensors then InformUser"
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "wfi_artifacts_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "C8",
+                "text": "C8 when DataCollected then not AnonymizeData eventually"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "C9",
+                "text": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually"
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "rule_references_by_type": {
+          "concerns": [
+            [],
+            []
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "related_rules_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "Rule12",
+                "text": "Rule12 when DataCollected and (not {dataNeededForTraining}) then DeleteData\nunless {dataNeededForTraining} then AnonymizeData",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "Rule15",
+                "text": "Rule15 when DataCollected then DeleteData within bufferPeriod seconds",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "Rule13_1",
+                "text": "Rule13_1 when UserWantsToRemoveSensors and (not {caregiverConsent})\nthen not RemoveSensors",
+                "score": 8
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "Rule13_2",
+                "text": "Rule13_2 when UserWantsToRemoveSensors then InformUser",
+                "score": 1
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "diagnoses_by_type": {
+          "concerns": [
+            {
+              "source_id": "C8",
+              "source_text": "C8 when DataCollected then not AnonymizeData eventually",
+              "raw_report": "C8 when DataCollected then not AnonymizeData eventually\nConcern is raised\nat time 0: DataCollected()\nat time 0: DeleteData()\nat time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DataCollected",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DataCollected()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DeleteData",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DeleteData()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "patientDiscomfort": "p_low",
+                    "riskLevel": "r_low",
+                    "batteryConsumption": "low",
+                    "numUsersKnown": false,
+                    "numSampleKnown": false,
+                    "canDeactivate": false,
+                    "patientIsHome": false,
+                    "signsImpaired": false,
+                    "signsDetached": false,
+                    "isWaterproof": false,
+                    "hasFallAlertPendant": false,
+                    "allowsBathroomTracking": false,
+                    "canCommunicateRegularly": false,
+                    "authorizedParties": false,
+                    "emergencyDetected": false,
+                    "messageOnTime": false,
+                    "alternateSensorsDeployed": false,
+                    "timeToFailureKnown": false,
+                    "anomalyDetected": false,
+                    "unusualActivity": false,
+                    "sensorMalfunction": false,
+                    "sensorMisplacement": false,
+                    "userResponds": false,
+                    "caregiverResponds": false,
+                    "dataNeededForTraining": false,
+                    "userWantsToStop": false,
+                    "caregiverConsent": false,
+                    "seeHealthHistory": false,
+                    "seeDemographics": false,
+                    "seeLocation": false,
+                    "accurateHealthComparison": false
+                  },
+                  "arguments_raw": "patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False",
+                  "raw": "at time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=False, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "C9",
+              "source_text": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually",
+              "raw_report": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\nConcern is raised\nat time 0: InformUser()\nat time 0: UserWantsToRemoveSensors()\nat time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=True, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "InformUser",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: InformUser()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "UserWantsToRemoveSensors",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: UserWantsToRemoveSensors()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "patientDiscomfort": "p_low",
+                    "riskLevel": "r_low",
+                    "batteryConsumption": "low",
+                    "numUsersKnown": false,
+                    "numSampleKnown": false,
+                    "canDeactivate": false,
+                    "patientIsHome": false,
+                    "signsImpaired": false,
+                    "signsDetached": false,
+                    "isWaterproof": false,
+                    "hasFallAlertPendant": false,
+                    "allowsBathroomTracking": false,
+                    "canCommunicateRegularly": false,
+                    "authorizedParties": false,
+                    "emergencyDetected": false,
+                    "messageOnTime": false,
+                    "alternateSensorsDeployed": false,
+                    "timeToFailureKnown": false,
+                    "anomalyDetected": false,
+                    "unusualActivity": false,
+                    "sensorMalfunction": false,
+                    "sensorMisplacement": false,
+                    "userResponds": true,
+                    "caregiverResponds": false,
+                    "dataNeededForTraining": false,
+                    "userWantsToStop": false,
+                    "caregiverConsent": false,
+                    "seeHealthHistory": false,
+                    "seeDemographics": false,
+                    "seeLocation": false,
+                    "accurateHealthComparison": false
+                  },
+                  "arguments_raw": "patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=True, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False",
+                  "raw": "at time 0: Measure(patientDiscomfort=p_low, riskLevel=r_low, batteryConsumption=low, numUsersKnown=False, numSampleKnown=False, canDeactivate=False, patientIsHome=False, signsImpaired=False, signsDetached=False, isWaterproof=False, hasFallAlertPendant=False, allowsBathroomTracking=False, canCommunicateRegularly=False, authorizedParties=False, emergencyDetected=False, messageOnTime=False, alternateSensorsDeployed=False, timeToFailureKnown=False, anomalyDetected=False, unusualActivity=False, sensorMalfunction=False, sensorMisplacement=False, userResponds=True, caregiverResponds=False, dataNeededForTraining=False, userWantsToStop=False, caregiverConsent=False, seeHealthHistory=False, seeDemographics=False, seeLocation=False, accurateHealthComparison=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            }
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        }
+      },
+      "syntax_validation": {
+        "valid": true,
+        "error": "",
+        "rule_count": 30
+      },
+      "regression_report": {
+        "selected_issue_fixed": true,
+        "new_issues_introduced": false,
+        "regression_passed": true,
+        "before_issue_count": 3,
+        "after_issue_count": 2,
+        "new_issue_count": 0,
+        "resolved_issue_count": 1,
+        "remaining_issue_count": 2,
+        "before_counts_by_type": {
+          "concerns": 3,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 0,
+          "situational_conflicts": 0
+        },
+        "after_counts_by_type": {
+          "concerns": 2,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 0,
+          "situational_conflicts": 0
+        },
+        "new_issues": [],
+        "resolved_issues": [
+          {
+            "fingerprint": "concerns:6950d817d09211ae2eb29f8c",
+            "issue_type": "concerns",
+            "summary": "C2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate Concern is raised",
+            "rule_ids": []
+          }
+        ],
+        "remaining_issues": [
+          {
+            "fingerprint": "concerns:631dae466fce35ae8ed97087",
+            "issue_type": "concerns",
+            "summary": "C8 when DataCollected then not AnonymizeData eventually Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:8e428ce3c788742db51385a2",
+            "issue_type": "concerns",
+            "summary": "C9 when UserWantsToRemoveSensors then not RemoveSensors eventually Concern is raised",
+            "rule_ids": []
+          }
+        ]
+      },
+      "regression_passed": true,
+      "semantic_validation": {
+        "valid": true,
+        "errors": [],
+        "warnings": [
+          "Domain meaning requires stakeholder review."
+        ],
+        "operation": "new_rule_generation",
+        "operator_validation": {
+          "passed": true
+        },
+        "temporal_validation": {
+          "passed": true
+        }
+      },
+      "semantic_validation_passed": true,
+      "vocabulary_grounded": false,
+      "diagnosis_aligned": false,
+      "operator_valid": true,
+      "temporal_alignment": true,
+      "semantic_warning": false,
+      "semantic_warning_reason": "",
+      "patched_sleec": "def_start\n\t// BSN actions\n\tevent HideGeographicLocation\n    event ConfirmSensorPlacement\n    event ConfirmUsersActivities\n    event AdjustServiceTimerate\n    event AdjustSamplingRate\n    event CalibrateBSN\n    event EnsureHardwareCompliance\n    // Related to contacts and emergency\n    event EmergencyConfirmed\n    event CallAmbulance\n    event ObtainEmergencyContact\n    // Related to BSN and human interactions\n    event MeetingUser\n    event ObtainUserConsentForData\n    event ObtainUserConsentForSensors\n    event InformUser\n    event TrackVitals\t\t// With assumption that this is being done accurately\n    event InformBSNPurposeAndResponseProtocol\n    event CallCaregiver\n    event EnsureEasyStopping\n    event RemoveSensors\n    event CaregiverCanDeactivate\n    // Related to data\n    event DataCollected\n    event DeleteData\n    event AnonymizeData\n\n    // Patient actions\n    event PatientOutdoors\n    event PatientAsleep\n    event PatientDoingChores\n    event PatientBathing\n    event UserWantsToRemoveSensors\n    event UserCanCallEmergency\n    event AdjustSensors\n    event UserWantsTimeout\n    event SystemShutDown\n    event ObtainRiskLevel\n\n    measure patientDiscomfort: scale(p_low, p_moderate, p_high)\n    measure riskLevel: scale(r_low, r_moderate, r_high)\n    measure batteryConsumption: scale(low, moderate, high)\n    measure numUsersKnown: boolean\n    measure numSampleKnown: boolean\n    measure canDeactivate: boolean\n    measure patientIsHome: boolean\n    measure signsImpaired: boolean\n    measure signsDetached: boolean\n    measure isWaterproof: boolean\n    measure hasFallAlertPendant: boolean\n    measure allowsBathroomTracking: boolean\n    measure canCommunicateRegularly: boolean\n    measure authorizedParties: boolean\n    measure emergencyDetected: boolean\n    measure messageOnTime: boolean\n    measure alternateSensorsDeployed: boolean\n    measure timeToFailureKnown: boolean\n    measure anomalyDetected: boolean\n    measure unusualActivity: boolean\n    measure sensorMalfunction: boolean\n    measure sensorMisplacement: boolean\n    measure userResponds: boolean\n    measure caregiverResponds: boolean\n    measure dataNeededForTraining: boolean\n    measure userWantsToStop: boolean\n    measure caregiverConsent: boolean\n    measure seeHealthHistory: boolean\n    measure seeDemographics: boolean\n    measure seeLocation: boolean\n    measure accurateHealthComparison: boolean\n\n    //WARNING: Defined constant values\n    constant autonomyConcern = 20\n    constant bufferPeriod = 100\ndef_end\n\nrule_start\n\t// Natural language rule 1\n\t// Track no matter what comfort is, unless it is medium or high and the caregiver can deactivate\n\tRule1 when PatientAsleep and ((({patientDiscomfort} = low) or ({patientDiscomfort} = moderate))\n\t    or ({patientDiscomfort} = high)) then TrackVitals\n\t\tunless ({canDeactivate} and ({patientDiscomfort} > low)) then CaregiverCanDeactivate\n\n\t// Natural language rule 2\n\tRule2 when PatientDoingChores and {patientIsHome} then TrackVitals\n\t\tunless (({signsImpaired} or {signsDetached}) and {alternateSensorsDeployed})\n\n\t// Natural language rule 3\n\tRule3 when PatientBathing then TrackVitals\n\t\tunless (((not {isWaterproof}) and {hasFallAlertPendant}) or (not {allowsBathroomTracking}))\n\n\t// Natural language rule 4\n\tRule4 when PatientOutdoors and (not {patientIsHome}) then HideGeographicLocation\n\t\tunless {canCommunicateRegularly}\n    unless {authorizedParties}\n    unless {emergencyDetected}\n\n    // Natural language rule 5\n    Rule5 when TrackVitals and ((not {messageOnTime}) and (not {numUsersKnown}))\n    then AdjustServiceTimerate\n\n    Rule5_1 when TrackVitals and ((not {messageOnTime}) and (not {numUsersKnown}))\n    then not SystemShutDown\n\n    // Natural language rule 6\n    Rule6 when TrackVitals and (((not {timeToFailureKnown}) and (not {numSampleKnown}))\n    or ({batteryConsumption} = high)) then AdjustSamplingRate\n\n    Rule6_1 when TrackVitals and (((not {timeToFailureKnown}) and (not {numSampleKnown}))\n    or ({batteryConsumption} = high)) then not SystemShutDown\n\n    // Natural language rule 7 part 1\n    // Because we can call for help whenever there is an emergency\n    Rule7 when EmergencyConfirmed then CallCaregiver\n\n    // Natural language rule 7 part 2\n    // But only inform caregiver when the risk level is medium or high\n    Rule7_1 when EmergencyConfirmed and ({riskLevel} >= moderate) then CallAmbulance\n\n    // If an anomaly in vital signals is detected ensure that they are not caused by circumstantial conditions.\n    // Confirm with user all sensors are properly placed\n    Rule8 when TrackVitals and {anomalyDetected} then ConfirmSensorPlacement\n\n    // Confirm if the user is not performing any unusual physical activity\n    Rule8_1 when TrackVitals and {anomalyDetected} then ConfirmUsersActivities\n\n    // If an anomaly in vital signals is detected but not caused by sensor malfunction, misplacement, or unusual activity, inform the user about it.\n    Rule9 when TrackVitals and ((({anomalyDetected} and (not {unusualActivity})) and\n        (not {sensorMalfunction})) and (not {sensorMisplacement})) then InformUser\n\n\t// If user does not respond to this information in any way, notify their emergency contact.\n    Rule9_1 when InformUser and (not {userResponds}) then CallCaregiver\n\n\t// If emergency does not answer, call medical help.\n\tRule9_2 when CallCaregiver and (not {caregiverResponds}) then CallAmbulance\n\n\tRule10 when MeetingUser then ObtainUserConsentForData\n\t// In first interaction with the user, inform them of the purposes of using this technology.\n\t// inform them that the emergency contact can be contacted if the sensors detect anomalies in their vital signs.\n\t// Inform them about what will happen in case the sensors malfunction and they do not respond\n\tRule11 when MeetingUser then InformBSNPurposeAndResponseProtocol\n\n\t// Ask them for an emergency contact\n    Rule11_1 when MeetingUser then ObtainEmergencyContact\n\n    Rule12 when DataCollected and (not {dataNeededForTraining}) then DeleteData\n    unless {dataNeededForTraining} then AnonymizeData\n\n\tRule13 when TrackVitals and {userWantsToStop} then EnsureEasyStopping\n\t    otherwise CallCaregiver\n\t\tunless ({riskLevel} > autonomyConcern)\n\t\t// If risk to user from removal is low, then alert caregiver\n\n\n\t// Do not remove sensors without explicit consent from caregiver to do so\n    Rule13_1 when UserWantsToRemoveSensors and (not {caregiverConsent})\n    then not RemoveSensors\n\n    Rule13_2 when UserWantsToRemoveSensors then InformUser\n\n    Rule13_3 when UserWantsTimeout then InformUser\n\n    // Inform/calibrate BSN signal so that the system doesn\u2019t overly interfere or cause stress\n    Rule14 when CalibrateBSN and ((({seeHealthHistory} and {seeDemographics}) and {seeLocation})\n                                    and {accurateHealthComparison}) then TrackVitals\n\n    Rule15 when DataCollected then DeleteData within bufferPeriod seconds\n\n    // Hardware must not unreasonably interfere with user\u2019s culture and religious acts\n    Rule16 when MeetingUser then EnsureHardwareCompliance\n\n    // Ask user for consent prior to fitting BSN\n    Rule16_1 when MeetingUser then ObtainUserConsentForSensors\n\n    Rule17 when TrackVitals then UserCanCallEmergency\n\n    Rule18 when CalibrateBSN then ObtainRiskLevel\nR1 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then CaregiverCanDeactivate\nrule_end\n\n// Security, autonomy, legal, cultural, privacy, safety.\nconcern_start\n\t// Patient should not be able to remove sensors by himself.\n\tC1 when UserWantsToRemoveSensors and (not {caregiverConsent}) then RemoveSensors\n\n\t// Every time sensors are adjusted, check the patient for their level of comfort.\n\tC2 when TrackVitals and ({canDeactivate} and ({patientDiscomfort} > low)) then not CaregiverCanDeactivate\n\n\t// The patient's privacy should be respected as much as possible. Patient should be able to select when they want a time out from the sensors. Patient should always be informed that their health monitoring will be decreased when they do it.\n\tC3 when UserWantsTimeout then not InformUser\n\n\t// If the patient does not want to wear the sensors due to privacy, the system should check in with the patient (via notifications). The system should also inform the user of the risks and tradeoffs between privacy and health as soon as they remove the sensors.\n\tC4 when UserWantsToRemoveSensors then not InformUser\n\n\t// System should not shut down if there is a flush of information (more than the system can handle).\n\tC5 when TrackVitals and ((not {messageOnTime}) and (not {numUsersKnown})) then SystemShutDown\n\n\t// As soon as system is setup, user and caregiver does not ask about the level of risk of the patient.\n\tC6 when CalibrateBSN then not ObtainRiskLevel\n\n    //All the data collected must eventually be deleted in the system.\n\tC7 when DataCollected then not DeleteData eventually\n\n    //All the data collected is anonymized\n    C8 when DataCollected then not AnonymizeData eventually\n\n    //If a user wants to remove sensors, then sensors must be removed (or it raises a concern)\n    C9 when UserWantsToRemoveSensors then not RemoveSensors eventually\n\nconcern_end\npurpose_start\n// The purpose is to monitor a patient's health respecting their autonomy, safety, cultural differences, and privacy while protecting the user against security threats.\n\t// First we ensure every functionality is reachable\n    pr1 exists HideGeographicLocation\n    pr2 exists ConfirmSensorPlacement\n    pr3 exists ConfirmUsersActivities\n    pr4 exists AdjustServiceTimerate\n    pr5 exists AdjustSamplingRate\n    pr6 exists CalibrateBSN\n    pr7 exists EnsureHardwareCompliance\n    pr8 exists EmergencyConfirmed\n    pr9 exists CallAmbulance\n    pr10 exists ObtainEmergencyContact\n    pr11 exists MeetingUser\n    pr12 exists ObtainUserConsentForData\n    pr13 exists ObtainUserConsentForSensors\n    pr14 exists InformUser\n    pr15 exists TrackVitals\n    pr16 exists InformBSNPurposeAndResponseProtocol\n    pr17 exists CallCaregiver\n    pr18 exists EnsureEasyStopping\n    pr19 exists RemoveSensors\n    pr20 exists CaregiverCanDeactivate\n    pr21 exists DataCollected\n    pr22 exists DeleteData\n    pr23 exists AnonymizeData\n    pr24 exists PatientOutdoors\n    pr25 exists PatientAsleep\n    pr26 exists PatientDoingChores\n    pr27 exists PatientBathing\n    pr28 exists UserWantsToRemoveSensors\n    pr29 exists UserCanCallEmergency\n    pr30 exists AdjustSensors\n    pr31 exists UserWantsTimeout\n    pr32 exists SystemShutDown\n    pr33 exists ObtainRiskLevel\n\n\t// Autonomy - User should be able to not disclose their geographic location while outdoors\n\tP1 exists HideGeographicLocation and (not {patientIsHome})\n\n\t// Safety - BSN should be able to call a caregiver in case of an emergency\n\tP2 exists CallCaregiver while EmergencyConfirmed\n\n\t// Cultural difference\n\tP3 exists EnsureHardwareCompliance\n\n\t// Privacy - BSN should be able to delete data when it is no longer necessary\n\tP4 exists DeleteData and (not {dataNeededForTraining})\n\n    // Privacy - BSN should be able to anonymize data when it is being used\n    P5 exists AnonymizeData and {dataNeededForTraining}\n\n\t// Protect against threats\n\tP6 exists CallAmbulance and (riskLevel >= moderate)\n\n\t// BSN should be able to inform user when an anomaly is detected while tracking vitals\n\tP7 exists InformUser and {anomalyDetected} while TrackVitals\n\npurpose_end\n\n",
+      "syntax_valid": true,
+      "formally_verified": true,
+      "requires_social_scientist_review": true,
+      "failure_reason": "",
+      "candidate_status": "formally_verified",
+      "attempt": 5,
+      "ranking": {
+        "rules_affected": 1,
+        "rules_edited": 0,
+        "rules_added": 1,
+        "rules_removed": 0,
+        "new_elements": 0,
+        "new_events": 0,
+        "new_measures": 0,
+        "new_defeaters": 0,
+        "boolean_complexity": 2,
+        "defeaters": 0,
+        "defeater_depth": 0,
+        "lexicographic_key": [
+          1,
+          0,
+          2,
+          0,
+          0
+        ],
+        "method": "lexicographic",
+        "total_score": 0
+      },
+      "rank": 1,
+      "ranking_score": -1,
+      "ranking_rationale": [
+        "Prefer fewer affected rules, new elements, Boolean operators, defeaters, then lower defeater nesting depth."
+      ]
+    }
+  }
+]

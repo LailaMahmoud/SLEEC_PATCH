@@ -1,0 +1,27 @@
+{
+  "status": "passed",
+  "before_count": 10,
+  "after_count": 3,
+  "resolved_count": 7,
+  "new_count": 0,
+  "selected_still_present": [],
+  "selected_absent_from_baseline": [],
+  "remaining": [
+    {
+      "type": "concerns",
+      "subject": "c1",
+      "value": "c1 when RobotWorking and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then RobotContinueTask\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "c3",
+      "value": "c3 when RobotMoving and ({humanInRange} or ({bumpHuman} or ({humanTooClose} or (not {routeAvailable})))) then not AdjustRoute\nConcern is raised"
+    },
+    {
+      "type": "concerns",
+      "subject": "c5",
+      "value": "c5 when ActionHumanRandom then  RobotMoving\nConcern is raised"
+    }
+  ],
+  "introduced": []
+}

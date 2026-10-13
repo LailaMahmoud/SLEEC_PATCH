@@ -1,0 +1,2324 @@
+[
+  {
+    "use_case": "AutoCAR",
+    "issue_id": "redundancies_1",
+    "issue_type": "redundancies",
+    "run_id": "fa53912d294d4954912b404dc14132f6",
+    "timestamp": "2026-10-03T10:08:29.643172",
+    "input_sha256": "8c3604363ab89b9ec53420413e7dd16cac8128579434849ac93b0ef790e35e73",
+    "generation_time_seconds": 14.801,
+    "validation_time_seconds": 34.143,
+    "verified_patch_count": 1,
+    "result_id": 204,
+    "patch_id": "d_rule_removal_R22_1",
+    "operation": "rule_removal",
+    "source": "deterministic",
+    "rank": 1,
+    "rank_method": "lexicographic",
+    "rules_modified": 0,
+    "rules_added": 0,
+    "rules_removed": 1,
+    "NE": 0,
+    "BO": 0,
+    "Neg": 0,
+    "Def": 0,
+    "Depth": 0,
+    "NE_provenance": "recorded",
+    "BO_provenance": "recorded",
+    "Neg_provenance": "calculated_from_simplified_saved_rules",
+    "Def_provenance": "recorded",
+    "Depth_provenance": "recorded",
+    "verification_record_id": 546,
+    "verification_match_method": "run_id_and_patch_content",
+    "selected_issue": "R22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}",
+    "patch": {
+      "patch_id": "d_rule_removal_R22_1",
+      "id": "d_rule_removal_R22_1",
+      "source": "deterministic",
+      "issue_type": "redundancies",
+      "operation": "rule_removal",
+      "target_rule_id": "R22",
+      "original_rule": "R22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}",
+      "proposed_rule": "",
+      "diagnosis": {
+        "source_id": "R22",
+        "source_text": "R22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}",
+        "raw_report": "Redundant SLEEC rule:\nR22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\n----------------------------------------------------------------------------------------------------",
+        "trace": [],
+        "affected_rule_ids": [
+          "R22",
+          "R23"
+        ],
+        "rule_references": [
+          {
+            "id": "R22",
+            "text": "R22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}"
+          },
+          {
+            "id": "R23",
+            "text": "R23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}"
+          }
+        ],
+        "rule_id_provenance": "detector_report"
+      },
+      "target_resolution": {
+        "addition_scope": null,
+        "rule_ids": [
+          "R22"
+        ],
+        "basis": "detector_report",
+        "reason": "These rules are identified in the detector report."
+      },
+      "natural_language_explanation": "Remove only the explicitly diagnosed redundant targets; retain supporting rules.",
+      "original_sleec": "def_start\n\t// Events before driving starts\n\tevent UserTurnOnSystem\n\tevent UserTurnOffSystem\n\tevent TurnOnSensors\n\tevent TurnOffSensors\n\tevent CheckSystemComponents\n\tevent SystemReady\n\tevent TakeUserInput\n\tevent CalculateShortestPath\n\tevent ReadyToDrive\n\tevent GetReadyToDrive\n\tevent AskIfUserReadyToDrive\n\tevent DisplayCarInformation\n\t// Events during driving\n\tevent CarDriving\n\tevent SlowDown\t\t\t// But not stop completely\n\tevent TurnOnHazardsAndTemporarilyStop // Different than temporarily stopping just by hazards, i.e. situation is dangerous and we\u2019re not just temporarily stopping for lights\n\tevent TemporarilyStopCar\t\t// Different than parking, system not turned off\n\tevent ParkVehicle\t\t// On road shoulder or parking area\n\t// Parking also implies stopping car and turning of system\n\tevent DisplayError\t\t// Error is internal, i.e car systems not properly working\n\tevent DisplayAlert \t\t// Alert is external, includes information\n\tevent DisplayRoute\n\tevent ChangeSpeed\n\tevent ChangeLanes\n\tevent ChangeCurrentDriving\n\tevent TakeNewInput\n\tevent TakeShortestPath\n\tevent MaintainEqualDistance\n\tevent StayCenteredinLane\n\tevent SeeTrafficLight\n\tevent WaitUntilChanges\n\tevent RecordPeople\n\t// User requests related\n\tevent UserChangeRoute\n\tevent UserCancelPath\n\tevent UserRequestSpeedChange\n\tevent AskForClarification\n\t// Priority vehicle related\n\tevent PriorityVehicleNearby\n\tevent MakeSpace\t\t\t// Such as emergency corridor or use the shoulder\n\n\t// Measures before driving starts\n\tmeasure destinationExists: boolean\n\tmeasure pathExists: boolean\n\t// Events during driving\n\tmeasure objectInPath: boolean\t\t// Sth in front of car, i.e pedestrian, animal, stationary vehicle\n\tmeasure carsInFront: boolean\t\t// Moving thing in front\n\tmeasure carsBehind: boolean\n\tmeasure actionIsLegal: boolean\n\t// User requests related\n\n\t// Priority vehicle related\n\tmeasure userRequestedLaneChange: boolean\n\tmeasure ambulanceBehindCar: boolean\n\tmeasure ambulanceOnOppositeSide: boolean\n\tmeasure ambulanceNextToCar: boolean\n\n\tmeasure environmentClear: boolean\t// Other moving vehicles on road, either next to, in front, behind\n\tmeasure riskLevel: scale(low, medium, high)\n\tmeasure withinLane: boolean\n\tmeasure multipleLanes: boolean\t\t// Whether 1 lane or multiple\n\tmeasure commandClear: boolean\n\tmeasure laneExists: boolean\n\tmeasure userTurnedOffSystem: boolean\n\tmeasure recognizeInput: boolean\n\tmeasure redLight: boolean\n\tmeasure yellowLight: boolean\n\tmeasure greenLight: boolean\n\tmeasure previousLight: scale(red, yellow, green)\n\tmeasure doorClosed: boolean\n\tmeasure seatBeltOn: boolean\n\tmeasure userSaysYes: boolean\n\tmeasure peopleConsentObtained: boolean\ndef_end\n\nrule_start\n\tR1 when UserTurnOnSystem then TurnOnSensors\n\tR1_cont when TurnOnSensors then CheckSystemComponents\n\tR2 when SystemReady then TakeUserInput\n\tR3 when TakeUserInput then CalculateShortestPath\n\t\tunless ((not {destinationExists}) or (not {pathExists})) then DisplayError\n\tR3_cont when CalculateShortestPath then DisplayRoute\n\tR4 when UserRequestSpeedChange and {environmentClear} then ChangeSpeed\n        unless ({riskLevel} > low)\n        unless (not {actionIsLegal})\n\n\tR5 when UserChangeRoute then CalculateShortestPath\n\t\tunless (not {commandClear}) then AskForClarification\n\t\totherwise not ChangeCurrentDriving\n\n\tR6 when UserCancelPath then ParkVehicle\n\t\tunless ({riskLevel} > low) then WaitUntilChanges\n\tR7 when CarDriving and ({carsInFront} and {carsBehind}) then MaintainEqualDistance\n\tR8 when CarDriving and {objectInPath} then TemporarilyStopCar\n\tunless ({riskLevel} > low) then ChangeLanes\n\tunless (not {multipleLanes}) then TurnOnHazardsAndTemporarilyStop\n    unless (not {objectInPath}) then CarDriving\n\t//invalid rules\n\tR9 when CarDriving and {withinLane} then StayCenteredinLane\n    unless ({userRequestedLaneChange} and ({environmentClear} and ({riskLevel} = low)))\n    then ChangeLanes\n    unless ((not {withinLane}) or (not {laneExists})) then DisplayAlert\n\tR10 when UserTurnOffSystem then ParkVehicle\n\tR10_1 when ParkVehicle and {userTurnedOffSystem} then TurnOffSensors\n\tR11 when PriorityVehicleNearby then DisplayAlert\n\tR12 when PriorityVehicleNearby and ({ambulanceBehindCar} and (not {ambulanceOnOppositeSide}))\n\t\tthen ChangeLanes\n\t\tunless ({ambulanceNextToCar} or (not {multipleLanes})) then MakeSpace\n\t\tunless ({riskLevel} > low)\n\tR13 when SeeTrafficLight and ({redLight} and {recognizeInput}) then TemporarilyStopCar\n\t\tunless (not {redLight}) then TakeNewInput // unless is being used as an \u2018until\u2019 here\n\tR14 when SeeTrafficLight and ({yellowLight} and {recognizeInput}) then SlowDown\n\t\tunless (not {yellowLight}) then TakeNewInput\n\t\tunless ({previousLight} = red) then GetReadyToDrive\n\tR15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\n\t\tunless {objectInPath} then WaitUntilChanges\n\tR16 when SeeTrafficLight and (not {recognizeInput}) then SlowDown\n\tR16_cont when SlowDown and {environmentClear} then CarDriving\n\t// Rules 17 and 18 combined\n\tR17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\n\tthen DisplayAlert otherwise AskIfUserReadyToDrive\n\n\tR19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving\n\n\tR20 when SystemReady then DisplayCarInformation\n\tR26 when UserTurnOffSystem then TurnOffSensors eventually \n\tR21 when CalculateShortestPath then TakeShortestPath\n\t    unless ({riskLevel} > low)\n\t    unless (not {actionIsLegal})\n\tR22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\n    R23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\nrule_end\n\nconcern_start\n\t// Safety of the driver and of others in the environment\n\tc1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\n\t// Legal - road rules must be followed\n\tc2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\n\tc3 when SeeTrafficLight and ({redLight} and {recognizeInput}) then not TemporarilyStopCar\n\t// Autonomy - user must remain in control as much as possible\n\tc4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\n    c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\n\t// Privacy - use of cameras attached to car\n    c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\n\t// Accuracy - for deciding routes and destinations\n\tc7 when TakeUserInput and ((not {destinationExists}) or (not {pathExists})) then not DisplayError\n\t// Emergency vehicle related\n\tc8 when PriorityVehicleNearby and ({ambulanceBehindCar} and ((not {ambulanceOnOppositeSide}) and ((not {ambulanceNextToCar}) and ( {multipleLanes} and  ({riskLevel}  < medium) )))) then not ChangeLanes\n\n\n\n\n\t//autonomy\n    c9 when ReadyToDrive then not ReadyToDrive eventually\n    c10 when UserTurnOnSystem then TurnOffSensors\n    c11 when UserTurnOffSystem then not TurnOffSensors eventually\n\n    //privacy\n    c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nconcern_end\n\npurpose_start\n\tpr1 exists UserTurnOnSystem\n    pr2 exists UserTurnOffSystem\n    pr3 exists TurnOnSensors\n    pr4 exists TurnOffSensors\n    pr5 exists CheckSystemComponents\n    pr6 exists SystemReady\n    pr7 exists TakeUserInput\n    pr8 exists CalculateShortestPath\n    pr9 exists ReadyToDrive\n    pr10 exists GetReadyToDrive\n    pr11 exists AskIfUserReadyToDrive\n    pr12 exists DisplayCarInformation\n    // Events during driving\n    pr13 exists CarDriving\n    pr14 exists SlowDown\t\t\t// But not stop completely\n    pr15 exists TurnOnHazardsAndTemporarilyStop // Different than temporarily stopping just by hazards, i.e. situation is dangerous and we\u2019re not just temporarily stopping for lights\n    pr16 exists TemporarilyStopCar\t\t// Different than parking, system not turned off\n    pr17 exists ParkVehicle\t\t// On road shoulder or parking area\n    // Parking also implies stopping car and turning of system\n    pr18 exists DisplayError\t\t// Error is internal, i.e car systems not properly working\n    pr19 exists DisplayAlert \t\t// Alert is external, includes information\n    pr20 exists DisplayRoute\n    pr21 exists ChangeSpeed\n    pr22 exists ChangeLanes\n    pr23 exists ChangeCurrentDriving\n    pr24 exists TakeNewInput\n    pr25 exists TakeShortestPath\n    pr26 exists MaintainEqualDistance\n    pr27 exists StayCenteredinLane\n    pr28 exists SeeTrafficLight\n    pr29 exists WaitUntilChanges\n    pr30 exists RecordPeople\n    // User requests related\n        pr31 exists UserChangeRoute\n    pr32 exists UserCancelPath\n    pr33 exists UserRequestSpeedChange\n    pr35 exists AskForClarification\n        // Priority vehicle related\n    pr36 exists PriorityVehicleNearby\n    pr37 exists MakeSpace\n\n    // Safely transport user from A to B\n    P1 exists CarDriving and (({riskLevel} > low) and {actionIsLegal}) while TakeShortestPath\n    // Maintain user autonomy\n    P2 exists AskIfUserReadyToDrive and (({doorClosed} and {seatBeltOn}) and {destinationExists})\n    P3  exists DisplayCarInformation while SystemReady\n    // Ensure emergency vehicles are able to carry out their function without unreasonable impediment\n    P4  exists MakeSpace while PriorityVehicleNearby\n    // Enable user freedom of movement\n    P5  exists UserChangeRoute while CarDriving\n    P6  exists UserCancelPath while CarDriving\n    P7  exists UserRequestSpeedChange while CarDriving\n    P8  exists CarDriving and {userRequestedLaneChange}\npurpose_end\n",
+      "result_id": "",
+      "rule_ids": [],
+      "operation_label": "Remove redundant rule",
+      "stakeholder_summary": "This patch removes rule R22 because it appears redundant with another rule.",
+      "review_flags": [],
+      "missing_element": "",
+      "grounding_evidence": {},
+      "new_event": "",
+      "new_measure": "",
+      "new_capability": "",
+      "new_rule": "",
+      "applicability": {},
+      "modification_cost": 1,
+      "new_events_added": 0,
+      "new_measures_added": 0,
+      "new_capabilities_added": 0,
+      "new_rules_added": 0,
+      "defeaters_added": 0,
+      "verified": true,
+      "syntax_validation": {
+        "valid": true,
+        "error": "",
+        "rule_count": 26
+      },
+      "failure_reason": "",
+      "verification_cache_hit": false,
+      "patched_sleec": "def_start\n\t// Events before driving starts\n\tevent UserTurnOnSystem\n\tevent UserTurnOffSystem\n\tevent TurnOnSensors\n\tevent TurnOffSensors\n\tevent CheckSystemComponents\n\tevent SystemReady\n\tevent TakeUserInput\n\tevent CalculateShortestPath\n\tevent ReadyToDrive\n\tevent GetReadyToDrive\n\tevent AskIfUserReadyToDrive\n\tevent DisplayCarInformation\n\t// Events during driving\n\tevent CarDriving\n\tevent SlowDown\t\t\t// But not stop completely\n\tevent TurnOnHazardsAndTemporarilyStop // Different than temporarily stopping just by hazards, i.e. situation is dangerous and we\u2019re not just temporarily stopping for lights\n\tevent TemporarilyStopCar\t\t// Different than parking, system not turned off\n\tevent ParkVehicle\t\t// On road shoulder or parking area\n\t// Parking also implies stopping car and turning of system\n\tevent DisplayError\t\t// Error is internal, i.e car systems not properly working\n\tevent DisplayAlert \t\t// Alert is external, includes information\n\tevent DisplayRoute\n\tevent ChangeSpeed\n\tevent ChangeLanes\n\tevent ChangeCurrentDriving\n\tevent TakeNewInput\n\tevent TakeShortestPath\n\tevent MaintainEqualDistance\n\tevent StayCenteredinLane\n\tevent SeeTrafficLight\n\tevent WaitUntilChanges\n\tevent RecordPeople\n\t// User requests related\n\tevent UserChangeRoute\n\tevent UserCancelPath\n\tevent UserRequestSpeedChange\n\tevent AskForClarification\n\t// Priority vehicle related\n\tevent PriorityVehicleNearby\n\tevent MakeSpace\t\t\t// Such as emergency corridor or use the shoulder\n\n\t// Measures before driving starts\n\tmeasure destinationExists: boolean\n\tmeasure pathExists: boolean\n\t// Events during driving\n\tmeasure objectInPath: boolean\t\t// Sth in front of car, i.e pedestrian, animal, stationary vehicle\n\tmeasure carsInFront: boolean\t\t// Moving thing in front\n\tmeasure carsBehind: boolean\n\tmeasure actionIsLegal: boolean\n\t// User requests related\n\n\t// Priority vehicle related\n\tmeasure userRequestedLaneChange: boolean\n\tmeasure ambulanceBehindCar: boolean\n\tmeasure ambulanceOnOppositeSide: boolean\n\tmeasure ambulanceNextToCar: boolean\n\n\tmeasure environmentClear: boolean\t// Other moving vehicles on road, either next to, in front, behind\n\tmeasure riskLevel: scale(low, medium, high)\n\tmeasure withinLane: boolean\n\tmeasure multipleLanes: boolean\t\t// Whether 1 lane or multiple\n\tmeasure commandClear: boolean\n\tmeasure laneExists: boolean\n\tmeasure userTurnedOffSystem: boolean\n\tmeasure recognizeInput: boolean\n\tmeasure redLight: boolean\n\tmeasure yellowLight: boolean\n\tmeasure greenLight: boolean\n\tmeasure previousLight: scale(red, yellow, green)\n\tmeasure doorClosed: boolean\n\tmeasure seatBeltOn: boolean\n\tmeasure userSaysYes: boolean\n\tmeasure peopleConsentObtained: boolean\ndef_end\n\nrule_start\n\tR1 when UserTurnOnSystem then TurnOnSensors\n\tR1_cont when TurnOnSensors then CheckSystemComponents\n\tR2 when SystemReady then TakeUserInput\n\tR3 when TakeUserInput then CalculateShortestPath\n\t\tunless ((not {destinationExists}) or (not {pathExists})) then DisplayError\n\tR3_cont when CalculateShortestPath then DisplayRoute\n\tR4 when UserRequestSpeedChange and {environmentClear} then ChangeSpeed\n        unless ({riskLevel} > low)\n        unless (not {actionIsLegal})\n\n\tR5 when UserChangeRoute then CalculateShortestPath\n\t\tunless (not {commandClear}) then AskForClarification\n\t\totherwise not ChangeCurrentDriving\n\n\tR6 when UserCancelPath then ParkVehicle\n\t\tunless ({riskLevel} > low) then WaitUntilChanges\n\tR7 when CarDriving and ({carsInFront} and {carsBehind}) then MaintainEqualDistance\n\tR8 when CarDriving and {objectInPath} then TemporarilyStopCar\n\tunless ({riskLevel} > low) then ChangeLanes\n\tunless (not {multipleLanes}) then TurnOnHazardsAndTemporarilyStop\n    unless (not {objectInPath}) then CarDriving\n\t//invalid rules\n\tR9 when CarDriving and {withinLane} then StayCenteredinLane\n    unless ({userRequestedLaneChange} and ({environmentClear} and ({riskLevel} = low)))\n    then ChangeLanes\n    unless ((not {withinLane}) or (not {laneExists})) then DisplayAlert\n\tR10 when UserTurnOffSystem then ParkVehicle\n\tR10_1 when ParkVehicle and {userTurnedOffSystem} then TurnOffSensors\n\tR11 when PriorityVehicleNearby then DisplayAlert\n\tR12 when PriorityVehicleNearby and ({ambulanceBehindCar} and (not {ambulanceOnOppositeSide}))\n\t\tthen ChangeLanes\n\t\tunless ({ambulanceNextToCar} or (not {multipleLanes})) then MakeSpace\n\t\tunless ({riskLevel} > low)\n\tR13 when SeeTrafficLight and ({redLight} and {recognizeInput}) then TemporarilyStopCar\n\t\tunless (not {redLight}) then TakeNewInput // unless is being used as an \u2018until\u2019 here\n\tR14 when SeeTrafficLight and ({yellowLight} and {recognizeInput}) then SlowDown\n\t\tunless (not {yellowLight}) then TakeNewInput\n\t\tunless ({previousLight} = red) then GetReadyToDrive\n\tR15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\n\t\tunless {objectInPath} then WaitUntilChanges\n\tR16 when SeeTrafficLight and (not {recognizeInput}) then SlowDown\n\tR16_cont when SlowDown and {environmentClear} then CarDriving\n\t// Rules 17 and 18 combined\n\tR17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\n\tthen DisplayAlert otherwise AskIfUserReadyToDrive\n\n\tR19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving\n\n\tR20 when SystemReady then DisplayCarInformation\n\tR26 when UserTurnOffSystem then TurnOffSensors eventually \n\tR21 when CalculateShortestPath then TakeShortestPath\n\t    unless ({riskLevel} > low)\n\t    unless (not {actionIsLegal})\n\t\n    R23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\nrule_end\n\nconcern_start\n\t// Safety of the driver and of others in the environment\n\tc1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\n\t// Legal - road rules must be followed\n\tc2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\n\tc3 when SeeTrafficLight and ({redLight} and {recognizeInput}) then not TemporarilyStopCar\n\t// Autonomy - user must remain in control as much as possible\n\tc4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\n    c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\n\t// Privacy - use of cameras attached to car\n    c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\n\t// Accuracy - for deciding routes and destinations\n\tc7 when TakeUserInput and ((not {destinationExists}) or (not {pathExists})) then not DisplayError\n\t// Emergency vehicle related\n\tc8 when PriorityVehicleNearby and ({ambulanceBehindCar} and ((not {ambulanceOnOppositeSide}) and ((not {ambulanceNextToCar}) and ( {multipleLanes} and  ({riskLevel}  < medium) )))) then not ChangeLanes\n\n\n\n\n\t//autonomy\n    c9 when ReadyToDrive then not ReadyToDrive eventually\n    c10 when UserTurnOnSystem then TurnOffSensors\n    c11 when UserTurnOffSystem then not TurnOffSensors eventually\n\n    //privacy\n    c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nconcern_end\n\npurpose_start\n\tpr1 exists UserTurnOnSystem\n    pr2 exists UserTurnOffSystem\n    pr3 exists TurnOnSensors\n    pr4 exists TurnOffSensors\n    pr5 exists CheckSystemComponents\n    pr6 exists SystemReady\n    pr7 exists TakeUserInput\n    pr8 exists CalculateShortestPath\n    pr9 exists ReadyToDrive\n    pr10 exists GetReadyToDrive\n    pr11 exists AskIfUserReadyToDrive\n    pr12 exists DisplayCarInformation\n    // Events during driving\n    pr13 exists CarDriving\n    pr14 exists SlowDown\t\t\t// But not stop completely\n    pr15 exists TurnOnHazardsAndTemporarilyStop // Different than temporarily stopping just by hazards, i.e. situation is dangerous and we\u2019re not just temporarily stopping for lights\n    pr16 exists TemporarilyStopCar\t\t// Different than parking, system not turned off\n    pr17 exists ParkVehicle\t\t// On road shoulder or parking area\n    // Parking also implies stopping car and turning of system\n    pr18 exists DisplayError\t\t// Error is internal, i.e car systems not properly working\n    pr19 exists DisplayAlert \t\t// Alert is external, includes information\n    pr20 exists DisplayRoute\n    pr21 exists ChangeSpeed\n    pr22 exists ChangeLanes\n    pr23 exists ChangeCurrentDriving\n    pr24 exists TakeNewInput\n    pr25 exists TakeShortestPath\n    pr26 exists MaintainEqualDistance\n    pr27 exists StayCenteredinLane\n    pr28 exists SeeTrafficLight\n    pr29 exists WaitUntilChanges\n    pr30 exists RecordPeople\n    // User requests related\n        pr31 exists UserChangeRoute\n    pr32 exists UserCancelPath\n    pr33 exists UserRequestSpeedChange\n    pr35 exists AskForClarification\n        // Priority vehicle related\n    pr36 exists PriorityVehicleNearby\n    pr37 exists MakeSpace\n\n    // Safely transport user from A to B\n    P1 exists CarDriving and (({riskLevel} > low) and {actionIsLegal}) while TakeShortestPath\n    // Maintain user autonomy\n    P2 exists AskIfUserReadyToDrive and (({doorClosed} and {seatBeltOn}) and {destinationExists})\n    P3  exists DisplayCarInformation while SystemReady\n    // Ensure emergency vehicles are able to carry out their function without unreasonable impediment\n    P4  exists MakeSpace while PriorityVehicleNearby\n    // Enable user freedom of movement\n    P5  exists UserChangeRoute while CarDriving\n    P6  exists UserCancelPath while CarDriving\n    P7  exists UserRequestSpeedChange while CarDriving\n    P8  exists CarDriving and {userRequestedLaneChange}\npurpose_end\n",
+      "target_fixed": true,
+      "related_issue": null,
+      "regression_report": {
+        "selected_issue_fixed": true,
+        "new_issues_introduced": false,
+        "regression_passed": true,
+        "before_issue_count": 9,
+        "after_issue_count": 7,
+        "new_issue_count": 0,
+        "resolved_issue_count": 2,
+        "remaining_issue_count": 7,
+        "before_counts_by_type": {
+          "concerns": 7,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 2,
+          "situational_conflicts": 0
+        },
+        "after_counts_by_type": {
+          "concerns": 7,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 0,
+          "situational_conflicts": 0
+        },
+        "new_issues": [],
+        "resolved_issues": [
+          {
+            "fingerprint": "redundancies:6b743259ad5a66529cfda6f4",
+            "issue_type": "redundancies",
+            "summary": "R23 when SystemReady then not RecordPeople unless {peopleConsentObtained}",
+            "rule_ids": [
+              "R23",
+              "R22"
+            ]
+          },
+          {
+            "fingerprint": "redundancies:7bed0bdf59ebe65af86e8ca2",
+            "issue_type": "redundancies",
+            "summary": "R22 when SystemReady then not RecordPeople unless {peopleConsentObtained}",
+            "rule_ids": [
+              "R22",
+              "R23"
+            ]
+          }
+        ],
+        "remaining_issues": [
+          {
+            "fingerprint": "concerns:3a8f11b36c245be9a527b58a",
+            "issue_type": "concerns",
+            "summary": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:4b2979d95d3d22edf2986648",
+            "issue_type": "concerns",
+            "summary": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:65539e5e7451d7b4c2992dc1",
+            "issue_type": "concerns",
+            "summary": "c4 when SystemReady and ({doorClosed} and (({seatBeltOn} and {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:af1e927f4c9392a581aec218",
+            "issue_type": "concerns",
+            "summary": "c10 when UserTurnOnSystem then TurnOffSensors Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:ba758dacceb2e54ed80203c8",
+            "issue_type": "concerns",
+            "summary": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:dab18bc76146195fa2f9a8c8",
+            "issue_type": "concerns",
+            "summary": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:e14d92eeb1d8baba5013f06b",
+            "issue_type": "concerns",
+            "summary": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving Concern is raised",
+            "rule_ids": []
+          }
+        ]
+      },
+      "regression_passed": true,
+      "validation_result": {
+        "concerns": [
+          "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\nConcern is raised",
+          "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\nConcern is raised",
+          "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\nConcern is raised",
+          "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\nConcern is raised",
+          "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised",
+          "c10 when UserTurnOnSystem then TurnOffSensors\nConcern is raised",
+          "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [],
+        "situational_conflicts": [],
+        "original_rules_by_type": {
+          "concerns": [
+            [
+              "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+              "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+              "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges"
+            ],
+            [
+              "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+              "R2 when SystemReady then TakeUserInput",
+              "R20 when SystemReady then DisplayCarInformation"
+            ],
+            [
+              "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+              "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+              "R2 when SystemReady then TakeUserInput"
+            ],
+            [
+              "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+              "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+              "R16_cont when SlowDown and {environmentClear} then CarDriving"
+            ],
+            [
+              "R23 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+              "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+              "R16_cont when SlowDown and {environmentClear} then CarDriving"
+            ],
+            [
+              "R1 when UserTurnOnSystem then TurnOnSensors",
+              "R10_1 when ParkVehicle and {userTurnedOffSystem} then TurnOffSensors",
+              "R26 when UserTurnOffSystem then TurnOffSensors eventually"
+            ],
+            [
+              "R23 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+              "R4 when UserRequestSpeedChange and {environmentClear} then ChangeSpeed\nunless ({riskLevel} > low)\nunless (not {actionIsLegal})"
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "wfi_artifacts_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c1",
+                "text": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c2",
+                "text": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c4",
+                "text": "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c5",
+                "text": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c6",
+                "text": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c10",
+                "text": "c10 when UserTurnOnSystem then TurnOffSensors"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c12",
+                "text": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople"
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "rule_references_by_type": {
+          "concerns": [
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "related_rules_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R17",
+                "text": "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+                "score": 4
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R15",
+                "text": "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R16_cont",
+                "text": "R16_cont when SlowDown and {environmentClear} then CarDriving",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R2",
+                "text": "R2 when SystemReady then TakeUserInput",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R17",
+                "text": "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R2",
+                "text": "R2 when SystemReady then TakeUserInput",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R20",
+                "text": "R20 when SystemReady then DisplayCarInformation",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R21",
+                "text": "R21 when CalculateShortestPath then TakeShortestPath\nunless ({riskLevel} > low)\nunless (not {actionIsLegal})",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R23",
+                "text": "R23 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R17",
+                "text": "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+                "score": 5
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R2",
+                "text": "R2 when SystemReady then TakeUserInput",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R20",
+                "text": "R20 when SystemReady then DisplayCarInformation",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R23",
+                "text": "R23 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+                "score": 3
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R15",
+                "text": "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R16_cont",
+                "text": "R16_cont when SlowDown and {environmentClear} then CarDriving",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R17",
+                "text": "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R7",
+                "text": "R7 when CarDriving and ({carsInFront} and {carsBehind}) then MaintainEqualDistance",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R23",
+                "text": "R23 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R15",
+                "text": "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R16_cont",
+                "text": "R16_cont when SlowDown and {environmentClear} then CarDriving",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R7",
+                "text": "R7 when CarDriving and ({carsInFront} and {carsBehind}) then MaintainEqualDistance",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R1",
+                "text": "R1 when UserTurnOnSystem then TurnOnSensors",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R10_1",
+                "text": "R10_1 when ParkVehicle and {userTurnedOffSystem} then TurnOffSensors",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R26",
+                "text": "R26 when UserTurnOffSystem then TurnOffSensors eventually",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R23",
+                "text": "R23 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R4",
+                "text": "R4 when UserRequestSpeedChange and {environmentClear} then ChangeSpeed\nunless ({riskLevel} > low)\nunless (not {actionIsLegal})",
+                "score": 1
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "diagnoses_by_type": {
+          "concerns": [
+            {
+              "source_id": "c1",
+              "source_text": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving",
+              "raw_report": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\nConcern is raised\nat time 0: SystemReady()\nat time 0: TakeUserInput()\nat time 0: DisplayCarInformation()\nat time 0: CarDriving()\nat time 0: DisplayError()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=medium, withinLane=False, multipleLanes=True, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SystemReady",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SystemReady()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TakeUserInput",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TakeUserInput()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayCarInformation",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayCarInformation()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "CarDriving",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: CarDriving()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayError",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayError()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "medium",
+                    "withinLane": false,
+                    "multipleLanes": true,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": true,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=medium, withinLane=False, multipleLanes=True, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=medium, withinLane=False, multipleLanes=True, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c2",
+              "source_text": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving",
+              "raw_report": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\nConcern is raised\nat time 0: SystemReady()\nat time 0: TakeUserInput()\nat time 0: DisplayCarInformation()\nat time 0: DisplayError()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SystemReady",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SystemReady()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TakeUserInput",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TakeUserInput()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayCarInformation",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayCarInformation()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayError",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayError()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": true,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c4",
+              "source_text": "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive",
+              "raw_report": "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\nConcern is raised\nat time 0: SystemReady()\nat time 0: TakeUserInput()\nat time 0: DisplayCarInformation()\nat time 0: DisplayError()\nat time 0: Measure(destinationExists=True, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=True, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SystemReady",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SystemReady()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TakeUserInput",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TakeUserInput()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayCarInformation",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayCarInformation()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayError",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayError()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": true,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": true,
+                    "seatBeltOn": true,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=True, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=True, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=True, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=True, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c5",
+              "source_text": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving",
+              "raw_report": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\nConcern is raised\nat time 0: AskIfUserReadyToDrive()\nat time 0: CarDriving()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "AskIfUserReadyToDrive",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: AskIfUserReadyToDrive()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "CarDriving",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: CarDriving()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": false,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c6",
+              "source_text": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople",
+              "raw_report": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised\nat time 0: CarDriving()\nat time 0: RecordPeople()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "CarDriving",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: CarDriving()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "RecordPeople",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: RecordPeople()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": false,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c10",
+              "source_text": "c10 when UserTurnOnSystem then TurnOffSensors",
+              "raw_report": "c10 when UserTurnOnSystem then TurnOffSensors\nConcern is raised\nat time 0: UserTurnOnSystem()\nat time 0: TurnOnSensors()\nat time 0: TurnOffSensors()\nat time 0: CheckSystemComponents()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "UserTurnOnSystem",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: UserTurnOnSystem()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TurnOnSensors",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TurnOnSensors()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TurnOffSensors",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TurnOffSensors()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "CheckSystemComponents",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: CheckSystemComponents()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": false,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c12",
+              "source_text": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople",
+              "raw_report": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised\nat time 0: ChangeSpeed()\nat time 0: RecordPeople()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "ChangeSpeed",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: ChangeSpeed()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "RecordPeople",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: RecordPeople()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": false,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            }
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        }
+      },
+      "syntax_valid": true,
+      "formally_verified": true,
+      "candidate_status": "formally_verified",
+      "semantic_review_status": "not_required",
+      "requires_social_scientist_review": false,
+      "attempt": 1,
+      "ranking": {
+        "rules_affected": 1,
+        "rules_edited": 0,
+        "rules_added": 0,
+        "rules_removed": 1,
+        "new_elements": 0,
+        "new_events": 0,
+        "new_measures": 0,
+        "new_defeaters": 0,
+        "boolean_complexity": 0,
+        "defeaters": 0,
+        "defeater_depth": 0,
+        "lexicographic_key": [
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "method": "lexicographic",
+        "total_score": 0
+      },
+      "rank": 1,
+      "ranking_score": -1,
+      "ranking_rationale": [
+        "Prefer fewer affected rules, new elements, Boolean operators, defeaters, then lower defeater nesting depth."
+      ]
+    }
+  },
+  {
+    "use_case": "AutoCAR",
+    "issue_id": "redundancies_2",
+    "issue_type": "redundancies",
+    "run_id": "d0dc029818764a18931102809c727110",
+    "timestamp": "2026-10-03T10:10:25.954747",
+    "input_sha256": "8c3604363ab89b9ec53420413e7dd16cac8128579434849ac93b0ef790e35e73",
+    "generation_time_seconds": 14.805,
+    "validation_time_seconds": 32.834,
+    "verified_patch_count": 1,
+    "result_id": 207,
+    "patch_id": "d_rule_removal_R23_1",
+    "operation": "rule_removal",
+    "source": "deterministic",
+    "rank": 1,
+    "rank_method": "lexicographic",
+    "rules_modified": 0,
+    "rules_added": 0,
+    "rules_removed": 1,
+    "NE": 0,
+    "BO": 0,
+    "Neg": 0,
+    "Def": 0,
+    "Depth": 0,
+    "NE_provenance": "recorded",
+    "BO_provenance": "recorded",
+    "Neg_provenance": "calculated_from_simplified_saved_rules",
+    "Def_provenance": "recorded",
+    "Depth_provenance": "recorded",
+    "verification_record_id": 556,
+    "verification_match_method": "run_id_and_patch_content",
+    "selected_issue": "R23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}",
+    "patch": {
+      "patch_id": "d_rule_removal_R23_1",
+      "id": "d_rule_removal_R23_1",
+      "source": "deterministic",
+      "issue_type": "redundancies",
+      "operation": "rule_removal",
+      "target_rule_id": "R23",
+      "original_rule": "R23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}",
+      "proposed_rule": "",
+      "diagnosis": {
+        "source_id": "R23",
+        "source_text": "R23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}",
+        "raw_report": "Redundant SLEEC rule:\nR23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\n----------------------------------------------------------------------------------------------------\nBecause of the following SLEEC rule:\n----------------------------------------------------------------------------------------------------\nR22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\n----------------------------------------------------------------------------------------------------",
+        "trace": [],
+        "affected_rule_ids": [
+          "R23",
+          "R22"
+        ],
+        "rule_references": [
+          {
+            "id": "R23",
+            "text": "R23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}"
+          },
+          {
+            "id": "R22",
+            "text": "R22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}"
+          }
+        ],
+        "rule_id_provenance": "detector_report"
+      },
+      "target_resolution": {
+        "addition_scope": null,
+        "rule_ids": [
+          "R23"
+        ],
+        "basis": "detector_report",
+        "reason": "These rules are identified in the detector report."
+      },
+      "natural_language_explanation": "Remove only the explicitly diagnosed redundant targets; retain supporting rules.",
+      "original_sleec": "def_start\n\t// Events before driving starts\n\tevent UserTurnOnSystem\n\tevent UserTurnOffSystem\n\tevent TurnOnSensors\n\tevent TurnOffSensors\n\tevent CheckSystemComponents\n\tevent SystemReady\n\tevent TakeUserInput\n\tevent CalculateShortestPath\n\tevent ReadyToDrive\n\tevent GetReadyToDrive\n\tevent AskIfUserReadyToDrive\n\tevent DisplayCarInformation\n\t// Events during driving\n\tevent CarDriving\n\tevent SlowDown\t\t\t// But not stop completely\n\tevent TurnOnHazardsAndTemporarilyStop // Different than temporarily stopping just by hazards, i.e. situation is dangerous and we\u2019re not just temporarily stopping for lights\n\tevent TemporarilyStopCar\t\t// Different than parking, system not turned off\n\tevent ParkVehicle\t\t// On road shoulder or parking area\n\t// Parking also implies stopping car and turning of system\n\tevent DisplayError\t\t// Error is internal, i.e car systems not properly working\n\tevent DisplayAlert \t\t// Alert is external, includes information\n\tevent DisplayRoute\n\tevent ChangeSpeed\n\tevent ChangeLanes\n\tevent ChangeCurrentDriving\n\tevent TakeNewInput\n\tevent TakeShortestPath\n\tevent MaintainEqualDistance\n\tevent StayCenteredinLane\n\tevent SeeTrafficLight\n\tevent WaitUntilChanges\n\tevent RecordPeople\n\t// User requests related\n\tevent UserChangeRoute\n\tevent UserCancelPath\n\tevent UserRequestSpeedChange\n\tevent AskForClarification\n\t// Priority vehicle related\n\tevent PriorityVehicleNearby\n\tevent MakeSpace\t\t\t// Such as emergency corridor or use the shoulder\n\n\t// Measures before driving starts\n\tmeasure destinationExists: boolean\n\tmeasure pathExists: boolean\n\t// Events during driving\n\tmeasure objectInPath: boolean\t\t// Sth in front of car, i.e pedestrian, animal, stationary vehicle\n\tmeasure carsInFront: boolean\t\t// Moving thing in front\n\tmeasure carsBehind: boolean\n\tmeasure actionIsLegal: boolean\n\t// User requests related\n\n\t// Priority vehicle related\n\tmeasure userRequestedLaneChange: boolean\n\tmeasure ambulanceBehindCar: boolean\n\tmeasure ambulanceOnOppositeSide: boolean\n\tmeasure ambulanceNextToCar: boolean\n\n\tmeasure environmentClear: boolean\t// Other moving vehicles on road, either next to, in front, behind\n\tmeasure riskLevel: scale(low, medium, high)\n\tmeasure withinLane: boolean\n\tmeasure multipleLanes: boolean\t\t// Whether 1 lane or multiple\n\tmeasure commandClear: boolean\n\tmeasure laneExists: boolean\n\tmeasure userTurnedOffSystem: boolean\n\tmeasure recognizeInput: boolean\n\tmeasure redLight: boolean\n\tmeasure yellowLight: boolean\n\tmeasure greenLight: boolean\n\tmeasure previousLight: scale(red, yellow, green)\n\tmeasure doorClosed: boolean\n\tmeasure seatBeltOn: boolean\n\tmeasure userSaysYes: boolean\n\tmeasure peopleConsentObtained: boolean\ndef_end\n\nrule_start\n\tR1 when UserTurnOnSystem then TurnOnSensors\n\tR1_cont when TurnOnSensors then CheckSystemComponents\n\tR2 when SystemReady then TakeUserInput\n\tR3 when TakeUserInput then CalculateShortestPath\n\t\tunless ((not {destinationExists}) or (not {pathExists})) then DisplayError\n\tR3_cont when CalculateShortestPath then DisplayRoute\n\tR4 when UserRequestSpeedChange and {environmentClear} then ChangeSpeed\n        unless ({riskLevel} > low)\n        unless (not {actionIsLegal})\n\n\tR5 when UserChangeRoute then CalculateShortestPath\n\t\tunless (not {commandClear}) then AskForClarification\n\t\totherwise not ChangeCurrentDriving\n\n\tR6 when UserCancelPath then ParkVehicle\n\t\tunless ({riskLevel} > low) then WaitUntilChanges\n\tR7 when CarDriving and ({carsInFront} and {carsBehind}) then MaintainEqualDistance\n\tR8 when CarDriving and {objectInPath} then TemporarilyStopCar\n\tunless ({riskLevel} > low) then ChangeLanes\n\tunless (not {multipleLanes}) then TurnOnHazardsAndTemporarilyStop\n    unless (not {objectInPath}) then CarDriving\n\t//invalid rules\n\tR9 when CarDriving and {withinLane} then StayCenteredinLane\n    unless ({userRequestedLaneChange} and ({environmentClear} and ({riskLevel} = low)))\n    then ChangeLanes\n    unless ((not {withinLane}) or (not {laneExists})) then DisplayAlert\n\tR10 when UserTurnOffSystem then ParkVehicle\n\tR10_1 when ParkVehicle and {userTurnedOffSystem} then TurnOffSensors\n\tR11 when PriorityVehicleNearby then DisplayAlert\n\tR12 when PriorityVehicleNearby and ({ambulanceBehindCar} and (not {ambulanceOnOppositeSide}))\n\t\tthen ChangeLanes\n\t\tunless ({ambulanceNextToCar} or (not {multipleLanes})) then MakeSpace\n\t\tunless ({riskLevel} > low)\n\tR13 when SeeTrafficLight and ({redLight} and {recognizeInput}) then TemporarilyStopCar\n\t\tunless (not {redLight}) then TakeNewInput // unless is being used as an \u2018until\u2019 here\n\tR14 when SeeTrafficLight and ({yellowLight} and {recognizeInput}) then SlowDown\n\t\tunless (not {yellowLight}) then TakeNewInput\n\t\tunless ({previousLight} = red) then GetReadyToDrive\n\tR15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\n\t\tunless {objectInPath} then WaitUntilChanges\n\tR16 when SeeTrafficLight and (not {recognizeInput}) then SlowDown\n\tR16_cont when SlowDown and {environmentClear} then CarDriving\n\t// Rules 17 and 18 combined\n\tR17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\n\tthen DisplayAlert otherwise AskIfUserReadyToDrive\n\n\tR19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving\n\n\tR20 when SystemReady then DisplayCarInformation\n\tR26 when UserTurnOffSystem then TurnOffSensors eventually \n\tR21 when CalculateShortestPath then TakeShortestPath\n\t    unless ({riskLevel} > low)\n\t    unless (not {actionIsLegal})\n\tR22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\n    R23 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\nrule_end\n\nconcern_start\n\t// Safety of the driver and of others in the environment\n\tc1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\n\t// Legal - road rules must be followed\n\tc2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\n\tc3 when SeeTrafficLight and ({redLight} and {recognizeInput}) then not TemporarilyStopCar\n\t// Autonomy - user must remain in control as much as possible\n\tc4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\n    c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\n\t// Privacy - use of cameras attached to car\n    c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\n\t// Accuracy - for deciding routes and destinations\n\tc7 when TakeUserInput and ((not {destinationExists}) or (not {pathExists})) then not DisplayError\n\t// Emergency vehicle related\n\tc8 when PriorityVehicleNearby and ({ambulanceBehindCar} and ((not {ambulanceOnOppositeSide}) and ((not {ambulanceNextToCar}) and ( {multipleLanes} and  ({riskLevel}  < medium) )))) then not ChangeLanes\n\n\n\n\n\t//autonomy\n    c9 when ReadyToDrive then not ReadyToDrive eventually\n    c10 when UserTurnOnSystem then TurnOffSensors\n    c11 when UserTurnOffSystem then not TurnOffSensors eventually\n\n    //privacy\n    c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nconcern_end\n\npurpose_start\n\tpr1 exists UserTurnOnSystem\n    pr2 exists UserTurnOffSystem\n    pr3 exists TurnOnSensors\n    pr4 exists TurnOffSensors\n    pr5 exists CheckSystemComponents\n    pr6 exists SystemReady\n    pr7 exists TakeUserInput\n    pr8 exists CalculateShortestPath\n    pr9 exists ReadyToDrive\n    pr10 exists GetReadyToDrive\n    pr11 exists AskIfUserReadyToDrive\n    pr12 exists DisplayCarInformation\n    // Events during driving\n    pr13 exists CarDriving\n    pr14 exists SlowDown\t\t\t// But not stop completely\n    pr15 exists TurnOnHazardsAndTemporarilyStop // Different than temporarily stopping just by hazards, i.e. situation is dangerous and we\u2019re not just temporarily stopping for lights\n    pr16 exists TemporarilyStopCar\t\t// Different than parking, system not turned off\n    pr17 exists ParkVehicle\t\t// On road shoulder or parking area\n    // Parking also implies stopping car and turning of system\n    pr18 exists DisplayError\t\t// Error is internal, i.e car systems not properly working\n    pr19 exists DisplayAlert \t\t// Alert is external, includes information\n    pr20 exists DisplayRoute\n    pr21 exists ChangeSpeed\n    pr22 exists ChangeLanes\n    pr23 exists ChangeCurrentDriving\n    pr24 exists TakeNewInput\n    pr25 exists TakeShortestPath\n    pr26 exists MaintainEqualDistance\n    pr27 exists StayCenteredinLane\n    pr28 exists SeeTrafficLight\n    pr29 exists WaitUntilChanges\n    pr30 exists RecordPeople\n    // User requests related\n        pr31 exists UserChangeRoute\n    pr32 exists UserCancelPath\n    pr33 exists UserRequestSpeedChange\n    pr35 exists AskForClarification\n        // Priority vehicle related\n    pr36 exists PriorityVehicleNearby\n    pr37 exists MakeSpace\n\n    // Safely transport user from A to B\n    P1 exists CarDriving and (({riskLevel} > low) and {actionIsLegal}) while TakeShortestPath\n    // Maintain user autonomy\n    P2 exists AskIfUserReadyToDrive and (({doorClosed} and {seatBeltOn}) and {destinationExists})\n    P3  exists DisplayCarInformation while SystemReady\n    // Ensure emergency vehicles are able to carry out their function without unreasonable impediment\n    P4  exists MakeSpace while PriorityVehicleNearby\n    // Enable user freedom of movement\n    P5  exists UserChangeRoute while CarDriving\n    P6  exists UserCancelPath while CarDriving\n    P7  exists UserRequestSpeedChange while CarDriving\n    P8  exists CarDriving and {userRequestedLaneChange}\npurpose_end\n",
+      "result_id": "",
+      "rule_ids": [],
+      "operation_label": "Remove redundant rule",
+      "stakeholder_summary": "This patch removes rule R23 because it appears redundant with another rule.",
+      "review_flags": [],
+      "missing_element": "",
+      "grounding_evidence": {},
+      "new_event": "",
+      "new_measure": "",
+      "new_capability": "",
+      "new_rule": "",
+      "applicability": {},
+      "modification_cost": 1,
+      "new_events_added": 0,
+      "new_measures_added": 0,
+      "new_capabilities_added": 0,
+      "new_rules_added": 0,
+      "defeaters_added": 0,
+      "verified": true,
+      "syntax_validation": {
+        "valid": true,
+        "error": "",
+        "rule_count": 26
+      },
+      "failure_reason": "",
+      "verification_cache_hit": false,
+      "patched_sleec": "def_start\n\t// Events before driving starts\n\tevent UserTurnOnSystem\n\tevent UserTurnOffSystem\n\tevent TurnOnSensors\n\tevent TurnOffSensors\n\tevent CheckSystemComponents\n\tevent SystemReady\n\tevent TakeUserInput\n\tevent CalculateShortestPath\n\tevent ReadyToDrive\n\tevent GetReadyToDrive\n\tevent AskIfUserReadyToDrive\n\tevent DisplayCarInformation\n\t// Events during driving\n\tevent CarDriving\n\tevent SlowDown\t\t\t// But not stop completely\n\tevent TurnOnHazardsAndTemporarilyStop // Different than temporarily stopping just by hazards, i.e. situation is dangerous and we\u2019re not just temporarily stopping for lights\n\tevent TemporarilyStopCar\t\t// Different than parking, system not turned off\n\tevent ParkVehicle\t\t// On road shoulder or parking area\n\t// Parking also implies stopping car and turning of system\n\tevent DisplayError\t\t// Error is internal, i.e car systems not properly working\n\tevent DisplayAlert \t\t// Alert is external, includes information\n\tevent DisplayRoute\n\tevent ChangeSpeed\n\tevent ChangeLanes\n\tevent ChangeCurrentDriving\n\tevent TakeNewInput\n\tevent TakeShortestPath\n\tevent MaintainEqualDistance\n\tevent StayCenteredinLane\n\tevent SeeTrafficLight\n\tevent WaitUntilChanges\n\tevent RecordPeople\n\t// User requests related\n\tevent UserChangeRoute\n\tevent UserCancelPath\n\tevent UserRequestSpeedChange\n\tevent AskForClarification\n\t// Priority vehicle related\n\tevent PriorityVehicleNearby\n\tevent MakeSpace\t\t\t// Such as emergency corridor or use the shoulder\n\n\t// Measures before driving starts\n\tmeasure destinationExists: boolean\n\tmeasure pathExists: boolean\n\t// Events during driving\n\tmeasure objectInPath: boolean\t\t// Sth in front of car, i.e pedestrian, animal, stationary vehicle\n\tmeasure carsInFront: boolean\t\t// Moving thing in front\n\tmeasure carsBehind: boolean\n\tmeasure actionIsLegal: boolean\n\t// User requests related\n\n\t// Priority vehicle related\n\tmeasure userRequestedLaneChange: boolean\n\tmeasure ambulanceBehindCar: boolean\n\tmeasure ambulanceOnOppositeSide: boolean\n\tmeasure ambulanceNextToCar: boolean\n\n\tmeasure environmentClear: boolean\t// Other moving vehicles on road, either next to, in front, behind\n\tmeasure riskLevel: scale(low, medium, high)\n\tmeasure withinLane: boolean\n\tmeasure multipleLanes: boolean\t\t// Whether 1 lane or multiple\n\tmeasure commandClear: boolean\n\tmeasure laneExists: boolean\n\tmeasure userTurnedOffSystem: boolean\n\tmeasure recognizeInput: boolean\n\tmeasure redLight: boolean\n\tmeasure yellowLight: boolean\n\tmeasure greenLight: boolean\n\tmeasure previousLight: scale(red, yellow, green)\n\tmeasure doorClosed: boolean\n\tmeasure seatBeltOn: boolean\n\tmeasure userSaysYes: boolean\n\tmeasure peopleConsentObtained: boolean\ndef_end\n\nrule_start\n\tR1 when UserTurnOnSystem then TurnOnSensors\n\tR1_cont when TurnOnSensors then CheckSystemComponents\n\tR2 when SystemReady then TakeUserInput\n\tR3 when TakeUserInput then CalculateShortestPath\n\t\tunless ((not {destinationExists}) or (not {pathExists})) then DisplayError\n\tR3_cont when CalculateShortestPath then DisplayRoute\n\tR4 when UserRequestSpeedChange and {environmentClear} then ChangeSpeed\n        unless ({riskLevel} > low)\n        unless (not {actionIsLegal})\n\n\tR5 when UserChangeRoute then CalculateShortestPath\n\t\tunless (not {commandClear}) then AskForClarification\n\t\totherwise not ChangeCurrentDriving\n\n\tR6 when UserCancelPath then ParkVehicle\n\t\tunless ({riskLevel} > low) then WaitUntilChanges\n\tR7 when CarDriving and ({carsInFront} and {carsBehind}) then MaintainEqualDistance\n\tR8 when CarDriving and {objectInPath} then TemporarilyStopCar\n\tunless ({riskLevel} > low) then ChangeLanes\n\tunless (not {multipleLanes}) then TurnOnHazardsAndTemporarilyStop\n    unless (not {objectInPath}) then CarDriving\n\t//invalid rules\n\tR9 when CarDriving and {withinLane} then StayCenteredinLane\n    unless ({userRequestedLaneChange} and ({environmentClear} and ({riskLevel} = low)))\n    then ChangeLanes\n    unless ((not {withinLane}) or (not {laneExists})) then DisplayAlert\n\tR10 when UserTurnOffSystem then ParkVehicle\n\tR10_1 when ParkVehicle and {userTurnedOffSystem} then TurnOffSensors\n\tR11 when PriorityVehicleNearby then DisplayAlert\n\tR12 when PriorityVehicleNearby and ({ambulanceBehindCar} and (not {ambulanceOnOppositeSide}))\n\t\tthen ChangeLanes\n\t\tunless ({ambulanceNextToCar} or (not {multipleLanes})) then MakeSpace\n\t\tunless ({riskLevel} > low)\n\tR13 when SeeTrafficLight and ({redLight} and {recognizeInput}) then TemporarilyStopCar\n\t\tunless (not {redLight}) then TakeNewInput // unless is being used as an \u2018until\u2019 here\n\tR14 when SeeTrafficLight and ({yellowLight} and {recognizeInput}) then SlowDown\n\t\tunless (not {yellowLight}) then TakeNewInput\n\t\tunless ({previousLight} = red) then GetReadyToDrive\n\tR15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\n\t\tunless {objectInPath} then WaitUntilChanges\n\tR16 when SeeTrafficLight and (not {recognizeInput}) then SlowDown\n\tR16_cont when SlowDown and {environmentClear} then CarDriving\n\t// Rules 17 and 18 combined\n\tR17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\n\tthen DisplayAlert otherwise AskIfUserReadyToDrive\n\n\tR19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving\n\n\tR20 when SystemReady then DisplayCarInformation\n\tR26 when UserTurnOffSystem then TurnOffSensors eventually \n\tR21 when CalculateShortestPath then TakeShortestPath\n\t    unless ({riskLevel} > low)\n\t    unless (not {actionIsLegal})\n\tR22 when SystemReady then not RecordPeople\n\t    unless {peopleConsentObtained}\n    \nrule_end\n\nconcern_start\n\t// Safety of the driver and of others in the environment\n\tc1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\n\t// Legal - road rules must be followed\n\tc2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\n\tc3 when SeeTrafficLight and ({redLight} and {recognizeInput}) then not TemporarilyStopCar\n\t// Autonomy - user must remain in control as much as possible\n\tc4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\n    c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\n\t// Privacy - use of cameras attached to car\n    c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\n\t// Accuracy - for deciding routes and destinations\n\tc7 when TakeUserInput and ((not {destinationExists}) or (not {pathExists})) then not DisplayError\n\t// Emergency vehicle related\n\tc8 when PriorityVehicleNearby and ({ambulanceBehindCar} and ((not {ambulanceOnOppositeSide}) and ((not {ambulanceNextToCar}) and ( {multipleLanes} and  ({riskLevel}  < medium) )))) then not ChangeLanes\n\n\n\n\n\t//autonomy\n    c9 when ReadyToDrive then not ReadyToDrive eventually\n    c10 when UserTurnOnSystem then TurnOffSensors\n    c11 when UserTurnOffSystem then not TurnOffSensors eventually\n\n    //privacy\n    c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nconcern_end\n\npurpose_start\n\tpr1 exists UserTurnOnSystem\n    pr2 exists UserTurnOffSystem\n    pr3 exists TurnOnSensors\n    pr4 exists TurnOffSensors\n    pr5 exists CheckSystemComponents\n    pr6 exists SystemReady\n    pr7 exists TakeUserInput\n    pr8 exists CalculateShortestPath\n    pr9 exists ReadyToDrive\n    pr10 exists GetReadyToDrive\n    pr11 exists AskIfUserReadyToDrive\n    pr12 exists DisplayCarInformation\n    // Events during driving\n    pr13 exists CarDriving\n    pr14 exists SlowDown\t\t\t// But not stop completely\n    pr15 exists TurnOnHazardsAndTemporarilyStop // Different than temporarily stopping just by hazards, i.e. situation is dangerous and we\u2019re not just temporarily stopping for lights\n    pr16 exists TemporarilyStopCar\t\t// Different than parking, system not turned off\n    pr17 exists ParkVehicle\t\t// On road shoulder or parking area\n    // Parking also implies stopping car and turning of system\n    pr18 exists DisplayError\t\t// Error is internal, i.e car systems not properly working\n    pr19 exists DisplayAlert \t\t// Alert is external, includes information\n    pr20 exists DisplayRoute\n    pr21 exists ChangeSpeed\n    pr22 exists ChangeLanes\n    pr23 exists ChangeCurrentDriving\n    pr24 exists TakeNewInput\n    pr25 exists TakeShortestPath\n    pr26 exists MaintainEqualDistance\n    pr27 exists StayCenteredinLane\n    pr28 exists SeeTrafficLight\n    pr29 exists WaitUntilChanges\n    pr30 exists RecordPeople\n    // User requests related\n        pr31 exists UserChangeRoute\n    pr32 exists UserCancelPath\n    pr33 exists UserRequestSpeedChange\n    pr35 exists AskForClarification\n        // Priority vehicle related\n    pr36 exists PriorityVehicleNearby\n    pr37 exists MakeSpace\n\n    // Safely transport user from A to B\n    P1 exists CarDriving and (({riskLevel} > low) and {actionIsLegal}) while TakeShortestPath\n    // Maintain user autonomy\n    P2 exists AskIfUserReadyToDrive and (({doorClosed} and {seatBeltOn}) and {destinationExists})\n    P3  exists DisplayCarInformation while SystemReady\n    // Ensure emergency vehicles are able to carry out their function without unreasonable impediment\n    P4  exists MakeSpace while PriorityVehicleNearby\n    // Enable user freedom of movement\n    P5  exists UserChangeRoute while CarDriving\n    P6  exists UserCancelPath while CarDriving\n    P7  exists UserRequestSpeedChange while CarDriving\n    P8  exists CarDriving and {userRequestedLaneChange}\npurpose_end\n",
+      "target_fixed": true,
+      "related_issue": null,
+      "regression_report": {
+        "selected_issue_fixed": true,
+        "new_issues_introduced": false,
+        "regression_passed": true,
+        "before_issue_count": 9,
+        "after_issue_count": 7,
+        "new_issue_count": 0,
+        "resolved_issue_count": 2,
+        "remaining_issue_count": 7,
+        "before_counts_by_type": {
+          "concerns": 7,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 2,
+          "situational_conflicts": 0
+        },
+        "after_counts_by_type": {
+          "concerns": 7,
+          "conflicts": 0,
+          "purpose_blocking": 0,
+          "redundancies": 0,
+          "situational_conflicts": 0
+        },
+        "new_issues": [],
+        "resolved_issues": [
+          {
+            "fingerprint": "redundancies:6b743259ad5a66529cfda6f4",
+            "issue_type": "redundancies",
+            "summary": "R23 when SystemReady then not RecordPeople unless {peopleConsentObtained}",
+            "rule_ids": [
+              "R23",
+              "R22"
+            ]
+          },
+          {
+            "fingerprint": "redundancies:7bed0bdf59ebe65af86e8ca2",
+            "issue_type": "redundancies",
+            "summary": "R22 when SystemReady then not RecordPeople unless {peopleConsentObtained}",
+            "rule_ids": [
+              "R22",
+              "R23"
+            ]
+          }
+        ],
+        "remaining_issues": [
+          {
+            "fingerprint": "concerns:3a8f11b36c245be9a527b58a",
+            "issue_type": "concerns",
+            "summary": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:4b2979d95d3d22edf2986648",
+            "issue_type": "concerns",
+            "summary": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:65539e5e7451d7b4c2992dc1",
+            "issue_type": "concerns",
+            "summary": "c4 when SystemReady and ({doorClosed} and (({seatBeltOn} and {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:af1e927f4c9392a581aec218",
+            "issue_type": "concerns",
+            "summary": "c10 when UserTurnOnSystem then TurnOffSensors Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:ba758dacceb2e54ed80203c8",
+            "issue_type": "concerns",
+            "summary": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:dab18bc76146195fa2f9a8c8",
+            "issue_type": "concerns",
+            "summary": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving Concern is raised",
+            "rule_ids": []
+          },
+          {
+            "fingerprint": "concerns:e14d92eeb1d8baba5013f06b",
+            "issue_type": "concerns",
+            "summary": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving Concern is raised",
+            "rule_ids": []
+          }
+        ]
+      },
+      "regression_passed": true,
+      "validation_result": {
+        "concerns": [
+          "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\nConcern is raised",
+          "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\nConcern is raised",
+          "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\nConcern is raised",
+          "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\nConcern is raised",
+          "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised",
+          "c10 when UserTurnOnSystem then TurnOffSensors\nConcern is raised",
+          "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised"
+        ],
+        "conflicts": [],
+        "purpose_blocking": [],
+        "redundancies": [],
+        "situational_conflicts": [],
+        "original_rules_by_type": {
+          "concerns": [
+            [
+              "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+              "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+              "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges"
+            ],
+            [
+              "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+              "R2 when SystemReady then TakeUserInput",
+              "R20 when SystemReady then DisplayCarInformation"
+            ],
+            [
+              "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+              "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+              "R2 when SystemReady then TakeUserInput"
+            ],
+            [
+              "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+              "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+              "R16_cont when SlowDown and {environmentClear} then CarDriving"
+            ],
+            [
+              "R22 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+              "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+              "R16_cont when SlowDown and {environmentClear} then CarDriving"
+            ],
+            [
+              "R1 when UserTurnOnSystem then TurnOnSensors",
+              "R10_1 when ParkVehicle and {userTurnedOffSystem} then TurnOffSensors",
+              "R26 when UserTurnOffSystem then TurnOffSensors eventually"
+            ],
+            [
+              "R22 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+              "R4 when UserRequestSpeedChange and {environmentClear} then ChangeSpeed\nunless ({riskLevel} > low)\nunless (not {actionIsLegal})"
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "wfi_artifacts_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c1",
+                "text": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c2",
+                "text": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c4",
+                "text": "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c5",
+                "text": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c6",
+                "text": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c10",
+                "text": "c10 when UserTurnOnSystem then TurnOffSensors"
+              }
+            ],
+            [
+              {
+                "role": "violated_concern",
+                "kind": "concern",
+                "id": "c12",
+                "text": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople"
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "rule_references_by_type": {
+          "concerns": [
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "related_rules_by_type": {
+          "concerns": [
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R17",
+                "text": "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+                "score": 4
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R15",
+                "text": "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R16_cont",
+                "text": "R16_cont when SlowDown and {environmentClear} then CarDriving",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R2",
+                "text": "R2 when SystemReady then TakeUserInput",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R17",
+                "text": "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R2",
+                "text": "R2 when SystemReady then TakeUserInput",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R20",
+                "text": "R20 when SystemReady then DisplayCarInformation",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R21",
+                "text": "R21 when CalculateShortestPath then TakeShortestPath\nunless ({riskLevel} > low)\nunless (not {actionIsLegal})",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R22",
+                "text": "R22 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R17",
+                "text": "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+                "score": 5
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R2",
+                "text": "R2 when SystemReady then TakeUserInput",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R20",
+                "text": "R20 when SystemReady then DisplayCarInformation",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R22",
+                "text": "R22 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+                "score": 3
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R15",
+                "text": "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R16_cont",
+                "text": "R16_cont when SlowDown and {environmentClear} then CarDriving",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R17",
+                "text": "R17 when SystemReady and (not (({doorClosed} or {seatBeltOn}) or {destinationExists}))\nthen DisplayAlert otherwise AskIfUserReadyToDrive",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R7",
+                "text": "R7 when CarDriving and ({carsInFront} and {carsBehind}) then MaintainEqualDistance",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R22",
+                "text": "R22 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R15",
+                "text": "R15 when SeeTrafficLight and ({greenLight} and {recognizeInput}) then CarDriving\nunless {objectInPath} then WaitUntilChanges",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R16_cont",
+                "text": "R16_cont when SlowDown and {environmentClear} then CarDriving",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R19",
+                "text": "R19 when AskIfUserReadyToDrive and {userSaysYes} then CarDriving",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R7",
+                "text": "R7 when CarDriving and ({carsInFront} and {carsBehind}) then MaintainEqualDistance",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R1",
+                "text": "R1 when UserTurnOnSystem then TurnOnSensors",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R10_1",
+                "text": "R10_1 when ParkVehicle and {userTurnedOffSystem} then TurnOffSensors",
+                "score": 1
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R26",
+                "text": "R26 when UserTurnOffSystem then TurnOffSensors eventually",
+                "score": 1
+              }
+            ],
+            [
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R22",
+                "text": "R22 when SystemReady then not RecordPeople\nunless {peopleConsentObtained}",
+                "score": 2
+              },
+              {
+                "role": "inferred",
+                "kind": "rule",
+                "id": "R4",
+                "text": "R4 when UserRequestSpeedChange and {environmentClear} then ChangeSpeed\nunless ({riskLevel} > low)\nunless (not {actionIsLegal})",
+                "score": 1
+              }
+            ]
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        },
+        "diagnoses_by_type": {
+          "concerns": [
+            {
+              "source_id": "c1",
+              "source_text": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving",
+              "raw_report": "c1 when SystemReady and ((not {userSaysYes}) and (((not {doorClosed}) or (not{seatBeltOn})) or (not {destinationExists}))) then CarDriving\nConcern is raised\nat time 0: SystemReady()\nat time 0: TakeUserInput()\nat time 0: DisplayCarInformation()\nat time 0: CarDriving()\nat time 0: DisplayError()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=medium, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SystemReady",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SystemReady()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TakeUserInput",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TakeUserInput()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayCarInformation",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayCarInformation()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "CarDriving",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: CarDriving()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayError",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayError()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "medium",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": true,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=medium, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=medium, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c2",
+              "source_text": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving",
+              "raw_report": "c2 when SystemReady and (not {actionIsLegal}) then not ChangeCurrentDriving\nConcern is raised\nat time 0: SystemReady()\nat time 0: TakeUserInput()\nat time 0: DisplayCarInformation()\nat time 0: DisplayError()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SystemReady",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SystemReady()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TakeUserInput",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TakeUserInput()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayCarInformation",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayCarInformation()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayError",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayError()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": true,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c4",
+              "source_text": "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive",
+              "raw_report": "c4 when SystemReady  and  ({doorClosed} and (({seatBeltOn} and  {destinationExists}) and (not {userSaysYes}))) then not AskIfUserReadyToDrive\nConcern is raised\nat time 0: SystemReady()\nat time 0: TakeUserInput()\nat time 0: DisplayCarInformation()\nat time 0: DisplayError()\nat time 0: Measure(destinationExists=True, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=True, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "SystemReady",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: SystemReady()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TakeUserInput",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TakeUserInput()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayCarInformation",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayCarInformation()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "DisplayError",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: DisplayError()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": true,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": true,
+                    "seatBeltOn": true,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=True, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=True, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=True, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=True, seatBeltOn=True, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c5",
+              "source_text": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving",
+              "raw_report": "c5 when AskIfUserReadyToDrive and (not {userSaysYes}) then CarDriving\nConcern is raised\nat time 0: AskIfUserReadyToDrive()\nat time 0: CarDriving()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "AskIfUserReadyToDrive",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: AskIfUserReadyToDrive()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "CarDriving",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: CarDriving()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": false,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c6",
+              "source_text": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople",
+              "raw_report": "c6 when CarDriving and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised\nat time 0: CarDriving()\nat time 0: RecordPeople()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=True, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=True, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "CarDriving",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: CarDriving()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "RecordPeople",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: RecordPeople()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": true,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": true,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": false,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=True, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=True, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=True, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=True, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c10",
+              "source_text": "c10 when UserTurnOnSystem then TurnOffSensors",
+              "raw_report": "c10 when UserTurnOnSystem then TurnOffSensors\nConcern is raised\nat time 0: UserTurnOnSystem()\nat time 0: TurnOnSensors()\nat time 0: TurnOffSensors()\nat time 0: CheckSystemComponents()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "UserTurnOnSystem",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: UserTurnOnSystem()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TurnOnSensors",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TurnOnSensors()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "TurnOffSensors",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: TurnOffSensors()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "CheckSystemComponents",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: CheckSystemComponents()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": false,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            },
+            {
+              "source_id": "c12",
+              "source_text": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople",
+              "raw_report": "c12 when ChangeSpeed and (not {peopleConsentObtained}) then RecordPeople\nConcern is raised\nat time 0: ChangeSpeed()\nat time 0: RecordPeople()\nat time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)\n----------------------------------------------------------------------------------------------------",
+              "trace": [
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "ChangeSpeed",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: ChangeSpeed()"
+                },
+                {
+                  "kind": "event",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "RecordPeople",
+                  "values": {},
+                  "arguments_raw": "",
+                  "raw": "at time 0: RecordPeople()"
+                },
+                {
+                  "kind": "measure",
+                  "timestamp": 0,
+                  "timestamp_raw": "0",
+                  "time_unit": "seconds",
+                  "name": "Measure",
+                  "values": {
+                    "destinationExists": false,
+                    "pathExists": false,
+                    "objectInPath": false,
+                    "carsInFront": false,
+                    "carsBehind": false,
+                    "actionIsLegal": false,
+                    "userRequestedLaneChange": false,
+                    "ambulanceBehindCar": false,
+                    "ambulanceOnOppositeSide": false,
+                    "ambulanceNextToCar": false,
+                    "environmentClear": false,
+                    "riskLevel": "low",
+                    "withinLane": false,
+                    "multipleLanes": false,
+                    "commandClear": false,
+                    "laneExists": false,
+                    "userTurnedOffSystem": false,
+                    "recognizeInput": false,
+                    "redLight": false,
+                    "yellowLight": false,
+                    "greenLight": false,
+                    "previousLight": "red",
+                    "doorClosed": false,
+                    "seatBeltOn": false,
+                    "userSaysYes": false,
+                    "peopleConsentObtained": false
+                  },
+                  "arguments_raw": "destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False",
+                  "raw": "at time 0: Measure(destinationExists=False, pathExists=False, objectInPath=False, carsInFront=False, carsBehind=False, actionIsLegal=False, userRequestedLaneChange=False, ambulanceBehindCar=False, ambulanceOnOppositeSide=False, ambulanceNextToCar=False, environmentClear=False, riskLevel=low, withinLane=False, multipleLanes=False, commandClear=False, laneExists=False, userTurnedOffSystem=False, recognizeInput=False, redLight=False, yellowLight=False, greenLight=False, previousLight=red, doorClosed=False, seatBeltOn=False, userSaysYes=False, peopleConsentObtained=False)"
+                }
+              ],
+              "affected_rule_ids": [],
+              "rule_references": [],
+              "rule_id_provenance": "unavailable"
+            }
+          ],
+          "conflicts": [],
+          "purpose_blocking": [],
+          "redundancies": [],
+          "situational_conflicts": []
+        }
+      },
+      "syntax_valid": true,
+      "formally_verified": true,
+      "candidate_status": "formally_verified",
+      "semantic_review_status": "not_required",
+      "requires_social_scientist_review": false,
+      "attempt": 1,
+      "ranking": {
+        "rules_affected": 1,
+        "rules_edited": 0,
+        "rules_added": 0,
+        "rules_removed": 1,
+        "new_elements": 0,
+        "new_events": 0,
+        "new_measures": 0,
+        "new_defeaters": 0,
+        "boolean_complexity": 0,
+        "defeaters": 0,
+        "defeater_depth": 0,
+        "lexicographic_key": [
+          1,
+          0,
+          0,
+          0,
+          0
+        ],
+        "method": "lexicographic",
+        "total_score": 0
+      },
+      "rank": 1,
+      "ranking_score": -1,
+      "ranking_rationale": [
+        "Prefer fewer affected rules, new elements, Boolean operators, defeaters, then lower defeater nesting depth."
+      ]
+    }
+  }
+]
